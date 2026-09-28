@@ -1,12 +1,13 @@
 import { computeTiers, PRESETS, type Ranked } from "../formula";
 import { assetUrl, loadHeroes, loadMaps, loadMeta, loadSnapshot, type Mode } from "../data";
-import { mountFooter, mountNav } from "../lib/nav";
+import { mountFooter, mountNav, mountTitle } from "../lib/nav";
 
 const fmt1 = (n: number) => n.toFixed(1);
 
 /** 홈: role leaders, movers vs the previous patch, and a few maps — every card links deeper. */
 async function main(): Promise<void> {
   mountNav("home");
+  mountTitle("히오스 메타");
   mountFooter();
   let mode: Mode = new URLSearchParams(location.search).get("mode") === "sl" ? "sl" : "qm";
   const [meta, heroes, maps] = await Promise.all([loadMeta(), loadHeroes(), loadMaps()]);

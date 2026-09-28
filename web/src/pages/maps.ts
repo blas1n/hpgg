@@ -1,16 +1,16 @@
 import { computeTiers, PRESETS } from "../formula";
 import { assetUrl, loadHeroes, loadMaps, loadMeta, loadSnapshot } from "../data";
-import { mountFooter, mountNav } from "../lib/nav";
+import { mountFooter, mountNav, mountTitle } from "../lib/nav";
 
 /** 전장: one card per ranked map (image, match count, top hero per role in Storm League). */
 async function main(): Promise<void> {
   mountNav("maps");
+  mountTitle("전장");
   const [meta, heroes, maps] = await Promise.all([loadMeta(), loadHeroes(), loadMaps()]);
   const sl = await loadSnapshot("sl", "current");
   const byName = new Map(heroes.heroes.map((h) => [h.name, h]));
   const grid = document.getElementById("map-grid")!;
   const tpl = document.getElementById("tpl-map") as HTMLTemplateElement;
-  document.getElementById("maps-count")!.textContent = `${maps.maps.length}`;
   document.getElementById("meta-line")!.textContent = `폭풍 리그 · 패치 ${sl.patch} · ${sl.matches.toLocaleString("ko-KR")} 매치 · ${sl.collected_at.slice(5, 10).replace("-", "/")} 갱신 · 전장을 누르면 그 전장의 티어표로 갑니다.`;
 
   const cards = maps.maps.map((m) => {

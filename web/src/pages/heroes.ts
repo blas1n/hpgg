@@ -1,10 +1,11 @@
 import { computeTiers, PRESETS, type Tier } from "../formula";
 import { assetUrl, loadHeroes, loadMeta, loadSnapshot, type Mode } from "../data";
-import { mountFooter, mountNav } from "../lib/nav";
+import { mountFooter, mountNav, mountTitle } from "../lib/nav";
 
 /** 영웅: portrait grid with the current tier badge; search + role filter; links to hero.html. */
 async function main(): Promise<void> {
   mountNav("heroes");
+  mountTitle("영웅");
   mountFooter();
   const q = new URLSearchParams(location.search);
   let mode: Mode = q.get("mode") === "sl" ? "sl" : "qm";
@@ -16,7 +17,6 @@ async function main(): Promise<void> {
   const rolesEl = document.getElementById("roles")!;
   const search = document.getElementById("search") as HTMLInputElement;
   const list = [...heroes.heroes].sort((a, b) => a.ko.localeCompare(b.ko, "ko"));
-  document.getElementById("count")!.textContent = `${list.length}`;
 
   for (const r of [{ name: "all", ko: "전체" }, ...heroes.roles]) {
     const b = document.createElement("button");

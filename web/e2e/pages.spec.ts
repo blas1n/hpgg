@@ -15,6 +15,7 @@ test("home: role leaders, movers vs previous patch, map cards, mode toggle", asy
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
   expect(overflow).toBeLessThanOrEqual(0);
   await expect(page.locator("nav.tabs .tab.active")).toHaveText(/홈/);
+  await expect(page.locator(".topbar")).toBeVisible();
 });
 
 test("heroes: grid of 90 with tier badges, search and role filter", async ({ page }) => {
@@ -66,7 +67,7 @@ test("maps: cards with images, match counts and top heroes; card links to the ma
 
 test("tier table shows ▲▼ deltas against the previous patch", async ({ page }) => {
   await page.goto("./tier.html");
-  await expect(page.locator('tr.hero[data-hero="qhira"] .delta')).toHaveText("–"); // fixture previous == current
+  await expect(page.locator('tr.hero[data-hero="qhira"] .delta')).toHaveText("— 0"); // fixture previous == current
 });
 
 test("tier table: Storm League rank-bracket selector loads sl_<bracket>.json and lands in the URL", async ({ page }) => {

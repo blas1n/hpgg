@@ -17,17 +17,15 @@ test("default view is Quick Match, all maps, no map dropdown, ban column hidden;
   expect(await tierOf(page, "brightwing")).toBe("A");
   // default order is by score: first row is rank #1
   await expect(page.locator("tbody tr.hero").first()).toHaveAttribute("data-hero", "qhira");
-  await expect(page.locator("tbody tr.hero").first().locator(".rank")).toHaveText("#1");
+  await expect(page.locator("tbody tr.hero").first().locator(".rank")).toHaveText("1");
 });
 
-test("win rate, pick rate and score all show a number and a bar (no single-metric emphasis)", async ({ page }) => {
+test("score, win rate, pick rate and sample size all show plain numbers (no single-metric emphasis)", async ({ page }) => {
   await page.goto("./tier.html");
   const r = row(page, "illidan");
-  for (const cls of ["score", "wr", "pick"]) {
-    await expect(r.locator(`td.${cls} .v`)).not.toHaveText("");
-    const width = await r.locator(`td.${cls} .bar i`).evaluate((el) => (el as HTMLElement).style.width);
-    expect(parseFloat(width)).toBeGreaterThan(0);
-  }
+  for (const cls of ["score", "wr", "pick", "games"]) await expect(r.locator(`td.${cls} .v`)).not.toHaveText("");
+  await expect(r.locator("td.wr .v")).toContainText("%");
+  await expect(r.locator(".avatar .badge")).toHaveText("B");
 });
 
 test("sorting by pick rate reorders rows and is reflected in the URL; tiers stay", async ({ page }) => {

@@ -1,6 +1,6 @@
 import { computeTiers, formulaLine, PRESETS, type Ranked, type Row, type Snapshot } from "../formula";
 import { wilson } from "../wilson";
-import { mountFooter, mountNav } from "../lib/nav";
+import { mountFooter, mountNav, mountTitle } from "../lib/nav";
 import {
   assetUrl,
   BRACKET_LABEL,
@@ -26,7 +26,7 @@ declare global {
   }
 }
 
-type SortKey = "score" | "win_rate" | "pick" | "ban_rate";
+type SortKey = "score" | "win_rate" | "pick" | "ban_rate" | "games";
 
 interface State {
   mode: Mode;
@@ -46,7 +46,7 @@ const $ = <T extends HTMLElement>(sel: string): T => {
 
 const fmt1 = (n: number) => n.toFixed(1);
 const fmtInt = (n: number) => n.toLocaleString("ko-KR");
-const SORT_KEYS: SortKey[] = ["score", "win_rate", "pick", "ban_rate"];
+const SORT_KEYS: SortKey[] = ["score", "win_rate", "pick", "ban_rate", "games"];
 
 function readState(): State {
   const q = new URLSearchParams(location.search);
@@ -117,6 +117,7 @@ class App {
 
   async start(): Promise<void> {
     mountNav("tier");
+    mountTitle("영웅 티어");
     mountFooter();
     [this.meta, this.heroes, this.maps] = await Promise.all([loadMeta(), loadHeroes(), loadMaps()]);
     for (const h of this.heroes.heroes) this.byName.set(h.name, h);
@@ -296,6 +297,7 @@ class App {
       win_rate: Math.max(...wrs, 1),
       pick: Math.max(...tiers.ranked.map((x) => x.row.pick), 1),
       ban_rate: Math.max(...tiers.ranked.map((x) => x.row.ban_rate), 1),
+      games: Math.max(...tiers.ranked.map((x) => x.row.games), 1),
     };
     const wrMin = Math.min(...wrs, 50);
     const wrSpan = Math.max(maxAbs.win_rate - wrMin, 1);
@@ -370,12 +372,13 @@ class App {
     const badge = tr.querySelector<HTMLElement>(".badge")!;
     badge.textContent = x.tier;
     badge.classList.add(`badge-${x.tier}`);
-    tr.querySelector(".rank")!.textContent = `#${x.rank}`;
+    tr.querySelector(".rank")!.textContent = `${x.rank}`;
+    tr.querySelector("td.games .v")!.textContent = fmtInt(r.games);
     const deltaEl = tr.querySelector<HTMLElement>(".delta")!;
     if (prevRank.size) {
       const pr = prevRank.get(r.hero);
       const d = pr === undefined ? null : pr - x.rank;
-      deltaEl.textContent = d === null ? "NEW" : d === 0 ? "–" : d > 0 ? `▲${d}` : `▼${-d}`;
+      deltaEl.textContent = d === null ? "NEW" : d === 0 ? "— 0" : d > 0 ? `▲ ${d}` : `▼ ${-d}`;
       deltaEl.className = "delta " + (d === null ? "new" : d > 0 ? "up" : d < 0 ? "down" : "same");
       deltaEl.title = pr === undefined ? "직전 패치엔 표본 부족" : `직전 패치 #${pr}`;
     } else deltaEl.textContent = "";
@@ -387,11 +390,11 @@ class App {
       img.src = assetUrl(info.portrait);
       img.alt = "";
       img.loading = "lazy";
-      img.width = 30;
-      img.height = 30;
+      img.width = 36;
+      img.height = 36;
       av.appendChild(img);
     } else {
-      av.textContent = this.ko(r.hero).slice(0, 1);
+      av.append(this.ko(r.hero).slice(0, 1));
     }
     tr.querySelector(".name")!.textContent = this.ko(r.hero);
     tr.querySelector(".en")!.textContent = `${r.hero}${info ? ` · ${info.role_ko}` : ""}`;

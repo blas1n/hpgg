@@ -25,7 +25,7 @@ async function main(): Promise<void> {
   }
   document.title = `${info.ko} | 히오스 티어표 hotsmeta.kr`;
   const head = document.getElementById("hero-head")!;
-  head.innerHTML = `<img alt="" src="${info.portrait ? assetUrl(info.portrait) : ""}" /><div><h1>${info.ko}</h1><div class="muted">${info.name} · ${info.role_ko}</div><p class="meta" id="meta-line"></p></div>`;
+  head.innerHTML = `<div class="portrait"><img alt="" src="${info.portrait ? assetUrl(info.portrait) : ""}" /><span class="badge badge-lg" id="head-badge" hidden></span></div><div><h1>${info.ko}</h1><div class="muted">${info.name} · ${info.role_ko}</div><p class="meta" id="meta-line"></p></div>`;
   const cache: Record<string, Snapshot> = {};
   const get = async (key: string, patch: "current" | "previous" = "current"): Promise<Snapshot | null> => {
     const k = `${key}:${patch}`;
@@ -79,6 +79,12 @@ async function main(): Promise<void> {
       d.innerHTML = `<div class="k">${k}</div><div class="v">${v}</div><div class="s">${s}</div>`;
       stats.appendChild(d);
     };
+    const hb = document.getElementById("head-badge")!;
+    if (r) {
+      hb.hidden = false;
+      hb.className = `badge badge-lg badge-${r.tier}`;
+      hb.textContent = r.tier;
+    } else hb.hidden = true;
     if (r) {
       const d = pr ? pr.rank - r.rank : null;
       const delta = d === null ? (prev ? "직전 패치 표본 부족" : "") : d === 0 ? "직전 패치와 같음" : d > 0 ? `▲ ${d} (직전 #${pr!.rank})` : `▼ ${-d} (직전 #${pr!.rank})`;
@@ -118,6 +124,7 @@ async function main(): Promise<void> {
     const bt = document.getElementById("brackets-title")!;
     const bEl = document.getElementById("brackets")!;
     bEl.innerHTML = "";
+    document.getElementById("nav-brackets")!.hidden = mode !== "sl";
     if (mode === "sl") {
       bt.hidden = false;
       bEl.hidden = false;
@@ -180,6 +187,7 @@ async function main(): Promise<void> {
     }
     title.hidden = false;
     box.hidden = false;
+    document.getElementById("nav-builds")!.hidden = false;
     document.getElementById("builds-sub")!.textContent = `빠른 대전 + 폭풍 리그 합산 · 패치 ${builds.patch} · 많이 쓴 순`;
     box.innerHTML = "";
     const maxGames = Math.max(...list.map((b) => b.games), 1);
