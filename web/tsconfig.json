@@ -8,21 +8,44 @@
       "DOM",
       "DOM.Iterable"
     ],
+    "jsx": "preserve",
     "strict": true,
     "noUncheckedIndexedAccess": true,
     "noImplicitOverride": true,
     "skipLibCheck": true,
     "isolatedModules": true,
     "resolveJsonModule": true,
+    "allowJs": false,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "incremental": true,
     "types": [
-      "vite/client",
       "node"
-    ]
+    ],
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
+    "paths": {
+      "@/*": [
+        "./src/*"
+      ]
+    }
   },
   "include": [
+    "*.config.ts",
+    ".next/types/**/*.ts",
+    "app",
+    "e2e",
+    "next-env.d.ts",
     "src",
     "tests",
-    "e2e",
-    "vite.config.ts"
+    "dist/types/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "dist-e2e"
   ]
 }

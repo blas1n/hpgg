@@ -3,11 +3,11 @@
 Last updated 2026-09-28. Read `docs/STATUS.md` first for the current state; this file is how to operate and extend the project.
 
 ## What this is
-A static Korean-language Heroes of the Storm tier site. A Python collector pulls hero statistics once a day from the Heroes Profile API v1, commits JSON to `main`, and a Vite + TypeScript site computes tiers in the browser with a formula printed on the page. No server, no database, no accounts.
+A static Korean-language Heroes of the Storm tier site. A Python collector pulls hero statistics once a day from the Heroes Profile API v1, commits JSON to `main`, and a Next.js static export (React 19 + Tailwind 4, `output: "export"`) renders the site; tiers are computed from the same JSON at build time (홈, search index) and in the browser (tier table, hero detail) with the formula printed on the page. No server, no database, no accounts.
 
 - Live: https://hpgg.win/hots/ (GitHub Pages + custom domain, HTTPS enforced; `data/CNAME` is published with the site so the domain survives every deploy). Root `/` forwards to `/hots/`; a second game would live at `/<game>/`.
 - Brand: hpgg.win — Happy Good Game. Logo, crops and palette in `docs/BRAND.md` and `data/img/brand/`.
-- Analytics: https://hpgg.goatcounter.com — page views plus 👍👎 events `vote/<mode>/<slug>/<up|down>`.
+- Analytics: https://hpgg.goatcounter.com — page views. (👍👎 voting was removed 2026-09-28; formula feedback goes to contact@hpgg.win.)
 - Repo: https://github.com/blas1n/hpgg (public). Bot commits land on `main`; raw daily snapshots on the orphan `snapshots` branch.
 - Design of record: `docs/DESIGN-2026-09-28.md`. E2E checklists: `docs/e2e/`.
 
@@ -23,10 +23,14 @@ GitHub Actions (cron 03:20 KST, workflow_dispatch, push:main)
       raw + normalised gz → data/.snapshot_out/<day>/ → committed to the `snapshots` branch
     git commit data/ → git pull --rebase --autostash → push
   deploy job (always)
-    cd web && npm ci && npm run build   (Vite: publicDir=../data, base=/)
+    cd web && npm ci && npm run build   (sync ../data → public/, tsc, next build → web/dist)
     upload web/dist → GitHub Pages
 ```
-Frontend pages live in `web/hots/`: `index.html` (홈), `tier.html` (영웅 티어), `heroes.html`, `hero.html?hero=<slug>`, `maps.html`; `web/index.html` is the root redirect. Every page carries the GoatCounter tag. Shared: `web/src/formula.ts` (tiers), `web/src/data.ts` (loaders + types), `web/src/lib/nav.ts` (chrome).
+Frontend (`web/`, Next.js App Router, static export to `web/dist`):
+- Routes: `app/hots/page.tsx` 홈 · `app/hots/tier/` 영웅 티어 · `app/hots/heroes/` 영웅 · `app/hots/heroes/[slug]/` 영웅 상세 (one static page per hero, unknown slug → 404) · `app/hots/maps/` 전장 · `app/page.tsx` root redirect · `app/not-found.tsx`. Old `hots/*.html` addresses forward via `web/legacy-redirects/`.
+- Data: `scripts/sync-data.mjs` copies `DATA_DIR` (default `../data`) into `public/` (gitignored) so the export ships it verbatim; server components read the same files through `src/server/data.ts`, client code fetches them through `src/data.ts`.
+- Design system: tokens in `src/styles/globals.css` (`@theme`: surfaces, brand, tier and role colours), primitives in `src/components/ui.tsx` (TierBadge, Portrait, RankDelta, Card, Segmented), chrome in `SiteHeader` (hero search: Korean / English / 초성, `/` to focus) and `SiteFooter`.
+- Rebuilt in React: shell + 홈 (`src/components/home/HomeView.tsx`, view models in `src/lib/home.ts`). **Not yet rebuilt**: tier, heroes, hero detail, maps run their old imperative modules (`src/legacy/*.ts`) inside `LegacyPage` over server-rendered skeletons (`src/legacy/markup.ts`), styled by `src/styles/legacy.css` in a cascade layer below the utilities. Rebuild one page per PR and delete its legacy module, markup and CSS.
 
 ## The formula (web/src/formula.ts — printed on the page)
 ```
@@ -59,22 +63,22 @@ Error responses and 202 job polling are not charged. `group_by_map=true` is rate
 uv run ruff check collector/ tests/ tools/ && uv run ruff format --check collector/ tests/ tools/
 uv run mypy collector/
 uv run pytest tests/ --cov=collector --cov-fail-under=80        # 40 tests, ~90 %
-cd web && npx tsc --noEmit && npm test && npm run e2e            # 26 vitest, 18 Playwright
+cd web && npx tsc --noEmit && npm run test:cov && npm run e2e     # 43 vitest (95 %), 25 Playwright
 ```
 
 ## Where things are
 - `collector/` client (Bearer, 202 polling, bounded retries), snapshot (normalisation, atomic commit, meta), run (orchestration, backfill), `__main__` (CLI, JSON logging; token never logged — asserted by tests)
 - `tools/build_assets.py` asset/localisation generator (tests in `tests/test_build_assets.py`)
-- `web/src/pages/*.ts` one module per page; `web/e2e/*.spec.ts`; `web/tests/formula.test.ts`
-- `.github/workflows/collect-and-deploy.yml`
+- `web/app/` routes; `web/src/{components,lib,legacy,server,styles}`; `web/e2e/*.spec.ts` (served like Pages by `scripts/serve.mjs`); `web/tests/*.test.ts`
+- `.github/workflows/collect-and-deploy.yml` (collect + deploy on main), `.github/workflows/ci.yml` (all gates on every PR)
 - `docs/hp-api-v1-variables.md` accepted parameter values (from the v1 docs)
 
-## Starting UI/UX work (next session)
-- Direction from the owner: main UI follows LoL stat sites (lol.ps first), Overwatch sites only as a reference for maps; brand palette from `docs/BRAND.md` (CSS tokens at the top of `web/src/style.css`). Tier badge colours stay separate from the brand palette.
-- Korean-first UI, but do not add Korea-only framing: the long-term goal is a global, multi-game community (issue #10 for i18n).
-- Loop: `cd web && npm run dev` serves `../data` live at http://localhost:5173/hots/ ; check phone (390 px) and desktop (1280 px) widths; `npm run e2e` pins behaviour (18 specs, selectors are ids/data-attributes, not styles), so a restyle should not break it unless structure changes.
-- Reference captures from the last session are outside the repo (`~/.playwright-mcp/ref-lolps-*.png`); re-capture if needed.
-- UI issues ready to pick: #1 light theme, #2 formula presets in the UI, #3 desktop density.
+## UI/UX work (in progress)
+- Direction from the owner: production-site level; main UI follows LoL stat sites (lol.ps first), Overwatch sites only as a reference for maps; brand palette from `docs/BRAND.md` (tokens in `web/src/styles/globals.css`). Tier badge colours stay separate from the brand palette.
+- Copy: never claim the tiers "match your gut feel" (owner, 2026-09-28) — state what the site does. No voting.
+- Korean-first UI, but do not add Korea-only framing: the long-term goal is a global, multi-game community (issue #10 for i18n). Player search and community come later, so keep the header search generic.
+- Loop: `cd web && npm run dev` serves live data at http://localhost:5173/hots/ ; check phone (390 px) and desktop (1280 px) widths; `npm run e2e` pins behaviour (selectors are ids/data-attributes, not styles).
+- Next: rebuild the legacy pages in React one PR each (tier table → hero detail → heroes → maps), then #1 light theme, #2 formula presets, #3 desktop density.
 
 ## Backlog (see GitHub issues)
 UI polish (#1 light theme, #2 formula presets, #3 desktop density), i18n (#10), community/comments (#7), player search (Basic plan gives only 25 player calls/week — needs a plan change or a different design), Xal'atath assets.

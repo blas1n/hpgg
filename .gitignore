@@ -16,3 +16,10 @@ web/dist-e2e/
 web/playwright-report/
 web/test-results/
 .cache/
+
+# Next.js
+web/.next/
+web/public/
+web/next-env.d.ts
+web/*.tsbuildinfo
+web/coverage/
