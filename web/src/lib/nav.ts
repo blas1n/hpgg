@@ -13,7 +13,7 @@ export function mountNav(active: PageId): void {
   bar.className = "topbar";
   bar.innerHTML = `
     <div class="topbar-in">
-      <a class="brand" href="./" aria-label="HPGG 홈"><span class="brand-name">HP<span class="brand-accent">GG</span></span><span class="brand-tag">.win</span><span class="brand-game">Heroes of the Storm</span></a>
+      <a class="brand" href="./" aria-label="hpgg.win 홈"><img class="brand-icon" src="${import.meta.env.BASE_URL}img/brand/icon-sm.png" alt="" width="28" height="28" /><span class="brand-name">hpgg<span class="brand-tag">.win</span></span><span class="brand-game">Heroes of the Storm</span></a>
       <nav class="tabs" aria-label="주 메뉴"></nav>
       <div class="topbar-right"><a class="topbar-link" href="https://github.com/blas1n/hpgg" rel="noopener">GitHub</a></div>
     </div>`;
@@ -40,7 +40,7 @@ export function mountNav(active: PageId): void {
 export function mountFooter(extra?: string): void {
   const f = document.createElement("footer");
   f.className = "foot";
-  f.innerHTML = `<div class="foot-in">${extra ?? ""}<p class="muted">Data provided by <a href="https://www.heroesprofile.com/" rel="noopener">Heroes Profile</a> · 매일 새벽 갱신 · 초상화·전장·특성 이미지 © Blizzard Entertainment (HeroesToolChest 배포본) · Heroes of the Storm™ is a trademark of Blizzard Entertainment, Inc. HPGG is not affiliated with Blizzard.</p></div>`;
+  f.innerHTML = `<div class="foot-in">${extra ?? ""}<p class="muted">Data provided by <a href="https://www.heroesprofile.com/" rel="noopener">Heroes Profile</a> · 매일 새벽 갱신 · 초상화·전장·특성 이미지 © Blizzard Entertainment (HeroesToolChest 배포본) · Heroes of the Storm™ is a trademark of Blizzard Entertainment, Inc. hpgg.win (Happy Good Game) is not affiliated with Blizzard.</p></div>`;
   document.body.appendChild(f);
 }
 
