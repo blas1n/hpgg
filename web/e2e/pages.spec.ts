@@ -102,10 +102,12 @@ test("hero detail: unknown slug is a 404 page with a way back", async ({ page })
 
 test("maps: cards with images, match counts and top heroes; card links to the map tier table with a banner", async ({ page }) => {
   await page.goto("./maps/");
-  await expect(page.locator("#map-grid .map-card")).toHaveCount(15);
-  const card = page.locator('#map-grid .map-card[data-map="cursed-hollow"]');
+  await expect(page.locator("#map-grid a[data-map]")).toHaveCount(15);
+  const card = page.locator('#map-grid a[data-map="cursed-hollow"]');
   await expect(card).toContainText("저주받은 골짜기");
-  await expect(card.locator(".map-top-hero")).toHaveCount(3);
+  await expect(card.locator("[data-top-hero]")).toHaveCount(3);
+  await expect(page.locator("#map-grid a[data-map]").first()).toHaveAttribute("data-map", "cursed-hollow"); // most matches first
+  await expect(page.locator('#map-grid a[data-map="towers-of-doom"]')).toContainText("표본 없음"); // fixture: no SL rows there
   await card.click();
   await expect(page).toHaveURL(/tier\/\?mode=sl&map=Cursed(\+|%20)Hollow/);
   await expect(page.locator("#map-hero")).toBeVisible();

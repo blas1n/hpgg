@@ -55,9 +55,6 @@ async function getJson<T>(path: string): Promise<T> {
   return (await res.json()) as T;
 }
 
-export const loadMeta = (): Promise<Meta> => getJson<Meta>("latest/meta.json");
-export const loadHeroes = (): Promise<HeroTable> => getJson<HeroTable>("heroes_ko.json");
-export const loadMaps = (): Promise<MapTable> => getJson<MapTable>("maps_ko.json");
 export const loadSnapshot = (key: string, patch: PatchChoice): Promise<Snapshot> =>
   getJson<Snapshot>(`${patch === "previous" ? "previous" : "latest"}/${key}.json`);
 
@@ -105,6 +102,3 @@ export interface TalentInfo {
 export interface TalentTable {
   talents: Record<string, TalentInfo>;
 }
-export const loadBuilds = (): Promise<BuildsFile | null> => getJson<BuildsFile>("latest/builds.json").catch(() => null);
-/** One small file per hero (data/talents/<slug>.json, written by tools/build_assets.py). */
-export const loadTalents = (slug: string): Promise<TalentTable | null> => getJson<TalentTable>(`talents/${slug}.json`).catch(() => null);

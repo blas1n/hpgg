@@ -4,7 +4,7 @@ Start every session here. Operating guide and architecture: `docs/HANDOFF.md`. B
 
 ## State on 2026-09-29 (Next.js rebuild merged, #11)
 - **Live**: https://hpgg.win/hots/ (root `/` forwards here). Pages: 홈 (today's meta: role leaders, tier top 10, risers/fallers vs previous patch, map cards) · 영웅 티어 `/hots/tier/` (QM/SL, SL brackets, per-map, ▲▼, sortable) · 영웅 `/hots/heroes/` · 영웅 상세 `/hots/heroes/<slug>/` (90 pre-rendered pages; three stat cards, per-map win rates, brackets, sticky section tabs, talent builds with a description popover) · 전장 `/hots/maps/`. Old `hots/*.html` addresses forward.
-- **Stack**: Next.js 16 (App Router, static export, Turbopack) + React 19 + Tailwind 4 on GitHub Pages. Shell (header with hero search incl. 초성, footer with contact@hpgg.win), 홈, 영웅 티어, 영웅 and 영웅 상세 are React (영웅 and hero pages are fully pre-rendered, no fetch); only 전장 still runs its legacy module inside the new shell — **#12** last step: maps, then delete `LegacyPage`, `markup.ts`, `legacy.css`.
+- **Stack**: Next.js 16 (App Router, static export, Turbopack) + React 19 + Tailwind 4 on GitHub Pages. Every page is React on the design system (#12 done 2026-09-29): 홈, 영웅, 영웅 상세 and 전장 are fully pre-rendered (no fetch); 영웅 티어 pre-renders its default view and loads other snapshots on demand. Pages read data through `readShown` (one patch rule; a test fails if a page calls `readSnapshot` directly).
 - **Pipeline**: daily cron (03:20 KST) collects 4 stats calls (QM, SL, SL 브실골플 1-4, SL 다마그 5-6) + 1 builds call, commits to `main`, archives to `snapshots`, deploys Pages. Previous patch 2.55.17.97771 re-backfilled with the two brackets on 2026-09-29.
 - **Data/localisation**: Korean names and talent tooltips from the game strings (HeroesToolChest, MIT), one talent file per hero (`data/talents/<slug>.json`); portraits, maps, icons from heroes-images (MIT).
 - **Quality**: pytest 43 (90 % cov), vitest 45 (95 %), Playwright 30; ruff/mypy/tsc clean. Every PR runs all gates (`.github/workflows/ci.yml`).
@@ -23,7 +23,7 @@ The patch changed overnight. Right after a patch the current sample is thin (QM 
 2. First community post (Inven / Arca) with a screenshot; watch day-7 uniques vs day-1 (success criterion in the design doc).
 
 ## Next session (owner, 2026-09-29)
-1. **Clear the existing issues**: #12 React rebuild of the four legacy pages (with #3 desktop density), #1 light theme, #2 formula presets, #6 Xal'atath assets (when HeroesToolChest ships the data), #9 map detail, #10 i18n groundwork.
+1. **Clear the existing issues**: ~~#12 React rebuild~~ (done), #3 desktop density, #1 light theme, #2 formula presets, #6 Xal'atath assets (when HeroesToolChest ships the data), #9 map detail, #10 i18n groundwork.
 2. **Player search (전적검색, #8)** — design first. Heroes Profile Basic allows 25 player calls/week, so a live search needs a plan upgrade or a cached, on-demand design. The home page top is reserved for it (the search banner was removed; no non-working box is shown).
 3. **Counters / synergies on the hero page (#15)** → later a ban/pick simulator. `/heroes/matchups` exists (one hero per call, own 700/week bucket). References: lol.ps for the UI, hiosu.gg's simulator (`docs/refs/hiosu-banpick-2026-09-29.png`) for the draft flow — ours speaks in numbers, not per-pair prose.
 4. **Region filter (#14)** — 아시아 (KR) / 아메리카 (NA) / 유럽 (EU); decide the Heroes/Stats quota plan first (70/week, 28 used).

@@ -102,7 +102,7 @@ export function MoreLink({ href, children }: { href: string; children: ReactNode
   );
 }
 
-/** Two-option segmented control (buttons keep their legacy ids for the e2e suite). */
+/** Two-option segmented control; `idPrefix` gives the buttons stable ids (`mode-qm`, `mode-sl`). */
 export function Segmented<T extends string>({
   value,
   options,
