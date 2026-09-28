@@ -37,11 +37,12 @@
     "*.config.ts",
     ".next/types/**/*.ts",
     "app",
+    "dist/types/**/*.ts",
     "e2e",
     "next-env.d.ts",
     "src",
     "tests",
-    "dist/types/**/*.ts"
+    ".next-dev/types/**/*.ts"
   ],
   "exclude": [
     "node_modules",

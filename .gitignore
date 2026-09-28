@@ -23,3 +23,4 @@ web/public/
 web/next-env.d.ts
 web/*.tsbuildinfo
 web/coverage/
+web/.next-dev/
