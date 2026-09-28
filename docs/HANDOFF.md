@@ -1,11 +1,11 @@
-# HANDOFF — hotsmeta.kr
+# HANDOFF — hotsmeta.gg
 
 Last updated 2026-09-28. Read `docs/STATUS.md` first for the current state; this file is how to operate and extend the project.
 
 ## What this is
 A static Korean-language Heroes of the Storm tier site. A Python collector pulls hero statistics once a day from the Heroes Profile API v1, commits JSON to `main`, and a Vite + TypeScript site computes tiers in the browser with a formula printed on the page. No server, no database, no accounts.
 
-- Live: https://blas1n.github.io/hotsmeta/ (GitHub Pages; custom domain hotsmeta.kr not registered yet)
+- Live: https://blas1n.github.io/hotsmeta/ (GitHub Pages; custom domain hotsmeta.gg not registered yet)
 - Repo: https://github.com/blas1n/hotsmeta (public). Bot commits land on `main`; raw daily snapshots on the orphan `snapshots` branch.
 - Design of record: `docs/DESIGN-2026-09-28.md`. E2E checklists: `docs/e2e/`.
 

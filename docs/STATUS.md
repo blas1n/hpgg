@@ -1,4 +1,4 @@
-# STATUS — hotsmeta.kr
+# STATUS — hotsmeta.gg
 
 Start every session here. Operating guide and architecture: `docs/HANDOFF.md`. Backlog: GitHub issues.
 
@@ -11,7 +11,7 @@ Start every session here. Operating guide and architecture: `docs/HANDOFF.md`. B
 - **Quota today**: Heroes/Stats 16/70, builds/all 1/7 (+1 tonight).
 
 ## Owner actions still open
-1. Register hotsmeta.kr (and .gg) and attach the custom domain to Pages (then set Vite `base` to `/`). Issue #5.
+1. Register hotsmeta.gg (and .gg) and attach the custom domain to Pages (then set Vite `base` to `/`). Issue #5.
 2. Create a GoatCounter site and add its script tag — until then 👍👎 votes stay in each visitor's browser. Issue #4.
 3. First community post (Inven / Arca) with a screenshot; watch day-7 uniques vs day-1 (success criterion in the design doc).
 

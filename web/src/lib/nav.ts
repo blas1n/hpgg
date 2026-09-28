@@ -13,7 +13,7 @@ export function mountNav(active: PageId): void {
   bar.className = "topbar";
   bar.innerHTML = `
     <div class="topbar-in">
-      <a class="brand" href="./" aria-label="hotsmeta.kr 홈"><span class="logo">S</span><span class="brand-name">HOTS<span class="brand-accent">META</span></span></a>
+      <a class="brand" href="./" aria-label="HOTSMETA 홈"><span class="logo">S</span><span class="brand-name">HOTS<span class="brand-accent">META</span></span><span class="brand-tag">.gg</span></a>
       <nav class="tabs" aria-label="주 메뉴"></nav>
       <div class="topbar-right"><a class="topbar-link" href="https://github.com/blas1n/hotsmeta" rel="noopener">GitHub</a></div>
     </div>`;
@@ -40,7 +40,7 @@ export function mountNav(active: PageId): void {
 export function mountFooter(extra?: string): void {
   const f = document.createElement("footer");
   f.className = "foot";
-  f.innerHTML = `<div class="foot-in">${extra ?? ""}<p class="muted">Data provided by <a href="https://www.heroesprofile.com/" rel="noopener">Heroes Profile</a> · 매일 새벽 갱신 · 초상화·전장·특성 이미지 © Blizzard Entertainment (HeroesToolChest 배포본) · Heroes of the Storm™ is a trademark of Blizzard Entertainment, Inc. hotsmeta.kr is not affiliated with Blizzard.</p></div>`;
+  f.innerHTML = `<div class="foot-in">${extra ?? ""}<p class="muted">Data provided by <a href="https://www.heroesprofile.com/" rel="noopener">Heroes Profile</a> · 매일 새벽 갱신 · 초상화·전장·특성 이미지 © Blizzard Entertainment (HeroesToolChest 배포본) · Heroes of the Storm™ is a trademark of Blizzard Entertainment, Inc. HOTSMETA is not affiliated with Blizzard.</p></div>`;
   document.body.appendChild(f);
 }
 

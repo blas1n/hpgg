@@ -23,7 +23,7 @@ async function main(): Promise<void> {
     document.getElementById("meta-line")!.textContent = "그런 영웅이 없습니다.";
     return;
   }
-  document.title = `${info.ko} | 히오스 티어표 hotsmeta.kr`;
+  document.title = `${info.ko} | HOTSMETA`;
   const head = document.getElementById("hero-head")!;
   head.innerHTML = `<div class="portrait"><img alt="" src="${info.portrait ? assetUrl(info.portrait) : ""}" /><span class="badge badge-lg" id="head-badge" hidden></span></div><div><h1>${info.ko}</h1><div class="muted">${info.name} · ${info.role_ko}</div><p class="meta" id="meta-line"></p></div>`;
   const cache: Record<string, Snapshot> = {};

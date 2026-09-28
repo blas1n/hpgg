@@ -36,6 +36,7 @@ a { color: var(--link); text-decoration: none; }
 .logo { display: inline-grid; place-items: center; width: 24px; height: 24px; border-radius: 6px; background: var(--s); color: #1a0000; font-weight: 900; font-size: 14px; }
 .brand-name { font-weight: 900; letter-spacing: 0.02em; font-size: 17px; }
 .brand-accent { color: #9dc0ff; }
+.brand-tag { color: #6f8ad1; font-size: 12px; font-weight: 600; margin-left: 2px; }
 .tabs { display: flex; gap: 2px; height: 48px; align-items: stretch; overflow-x: auto; scrollbar-width: none; }
 .tabs::-webkit-scrollbar { display: none; }
 .tab { display: inline-flex; align-items: center; padding: 0 12px; color: #c9d7ff; font-weight: 600; white-space: nowrap; border-bottom: 3px solid transparent; }
