@@ -2,10 +2,9 @@
 
 import { useEffect, useRef } from "react";
 
-type Page = "tier" | "heroes" | "hero" | "maps";
+type Page = "heroes" | "hero" | "maps";
 
 const loaders: Record<Page, () => Promise<{ run: (slug: string) => void }>> = {
-  tier: () => import("./tier"),
   heroes: () => import("./heroes"),
   hero: () => import("./hero"),
   maps: () => import("./maps"),
