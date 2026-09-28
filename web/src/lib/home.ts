@@ -107,7 +107,8 @@ export function movers(ranked: Ranked[], previous: Ranked[], heroes: HeroTable, 
   };
 }
 
-export function mapCards(sl: Snapshot, maps: MapTable, heroes: HeroTable, minGames: number, n: number): MapCard[] {
+/** Map cards, most Storm League matches first. 홈 shows the busiest few; the 전장 page keeps every map (`keepEmpty`). */
+export function mapCards(sl: Snapshot, maps: MapTable, heroes: HeroTable, minGames: number, n: number, { keepEmpty = false } = {}): MapCard[] {
   const refs = refIndex(heroes);
   return maps.maps
     .map((m) => {
@@ -120,7 +121,7 @@ export function mapCards(sl: Snapshot, maps: MapTable, heroes: HeroTable, minGam
         .map((x) => ({ hero: refs.get(x.row.hero)!, tier: x.tier }));
       return { slug: m.slug, name: m.name, ko: m.ko, image: m.image, matches, top };
     })
-    .filter((c) => c.matches > 0)
+    .filter((c) => keepEmpty || c.matches > 0)
     .sort((a, b) => b.matches - a.matches)
     .slice(0, n);
 }

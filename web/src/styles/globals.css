@@ -1,11 +1,9 @@
 /* HPGG design tokens. Brand palette (docs/BRAND.md): primary #4FD1FF · accent #3EE6A1 · secondary #7B8CFF ·
    bg #1B2030 · dark #0E1118. Tier colours are independent of the brand so tiers read the same in every game. */
-@layer theme, base, legacy, components, utilities;
+@layer theme, base, components, utilities;
 @import "tailwindcss/theme.css" layer(theme);
 @import "tailwindcss/preflight.css" layer(base);
 @import "tailwindcss/utilities.css" layer(utilities);
-/* Pages not yet rebuilt in React keep their class-based styles, in a layer below the utilities. */
-@import "./legacy.css" layer(legacy);
 
 @theme {
   --font-sans: "Pretendard Variable", Pretendard, system-ui, -apple-system, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;

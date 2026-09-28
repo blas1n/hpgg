@@ -92,6 +92,13 @@ describe("mapCards", () => {
     expect(c.top).toHaveLength(3);
     expect(c.top[0]!.tier).toBe("S");
   });
+
+  it("keepEmpty (전장 page): every map in the pool, maps without matches last with no heroes", () => {
+    const cards = mapCards(sl, maps, heroes, 200, Infinity, { keepEmpty: true });
+    expect(cards).toHaveLength(maps.maps.length);
+    expect(cards[0]!.slug).toBe("cursed-hollow");
+    expect(cards.slice(1).every((c) => c.matches === 0 && c.top.length === 0)).toBe(true);
+  });
 });
 
 describe("homeModel", () => {
