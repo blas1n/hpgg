@@ -19,6 +19,8 @@ Automated as Playwright specs in `web/e2e/tierlist.spec.ts`, run with `npm run e
 - [x] Hero detail: tier/rank card, cross-mode line, SL per-map bars with Korean map names, brackets, one-shot vote; unknown slug shows a message
 - [x] Maps: 15 cards with images/matches/top-3; card → tier.html?mode=sl&map=… with the map banner
 - [x] Tier table ▲▼ deltas against the previous patch
+- [x] Storm League bracket selector loads sl_<bracket>.json, lands in the URL (`tier=`), hidden in Quick Match
+- [x] Hero page: 5 popular builds, 7 talents each with Korean names and icons, games and win rate; unknown hero shows a message
 
 ## Human, against the live site
 - [ ] https://blas1n.github.io/hotsmeta/ loads today's patch and match count in the meta line

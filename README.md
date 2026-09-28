@@ -4,7 +4,8 @@ A Korean-language Heroes of the Storm tier list that matches how the game actual
 
 ## Layout
 - `collector/` — Python 3.11+ collector. `uv run python -m collector` makes the five daily calls (Quick Match, Storm League overall, Storm League league_tier 1-2 / 3-4 / 5-6, all with `group_by_map=true`) 60 seconds apart and **atomically** replaces `data/latest/{qm,sl,sl_low,sl_mid,sl_high,meta}.json`. Raw responses are kept as `data/.snapshot_out/<date>/*.json.gz` and archived on the `snapshots` branch.
-- `data/latest/` — the frontend contract (schema in the design doc, "latest JSON schema").
+- `data/latest/` — the frontend contract (schema in the design doc, "latest JSON schema"); `builds.json` holds the popular talent builds per hero.
+- `tools/build_assets.py` — regenerates `data/talents_ko.json` and talent icons from HeroesToolChest game data (run it after a new hero ships; hero tables were produced the same way).
 - `web/` — Vite + TypeScript static frontend, no framework. `src/formula.ts` is the tier formula (printed on the page); `npm test` runs vitest against the 2026-09-28 fixtures (13-hero verification table, presets, cuts), `npm run e2e` runs Playwright against a frozen data set in `tests/e2e-data`. Korean hero/map names and roles come from `data/heroes_ko.json` and `data/maps_ko.json`.
 - `.github/workflows/collect-and-deploy.yml` — daily cron: collect → commit → archive snapshots → deploy to Pages. A push to `main` only rebuilds and deploys.
 
