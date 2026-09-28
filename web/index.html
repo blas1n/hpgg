@@ -4,13 +4,13 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>히오스 티어표 | hotsmeta.kr</title>
-    <meta name="description" content="체감과 맞는 히어로즈 오브 더 스톰 티어표. 빠른 대전 기본, 스톰 리그는 맵별. 공식 공개." />
+    <meta name="description" content="체감과 맞는 히어로즈 오브 더 스톰 티어표. 빠른 대전 기본, 스톰 리그는 전장별. 공식 공개." />
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Crect width=%2732%27 height=%2732%27 rx=%276%27 fill=%27%23ff6b6b%27/%3E%3Ctext x=%2716%27 y=%2723%27 font-size=%2720%27 font-weight=%27800%27 text-anchor=%27middle%27 fill=%27%231a0000%27 font-family=%27system-ui%27%3ES%3C/text%3E%3C/svg%3E" />
     <link rel="stylesheet" href="./src/style.css" />
   </head>
   <body>
     <header class="top">
-      <h1>히오스 티어표</h1>
+      <div class="brand"><span class="logo">S</span><h1>히오스 티어표</h1><span class="domain">hotsmeta.kr</span></div>
       <p class="meta" id="meta-line">불러오는 중…</p>
     </header>
 
@@ -21,19 +21,33 @@
         <button type="button" id="mode-qm" class="seg-btn" aria-pressed="true">빠른 대전</button>
         <button type="button" id="mode-sl" class="seg-btn" aria-pressed="false">스톰 리그</button>
       </div>
-      <div class="chips" id="roles" role="group" aria-label="역할"></div>
       <label class="map-wrap" id="map-wrap" hidden>
         <span class="visually-hidden">전장</span>
         <select id="map"></select>
       </label>
+      <div class="chips scroll-x" id="roles" role="group" aria-label="역할"></div>
     </section>
 
-    <main id="tiers" aria-live="polite"></main>
+    <main>
+      <table class="tier-table" id="table">
+        <thead>
+          <tr>
+            <th class="col-tier">티어</th>
+            <th class="col-hero">영웅</th>
+            <th class="col-num" data-sort="score" aria-sort="descending"><button type="button" class="sort">점수</button></th>
+            <th class="col-num" data-sort="win_rate"><button type="button" class="sort">승률</button></th>
+            <th class="col-num" data-sort="pick"><button type="button" class="sort">픽률</button></th>
+            <th class="col-num col-ban" data-sort="ban_rate"><button type="button" class="sort">밴률</button></th>
+          </tr>
+        </thead>
+        <tbody id="rows"></tbody>
+      </table>
 
-    <section class="grey-wrap" id="grey-wrap" hidden>
-      <h2>표본 부족 <span class="muted">(200게임 미만, 티어 없음)</span></h2>
-      <div class="chips" id="grey"></div>
-    </section>
+      <section class="grey-wrap" id="grey-wrap" hidden>
+        <h2>표본 부족 <span class="muted">200게임 미만 · 티어 없음</span></h2>
+        <div class="chips" id="grey"></div>
+      </section>
+    </main>
 
     <footer class="foot">
       <p id="formula" class="formula"></p>
@@ -41,31 +55,37 @@
         <summary>자세히</summary>
         <div id="formula-detail"></div>
       </details>
-      <p class="muted">Data provided by <a href="https://www.heroesprofile.com/" rel="noopener">Heroes Profile</a>. 매일 갱신. 티어 옆 👍👎 로 체감과 맞는지 알려 주세요.</p>
+      <p class="muted">Data provided by <a href="https://www.heroesprofile.com/" rel="noopener">Heroes Profile</a> · 매일 새벽 갱신 · 영웅을 누르면 상세와 👍👎 가 열립니다.</p>
     </footer>
 
-    <template id="tpl-hero">
-      <details class="hero">
-        <summary>
-          <span class="name"></span><span class="en"></span>
-          <span class="stat wr"></span>
-        </summary>
-        <div class="detail">
+    <template id="tpl-row">
+      <tr class="hero" tabindex="0" role="button" aria-expanded="false">
+        <td class="col-tier"><span class="cell"><span class="badge"></span><span class="rank"></span></span></td>
+        <td class="col-hero"><span class="cell"><span class="avatar"></span><span class="names"><span class="name"></span><span class="en"></span></span></span></td>
+        <td class="col-num score"><span class="v"></span><span class="bar"><i></i></span></td>
+        <td class="col-num wr"><span class="v"></span><span class="bar"><i></i></span></td>
+        <td class="col-num pick"><span class="v"></span><span class="bar"><i></i></span></td>
+        <td class="col-num col-ban ban"><span class="v"></span><span class="bar"><i></i></span></td>
+      </tr>
+    </template>
+    <template id="tpl-detail">
+      <tr class="detail-row" hidden>
+        <td colspan="6">
           <dl>
-            <div><dt>순위</dt><dd class="rank"></dd></div>
-            <div><dt>승률</dt><dd class="wr-ci"></dd></div>
-            <div><dt>픽률</dt><dd class="pick"></dd></div>
-            <div class="ban-row"><dt>밴률</dt><dd class="ban"></dd></div>
-            <div><dt>표본</dt><dd class="games"></dd></div>
-            <div><dt>점수</dt><dd class="score"></dd></div>
+            <div><dt>순위</dt><dd class="d-rank"></dd></div>
+            <div><dt>승률 (95%)</dt><dd class="d-wr"></dd></div>
+            <div><dt>표본</dt><dd class="d-games"></dd></div>
+            <div><dt>픽률</dt><dd class="d-pick"></dd></div>
+            <div class="ban-row"><dt>밴률</dt><dd class="d-ban"></dd></div>
+            <div><dt>점수</dt><dd class="d-score"></dd></div>
           </dl>
           <div class="vote">
-            <span>체감과 맞나요?</span>
+            <span>이 티어, 체감과 맞나요?</span>
             <button type="button" class="vote-btn" data-vote="up" aria-label="맞다">👍</button>
             <button type="button" class="vote-btn" data-vote="down" aria-label="아니다">👎</button>
           </div>
-        </div>
-      </details>
+        </td>
+      </tr>
     </template>
 
     <script type="module" src="./src/main.ts"></script>

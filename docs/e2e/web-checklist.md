@@ -2,8 +2,10 @@
 
 Automated as Playwright specs in `web/e2e/tierlist.spec.ts`, run with `npm run e2e` against a frozen data set (`web/tests/e2e-data`, the 2026-09-28 fixtures) so tier expectations are deterministic. Human items are marked.
 
-## Automated (`npm run e2e`) — 7/7 passed 2026-09-28
-- [x] Default view: Quick Match, all maps, **no** map dropdown; Illidan B, Azmodan S, Brightwing A; no ban row
+## Automated (`npm run e2e`) — 9/9 passed 2026-09-28 (table UI v2)
+- [x] Default view: Quick Match, all maps, **no** map dropdown, ban column hidden; Illidan B, Azmodan S, Brightwing A; first row is rank #1 (Qhira)
+- [x] Score, win rate and pick rate each show a number **and** a bar — no single-metric emphasis
+- [x] Sorting by pick rate reorders rows (Abathur first in QM), toggles asc/desc, lands in the URL; tiers unchanged
 - [x] Role filter "치유사" hides other roles, keeps the tier computed on everyone, writes `role=` to the URL
 - [x] Storm League: map dropdown appears, Illidan A, Brightwing F, ban rate shown in the expanded card
 - [x] One map selected: thin rows are grey (listed, not tiered, absent from the tier sections), meta line shows the Korean map name

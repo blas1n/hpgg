@@ -1,4 +1,4 @@
-import { computeTiers, formulaLine, PRESETS, TIERS, type Ranked, type Row, type Snapshot, type Tier } from "./formula";
+import { computeTiers, formulaLine, PRESETS, type Ranked, type Row, type Snapshot } from "./formula";
 import { wilson } from "./wilson";
 import {
   daysSince,
@@ -21,11 +21,15 @@ declare global {
   }
 }
 
+type SortKey = "score" | "win_rate" | "pick" | "ban_rate";
+
 interface State {
   mode: Mode;
   map: string; // "all" or a map name
   role: string; // "all" or a role name
   patch: PatchChoice;
+  sort: SortKey;
+  dir: "desc" | "asc";
 }
 
 const $ = <T extends HTMLElement>(sel: string): T => {
@@ -36,15 +40,19 @@ const $ = <T extends HTMLElement>(sel: string): T => {
 
 const fmt1 = (n: number) => n.toFixed(1);
 const fmtInt = (n: number) => n.toLocaleString("ko-KR");
+const SORT_KEYS: SortKey[] = ["score", "win_rate", "pick", "ban_rate"];
 
 function readState(): State {
   const q = new URLSearchParams(location.search);
   const mode: Mode = q.get("mode") === "sl" ? "sl" : "qm";
+  const sort = q.get("sort") as SortKey | null;
   return {
     mode,
     map: mode === "sl" ? (q.get("map") ?? "all") : "all",
     role: q.get("role") ?? "all",
     patch: q.get("patch") === "previous" ? "previous" : "current",
+    sort: sort && SORT_KEYS.includes(sort) ? sort : "score",
+    dir: q.get("dir") === "asc" ? "asc" : "desc",
   };
 }
 
@@ -54,21 +62,21 @@ function writeState(s: State): void {
   if (s.mode === "sl" && s.map !== "all") q.set("map", s.map);
   if (s.role !== "all") q.set("role", s.role);
   if (s.patch === "previous") q.set("patch", "previous");
+  if (s.sort !== "score") q.set("sort", s.sort);
+  if (s.dir !== "desc") q.set("dir", s.dir);
   const qs = q.toString();
   history.replaceState(null, "", location.pathname + (qs ? `?${qs}` : ""));
 }
 
 const voteKey = (mode: Mode, slug: string) => `vote:${mode}:${slug}`;
-
 function recordVote(mode: Mode, slug: string, vote: "up" | "down"): void {
   try {
     localStorage.setItem(voteKey(mode, slug), vote);
   } catch {
-    /* private mode etc. — the click still counts as an event */
+    /* storage blocked — the event still counts */
   }
   window.goatcounter?.count({ path: `vote/${mode}/${slug}/${vote}`, event: true, title: "vote" });
 }
-
 function readVote(mode: Mode, slug: string): string | null {
   try {
     return localStorage.getItem(voteKey(mode, slug));
@@ -76,6 +84,15 @@ function readVote(mode: Mode, slug: string): string | null {
     return null;
   }
 }
+
+const ROLE_COLOR: Record<string, string> = {
+  Tank: "#4f9cff",
+  Bruiser: "#f0883e",
+  Healer: "#3fb950",
+  Support: "#c297ff",
+  "Melee Assassin": "#f85149",
+  "Ranged Assassin": "#ffd23f",
+};
 
 class App {
   private meta!: Meta;
@@ -86,6 +103,7 @@ class App {
   private loadedKey = "";
   private state: State = readState();
   private autoPrevious = false;
+  private expanded: string | null = null;
 
   async start(): Promise<void> {
     [this.meta, this.heroes, this.maps] = await Promise.all([loadMeta(), loadHeroes(), loadMaps()]);
@@ -101,8 +119,20 @@ class App {
     $("#mode-sl").addEventListener("click", () => this.setMode("sl"));
     $<HTMLSelectElement>("#map").addEventListener("change", (e) => {
       this.state.map = (e.target as HTMLSelectElement).value;
-      void this.refresh();
+      this.expanded = null;
+      this.render();
     });
+    for (const th of document.querySelectorAll<HTMLTableCellElement>("th[data-sort]")) {
+      th.querySelector(".sort")?.addEventListener("click", () => {
+        const key = th.dataset.sort as SortKey;
+        if (this.state.sort === key) this.state.dir = this.state.dir === "desc" ? "asc" : "desc";
+        else {
+          this.state.sort = key;
+          this.state.dir = "desc";
+        }
+        this.render();
+      });
+    }
   }
 
   private setMode(mode: Mode): void {
@@ -110,6 +140,7 @@ class App {
     this.state.mode = mode;
     this.state.map = "all";
     this.state.patch = "current";
+    this.expanded = null;
     void this.refresh();
   }
 
@@ -149,9 +180,7 @@ class App {
 
   private async refresh(): Promise<void> {
     const { mode } = this.state;
-    // thin current patch → show the previous one by default (only when it exists)
-    const q = new URLSearchParams(location.search);
-    const forced = q.get("patch");
+    const forced = new URLSearchParams(location.search).get("patch");
     this.autoPrevious = false;
     if (!forced && this.meta.previous_patch && thinSample(this.meta, mode)) {
       this.state.patch = "previous";
@@ -167,23 +196,11 @@ class App {
     this.render();
   }
 
-  private render(): void {
-    const { mode, map, role, patch } = this.state;
-    const snap = this.snapshot;
-    if (!snap) return;
-    writeState(this.state);
-
-    $("#mode-qm").setAttribute("aria-pressed", String(mode === "qm"));
-    $("#mode-sl").setAttribute("aria-pressed", String(mode === "sl"));
-    for (const b of document.querySelectorAll<HTMLButtonElement>("#roles .chip")) {
-      b.setAttribute("aria-pressed", String(b.dataset.role === role));
-    }
-    const mapWrap = $("#map-wrap");
-    mapWrap.hidden = mode !== "sl";
-    $<HTMLSelectElement>("#map").value = map;
-
-    // banner
+  private renderBanner(): void {
+    const { mode, patch } = this.state;
     const banner = $("#patch-banner");
+    banner.hidden = true;
+    banner.textContent = "";
     if (patch === "previous") {
       const days = daysSince(this.meta.patch_started_at);
       banner.hidden = false;
@@ -198,44 +215,64 @@ class App {
         void this.refresh();
       });
       banner.appendChild(sw);
-    } else if (this.autoPrevious === false && this.meta.previous_patch && thinSample(this.meta, mode)) {
+    } else if (!this.autoPrevious && this.meta.previous_patch && thinSample(this.meta, mode)) {
       banner.hidden = false;
       banner.textContent = `패치 ${this.meta.current_patch} 후 ${daysSince(this.meta.patch_started_at)}일 — 표본이 아직 적습니다.`;
-    } else {
-      banner.hidden = true;
-      banner.textContent = "";
+    }
+  }
+
+  private render(): void {
+    const { mode, map, role, sort, dir } = this.state;
+    const snap = this.snapshot;
+    if (!snap) return;
+    writeState(this.state);
+
+    $("#mode-qm").setAttribute("aria-pressed", String(mode === "qm"));
+    $("#mode-sl").setAttribute("aria-pressed", String(mode === "sl"));
+    for (const b of document.querySelectorAll<HTMLButtonElement>("#roles .chip")) {
+      b.setAttribute("aria-pressed", String(b.dataset.role === role));
+    }
+    $("#map-wrap").hidden = mode !== "sl";
+    $<HTMLSelectElement>("#map").value = map;
+    this.renderBanner();
+
+    const hasBans = mode === "sl";
+    const table = $("#table");
+    table.classList.toggle("hide-ban", !hasBans);
+    for (const th of document.querySelectorAll<HTMLTableCellElement>("th[data-sort]")) {
+      if (th.dataset.sort === sort) th.setAttribute("aria-sort", dir === "desc" ? "descending" : "ascending");
+      else th.removeAttribute("aria-sort");
     }
 
-    // rows for the selected map; tiers are computed on the map subset (role filter only hides)
     const rows: Row[] = snap.rows.filter((r) => r.map === map);
     const tiers = computeTiers(rows, PRESETS.aichi, this.meta.min_games_for_tier);
-    const hasBans = mode === "sl";
 
     const mapKo = map === "all" ? "전체 전장" : (this.maps.maps.find((m) => m.name === map)?.ko ?? map);
     const matches = map === "all" ? snap.matches : Math.round(rows.reduce((a, r) => a + r.games, 0) / 10);
-    $("#meta-line").textContent = `${mode === "qm" ? "빠른 대전" : "스톰 리그"} · ${mapKo} · 패치 ${snap.patch} · ${fmtInt(matches)} 매치 · ${snap.collected_at.slice(0, 10)} 갱신`;
+    $("#meta-line").textContent = `${mode === "qm" ? "빠른 대전" : "스톰 리그"} · ${mapKo} · 패치 ${snap.patch} · ${fmtInt(matches)} 매치 · ${snap.collected_at.slice(5, 10).replace("-", "/")} 갱신`;
 
-    const main = $("#tiers");
-    main.innerHTML = "";
-    const tpl = $<HTMLTemplateElement>("#tpl-hero");
-    const byTier = new Map<Tier, Ranked[]>();
-    for (const t of TIERS) byTier.set(t, []);
-    for (const r of tiers.ranked) byTier.get(r.tier)?.push(r);
-    for (const t of TIERS) {
-      const list = (byTier.get(t) ?? []).filter((x) => this.roleOk(x.row.hero, role));
-      if (!list.length) continue;
-      const sec = document.createElement("section");
-      sec.className = `tier tier-${t}`;
-      sec.dataset.tier = t;
-      const label = document.createElement("div");
-      label.className = "tier-label";
-      label.textContent = t;
-      const heroes = document.createElement("div");
-      heroes.className = "tier-heroes";
-      for (const x of list) heroes.appendChild(this.heroCard(tpl, x, hasBans, tiers.ranked.length));
-      sec.append(label, heroes);
-      main.appendChild(sec);
-    }
+    // sort the ranked rows for display; tier/rank stay from the score order
+    const visible = tiers.ranked.filter((x) => this.roleOk(x.row.hero, role));
+    const val = (x: Ranked): number => (sort === "score" ? x.score : x.row[sort]);
+    visible.sort((a, b) => (dir === "desc" ? val(b) - val(a) : val(a) - val(b)) || a.rank - b.rank);
+    // bar scales: score/pick/ban from 0 to the column max; win rate over the view's min..max
+    // range so 48% vs 56% reads as a real gap instead of two nearly full bars
+    const wrs = tiers.ranked.map((x) => x.row.win_rate);
+    const maxAbs = {
+      score: Math.max(1, ...tiers.ranked.map((x) => Math.abs(x.score))),
+      win_rate: Math.max(...wrs, 1),
+      pick: Math.max(...tiers.ranked.map((x) => x.row.pick), 1),
+      ban_rate: Math.max(...tiers.ranked.map((x) => x.row.ban_rate), 1),
+    };
+    const wrMin = Math.min(...wrs, 50);
+    const wrSpan = Math.max(maxAbs.win_rate - wrMin, 1);
+    const wrRatio = (wr: number) => (wr - wrMin) / wrSpan;
+
+    const body = $("#rows");
+    body.innerHTML = "";
+    const tplRow = $<HTMLTemplateElement>("#tpl-row");
+    const tplDetail = $<HTMLTemplateElement>("#tpl-detail");
+    for (const x of visible) body.append(...this.heroRows(tplRow, tplDetail, x, hasBans, tiers.ranked.length, maxAbs, wrRatio));
 
     const greyWrap = $("#grey-wrap");
     const grey = $("#grey");
@@ -255,7 +292,7 @@ class App {
 점수  = 픽률 × (WRs − 50) × 3${hasBans ? " + 밴률 × 1" : "   (빠른 대전은 밴이 없음)"}
 티어  = 200게임 이상인 영웅을 점수순으로 세워 누적 비율로 자름 (S 6% · A 24% · B 54% · C 82% · D 94% · F 나머지)
         경계는 단조 증가, 티어마다 최소 1명
-승률 ± 는 Wilson 95% 구간. 전장 하나를 고르면 그 전장의 표본으로만 계산합니다.
+표의 막대는 그 열의 최댓값 대비 길이. 승률 ± 는 Wilson 95% 구간. 전장을 고르면 그 전장의 표본으로만 계산합니다.
 같은 데이터라도 공식이 다르면 티어가 다릅니다 — 이 사이트는 공식을 숨기지 않습니다.</pre>`;
   }
 
@@ -269,40 +306,90 @@ class App {
     return this.byName.get(hero)?.slug ?? hero.toLowerCase().replace(/[^a-z0-9]+/g, "-");
   }
 
-  private heroCard(tpl: HTMLTemplateElement, x: Ranked, hasBans: boolean, n: number): HTMLElement {
-    const el = (tpl.content.firstElementChild as HTMLElement).cloneNode(true) as HTMLElement;
+  private heroRows(
+    tplRow: HTMLTemplateElement,
+    tplDetail: HTMLTemplateElement,
+    x: Ranked,
+    hasBans: boolean,
+    n: number,
+    maxAbs: Record<SortKey, number>,
+    wrRatio: (wr: number) => number,
+  ): [HTMLTableRowElement, HTMLTableRowElement] {
     const r = x.row;
     const slug = this.slug(r.hero);
-    el.dataset.hero = slug;
-    el.dataset.tier = x.tier;
-    el.querySelector(".name")!.textContent = this.ko(r.hero);
-    el.querySelector(".en")!.textContent = r.hero;
-    el.querySelector(".wr")!.textContent = `${fmt1(r.win_rate)}%`;
-    el.querySelector(".rank")!.textContent = `${x.rank} / ${n}`;
+    const info = this.byName.get(r.hero);
+    const tr = (tplRow.content.firstElementChild as HTMLTableRowElement).cloneNode(true) as HTMLTableRowElement;
+    tr.dataset.hero = slug;
+    tr.dataset.tier = x.tier;
+    const badge = tr.querySelector<HTMLElement>(".badge")!;
+    badge.textContent = x.tier;
+    badge.classList.add(`badge-${x.tier}`);
+    tr.querySelector(".rank")!.textContent = `#${x.rank}`;
+    const av = tr.querySelector<HTMLElement>(".avatar")!;
+    av.textContent = this.ko(r.hero).slice(0, 1);
+    av.style.borderColor = ROLE_COLOR[info?.role ?? ""] ?? "";
+    av.title = info?.role_ko ?? "";
+    tr.querySelector(".name")!.textContent = this.ko(r.hero);
+    tr.querySelector(".en")!.textContent = `${r.hero}${info ? ` · ${info.role_ko}` : ""}`;
+
+    const setCell = (cls: string, text: string, ratio: number) => {
+      const td = tr.querySelector<HTMLElement>(`td.${cls}`)!;
+      td.querySelector(".v")!.textContent = text;
+      td.querySelector<HTMLElement>(".bar i")!.style.width = `${Math.max(0, Math.min(100, ratio * 100))}%`;
+    };
+    setCell("score", (x.score >= 0 ? "+" : "") + x.score.toFixed(0), Math.abs(x.score) / maxAbs.score);
+    tr.querySelector("td.score")!.classList.toggle("neg", x.score < 0);
+    setCell("wr", `${fmt1(r.win_rate)}%`, wrRatio(r.win_rate));
+    setCell("pick", `${fmt1(r.pick)}%`, r.pick / maxAbs.pick);
+    setCell("ban", hasBans ? `${fmt1(r.ban_rate)}%` : "", hasBans ? r.ban_rate / maxAbs.ban_rate : 0);
+
+    const detail = (tplDetail.content.firstElementChild as HTMLTableRowElement).cloneNode(true) as HTMLTableRowElement;
+    detail.dataset.hero = slug;
     const [lo, hi] = wilson(r.wins, r.games);
-    el.querySelector(".wr-ci")!.textContent = `${fmt1(r.win_rate)}% ±${fmt1((hi - lo) / 2)}`;
-    el.querySelector(".pick")!.textContent = `${fmt1(r.pick)}%`;
-    const banRow = el.querySelector<HTMLElement>(".ban-row")!;
-    if (hasBans) el.querySelector(".ban")!.textContent = `${fmt1(r.ban_rate)}%`;
+    detail.querySelector(".d-rank")!.textContent = `${x.rank} / ${n}`;
+    detail.querySelector(".d-wr")!.textContent = `${fmt1(r.win_rate)}% ±${fmt1((hi - lo) / 2)}`;
+    detail.querySelector(".d-games")!.textContent = `${fmtInt(r.games)}게임`;
+    detail.querySelector(".d-pick")!.textContent = `${fmt1(r.pick)}%`;
+    const banRow = detail.querySelector<HTMLElement>(".ban-row")!;
+    if (hasBans) detail.querySelector(".d-ban")!.textContent = `${fmt1(r.ban_rate)}%`;
     else banRow.hidden = true;
-    el.querySelector(".games")!.textContent = `${fmtInt(r.games)}게임`;
-    el.querySelector(".score")!.textContent = x.score.toFixed(1);
+    detail.querySelector(".d-score")!.textContent = x.score.toFixed(1);
 
     const existing = readVote(this.state.mode, slug);
-    for (const b of el.querySelectorAll<HTMLButtonElement>(".vote-btn")) {
+    for (const b of detail.querySelectorAll<HTMLButtonElement>(".vote-btn")) {
       const v = b.dataset.vote as "up" | "down";
       b.setAttribute("aria-pressed", String(existing === v));
       if (existing) b.disabled = true;
-      b.addEventListener("click", () => {
+      b.addEventListener("click", (e) => {
+        e.stopPropagation();
         if (readVote(this.state.mode, slug)) return;
         recordVote(this.state.mode, slug, v);
-        for (const bb of el.querySelectorAll<HTMLButtonElement>(".vote-btn")) {
+        for (const bb of detail.querySelectorAll<HTMLButtonElement>(".vote-btn")) {
           bb.disabled = true;
           bb.setAttribute("aria-pressed", String(bb === b));
         }
       });
     }
-    return el;
+
+    const open = this.expanded === slug;
+    tr.setAttribute("aria-expanded", String(open));
+    detail.hidden = !open;
+    const toggle = () => {
+      const now = detail.hidden;
+      for (const d of document.querySelectorAll<HTMLTableRowElement>("tr.detail-row")) d.hidden = true;
+      for (const h of document.querySelectorAll<HTMLTableRowElement>("tr.hero")) h.setAttribute("aria-expanded", "false");
+      detail.hidden = !now;
+      tr.setAttribute("aria-expanded", String(now));
+      this.expanded = now ? slug : null;
+    };
+    tr.addEventListener("click", toggle);
+    tr.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        toggle();
+      }
+    });
+    return [tr, detail];
   }
 }
 
