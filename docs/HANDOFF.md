@@ -5,7 +5,9 @@ Last updated 2026-09-28. Read `docs/STATUS.md` first for the current state; this
 ## What this is
 A static Korean-language Heroes of the Storm tier site. A Python collector pulls hero statistics once a day from the Heroes Profile API v1, commits JSON to `main`, and a Vite + TypeScript site computes tiers in the browser with a formula printed on the page. No server, no database, no accounts.
 
-- Live: https://blas1n.github.io/hpgg/hots/ (GitHub Pages; custom domain hpgg.win not registered yet)
+- Live: https://hpgg.win/hots/ (GitHub Pages + custom domain, HTTPS enforced; `data/CNAME` is published with the site so the domain survives every deploy). Root `/` forwards to `/hots/`; a second game would live at `/<game>/`.
+- Brand: hpgg.win — Happy Good Game. Logo, crops and palette in `docs/BRAND.md` and `data/img/brand/`.
+- Analytics: https://hpgg.goatcounter.com — page views plus 👍👎 events `vote/<mode>/<slug>/<up|down>`.
 - Repo: https://github.com/blas1n/hpgg (public). Bot commits land on `main`; raw daily snapshots on the orphan `snapshots` branch.
 - Design of record: `docs/DESIGN-2026-09-28.md`. E2E checklists: `docs/e2e/`.
 
@@ -21,10 +23,10 @@ GitHub Actions (cron 03:20 KST, workflow_dispatch, push:main)
       raw + normalised gz → data/.snapshot_out/<day>/ → committed to the `snapshots` branch
     git commit data/ → git pull --rebase --autostash → push
   deploy job (always)
-    cd web && npm ci && npm run build   (Vite: publicDir=../data, base=/hpgg/)
+    cd web && npm ci && npm run build   (Vite: publicDir=../data, base=/)
     upload web/dist → GitHub Pages
 ```
-Frontend pages: `index.html` (홈), `tier.html` (영웅 티어), `heroes.html`, `hero.html?hero=<slug>`, `maps.html`. Shared: `web/src/formula.ts` (tiers), `web/src/data.ts` (loaders + types), `web/src/lib/nav.ts` (chrome).
+Frontend pages live in `web/hots/`: `index.html` (홈), `tier.html` (영웅 티어), `heroes.html`, `hero.html?hero=<slug>`, `maps.html`; `web/index.html` is the root redirect. Every page carries the GoatCounter tag. Shared: `web/src/formula.ts` (tiers), `web/src/data.ts` (loaders + types), `web/src/lib/nav.ts` (chrome).
 
 ## The formula (web/src/formula.ts — printed on the page)
 ```
@@ -67,5 +69,12 @@ cd web && npx tsc --noEmit && npm test && npm run e2e            # 26 vitest, 18
 - `.github/workflows/collect-and-deploy.yml`
 - `docs/hp-api-v1-variables.md` accepted parameter values (from the v1 docs)
 
+## Starting UI/UX work (next session)
+- Direction from the owner: main UI follows LoL stat sites (lol.ps first), Overwatch sites only as a reference for maps; brand palette from `docs/BRAND.md` (CSS tokens at the top of `web/src/style.css`). Tier badge colours stay separate from the brand palette.
+- Korean-first UI, but do not add Korea-only framing: the long-term goal is a global, multi-game community (issue #10 for i18n).
+- Loop: `cd web && npm run dev` serves `../data` live at http://localhost:5173/hots/ ; check phone (390 px) and desktop (1280 px) widths; `npm run e2e` pins behaviour (18 specs, selectors are ids/data-attributes, not styles), so a restyle should not break it unless structure changes.
+- Reference captures from the last session are outside the repo (`~/.playwright-mcp/ref-lolps-*.png`); re-capture if needed.
+- UI issues ready to pick: #1 light theme, #2 formula presets in the UI, #3 desktop density.
+
 ## Backlog (see GitHub issues)
-UI polish (light theme toggle, desktop density, formula presets in the UI), analytics (GoatCounter so 👍👎 votes reach us), custom domain, community/comments, player search (Basic plan gives only 25 player calls/week — needs a plan change or a different design), Xal'atath assets.
+UI polish (#1 light theme, #2 formula presets, #3 desktop density), i18n (#10), community/comments (#7), player search (Basic plan gives only 25 player calls/week — needs a plan change or a different design), Xal'atath assets.
