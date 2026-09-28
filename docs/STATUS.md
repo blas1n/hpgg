@@ -15,7 +15,7 @@ Start every session here. Operating guide and architecture: `docs/HANDOFF.md`. B
 
 ## Owner actions still open
 1. Attach the purchased hpgg.win domain the custom domain to Pages (then set Vite `base` to `/`). Issue #5.
-2. Create a GoatCounter site and add its script tag — until then 👍👎 votes stay in each visitor's browser. Issue #4.
+2. ~~GoatCounter~~ done — https://hpgg.goatcounter.com (page views + events `vote/<mode>/<slug>/<up|down>`).
 3. First community post (Inven / Arca) with a screenshot; watch day-7 uniques vs day-1 (success criterion in the design doc).
 
 ## Next work

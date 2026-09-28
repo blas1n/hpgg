@@ -1,5 +1,9 @@
 import { expect, test, type Page } from "@playwright/test";
 
+test.beforeEach(async ({ page }) => {
+  await page.route("**/gc.zgo.at/**", (r) => r.abort());
+});
+
 // Built against web/tests/e2e-data (frozen 2026-09-28 fixtures), see `npm run e2e`.
 
 const row = (page: Page, slug: string) => page.locator(`tr.hero[data-hero="${slug}"]`);

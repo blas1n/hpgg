@@ -1,5 +1,9 @@
 import { expect, test } from "@playwright/test";
 
+test.beforeEach(async ({ page }) => {
+  await page.route("**/gc.zgo.at/**", (r) => r.abort());
+});
+
 // Home, heroes, hero detail and maps pages against the frozen e2e data set.
 
 test("home: role leaders, movers vs previous patch, map cards, mode toggle", async ({ page }) => {
