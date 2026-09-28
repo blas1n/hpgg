@@ -23,6 +23,6 @@ Automated as Playwright specs in `web/e2e/tierlist.spec.ts`, run with `npm run e
 - [x] Hero page: 5 popular builds, 7 talents each with Korean names and icons, games and win rate; unknown hero shows a message
 
 ## Human, against the live site
-- [ ] https://blas1n.github.io/hotsmeta/ loads today's patch and match count in the meta line
+- [ ] https://blas1n.github.io/hpgg/hots/ loads today's patch and match count in the meta line
 - [ ] Switching to Storm League and picking a map re-tiers within a second on a phone
 - [ ] Owner reads the QM S/A tiers and notes any hero that contradicts gut feel (input for the vote sensor, not for hand edits)

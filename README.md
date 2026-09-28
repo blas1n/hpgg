@@ -1,4 +1,4 @@
-# hotsmeta.gg
+# HPGG (hpgg.win)
 
 A Korean-language Heroes of the Storm tier list that matches how the game actually feels: Quick Match first, Storm League per map and per rank bracket, and the formula printed on the page. Data comes from the Heroes Profile API v1 once a day and is served as a static site. Design: `docs/DESIGN-2026-09-28.md`. Current state: `docs/STATUS.md`. How to operate and extend: `docs/HANDOFF.md`.
 

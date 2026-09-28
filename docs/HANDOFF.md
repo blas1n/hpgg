@@ -1,12 +1,12 @@
-# HANDOFF — hotsmeta.gg
+# HANDOFF — HPGG (hpgg.win)
 
 Last updated 2026-09-28. Read `docs/STATUS.md` first for the current state; this file is how to operate and extend the project.
 
 ## What this is
 A static Korean-language Heroes of the Storm tier site. A Python collector pulls hero statistics once a day from the Heroes Profile API v1, commits JSON to `main`, and a Vite + TypeScript site computes tiers in the browser with a formula printed on the page. No server, no database, no accounts.
 
-- Live: https://blas1n.github.io/hotsmeta/ (GitHub Pages; custom domain hotsmeta.gg not registered yet)
-- Repo: https://github.com/blas1n/hotsmeta (public). Bot commits land on `main`; raw daily snapshots on the orphan `snapshots` branch.
+- Live: https://blas1n.github.io/hpgg/hots/ (GitHub Pages; custom domain hpgg.win not registered yet)
+- Repo: https://github.com/blas1n/hpgg (public). Bot commits land on `main`; raw daily snapshots on the orphan `snapshots` branch.
 - Design of record: `docs/DESIGN-2026-09-28.md`. E2E checklists: `docs/e2e/`.
 
 ## Architecture in one screen
@@ -21,7 +21,7 @@ GitHub Actions (cron 03:20 KST, workflow_dispatch, push:main)
       raw + normalised gz → data/.snapshot_out/<day>/ → committed to the `snapshots` branch
     git commit data/ → git pull --rebase --autostash → push
   deploy job (always)
-    cd web && npm ci && npm run build   (Vite: publicDir=../data, base=/hotsmeta/)
+    cd web && npm ci && npm run build   (Vite: publicDir=../data, base=/hpgg/)
     upload web/dist → GitHub Pages
 ```
 Frontend pages: `index.html` (홈), `tier.html` (영웅 티어), `heroes.html`, `hero.html?hero=<slug>`, `maps.html`. Shared: `web/src/formula.ts` (tiers), `web/src/data.ts` (loaders + types), `web/src/lib/nav.ts` (chrome).

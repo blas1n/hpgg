@@ -1,5 +1,5 @@
 [project]
-name = "hotsmeta-collector"
+name = "hpgg-collector"
 version = "0.1.0"
 description = "hotsmeta.gg — Heroes Profile API v1 daily hero-stats collector"
 requires-python = ">=3.11"

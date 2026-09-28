@@ -40,7 +40,7 @@ jobs:
       - name: Commit data/latest (+ previous) to main
         run: |
           git config user.name "hotsmeta-bot"
-          git config user.email "bot@hotsmeta.gg"
+          git config user.email "bot@hpgg.win"
           git add data/latest data/previous 2>/dev/null || git add data/latest
           git commit -m "data: $(date -u +%F) $(python3 -c 'import json;print(json.load(open("data/latest/meta.json"))["current_patch"])')" || echo "nothing to commit"
           git pull --rebase --autostash origin main
@@ -90,7 +90,7 @@ jobs:
             echo "web/ not present yet — publishing a placeholder + data/ (if any)"
             mkdir -p web/dist
             [ -d data ] && cp -r data web/dist/ || true
-            printf '<!doctype html><meta charset="utf-8"><title>hotsmeta.gg</title><p>준비 중 — 히오스 티어표</p>' > web/dist/index.html
+            printf '<!doctype html><meta charset="utf-8"><title>hpgg.win</title><p>준비 중 — 히오스 티어표</p>' > web/dist/index.html
           fi
       - uses: actions/upload-pages-artifact@v3
         with:
