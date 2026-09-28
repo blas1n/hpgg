@@ -11,10 +11,9 @@ Start every session here. Operating guide and architecture: `docs/HANDOFF.md`. B
 - **Quota**: Heroes/Stats ~30/70 in the rolling week (two bracket backfills on 2026-09-29; daily use 4 → 28/week); builds/all 1/7 per day.
 
 ## First thing to check next session
-The first cron after the merge (2026-09-29 03:20 KST) is the first live run of the 4-call collector:
-- the run succeeded and made 4 `/heroes/stats` calls;
-- `data/latest/` has `sl_low.json` with `league_tier [1,2,3,4]`, `sl_high.json` with `[5,6]`, and **no `sl_mid.json`**;
-- the tier page in 폭풍 리그 + a bracket shows ▲▼ again (current and previous brackets are now the same cohort).
+The 2026-09-29 03:20 KST cron **never fired** (`gh run list --event schedule` was empty; no scheduled run has ever existed on this repo). Suspect: the repo rename the evening before. The day's data was collected by a manual dispatch at 08:13 KST; the workflow file was re-committed to re-register the schedule.
+- `gh run list --event schedule -L 3` shows a run on 2026-09-30 around 03:20 KST (GitHub may start it late). **Empty = the schedule is still dead** → dispatch once by hand and look further (not the rename, then).
+- That run made 4 `/heroes/stats` calls; `data/latest/` has `sl_low.json` `[1,2,3,4]` and `sl_high.json` `[5,6]`, and no `sl_mid.json`.
 
 ## Owner actions
 1. ~~Custom domain~~ (#5) · ~~GoatCounter~~ · ~~contact@hpgg.win forwarding~~ (done 2026-09-29).
