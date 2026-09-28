@@ -45,7 +45,7 @@ test("hero detail: three stat cards, per-map rows (not links) in SL, brackets, n
   await expect(page.locator("#maps a")).toHaveCount(0); // map rows do not navigate
   await expect(page.locator("#brackets")).toBeVisible();
   await expect(page.locator("#brackets .rowbar")).toHaveCount(2); // 브실골플 / 다마그
-  await expect(page.locator("main button:not([id^=mode-])")).toHaveCount(0); // only the mode toggle is a button
+  await expect(page.locator("main button:not([id^=mode-]):not(.talent)")).toHaveCount(0); // no vote buttons: only the mode toggle and talent icons are buttons
 });
 
 test("hero detail: section tabs stick under the header and land each section just below them", async ({ page }) => {
@@ -122,4 +122,48 @@ test("hero detail: popular talent builds with Korean names, icons, games and win
 test("hero detail: a hero without builds hides the section", async ({ page }) => {
   await page.goto("./heroes/xal-atath/");
   await expect(page.locator("#meta-line")).toContainText("영웅이 없습니다"); // not in heroes_ko yet
+});
+
+test("hero detail: tapping a talent opens its description; outside tap or Escape closes it", async ({ page }) => {
+  await page.goto("./heroes/illidan/");
+  const first = page.locator('#builds .build[data-build="1"] .talent').first();
+  await first.click();
+  const pop = page.locator("#talent-pop");
+  await expect(pop).toBeVisible();
+  await expect(pop.locator(".tp-name")).toHaveText("끝없는 증오");
+  await expect(pop.locator(".tp-level")).toContainText("1레벨");
+  await expect(pop.locator(".tp-desc")).not.toBeEmpty();
+  await expect(pop.locator(".tp-desc .hl").first()).toBeVisible(); // highlighted numbers from the game text
+  await expect(pop).not.toContainText("{{"); // markers are rendered, never shown
+  const box = (await pop.boundingBox())!;
+  expect(box.x).toBeGreaterThanOrEqual(0);
+  expect(box.x + box.width).toBeLessThanOrEqual(390); // stays on a phone screen
+  await page.keyboard.press("Escape");
+  await expect(pop).toBeHidden();
+  await first.click();
+  await expect(pop).toBeVisible();
+  await page.locator("h1").click();
+  await expect(pop).toBeHidden();
+});
+
+test("hero detail: the tier card colours the rank change like the table", async ({ page }) => {
+  await page.goto("./heroes/illidan/");
+  await expect(page.locator('#stats .stat-card[data-k="tier"] .s')).toHaveClass(/\bsame\b/); // fixture: previous == current
+});
+
+test("hero detail: opening a section link directly lands on that section once the data is drawn", async ({ page }) => {
+  // slow data, as on a phone: the browser's own jump to the hash happens before the sections exist
+  await page.route("**/latest/*.json", async (r) => {
+    await new Promise((res) => setTimeout(res, 800));
+    await r.continue();
+  });
+  await page.goto("./heroes/illidan/#builds-title");
+  await expect(page.locator("#builds .build")).toHaveCount(5);
+  const nav = page.locator("nav.subnav");
+  await expect.poll(async () => {
+    const t = (await page.locator("#builds-title").boundingBox())!.y;
+    const n = (await nav.boundingBox())!;
+    return t >= n.y + n.height - 1 && t <= n.y + n.height + 40;
+  }).toBe(true);
+  await expect(nav.locator("#nav-builds")).toHaveClass(/active/);
 });

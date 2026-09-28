@@ -165,7 +165,17 @@ td.score .v { color: #cfe6ff; font-weight: 700; }
 .builds { display: flex; flex-direction: column; gap: 8px; }
 .build { display: grid; grid-template-columns: 1fr 76px; gap: 8px; background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 8px; }
 .build-talents { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
-.talent { display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 0; }
+.talent { display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 0; background: none; border: 0; padding: 0; color: inherit; font: inherit; cursor: pointer; }
+.talent:hover img, .talent:focus-visible img { border-color: var(--accent); }
+#talent-pop { position: absolute; z-index: 60; background: #1f2638; border: 1px solid #3a4560; border-radius: 12px; padding: 12px 14px; box-shadow: 0 16px 40px rgba(0, 0, 0, 0.55); }
+#talent-pop .tp-head { display: flex; gap: 10px; align-items: center; }
+#talent-pop .tp-head img { width: 36px; height: 36px; border-radius: 6px; border: 1px solid var(--line); }
+#talent-pop .tp-name { font-weight: 800; font-size: 14px; color: #fff; }
+#talent-pop .tp-level { font-size: 11px; color: var(--muted); }
+#talent-pop .tp-desc { margin: 8px 0 0; font-size: 13px; line-height: 1.55; color: #cfd6e6; white-space: pre-line; }
+#talent-pop .tp-desc .hl { color: var(--accent); font-weight: 700; }
+.stat-card .s.up { color: var(--pos); }
+.stat-card .s.down { color: var(--neg); }
 .talent img { width: 36px; height: 36px; border-radius: 6px; border: 1px solid var(--line); background: var(--panel-2); }
 .talent .tl { font-size: 10px; color: var(--muted); }
 .talent .tn { font-size: 10px; text-align: center; line-height: 1.15; max-height: 2.3em; overflow: hidden; }

@@ -1,5 +1,5 @@
 import { computeTiers, PRESETS, type Snapshot } from "../formula";
-import { assetUrl, BRACKET_LABEL, loadBuilds, loadHeroes, loadMaps, loadMeta, loadSnapshot, loadTalents, type Meta, type Mode } from "../data";
+import { assetUrl, BRACKET_LABEL, loadBuilds, loadHeroes, loadMaps, loadMeta, loadSnapshot, loadTalents, type Meta, type Mode, type TalentInfo } from "../data";
 
 const fmt1 = (n: number) => n.toFixed(1);
 const fmtInt = (n: number) => n.toLocaleString("ko-KR");
@@ -11,7 +11,7 @@ const BRACKETS: { key: string; label: string }[] = [
 async function main(slug: string): Promise<void> {
   const q = new URLSearchParams(location.search);
   let mode: Mode = q.get("mode") === "sl" ? "sl" : "qm";
-  const [meta, heroes, maps, builds, talents] = await Promise.all([loadMeta(), loadHeroes(), loadMaps(), loadBuilds(), loadTalents()]);
+  const [meta, heroes, maps, builds, talents] = await Promise.all([loadMeta(), loadHeroes(), loadMaps(), loadBuilds(), loadTalents(slug)]);
   const info = heroes.heroes.find((h) => h.slug === slug);
   if (!info) {
     document.getElementById("meta-line")!.textContent = "그런 영웅이 없습니다.";
@@ -53,7 +53,7 @@ async function main(slug: string): Promise<void> {
     document.getElementById("mode-sl")!.setAttribute("aria-pressed", String(mode === "sl"));
     const qs = new URLSearchParams();
     if (mode !== "qm") qs.set("mode", mode);
-    history.replaceState(null, "", location.pathname + (qs.toString() ? `?${qs}` : ""));
+    history.replaceState(null, "", location.pathname + (qs.toString() ? `?${qs}` : "") + location.hash); // keep #section
 
     const snap = await get(mode);
     if (!snap) return;
@@ -82,6 +82,7 @@ async function main(slug: string): Promise<void> {
       const d = pr ? pr.rank - r.rank : null;
       const delta = d === null ? (prev ? "직전 표본 부족" : "") : d === 0 ? "— 0" : d > 0 ? `▲ ${d}` : `▼ ${-d}`;
       card("티어", `<span class="badge badge-${r.tier}">${r.tier}</span> #${r.rank}`, delta, "tier");
+      stats.lastElementChild!.querySelector(".s")!.classList.add(d === null ? "none" : d > 0 ? "up" : d < 0 ? "down" : "same");
       if (pr) stats.lastElementChild!.querySelector<HTMLElement>(".s")!.title = `직전 패치 #${pr.rank}`;
       card("승률", `${fmt1(r.row.win_rate)}%`, `${fmtInt(r.row.games)}게임`, "wr");
       card("픽률", `${fmt1(r.row.pick)}%`, mode === "sl" ? `밴률 ${fmt1(r.row.ban_rate)}%` : "", "pick");
@@ -139,6 +140,9 @@ async function main(slug: string): Promise<void> {
   await render();
   renderBuilds();
   spySections();
+  // a shared/reloaded link like …/#builds-title: the browser jumped before the sections existed
+  const target = location.hash.length > 1 ? document.getElementById(location.hash.slice(1)) : null;
+  if (target && !target.hidden) target.scrollIntoView({ behavior: "instant" });
 
   /** Highlight the tab of the section currently under the sticky tabs. */
   function spySections(): void {
@@ -185,9 +189,14 @@ async function main(slug: string): Promise<void> {
       row.className = "build-talents";
       for (const t of b.talents) {
         const meta = talents?.talents[t.name];
-        const cell = document.createElement("span");
+        const cell = document.createElement("button");
+        cell.type = "button";
         cell.className = "talent";
-        cell.title = `${t.level}레벨 · ${meta?.ko ?? t.title}`;
+        cell.setAttribute("aria-label", `${t.level}레벨 · ${meta?.ko ?? t.title} — 설명 보기`);
+        cell.addEventListener("click", (e) => {
+          e.stopPropagation();
+          showTalent(cell, t.level, meta ?? { ko: t.title, icon: "" });
+        });
         cell.innerHTML = `${meta?.icon ? `<img alt="" loading="lazy" src="${assetUrl(`img/talents/${meta.icon}`)}" onerror="this.remove()" />` : ""}<span class="tl">${t.level}</span><span class="tn">${meta?.ko ?? t.title}</span>`;
         row.appendChild(cell);
       }
@@ -198,6 +207,66 @@ async function main(slug: string): Promise<void> {
       box.appendChild(card);
     });
   }
+}
+
+/** Talent description popover (lol.ps-style): one element, placed under the tapped icon, kept on screen. */
+function showTalent(anchor: HTMLElement, level: number, t: TalentInfo): void {
+  let pop = document.getElementById("talent-pop");
+  if (!pop) {
+    pop = document.createElement("div");
+    pop.id = "talent-pop";
+    pop.setAttribute("role", "dialog");
+    pop.addEventListener("click", (e) => e.stopPropagation());
+    document.body.appendChild(pop);
+    const close = () => {
+      pop!.hidden = true;
+    };
+    document.addEventListener("click", close);
+    document.addEventListener("keydown", (e) => e.key === "Escape" && close());
+    window.addEventListener("resize", close);
+  }
+  pop.replaceChildren();
+  const head = document.createElement("div");
+  head.className = "tp-head";
+  if (t.icon) {
+    const img = document.createElement("img");
+    img.src = assetUrl(`img/talents/${t.icon}`);
+    img.alt = "";
+    head.appendChild(img);
+  }
+  const titles = document.createElement("div");
+  const name = document.createElement("div");
+  name.className = "tp-name";
+  name.textContent = t.ko;
+  const lv = document.createElement("div");
+  lv.className = "tp-level";
+  lv.textContent = `${level}레벨${t.cd ? ` · ${t.cd.replace(/\{\{|\}\}/g, "")}` : ""}`;
+  titles.append(name, lv);
+  head.appendChild(titles);
+  const desc = document.createElement("p");
+  desc.className = "tp-desc";
+  // text nodes only: {{…}} becomes a highlighted span, nothing is parsed as HTML
+  (t.desc ?? "설명이 아직 없습니다.").split(/\{\{(.*?)\}\}/).forEach((part, i) => {
+    if (i % 2) {
+      const hl = document.createElement("span");
+      hl.className = "hl";
+      hl.textContent = part;
+      desc.appendChild(hl);
+    } else if (part) desc.appendChild(document.createTextNode(part));
+  });
+  pop.append(head, desc);
+  pop.hidden = false;
+  pop.setAttribute("aria-label", `${t.ko} 설명`);
+  const a = anchor.getBoundingClientRect();
+  const margin = 12;
+  const width = Math.min(320, window.innerWidth - margin * 2);
+  pop.style.width = `${width}px`;
+  const left = Math.min(Math.max(a.left + a.width / 2 - width / 2, margin), window.innerWidth - width - margin);
+  pop.style.left = `${left + window.scrollX}px`;
+  const below = a.bottom + 8;
+  const h = pop.offsetHeight;
+  const top = below + h > window.innerHeight - margin && a.top - 8 - h > margin ? a.top - 8 - h : below;
+  pop.style.top = `${top + window.scrollY}px`;
 }
 
 /** Mounted by the page component once its markup is in the DOM. */

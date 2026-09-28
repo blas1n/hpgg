@@ -2,8 +2,9 @@
 
   uv run python tools/build_assets.py --build 2.55.16.97039 [--icons <builds fixture>]
 
-Writes: data/heroes_ko.json (names, roles, slugs, portraits), data/talents_ko.json (talent_name →
-Korean name + icon), data/img/heroes/*.png, data/img/talents/*.png. Sources recorded per file.
+Writes: data/talents/<hero slug>.json (talent_name → Korean name, icon, description, cooldown),
+data/img/talents/*.png. Hero tables (data/heroes_ko.json, portraits) were produced the same way.
+Sources recorded per file. --skip-icons regenerates the tables without touching images.
 """
 
 from __future__ import annotations
@@ -78,6 +79,95 @@ def talent_table(herodata: dict[str, Any], kokr: dict[str, Any]) -> dict[str, di
     return out
 
 
+# Korean reading of a trailing digit, for particle choice: 1 일, 3 삼, 6 육, 7 칠, 8 팔 have a final
+# consonant; 0 at the end of a multi-digit number is 십/백/천/만 (final consonant, not ㄹ).
+_DIGIT_JONG = {"0": "x", "1": "ㄹ", "3": "x", "6": "x", "7": "ㄹ", "8": "ㄹ"}
+
+
+def _final_consonant(text: str) -> str | None:
+    """None (no final consonant), "ㄹ", or "x" (any other) for the last readable character."""
+    t = text.rstrip()
+    if not t:
+        return None
+    ch = t[-1]
+    if "가" <= ch <= "힣":
+        jong = (ord(ch) - 0xAC00) % 28
+        return None if jong == 0 else ("ㄹ" if jong == 8 else "x")
+    if ch.isdigit():
+        if ch == "0" and not (len(t) > 1 and t[-2].isdigit()):
+            return "x"  # 영
+        return _DIGIT_JONG.get(ch)
+    return None  # %, latin, punctuation: read without a final consonant (퍼센트, …)
+
+
+def _pick_particle(before: str, options: str) -> str:
+    """`<lang rule="jongsung">으로,로</lang>`: first option after a final consonant, else the
+    second; 으로 → 로 after ㄹ."""
+    with_jong, without = (options.split(",") + [""])[:2]
+    j = _final_consonant(before)
+    if j is None or (j == "ㄹ" and with_jong.startswith("으")):
+        return without
+    return with_jong
+
+
+def _scaling(m: re.Match[str]) -> str:
+    pct = float(m.group(1)) * 100
+    return f"(레벨당 +{pct:g}%)"
+
+
+def clean_desc(raw: str) -> str:
+    """Game tooltip markup → plain text; highlighted values become {{…}} for the page to style.
+    `108~~0.04~~` means +4 % per hero level."""
+    s = re.sub(r"~~([0-9.]+)~~", _scaling, raw)
+    s = re.sub(r"<n\s*/>|</n>", "\n", s)
+    s = re.sub(r"<img[^>]*/?>", "", s)
+    s = re.sub(r'<c val="[^"]*">(.*?)</c>', r"{{\1}}", s)
+    s = re.sub(r"<s [^>]*>(.*?)</s>", r"\1", s)
+    out = ""
+    for part in re.split(r'(<lang rule="jongsung">[^<]*</lang>)', s):
+        m = re.fullmatch(r'<lang rule="jongsung">([^<]*)</lang>', part)
+        out += _pick_particle(out.replace("{{", "").replace("}}", ""), m.group(1)) if m else part
+    out = re.sub(r"<[^>]+>", "", out)  # anything left unknown
+    return out.replace("{{}}", "").strip()
+
+
+def hero_talent_files(
+    herodata: dict[str, Any], kokr: dict[str, Any], heroes: list[dict[str, Any]]
+) -> dict[str, dict[str, dict[str, str]]]:
+    """Per hero slug: talent nameId → {ko, icon, desc?, cd?}. One small file per hero so the hero
+    page loads only its own talents (descriptions for every hero are ~0.8 MB)."""
+    names = talent_table(herodata, kokr)
+    strings = kokr["gamestrings"]["abiltalent"]
+
+    def first(field: str) -> dict[str, str]:
+        out: dict[str, str] = {}
+        for key, val in strings.get(field, {}).items():
+            out.setdefault(key.split("|")[0], val)
+        return out
+
+    full, cooldown = first("full"), first("cooldown")
+    idx = hero_index(herodata)
+    files: dict[str, dict[str, dict[str, str]]] = {}
+    for h in heroes:
+        found = idx.get(norm(h["name"]))
+        if not found:
+            continue
+        table: dict[str, dict[str, str]] = {}
+        for tier_talents in (found[1].get("talents") or {}).values():
+            for t in tier_talents:
+                name_id = t.get("nameId")
+                if not name_id:
+                    continue
+                entry = dict(names[name_id])
+                if name_id in full:
+                    entry["desc"] = clean_desc(full[name_id])
+                if name_id in cooldown:
+                    entry["cd"] = clean_desc(cooldown[name_id])
+                table[name_id] = entry
+        files[h["slug"]] = table
+    return files
+
+
 def fetch(url: str, dest: Path) -> bool:
     dest.parent.mkdir(parents=True, exist_ok=True)
     try:
@@ -102,6 +192,7 @@ def main() -> None:
         "--icons", help="builds_all fixture (.json or .json.gz): only download icons used there"
     )
     ap.add_argument("--cache", default=".cache/htc")
+    ap.add_argument("--skip-icons", action="store_true", help="tables only, no image downloads")
     args = ap.parse_args()
     data = Path(args.data)
     cache = Path(args.cache)
@@ -134,7 +225,7 @@ def main() -> None:
         want = {t["icon"] for t in talents.values() if t["icon"]}
     tdir = data / "img" / "talents"
     missing = 0
-    for icon in sorted(want):
+    for icon in [] if args.skip_icons else sorted(want):
         dst = tdir / icon
         if dst.exists():
             continue
@@ -143,20 +234,17 @@ def main() -> None:
             missing += 1
             continue
         resize(tmp, dst, 40)
-    (data / "talents_ko.json").write_text(
-        json.dumps(
-            {
-                "source": (
-                    f"HeroesToolChest heroes-data {args.build} (gamestrings kokr)"
-                    " + heroes-images abilitytalents, MIT"
-                ),
-                "talents": talents,
-            },
-            ensure_ascii=False,
-            separators=(",", ":"),
-        ),
-        encoding="utf-8",
-    )
+    heroes = json.loads((data / "heroes_ko.json").read_text(encoding="utf-8"))["heroes"]
+    source = f"HeroesToolChest heroes-data {args.build} (gamestrings kokr) + heroes-images, MIT"
+    out_dir = data / "talents"
+    out_dir.mkdir(parents=True, exist_ok=True)
+    for hero_slug, table in hero_talent_files(herodata, kokr, heroes).items():
+        (out_dir / f"{hero_slug}.json").write_text(
+            json.dumps(
+                {"source": source, "talents": table}, ensure_ascii=False, separators=(",", ":")
+            ),
+            encoding="utf-8",
+        )
     print(f"talents: {len(talents)} names, icons wanted {len(want)}, missing {missing}, dir {tdir}")
 
 

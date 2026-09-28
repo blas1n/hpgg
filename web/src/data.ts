@@ -90,8 +90,16 @@ export interface BuildsFile {
   collected_at: string;
   heroes: Record<string, Build[]>;
 }
+export interface TalentInfo {
+  ko: string;
+  icon: string;
+  /** Game tooltip as text; {{…}} marks a highlighted value, \n a line break. */
+  desc?: string;
+  cd?: string;
+}
 export interface TalentTable {
-  talents: Record<string, { ko: string; icon: string }>;
+  talents: Record<string, TalentInfo>;
 }
 export const loadBuilds = (): Promise<BuildsFile | null> => getJson<BuildsFile>("latest/builds.json").catch(() => null);
-export const loadTalents = (): Promise<TalentTable | null> => getJson<TalentTable>("talents_ko.json").catch(() => null);
+/** One small file per hero (data/talents/<slug>.json, written by tools/build_assets.py). */
+export const loadTalents = (slug: string): Promise<TalentTable | null> => getJson<TalentTable>(`talents/${slug}.json`).catch(() => null);
