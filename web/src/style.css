@@ -87,7 +87,7 @@ tr.hero:hover, tr.hero[aria-expanded="true"] { background: var(--panel-2); }
 tr.hero td { padding: 8px 6px; vertical-align: middle; }
 td.col-rank .cell { display: flex; flex-direction: column; gap: 3px; align-items: flex-start; }
 .rank { font-weight: 700; font-size: 13px; }
-.delta { display: inline-block; font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 999px; background: #1e3266; color: var(--muted); }
+.delta { display: inline-block; font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 999px; background: #1e3266; color: var(--muted); white-space: nowrap; }
 .delta.up { background: #123d2a; color: var(--pos); }
 .delta.down { background: #4a1d24; color: var(--neg); }
 .delta.new { background: #1a3a7a; color: #9dc0ff; }
