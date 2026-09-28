@@ -1,5 +1,6 @@
-import { computeTiers, formulaLine, PRESETS, type Ranked, type Row, type Snapshot } from "./formula";
-import { wilson } from "./wilson";
+import { computeTiers, formulaLine, PRESETS, type Ranked, type Row, type Snapshot } from "../formula";
+import { wilson } from "../wilson";
+import { mountFooter, mountNav } from "../lib/nav";
 import {
   assetUrl,
   daysSince,
@@ -14,7 +15,7 @@ import {
   type Meta,
   type Mode,
   type PatchChoice,
-} from "./data";
+} from "../data";
 
 declare global {
   interface Window {
@@ -101,12 +102,15 @@ class App {
   private maps!: MapTable;
   private byName = new Map<string, HeroInfo>();
   private snapshot: Snapshot | null = null;
+  private previous: Snapshot | null = null; // previous patch, same mode (for ▲▼ rank deltas)
   private loadedKey = "";
   private state: State = readState();
   private autoPrevious = false;
   private expanded: string | null = null;
 
   async start(): Promise<void> {
+    mountNav("tier");
+    mountFooter();
     [this.meta, this.heroes, this.maps] = await Promise.all([loadMeta(), loadHeroes(), loadMaps()]);
     for (const h of this.heroes.heroes) this.byName.set(h.name, h);
     this.renderRoles();
@@ -192,6 +196,10 @@ class App {
     const key = `${mode}:${this.state.patch}`;
     if (this.loadedKey !== key) {
       this.snapshot = await loadSnapshot(mode, this.state.patch);
+      this.previous = null;
+      if (this.state.patch === "current" && this.meta.previous_patch) {
+        this.previous = await loadSnapshot(mode, "previous").catch(() => null);
+      }
       this.loadedKey = key;
     }
     this.render();
@@ -247,6 +255,13 @@ class App {
 
     const rows: Row[] = snap.rows.filter((r) => r.map === map);
     const tiers = computeTiers(rows, PRESETS.aichi, this.meta.min_games_for_tier);
+    // rank in the previous patch (same mode/map) → ▲▼ next to the rank
+    const prevRank = new Map<string, number>();
+    if (this.previous) {
+      const prevTiers = computeTiers(this.previous.rows.filter((r) => r.map === map), PRESETS.aichi, this.meta.min_games_for_tier);
+      for (const x of prevTiers.ranked) prevRank.set(x.row.hero, x.rank);
+    }
+    this.renderMapHero(map);
 
     const mapKo = map === "all" ? "전체 전장" : (this.maps.maps.find((m) => m.name === map)?.ko ?? map);
     const matches = map === "all" ? snap.matches : Math.round(rows.reduce((a, r) => a + r.games, 0) / 10);
@@ -273,7 +288,7 @@ class App {
     body.innerHTML = "";
     const tplRow = $<HTMLTemplateElement>("#tpl-row");
     const tplDetail = $<HTMLTemplateElement>("#tpl-detail");
-    for (const x of visible) body.append(...this.heroRows(tplRow, tplDetail, x, hasBans, tiers.ranked.length, maxAbs, wrRatio));
+    for (const x of visible) body.append(...this.heroRows(tplRow, tplDetail, x, hasBans, tiers.ranked.length, maxAbs, wrRatio, prevRank));
 
     const greyWrap = $("#grey-wrap");
     const grey = $("#grey");
@@ -297,6 +312,18 @@ class App {
 같은 데이터라도 공식이 다르면 티어가 다릅니다 — 이 사이트는 공식을 숨기지 않습니다.</pre>`;
   }
 
+  private renderMapHero(map: string): void {
+    const box = $("#map-hero");
+    const m = map === "all" ? undefined : this.maps.maps.find((x) => x.name === map);
+    if (!m) {
+      box.hidden = true;
+      box.innerHTML = "";
+      return;
+    }
+    box.hidden = false;
+    box.innerHTML = `<img alt="" src="${m.image ? assetUrl(m.image) : ""}" /><div class="map-hero-text"><h1>${m.ko}</h1><span class="muted">${m.name} · 스톰 리그 · 이 전장 표본으로만 계산</span></div>`;
+  }
+
   private roleOk(hero: string, role: string): boolean {
     return role === "all" || this.byName.get(hero)?.role === role;
   }
@@ -315,6 +342,7 @@ class App {
     n: number,
     maxAbs: Record<SortKey, number>,
     wrRatio: (wr: number) => number,
+    prevRank: Map<string, number>,
   ): [HTMLTableRowElement, HTMLTableRowElement] {
     const r = x.row;
     const slug = this.slug(r.hero);
@@ -326,6 +354,14 @@ class App {
     badge.textContent = x.tier;
     badge.classList.add(`badge-${x.tier}`);
     tr.querySelector(".rank")!.textContent = `#${x.rank}`;
+    const deltaEl = tr.querySelector<HTMLElement>(".delta")!;
+    if (prevRank.size) {
+      const pr = prevRank.get(r.hero);
+      const d = pr === undefined ? null : pr - x.rank;
+      deltaEl.textContent = d === null ? "NEW" : d === 0 ? "–" : d > 0 ? `▲${d}` : `▼${-d}`;
+      deltaEl.className = "delta " + (d === null ? "new" : d > 0 ? "up" : d < 0 ? "down" : "same");
+      deltaEl.title = pr === undefined ? "직전 패치엔 표본 부족" : `직전 패치 #${pr}`;
+    } else deltaEl.textContent = "";
     const av = tr.querySelector<HTMLElement>(".avatar")!;
     av.style.borderColor = ROLE_COLOR[info?.role ?? ""] ?? "";
     av.title = info?.role_ko ?? "";
@@ -365,6 +401,7 @@ class App {
     if (hasBans) detail.querySelector(".d-ban")!.textContent = `${fmt1(r.ban_rate)}%`;
     else banRow.hidden = true;
     detail.querySelector(".d-score")!.textContent = x.score.toFixed(1);
+    detail.querySelector<HTMLAnchorElement>(".d-link")!.href = `./hero.html?hero=${encodeURIComponent(slug)}`;
 
     const existing = readVote(this.state.mode, slug);
     for (const b of detail.querySelectorAll<HTMLButtonElement>(".vote-btn")) {

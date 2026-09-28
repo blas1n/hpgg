@@ -6,7 +6,19 @@ import { defineConfig } from "vite";
 export default defineConfig({
   base: process.env.VITE_BASE ?? "/hotsmeta/",
   publicDir: process.env.VITE_DATA_DIR ?? "../data",
-  build: { outDir: process.env.VITE_OUT_DIR ?? "dist", emptyOutDir: true },
+  build: {
+    outDir: process.env.VITE_OUT_DIR ?? "dist",
+    emptyOutDir: true,
+    rollupOptions: {
+      input: {
+        index: "index.html",
+        tier: "tier.html",
+        heroes: "heroes.html",
+        hero: "hero.html",
+        maps: "maps.html",
+      },
+    },
+  },
   test: {
     include: ["tests/**/*.test.ts"],
     coverage: { include: ["src/formula.ts", "src/wilson.ts"], thresholds: { lines: 80 } },

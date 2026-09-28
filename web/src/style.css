@@ -123,3 +123,82 @@ dd { margin: 0; font-size: 13px; }
   .en { display: inline; margin-left: 6px; }
   .names { flex-direction: row; align-items: baseline; }
 }
+
+/* ---- site chrome ---- */
+.brand { text-decoration: none; color: inherit; }
+.brand-name { font-weight: 800; font-size: 18px; }
+.page { padding-bottom: 72px; }
+.page-title { font-size: 20px; margin: 12px 0 4px; }
+.tabs { position: fixed; left: 0; right: 0; bottom: 0; display: flex; background: var(--panel); border-top: 1px solid var(--line); z-index: 5; padding-bottom: env(safe-area-inset-bottom); }
+.tab { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 8px 0 6px; color: var(--muted); text-decoration: none; font-size: 12px; }
+.tab-icon { font-size: 18px; line-height: 1; }
+.tab.active { color: var(--accent); }
+@media (min-width: 640px) {
+  .page { padding-bottom: 24px; }
+  .tabs { position: static; border: 0; background: none; justify-content: flex-start; gap: 4px; padding: 6px 0 10px; order: -1; }
+  .tab { flex: 0 0 auto; flex-direction: row; gap: 6px; padding: 6px 12px; border-radius: 999px; font-size: 14px; }
+  .tab.active { background: #12233a; }
+  body { display: flex; flex-direction: column; }
+  header.top { order: -2; }
+}
+.delta { font-size: 10px; font-weight: 700; }
+.delta.up { color: var(--pos); } .delta.down { color: var(--neg); } .delta.same { color: var(--muted); } .delta.new { color: var(--accent); }
+.badge-sm { width: 18px; height: 18px; font-size: 11px; border-radius: 4px; }
+
+/* ---- map hero banner + map cards ---- */
+.map-hero { position: relative; border-radius: 10px; overflow: hidden; margin: 10px 0 6px; min-height: 120px; background: var(--panel); }
+.map-hero img { width: 100%; height: 160px; object-fit: cover; display: block; opacity: 0.85; }
+.map-hero-text { position: absolute; left: 12px; bottom: 10px; text-shadow: 0 1px 6px #000; }
+.map-hero-text h1 { margin: 0; font-size: 22px; }
+.map-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 10px; }
+@media (min-width: 640px) { .map-grid { grid-template-columns: repeat(3, 1fr); } }
+.map-card { display: block; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; color: inherit; text-decoration: none; }
+.map-card:hover { border-color: var(--accent); }
+.map-img { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; display: block; }
+.map-body { display: block; padding: 8px 10px 10px; }
+.map-name { display: block; font-weight: 700; font-size: 15px; }
+.map-sub { display: block; color: var(--muted); font-size: 11px; margin-top: 2px; }
+.map-top { display: flex; gap: 6px; margin-top: 8px; }
+.map-top-hero { position: relative; display: inline-block; }
+.map-top-hero img { width: 26px; height: 26px; border-radius: 50%; object-fit: cover; object-position: top; border: 1px solid var(--line); display: block; }
+.map-top-hero .badge { position: absolute; right: -6px; bottom: -4px; }
+
+/* ---- hero grid + hero page ---- */
+.hero-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 8px; margin-top: 10px; }
+.hero-card { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 4px; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; color: inherit; text-decoration: none; position: relative; }
+.hero-card img { width: 56px; height: 56px; border-radius: 50%; object-fit: cover; object-position: top; border: 2px solid var(--line); }
+.hero-card .hname { font-size: 12px; font-weight: 600; text-align: center; }
+.hero-card .badge { position: absolute; top: 6px; right: 6px; }
+.search { width: 100%; background: var(--panel); color: var(--text); border: 1px solid var(--line); border-radius: 8px; padding: 9px 12px; font-size: 14px; margin-top: 8px; }
+.hero-head { display: flex; gap: 14px; align-items: center; margin: 12px 0; }
+.hero-head img { width: 84px; height: 96px; border-radius: 10px; object-fit: cover; border: 2px solid var(--line); }
+.hero-head h1 { margin: 0; font-size: 24px; }
+.stat-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin: 10px 0; }
+@media (min-width: 640px) { .stat-grid { grid-template-columns: repeat(4, 1fr); } }
+.stat-card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; }
+.stat-card .k { font-size: 11px; color: var(--muted); }
+.stat-card .v { font-size: 22px; font-weight: 800; margin: 2px 0; }
+.stat-card .s { font-size: 12px; color: var(--muted); }
+.section-title { font-size: 15px; margin: 18px 0 8px; }
+.rows { display: flex; flex-direction: column; gap: 6px; }
+.rowbar { display: grid; grid-template-columns: 44px 1fr 60px; align-items: center; gap: 8px; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 6px 8px; color: inherit; text-decoration: none; }
+.rowbar img { width: 44px; height: 26px; object-fit: cover; border-radius: 4px; }
+.rowbar .lbl { font-size: 13px; }
+.rowbar .sub { color: var(--muted); font-size: 11px; }
+.rowbar .val { text-align: right; font-variant-numeric: tabular-nums; font-size: 13px; }
+.rowbar .bar { margin-top: 3px; }
+.rowbar .bar i { background: var(--wr); }
+.rowbar.neg .bar i { background: var(--neg); }
+
+/* ---- home ---- */
+.home-section { margin-top: 16px; }
+.mover-row { display: grid; grid-template-columns: 40px 1fr auto; gap: 10px; align-items: center; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; color: inherit; text-decoration: none; }
+.mover-row img { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; object-position: top; border: 2px solid var(--line); }
+.mover-row .big { font-size: 18px; font-weight: 800; }
+.role-strip { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+@media (min-width: 640px) { .role-strip { grid-template-columns: repeat(3, 1fr); } }
+.role-card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 10px; color: inherit; text-decoration: none; display: flex; gap: 10px; align-items: center; }
+.role-card img { width: 48px; height: 48px; border-radius: 50%; object-fit: cover; object-position: top; border: 2px solid var(--line); }
+.role-card .rk { font-size: 11px; color: var(--muted); }
+.role-card .rn { font-weight: 700; }
+.role-card .rs { font-size: 12px; color: var(--muted); }
