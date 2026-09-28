@@ -132,6 +132,15 @@ test("tier table: Storm League rank-bracket selector loads sl_<bracket>.json and
   await expect(page).not.toHaveURL(/tier=/);
 });
 
+test("tier table: a previous-patch bracket file of an older bracket definition is never shown under the new label", async ({ page }) => {
+  // fixture previous/sl_low.json covers league tiers [1,2] (the 2026-09-28 definition); 브론즈 – 플래티넘 is [1-4]
+  await page.goto("./tier/?mode=sl&tier=low&patch=previous");
+  await expect(page.locator("#table")).toHaveAttribute("aria-busy", "false");
+  await expect(page.locator("#meta-line")).toContainText("브론즈 – 플래티넘");
+  await expect(page.locator("#meta-line")).toContainText("2.55.17.98025"); // the current patch's [1-4] file
+  await expect(page.locator("#meta-line")).not.toContainText("3,362 매치"); // the old [1,2] cohort
+});
+
 test("hero detail: popular talent builds with Korean names, icons, games and win rate", async ({ page }) => {
   await page.goto("./heroes/illidan/");
   await expect(page.locator("#builds-title")).toBeVisible();

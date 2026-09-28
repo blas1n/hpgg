@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { assetUrl, MODE_LABEL, shortDate, type HeroInfo, type Mode } from "@/data";
+import { assetUrl, fallbackNote, MODE_LABEL, shortDate, type HeroInfo, type Mode } from "@/data";
 import { descParts, type BracketRow, type BuildTalentView, type BuildView, type HeroSummary, type MapRow } from "@/lib/hero";
 import { Card, cx, Portrait, Segmented, TierBadge } from "../ui";
 
@@ -12,6 +12,8 @@ const int = (n: number) => n.toLocaleString("ko-KR");
 export interface HeroModeModel {
   patch: string;
   collectedAt: string;
+  /** The thin current patch when this model is the previous one (lib/shown.ts). */
+  fallbackFrom: string | null;
   summary: HeroSummary;
   maps: MapRow[];
   brackets: BracketRow[]; // Storm League only
@@ -55,6 +57,7 @@ export function HeroView({ hero, models, builds, buildsPatch, minGames }: { hero
           </p>
           <p id="meta-line" className="num mt-0.5 text-xs text-muted">
             {MODE_LABEL[mode]} · 패치 {m.patch} · {shortDate(m.collectedAt)} 갱신
+            {m.fallbackFrom && <span data-fallback> · {fallbackNote(m.fallbackFrom)}</span>}
           </p>
         </div>
       </div>

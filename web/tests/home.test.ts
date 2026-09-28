@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import { computeTiers, PRESETS, type Row, type Snapshot } from "../src/formula";
-import type { HeroTable, MapTable } from "../src/data";
+import { fallbackNote, type HeroTable, type MapTable } from "../src/data";
 import { homeModel, mapCards, movers, roleLeaders, topHeroes } from "../src/lib/home";
 
 const dataDir = join(dirname(fileURLToPath(import.meta.url)), "e2e-data");
@@ -105,6 +105,12 @@ describe("homeModel", () => {
     expect(m.movers).toBeNull();
     expect(m.previousPatch).toBeNull(); // no previous snapshot → no "vs previous patch" line
     expect(m.top.every((t) => t.delta === null)).toBe(true);
+    expect(m.fallbackFrom).toBeNull();
+  });
+
+  it("carries the thin current patch it fell back from, and the page says so in one shared sentence", () => {
+    expect(homeModel("qm", qm, null, null, heroes, 200, "2.57.0.98285").fallbackFrom).toBe("2.57.0.98285");
+    expect(fallbackNote("2.57.0.98285")).toBe("새 패치 2.57.0.98285 표본이 아직 적어 이전 패치 기준");
   });
 
   it("carries the previous patch and movers when the previous snapshot exists", () => {

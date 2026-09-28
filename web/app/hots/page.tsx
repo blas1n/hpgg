@@ -1,19 +1,17 @@
 import { HomeView } from "@/components/home/HomeView";
+import type { Mode } from "@/data";
 import { homeModel, mapCards } from "@/lib/home";
-import { readHeroes, readMaps, readMeta, readSnapshot } from "@/server/data";
+import { readHeroes, readMaps, readMeta, readShown } from "@/server/data";
 
 /** 홈 — computed at build time for both modes; the mode toggle only swaps pre-rendered models. */
 export default function HotsHome() {
   const meta = readMeta();
   const heroes = readHeroes();
-  const maps = readMaps();
   const min = meta.min_games_for_tier;
-  const qm = readSnapshot("qm")!;
-  const sl = readSnapshot("sl")!;
-  const models = {
-    qm: homeModel("qm", qm, readSnapshot("qm", "previous"), meta.previous_patch, heroes, min),
-    sl: homeModel("sl", sl, readSnapshot("sl", "previous"), meta.previous_patch, heroes, min),
+  const model = (mode: Mode) => {
+    const s = readShown(mode)!;
+    return homeModel(mode, s.snap, s.previous, meta.previous_patch, heroes, min, s.fallback ? meta.current_patch : null);
   };
-  const cards = mapCards(sl, maps, heroes, min, 6);
-  return <HomeView models={models} maps={cards} />;
+  const cards = mapCards(readShown("sl")!.snap, readMaps(), heroes, min, 6);
+  return <HomeView models={{ qm: model("qm"), sl: model("sl") }} maps={cards} />;
 }

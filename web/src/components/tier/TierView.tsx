@@ -3,6 +3,7 @@
 import { Fragment, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { assetUrl, BRACKET_LABEL, daysSince, hotsHref, loadSnapshot, MODE_LABEL, shortDate, snapshotKey, thinSample, type Bracket, type HeroTable, type MapTable, type Meta, type Mode } from "@/data";
 import { formulaLine, PRESETS, type Snapshot } from "@/formula";
+import { bracketMatches } from "@/lib/shown";
 import { DEFAULT_TIER_STATE, parseTierState, resolvePatch, tierSearch, tierTable, visibleRows, type SortKey, type TierRow, type TierState, type TierTable } from "@/lib/tier";
 import { Card, cx, Portrait, Segmented } from "../ui";
 
@@ -63,8 +64,11 @@ export function TierView({ meta, heroes, maps, initial }: { meta: Meta; heroes: 
 
   const { mode, bracket, map, role, sort, dir } = state;
   const sl = mode === "sl";
-  const { patch, auto } = resolvePatch(meta, mode, state.patch);
   const file = snapshotKey(mode, bracket);
+  const resolved = resolvePatch(meta, mode, state.patch);
+  // a previous-patch bracket file that is missing or of another bracket definition is never shown under this
+  // label (lib/shown.ts): the current patch instead, thin as it is
+  const { patch, auto } = resolved.patch === "previous" && loaded[`previous/${file}`] === null ? { patch: "current" as const, auto: false } : resolved;
   const dirOf = (p: "current" | "previous") => (p === "previous" ? "previous" : "latest");
   const curKey = `${dirOf(patch)}/${file}`;
   const prevKey = patch === "current" && meta.previous_patch ? `previous/${file}` : null;
@@ -79,9 +83,12 @@ export function TierView({ meta, heroes, maps, initial }: { meta: Meta; heroes: 
       want.map(async (k) => {
         const [d, f] = k.split("/") as ["latest" | "previous", string];
         try {
-          return [k, await loadSnapshot(f, d === "previous" ? "previous" : "current")] as const;
+          const s = await loadSnapshot(f, d === "previous" ? "previous" : "current");
+          if (bracketMatches(s, bracket)) return [k, s] as const;
+          if (d === "latest") setError(`${f}.json 의 리그 구간(${s.league_tier?.join(",") ?? "전체"})이 이 구간 정의와 다릅니다`);
+          return [k, null] as const;
         } catch (e) {
-          if (k === curKey) setError(e instanceof Error ? e.message : String(e));
+          if (d === "latest") setError(e instanceof Error ? e.message : String(e));
           return [k, null] as const;
         }
       }),

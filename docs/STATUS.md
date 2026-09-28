@@ -15,6 +15,9 @@ The 2026-09-29 03:20 KST cron **never fired** (`gh run list --event schedule` wa
 - `gh run list --event schedule -L 3` shows a run on 2026-09-30 around 03:20 KST (GitHub may start it late). **Empty = the schedule is still dead** → dispatch once by hand and look further (not the rename, then).
 - That run made 4 `/heroes/stats` calls; `data/latest/` has `sl_low.json` `[1,2,3,4]` and `sl_high.json` `[5,6]`, and no `sl_mid.json`.
 
+## Patch 2.57.0.98285 (collected 2026-09-29 08:13 KST)
+The patch changed overnight. Right after a patch the current sample is thin (QM 419 matches, 1 hero ≥ 200 games), so **every page** now shows the previous patch with a note (`lib/shown.ts` — one rule for 홈, 티어, 영웅, 영웅 상세; before this only the tier table fell back and 홈 went empty). `previous/` was re-backfilled for 2.55.17.98025 with the current brackets (4 stats calls): the rotation had carried the 2026-09-28 bracket files ([1,2] / [3,4]) into `previous/`, and bracket files are now checked against `BRACKET_TIERS` before they are shown under a label. The fallback ends by itself once half the heroes pass 200 games on the new patch.
+
 ## Owner actions
 1. ~~Custom domain~~ (#5) · ~~GoatCounter~~ · ~~contact@hpgg.win forwarding~~ (done 2026-09-29).
 2. First community post (Inven / Arca) with a screenshot; watch day-7 uniques vs day-1 (success criterion in the design doc).
