@@ -43,6 +43,8 @@ export const MODE_LABEL: Record<Mode, string> = { qm: "빠른 대전", sl: "폭�
 export type Bracket = "all" | "low" | "high";
 /** Two brackets while the player base is small (owner, 2026-09-29): league_tier 1-4 / 5-6; grandmasters are inside master. */
 export const BRACKET_LABEL: Record<Bracket, string> = { all: "전체 구간", low: "브론즈 – 플래티넘", high: "다이아 – 그랜드마스터" };
+/** What each label means in league tiers (1 bronze … 6 master). A file whose league_tier differs is another cohort. */
+export const BRACKET_TIERS: Record<Bracket, number[] | null> = { all: null, low: [1, 2, 3, 4], high: [5, 6] };
 /** Snapshot file key for a mode + bracket (brackets exist for Storm League only). */
 export const snapshotKey = (mode: Mode, bracket: Bracket): string => (mode === "sl" && bracket !== "all" ? `sl_${bracket}` : mode);
 export type PatchChoice = "current" | "previous";
@@ -70,6 +72,9 @@ export function daysSince(isoDate: string, now = new Date()): number {
   const start = new Date(isoDate + "T00:00:00Z").getTime();
   return Math.max(0, Math.floor((now.getTime() - start) / 86_400_000));
 }
+
+/** Appended to a page's meta line while it shows the previous patch (see lib/shown.ts). */
+export const fallbackNote = (currentPatch: string): string => `새 패치 ${currentPatch} 표본이 아직 적어 이전 패치 기준`;
 
 /** "2026-09-28T04:07:19Z" → "09/28" */
 export const shortDate = (iso: string): string => iso.slice(5, 10).replace("-", "/");

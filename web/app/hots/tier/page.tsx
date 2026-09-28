@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { TierView } from "@/components/tier/TierView";
-import { resolvePatch, tierTable } from "@/lib/tier";
-import { readHeroes, readMaps, readMeta, readSnapshot } from "@/server/data";
+import { tierTable } from "@/lib/tier";
+import { readHeroes, readMaps, readMeta, readShown } from "@/server/data";
 
 export const metadata: Metadata = {
   title: "영웅 티어",
@@ -12,9 +12,8 @@ export const metadata: Metadata = {
 export default function TierPage() {
   const meta = readMeta();
   const heroes = readHeroes();
-  const { patch } = resolvePatch(meta, "qm", "auto");
-  const snap = readSnapshot("qm", patch)!;
-  const previous = patch === "current" ? readSnapshot("qm", "previous") : null;
-  const table = tierTable(snap, previous, "all", heroes, meta.min_games_for_tier);
+  const shown = readShown("qm")!;
+  const patch = shown.fallback ? "previous" : "current";
+  const table = tierTable(shown.snap, shown.previous, "all", heroes, meta.min_games_for_tier);
   return <TierView meta={meta} heroes={heroes} maps={readMaps()} initial={{ table, patch }} />;
 }

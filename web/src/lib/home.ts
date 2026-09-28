@@ -134,10 +134,12 @@ export interface HomeModel {
   leaders: LeaderCard[];
   top: TopRow[];
   movers: { up: Mover[]; down: Mover[] } | null;
+  /** The thin current patch when `patch` is the previous one (lib/shown.ts), else null. */
+  fallbackFrom: string | null;
 }
 
 /** One mode's home sections. `previous` is the same mode on the previous patch (null before the first patch change). */
-export function homeModel(mode: "qm" | "sl", snap: Snapshot, previous: Snapshot | null, previousPatch: string | null, heroes: HeroTable, minGames: number): HomeModel {
+export function homeModel(mode: "qm" | "sl", snap: Snapshot, previous: Snapshot | null, previousPatch: string | null, heroes: HeroTable, minGames: number, fallbackFrom: string | null = null): HomeModel {
   const rank = (s: Snapshot) => computeTiers(s.rows.filter((r) => r.map === "all"), PRESETS.aichi, minGames).ranked;
   const cur = rank(snap);
   const prev = previous ? rank(previous) : null;
@@ -150,5 +152,6 @@ export function homeModel(mode: "qm" | "sl", snap: Snapshot, previous: Snapshot 
     leaders: roleLeaders(cur, heroes),
     top: topHeroes(cur, prev, heroes, 10),
     movers: prev ? movers(cur, prev, heroes, 8) : null,
+    fallbackFrom,
   };
 }

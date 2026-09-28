@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { HeroView, type HeroModeModel } from "@/components/hero/HeroView";
 import type { Mode } from "@/data";
 import { bracketRows, heroBuilds, heroSummary, mapRows } from "@/lib/hero";
-import { readBuilds, readHeroes, readMaps, readMeta, readSnapshot, readTalents } from "@/server/data";
+import { readBuilds, readHeroes, readMaps, readMeta, readShown, readTalents } from "@/server/data";
 
 export const dynamicParams = false;
 
@@ -31,13 +31,14 @@ export default async function HeroPage({ params }: { params: Promise<{ slug: str
   const maps = readMaps();
   const min = meta.min_games_for_tier;
   const model = (mode: Mode): HeroModeModel => {
-    const snap = readSnapshot(mode)!;
+    const { snap, previous, fallback } = readShown(mode)!;
     return {
       patch: snap.patch,
       collectedAt: snap.collected_at,
-      summary: heroSummary(snap, meta.previous_patch ? readSnapshot(mode, "previous") : null, hero.name, min),
+      fallbackFrom: fallback ? meta.current_patch : null,
+      summary: heroSummary(snap, previous, hero.name, min),
       maps: mapRows(snap, hero.name, maps, min),
-      brackets: mode === "sl" ? bracketRows([{ key: "low", snap: readSnapshot("sl_low") }, { key: "high", snap: readSnapshot("sl_high") }], hero.name, min) : [],
+      brackets: mode === "sl" ? bracketRows([{ key: "low", snap: readShown("sl", "low")?.snap ?? null }, { key: "high", snap: readShown("sl", "high")?.snap ?? null }], hero.name, min) : [],
     };
   };
   const builds = readBuilds();

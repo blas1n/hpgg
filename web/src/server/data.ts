@@ -3,7 +3,8 @@ import "server-only";
 import { existsSync, readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { computeTiers, PRESETS, type Snapshot } from "../formula";
-import type { BuildsFile, HeroTable, MapTable, Meta, Mode, TalentTable } from "../data";
+import type { Bracket, BuildsFile, HeroTable, MapTable, Meta, Mode, TalentTable } from "../data";
+import { pickShown, type Shown } from "../lib/shown";
 import type { SearchItem } from "../lib/search";
 
 const dir = resolve(process.cwd(), process.env.DATA_DIR ?? "../data");
@@ -17,6 +18,9 @@ export const readSnapshot = (key: string, patch: "current" | "previous" = "curre
   return existsSync(join(dir, rel)) ? read<Snapshot>(rel) : null;
 };
 
+/** What a page shows for a mode (+ bracket): the same patch rule as the tier table. */
+export const readShown = (mode: Mode, bracket: Bracket = "all"): Shown | null => pickShown(readMeta(), mode, bracket, readSnapshot);
+
 const opt = <T>(rel: string): T | null => (existsSync(join(dir, rel)) ? read<T>(rel) : null);
 let builds: BuildsFile | null | undefined; // 270 KB, read once per build rather than once per hero page
 export const readBuilds = (): BuildsFile | null => (builds === undefined ? (builds = opt<BuildsFile>("latest/builds.json")) : builds);
@@ -26,7 +30,7 @@ export const readTalents = (slug: string): TalentTable | null => opt<TalentTable
 export function readSearchIndex(mode: Mode = "qm"): SearchItem[] {
   const heroes = readHeroes();
   const meta = readMeta();
-  const snap = readSnapshot(mode);
+  const snap = readShown(mode)?.snap;
   const tiers = snap ? computeTiers(snap.rows.filter((r) => r.map === "all"), PRESETS.aichi, meta.min_games_for_tier) : null;
   const tierOf = new Map(tiers?.ranked.map((x) => [x.row.hero, x.tier]) ?? []);
   return [...heroes.heroes]

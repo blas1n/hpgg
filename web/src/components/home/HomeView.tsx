@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { assetUrl, hotsHref, MODE_LABEL, shortDate, type Mode } from "@/data";
+import { assetUrl, fallbackNote, hotsHref, MODE_LABEL, shortDate, type Mode } from "@/data";
 import type { HomeModel, MapCard, Mover, TopRow } from "@/lib/home";
 import { Card, CardHeader, cx, MoreLink, Portrait, RankDelta, Segmented } from "../ui";
 
@@ -28,6 +28,7 @@ export function HomeView({ models, maps }: { models: Record<Mode, HomeModel>; ma
             <h1 className="text-2xl font-extrabold tracking-tight text-white">오늘의 메타</h1>
             <p id="meta-line" className="num mt-0.5 text-xs text-muted">
               {MODE_LABEL[mode]} · 패치 {m.patch} · {int(m.matches)} 매치 · {shortDate(m.collectedAt)} 갱신
+              {m.fallbackFrom && <span data-fallback> · {fallbackNote(m.fallbackFrom)}</span>}
             </p>
           </div>
           <Segmented
