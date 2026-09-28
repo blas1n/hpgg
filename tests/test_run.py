@@ -60,13 +60,12 @@ async def test_run_writes_five_files_meta_and_raw_gz(
         "sl.json",
         "sl_high.json",
         "sl_low.json",
-        "sl_mid.json",
     ]
     meta = json.loads((latest / "meta.json").read_text())
     assert (
         meta["current_patch"] == "2.55.17.97771" and meta["collected_at"] == "2026-09-28T01:02:03Z"
     )
-    assert set(meta["modes"]) == {"qm", "sl", "sl_low", "sl_mid", "sl_high"}
+    assert set(meta["modes"]) == {"qm", "sl", "sl_low", "sl_high"}
     # raw responses kept gzipped for the snapshots branch
     day = s.snapshot_out_dir / "2026-09-28"
     assert sorted(p.name for p in day.iterdir()) == [
@@ -78,14 +77,12 @@ async def test_run_writes_five_files_meta_and_raw_gz(
         "raw_sl.json.gz",
         "raw_sl_high.json.gz",
         "raw_sl_low.json.gz",
-        "raw_sl_mid.json.gz",
         "sl.json.gz",
         "sl_high.json.gz",
         "sl_low.json.gz",
-        "sl_mid.json.gz",
     ]
-    # 60 s spacing between the five group_by_map calls → 4 waits, + 1 before builds/all
-    assert fake_sleep.calls == [60.0] * 5
+    # 60 s spacing between the four group_by_map calls → 3 waits, + 1 before builds/all
+    assert fake_sleep.calls == [60.0] * 4
 
 
 @respx.mock
@@ -102,8 +99,7 @@ async def test_run_passes_league_tier_and_game_type_per_spec(
     assert [(c["game_type"], c.get("league_tier")) for c in calls] == [
         ("qm", None),
         ("sl", None),
-        ("sl", "1,2"),
-        ("sl", "3,4"),
+        ("sl", "1,2,3,4"),
         ("sl", "5,6"),
     ]
 
@@ -202,7 +198,6 @@ async def test_backfill_previous_writes_previous_and_meta_without_touching_lates
         "sl.json",
         "sl_high.json",
         "sl_low.json",
-        "sl_mid.json",
     ]
     assert json.loads((prev / "qm.json").read_text())["patch"] == "2.55.17.97650"
     meta = json.loads((s.data_dir / "latest" / "meta.json").read_text())
@@ -283,7 +278,7 @@ async def test_run_collects_popular_builds_after_stats(
         "title": "Unending Hatred",
     }
     assert b["heroes"]["Nova"] == []
-    assert fake_sleep.calls == [60.0] * 5  # 4 between stats + 1 before builds (1 req/min)
+    assert fake_sleep.calls == [60.0] * 4  # 3 between stats + 1 before builds (1 req/min)
     assert (s.snapshot_out_dir / "2026-09-28" / "raw_builds.json.gz").exists()
 
 

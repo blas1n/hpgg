@@ -30,7 +30,7 @@ jobs:
           fetch-depth: 1
       - uses: astral-sh/setup-uv@v5
       - run: uv sync --frozen --no-dev
-      - name: Collect (5 calls, ~5 min because group_by_map is 1 req/min)
+      - name: Collect (4 stats calls + 1 builds call, ~5 min because group_by_map is 1 req/min)
         id: run
         env:
           HP_API_TOKEN: ${{ secrets.HP_API_TOKEN }}

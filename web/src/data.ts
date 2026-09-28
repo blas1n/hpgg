@@ -15,7 +15,7 @@ export interface HeroInfo {
   ko: string;
   role: string;
   role_ko: string;
-  portrait?: string; // e.g. img/heroes/qhira.png (relative to BASE_URL)
+  portrait?: string; // e.g. img/heroes/qhira.png (relative to the site root)
 }
 export interface HeroTable {
   roles: { name: string; ko: string }[];
@@ -25,16 +25,27 @@ export interface MapTable {
   maps: { name: string; ko: string; slug: string; image?: string }[];
 }
 
+/** data/ is published at the site root (https://hpgg.win/latest/…, /img/…). */
+const base = "/";
 export const assetUrl = (rel: string): string => base + rel;
 
+/** Site routes for the Heroes of the Storm section. */
+export const hotsHref = {
+  home: "/hots/",
+  tier: (qs?: URLSearchParams | string) => `/hots/tier/${qs && String(qs) ? `?${String(qs)}` : ""}`,
+  heroes: "/hots/heroes/",
+  hero: (slug: string, mode?: Mode) => `/hots/heroes/${encodeURIComponent(slug)}/${mode === "sl" ? "?mode=sl" : ""}`,
+  maps: "/hots/maps/",
+};
+
 export type Mode = "qm" | "sl";
-export type Bracket = "all" | "low" | "mid" | "high";
-export const BRACKET_LABEL: Record<Bracket, string> = { all: "전체 구간", low: "브론즈 – 실버", mid: "골드 – 플래티넘", high: "다이아 – 마스터" };
+export const MODE_LABEL: Record<Mode, string> = { qm: "빠른 대전", sl: "폭풍 리그" };
+export type Bracket = "all" | "low" | "high";
+/** Two brackets while the player base is small (owner, 2026-09-29): league_tier 1-4 / 5-6; grandmasters are inside master. */
+export const BRACKET_LABEL: Record<Bracket, string> = { all: "전체 구간", low: "브론즈 – 플래티넘", high: "다이아 – 그랜드마스터" };
 /** Snapshot file key for a mode + bracket (brackets exist for Storm League only). */
 export const snapshotKey = (mode: Mode, bracket: Bracket): string => (mode === "sl" && bracket !== "all" ? `sl_${bracket}` : mode);
 export type PatchChoice = "current" | "previous";
-
-const base = import.meta.env.BASE_URL;
 
 async function getJson<T>(path: string): Promise<T> {
   const res = await fetch(base + path, { cache: "no-cache" });
@@ -60,6 +71,9 @@ export function daysSince(isoDate: string, now = new Date()): number {
   return Math.max(0, Math.floor((now.getTime() - start) / 86_400_000));
 }
 
+/** "2026-09-28T04:07:19Z" → "09/28" */
+export const shortDate = (iso: string): string => iso.slice(5, 10).replace("-", "/");
+
 export interface BuildTalent {
   level: number;
   name: string; // HP talent_name == game nameId
@@ -76,8 +90,16 @@ export interface BuildsFile {
   collected_at: string;
   heroes: Record<string, Build[]>;
 }
+export interface TalentInfo {
+  ko: string;
+  icon: string;
+  /** Game tooltip as text; {{…}} marks a highlighted value, \n a line break. */
+  desc?: string;
+  cd?: string;
+}
 export interface TalentTable {
-  talents: Record<string, { ko: string; icon: string }>;
+  talents: Record<string, TalentInfo>;
 }
 export const loadBuilds = (): Promise<BuildsFile | null> => getJson<BuildsFile>("latest/builds.json").catch(() => null);
-export const loadTalents = (): Promise<TalentTable | null> => getJson<TalentTable>("talents_ko.json").catch(() => null);
+/** One small file per hero (data/talents/<slug>.json, written by tools/build_assets.py). */
+export const loadTalents = (slug: string): Promise<TalentTable | null> => getJson<TalentTable>(`talents/${slug}.json`).catch(() => null);

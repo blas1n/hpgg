@@ -76,3 +76,52 @@ def test_talent_table_maps_name_id_to_korean_and_icon_with_english_fallback() ->
         "ko": "Aether Walker",
         "icon": "b.png",
     }  # no ko string → English name
+
+
+def test_clean_desc_turns_game_markup_into_text_with_highlight_markers() -> None:
+    raw = (
+        '대상에게 <c val="bfd4fd">108~~0.04~~</c>의 추가 피해를 줍니다.<n/><n/>'
+        '<img path="@UI/StormTalentInTextArmorIcon" alignment="uppermiddle" color="BBBBBB"'
+        ' width="20" height="22"/>'
+        '방어력 <s val="bfd4fd" name="StandardTooltipDetails">25</s> 증가'
+    )
+    expected = "대상에게 {{108(레벨당 +4%)}}의 추가 피해를 줍니다.\n\n방어력 25 증가"
+    assert ba.clean_desc(raw) == expected
+    assert ba.clean_desc('<c val="x">50~~0.025~~</c>') == "{{50(레벨당 +2.5%)}}"
+
+
+def test_clean_desc_picks_the_korean_particle_by_the_final_consonant() -> None:
+    # 20 → 이십 (ㅂ) → 으로 ; 30 → 삼십 → 으로 ; 5 → 오 → 로 ; 속도 → 로 ; 1 → 일 (ㄹ) → 로
+    rule = '<lang rule="jongsung">으로,로</lang>'
+    assert ba.clean_desc(f'<c val="x">20</c>{rule} 감소') == "{{20}}으로 감소"
+    assert ba.clean_desc(f"속도{rule} 증가") == "속도로 증가"
+    assert ba.clean_desc(f'<c val="x">5</c>{rule}') == "{{5}}로"
+    assert ba.clean_desc(f'<c val="x">1</c>{rule}') == "{{1}}로"
+    assert ba.clean_desc(f'<c val="x">30%</c>{rule}') == "{{30%}}로"  # 퍼센트
+
+
+def test_hero_talent_files_split_per_hero_slug_with_description_and_cooldown() -> None:
+    kokr = {
+        "gamestrings": {
+            **KOKR["gamestrings"],
+            "abiltalent": {
+                "name": KOKR["gamestrings"]["abiltalent"]["name"],
+                "full": {
+                    "AbathurPressureConvergence|X|Passive|True": '사거리 <c val="x">20%</c> 증가'
+                },
+                "cooldown": {"AbathurPressureConvergence|X|Passive|True": "재사용 대기시간: 10초"},
+            },
+        }
+    }
+    heroes = [{"name": "Abathur", "slug": "abathur"}, {"name": "Li-Ming", "slug": "li-ming"}]
+    files = ba.hero_talent_files(HERODATA, kokr, heroes)
+    assert files["abathur"] == {
+        "AbathurPressureConvergence": {
+            "ko": "압박 수렴",
+            "icon": "a.png",
+            "desc": "사거리 {{20%}} 증가",
+            "cd": "재사용 대기시간: 10초",
+        }
+    }
+    # no Korean strings for Li-Ming's talent → English name, no description or cooldown keys
+    assert files["li-ming"] == {"WizardAetherWalker": {"ko": "Aether Walker", "icon": "b.png"}}
