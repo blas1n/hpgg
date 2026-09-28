@@ -8,17 +8,33 @@ test.beforeEach(async ({ page }) => {
 
 test("heroes: grid of 90 with tier badges, search and role filter", async ({ page }) => {
   await page.goto("./heroes/");
-  await expect(page.locator("#grid .hero-card")).toHaveCount(90);
-  await expect(page.locator('#grid .hero-card[data-hero="qhira"] .badge')).toHaveText("S");
+  const cards = page.locator("#grid a[data-hero]");
+  await expect(cards).toHaveCount(90);
+  await expect(page.locator('#grid a[data-hero="qhira"] .tier-badge')).toHaveText("S");
   await page.locator("#search").fill("일리");
-  await expect(page.locator("#grid .hero-card")).toHaveCount(1);
-  await expect(page.locator("#grid .hero-card").first()).toContainText("일리단");
+  await expect(cards).toHaveCount(1);
+  await expect(cards.first()).toContainText("일리단");
+  await page.locator("#search").fill("ㅇㄹㄷ"); // 초성, like the header search
+  await expect(cards.first()).toHaveAttribute("data-hero", "illidan");
+  await page.locator("#search").fill("zzzz");
+  await expect(page.locator("main")).toContainText("맞는 영웅이 없습니다");
   await page.locator("#search").fill("");
-  await page.locator('#roles .chip[data-role="Tank"]').click();
+  await page.locator('#roles button[data-role="Tank"]').click();
   await expect(page).toHaveURL(/role=Tank/);
-  const n = await page.locator("#grid .hero-card").count();
+  const n = await cards.count();
   expect(n).toBeGreaterThan(5);
   expect(n).toBeLessThan(90);
+});
+
+test("heroes: the mode toggle swaps the tiers and the hero links carry the mode", async ({ page }) => {
+  await page.goto("./heroes/?role=Healer");
+  await expect(page.locator('#roles button[data-role="Healer"]')).toHaveAttribute("aria-pressed", "true");
+  const bw = page.locator('#grid a[data-hero="brightwing"]');
+  await expect(bw).toHaveAttribute("data-tier", "A"); // QM, as on the tier table
+  await page.locator("#mode-sl").click();
+  await expect(page).toHaveURL(/mode=sl&role=Healer/);
+  await expect(bw).toHaveAttribute("data-tier", "F");
+  await expect(bw).toHaveAttribute("href", "/hots/heroes/brightwing/?mode=sl");
 });
 
 test("hero detail: three stat cards, per-map rows (not links) in SL, brackets, no vote", async ({ page }) => {

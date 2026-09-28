@@ -23,7 +23,6 @@
   --max: 1200px;
   color-scheme: dark;
 }
-.muted { color: var(--muted); font-weight: 400; font-size: 12px; }
 
 /* ---- title band + page frame ---- */
 .title-in { max-width: var(--max); margin: 0 auto; padding: 18px 16px 6px; display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px; }
@@ -31,22 +30,11 @@
 .meta { margin: 0; color: var(--muted); font-size: 12px; }
 main.page { max-width: var(--max); margin: 0 auto; padding: 0 16px 40px; }
 
-/* ---- filter card (pills left, selects right) ---- */
-.seg { display: inline-flex; gap: 4px; }
-.seg-btn, .chip { background: transparent; color: var(--muted); border: 1px solid transparent; border-radius: 8px; padding: 7px 12px; font-size: 14px; font-weight: 600; cursor: pointer; white-space: nowrap; }
-.seg-btn[aria-pressed="true"], .chip[aria-pressed="true"] { background: var(--accent); color: #0e1118; }
-.chips { display: flex; gap: 2px; }
-.scroll-x { overflow-x: auto; scrollbar-width: none; max-width: 100%; }
-.scroll-x::-webkit-scrollbar { display: none; }
-.chip { flex: 0 0 auto; font-size: 13px; padding: 6px 10px; }
-.search { width: 100%; background: var(--panel-2); color: var(--text); border: 1px solid var(--line); border-radius: 8px; padding: 9px 12px; font-size: 14px; }
-
-/* ---- tier badges (hero, heroes, maps) ---- */
+/* ---- tier badges (maps) ---- */
 .badge { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; font-weight: 900; font-size: 12px; color: #0b0f16; border: 2px solid var(--bg); }
 .badge-S { background: var(--s); color: #fff; } .badge-A { background: var(--a); } .badge-B { background: var(--b); } .badge-C { background: var(--c); } .badge-D { background: var(--d); } .badge-F { background: var(--f); }
 .badge-sm { width: 18px; height: 18px; font-size: 10px; }
 
-/* ---- footer ---- */
 
 /* ---- map cards ---- */
 .map-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 10px; }
@@ -61,11 +49,3 @@ main.page { max-width: var(--max); margin: 0 auto; padding: 0 16px 40px; }
 .map-top-hero { position: relative; display: inline-block; }
 .map-top-hero img { width: 28px; height: 28px; border-radius: 6px; object-fit: cover; object-position: top; border: 1px solid var(--line); display: block; }
 .map-top-hero .badge { position: absolute; right: -7px; bottom: -6px; }
-
-/* ---- hero grid ---- */
-.hero-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 8px; margin-top: 10px; }
-.hero-card { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 10px 4px 8px; background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); color: inherit; position: relative; }
-.hero-card:hover { border-color: var(--accent); }
-.hero-card img { width: 56px; height: 56px; border-radius: 10px; object-fit: cover; object-position: top; border: 1px solid var(--line); }
-.hero-card .hname { font-size: 12px; font-weight: 700; text-align: center; }
-.hero-card .badge { position: absolute; top: 6px; left: 6px; }
