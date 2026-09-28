@@ -139,9 +139,12 @@ td.score .v { color: #cfe6ff; font-weight: 700; }
 .hero-head img { width: 84px; height: 96px; border-radius: 12px; object-fit: cover; border: 2px solid var(--line); display: block; }
 .hero-head .badge-lg { position: absolute; left: -8px; top: -8px; }
 .hero-head h1 { margin: 0; font-size: 24px; }
-.subnav { display: flex; gap: 2px; border-bottom: 1px solid var(--line); margin: 6px 0 12px; overflow-x: auto; scrollbar-width: none; }
+.subnav { display: flex; gap: 2px; border-bottom: 1px solid var(--line); margin: 6px -16px 12px; padding: 0 16px; overflow-x: auto; scrollbar-width: none; position: sticky; top: var(--header-h, 98px); z-index: 30; background: rgba(14, 17, 24, 0.94); backdrop-filter: blur(8px); }
+/* section titles land just below the header + sticky tabs */
+#maps-title, #brackets-title, #builds-title { scroll-margin-top: calc(var(--header-h, 98px) + 48px); }
 .subnav a { padding: 8px 12px; color: var(--muted); font-weight: 600; white-space: nowrap; border-bottom: 2px solid transparent; }
-.subnav a.active, .subnav a:hover { color: #fff; border-bottom-color: #fff; }
+.subnav a.active { color: #fff; border-bottom-color: #fff; }
+.subnav a:hover { color: #fff; }
 .stat-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin: 10px 0; }
 @media (min-width: 640px) { .stat-grid { grid-template-columns: repeat(4, 1fr); } }
 .stat-card { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 10px 12px; }

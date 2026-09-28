@@ -22,6 +22,13 @@ test("home: role leaders, top 10, movers, map cards and the mode toggle", async 
   await expect(page.locator('#role-top [data-card="role"]').first()).toHaveAttribute("href", /\?mode=sl$/);
 });
 
+test("home: no search banner — today's meta is the first thing on the page", async ({ page }) => {
+  await page.goto("./");
+  await expect(page.locator("#hero-search")).toHaveCount(0);
+  const top = (await page.locator("#meta-line").boundingBox())!.y;
+  expect(top).toBeLessThan(260); // above the fold on a phone, right under the header
+});
+
 test("home: ?mode=sl in the URL opens Storm League", async ({ page }) => {
   await page.goto("./?mode=sl");
   await expect(page.locator("#meta-line")).toContainText("폭풍 리그");
@@ -48,13 +55,6 @@ test("header search: 초성 query, keyboard selection opens the hero page", asyn
   await box.press("Enter");
   await expect(page).toHaveURL(/\/hots\/heroes\/illidan\/$/);
   await expect(page.locator("h1")).toHaveText("일리단");
-});
-
-test("home search box: English query, clicking a result opens the hero page", async ({ page }) => {
-  await page.goto("./");
-  await page.locator("#hero-search").fill("whitem");
-  await page.getByRole("option", { name: /화이트메인/ }).click();
-  await expect(page).toHaveURL(/\/hots\/heroes\/whitemane\/$/);
 });
 
 test("header search: a query with no match says so; '/' focuses the box", async ({ page }) => {

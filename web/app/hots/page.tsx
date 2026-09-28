@@ -1,6 +1,6 @@
 import { HomeView } from "@/components/home/HomeView";
 import { homeModel, mapCards } from "@/lib/home";
-import { readHeroes, readMaps, readMeta, readSearchIndex, readSnapshot } from "@/server/data";
+import { readHeroes, readMaps, readMeta, readSnapshot } from "@/server/data";
 
 /** 홈 — computed at build time for both modes; the mode toggle only swaps pre-rendered models. */
 export default function HotsHome() {
@@ -15,5 +15,5 @@ export default function HotsHome() {
     sl: homeModel("sl", sl, readSnapshot("sl", "previous"), meta.previous_patch, heroes, min),
   };
   const cards = mapCards(sl, maps, heroes, min, 6);
-  return <HomeView models={models} maps={cards} searchIndex={readSearchIndex()} heroCount={heroes.heroes.length} />;
+  return <HomeView models={models} maps={cards} />;
 }

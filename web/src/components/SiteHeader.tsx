@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
 import { assetUrl, hotsHref } from "@/data";
 import type { SearchItem } from "@/lib/search";
@@ -23,8 +24,19 @@ function activeId(path: string): string {
 /** Global header: brand + game, primary nav, hero search. Sticky; two rows on phones, one on desktop. */
 export function SiteHeader({ searchIndex }: { searchIndex: SearchItem[] }) {
   const active = activeId(usePathname() ?? "/hots/");
+  const ref = useRef<HTMLElement>(null);
+  // --header-h lets sticky sub-navigation and anchor targets sit exactly under the header (it is two rows on phones)
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const set = () => document.documentElement.style.setProperty("--header-h", `${el.getBoundingClientRect().height}px`);
+    set();
+    const ro = new ResizeObserver(set);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
   return (
-    <header className="sticky top-0 z-40 border-b border-line bg-surface-2/95 backdrop-blur supports-[backdrop-filter]:bg-surface-2/80">
+    <header ref={ref} className="sticky top-0 z-40 border-b border-line bg-surface-2/95 backdrop-blur supports-[backdrop-filter]:bg-surface-2/80">
       <div className="page-x flex h-14 items-center gap-3 md:gap-6">
         <a href={hotsHref.home} className="flex shrink-0 items-center gap-2" aria-label="hpgg.win 홈">
           {/* eslint-disable-next-line @next/next/no-img-element */}

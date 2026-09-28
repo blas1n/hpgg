@@ -3,15 +3,13 @@
 import { useEffect, useState } from "react";
 import { assetUrl, hotsHref, MODE_LABEL, shortDate, type Mode } from "@/data";
 import type { HomeModel, MapCard, Mover, TopRow } from "@/lib/home";
-import type { SearchItem } from "@/lib/search";
-import { HeroSearch } from "../HeroSearch";
 import { Card, CardHeader, cx, MoreLink, Portrait, RankDelta, Segmented } from "../ui";
 
 const pct = (n: number) => `${n.toFixed(1)}%`;
 const int = (n: number) => n.toLocaleString("ko-KR");
 const wrClass = (wr: number) => (wr >= 50 ? "text-pos" : "text-neg");
 
-export function HomeView({ models, maps, searchIndex, heroCount }: { models: Record<Mode, HomeModel>; maps: MapCard[]; searchIndex: SearchItem[]; heroCount: number }) {
+export function HomeView({ models, maps }: { models: Record<Mode, HomeModel>; maps: MapCard[] }) {
   const [mode, setMode] = useState<Mode>("qm");
   useEffect(() => {
     if (new URLSearchParams(location.search).get("mode") === "sl") setMode("sl");
@@ -24,11 +22,10 @@ export function HomeView({ models, maps, searchIndex, heroCount }: { models: Rec
 
   return (
     <>
-      <HeroBand qm={models.qm} sl={models.sl} heroCount={heroCount} searchIndex={searchIndex} image={maps[0]?.image} />
-      <main className="page-x mt-8 space-y-6">
+      <main className="page-x mt-6 space-y-6">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
-            <h2 className="text-xl font-extrabold tracking-tight">오늘의 메타</h2>
+            <h1 className="text-2xl font-extrabold tracking-tight text-white">오늘의 메타</h1>
             <p id="meta-line" className="num mt-0.5 text-xs text-muted">
               {MODE_LABEL[mode]} · 패치 {m.patch} · {int(m.matches)} 매치 · {shortDate(m.collectedAt)} 갱신
             </p>
@@ -110,46 +107,6 @@ export function HomeView({ models, maps, searchIndex, heroCount }: { models: Rec
         </Card>
       </main>
     </>
-  );
-}
-
-function HeroBand({ qm, sl, heroCount, searchIndex, image }: { qm: HomeModel; sl: HomeModel; heroCount: number; searchIndex: SearchItem[]; image?: string }) {
-  return (
-    <section className="relative overflow-hidden border-b border-line bg-surface">
-      {image && (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={assetUrl(image)} alt="" aria-hidden className="absolute inset-0 size-full object-cover opacity-25 blur-[2px]" />
-      )}
-      <div className="absolute inset-0 bg-gradient-to-r from-bg via-bg/85 to-bg/40" aria-hidden />
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,rgba(79,209,255,0.18),transparent_55%)]" aria-hidden />
-      <div className="page-x relative py-10 md:py-14">
-        <p className="num inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
-          <span className="size-1.5 animate-pulse rounded-full bg-primary" aria-hidden />
-          패치 {qm.patch} · {shortDate(qm.collectedAt)} 갱신
-        </p>
-        <h1 className="mt-4 text-3xl font-extrabold leading-tight tracking-tight text-white md:text-[40px]">
-          데이터로 보는 <span className="text-primary">히오스 메타</span>
-        </h1>
-        <p className="mt-2 max-w-xl text-sm text-fg-2 md:text-[15px]">빠른 대전과 폭풍 리그 매치를 매일 분석해 티어를 매깁니다. 공식은 티어표 아래에 전부 공개합니다.</p>
-        <div className="mt-6">
-          <HeroSearch items={searchIndex} variant="hero" id="hero-search" />
-        </div>
-        <dl className="mt-6 flex flex-wrap gap-x-8 gap-y-3">
-          <Kpi label="빠른 대전 매치" value={int(qm.matches)} />
-          <Kpi label="폭풍 리그 매치" value={int(sl.matches)} />
-          <Kpi label="영웅" value={`${heroCount}명`} />
-        </dl>
-      </div>
-    </section>
-  );
-}
-
-function Kpi({ label, value }: { label: string; value: string }) {
-  return (
-    <div>
-      <dt className="text-2xs font-semibold text-muted">{label}</dt>
-      <dd className="num text-lg font-bold text-fg">{value}</dd>
-    </div>
   );
 }
 

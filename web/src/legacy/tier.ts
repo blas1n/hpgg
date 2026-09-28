@@ -1,5 +1,6 @@
 import { computeTiers, formulaLine, PRESETS, type Ranked, type Row, type Snapshot } from "../formula";
 import { wilson } from "../wilson";
+import { sameCohort } from "../lib/cohort";
 import {
   assetUrl,
   hotsHref,
@@ -80,6 +81,13 @@ const ROLE_COLOR: Record<string, string> = {
   "Ranged Assassin": "#ffd23f",
 };
 
+/** An opened row must span exactly the visible columns: a larger colspan adds phantom columns that squeeze the
+ *  hero column on phones (where the ban and sample columns are hidden). */
+function syncDetailColspan(): void {
+  const n = [...document.querySelectorAll<HTMLTableCellElement>("#table thead th")].filter((th) => getComputedStyle(th).display !== "none").length;
+  for (const td of document.querySelectorAll<HTMLTableCellElement>("#rows tr.detail-row > td")) td.colSpan = n;
+}
+
 class App {
   private meta!: Meta;
   private heroes!: HeroTable;
@@ -98,6 +106,7 @@ class App {
     this.renderRoles();
     this.renderMapOptions();
     this.bind();
+    matchMedia("(min-width: 640px)").addEventListener("change", syncDetailColspan);
     await this.refresh();
   }
 
@@ -157,6 +166,8 @@ class App {
   }
 
   private renderMapOptions(): void {
+    // bracket labels have one source (BRACKET_LABEL); the skeleton only carries the values
+    for (const o of $<HTMLSelectElement>("#bracket").options) o.textContent = BRACKET_LABEL[o.value as Bracket] ?? o.textContent;
     const sel = $<HTMLSelectElement>("#map");
     sel.innerHTML = "";
     const all = document.createElement("option");
@@ -188,6 +199,8 @@ class App {
       this.previous = null;
       if (this.state.patch === "current" && this.meta.previous_patch) {
         this.previous = await loadSnapshot(file, "previous").catch(() => null);
+        // a bracket whose definition changed between patches is a different population: no ▲▼
+        if (this.previous && this.snapshot && !sameCohort(this.previous, this.snapshot)) this.previous = null;
       }
       this.loadedKey = key;
     }
@@ -282,6 +295,7 @@ class App {
     const tplRow = $<HTMLTemplateElement>("#tpl-row");
     const tplDetail = $<HTMLTemplateElement>("#tpl-detail");
     for (const x of visible) body.append(...this.heroRows(tplRow, tplDetail, x, hasBans, tiers.ranked.length, maxAbs, wrRatio, prevRank));
+    syncDetailColspan();
 
     const greyWrap = $("#grey-wrap");
     const grey = $("#grey");

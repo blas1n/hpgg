@@ -3,7 +3,7 @@
 Start every session here. Operating guide and architecture: `docs/HANDOFF.md`. Backlog: GitHub issues.
 
 ## State on 2026-09-28 (core features complete)
-- **Live**: https://hpgg.win/hots/ (root `/` forwards here) — 홈 (role leaders, movers vs previous patch, map cards) · 영웅 티어 (QM/SL, SL rank brackets, per-map, ▲▼ vs previous patch, sortable) · 영웅 (grid, search, roles) · 영웅 상세 (tier/rank, cross-mode line, per-map win rates, brackets, popular talent builds with Korean names and icons) · 전장 (cards → per-map tier table).
+- **Live**: https://hpgg.win/hots/ (root `/` forwards here) — 홈 (role leaders, movers vs previous patch, map cards) · 영웅 티어 (QM/SL, SL rank brackets, per-map, ▲▼ vs previous patch, sortable) · 영웅 (grid, search, roles) · 영웅 상세 (tier/rank, other-mode card, per-map win rates, brackets, sticky section tabs, popular talent builds with Korean names and icons) · 전장 (cards → per-map tier table).
 - **Pipeline**: daily cron collects 5 stats calls + 1 builds call, commits to `main`, archives to `snapshots`, deploys Pages. Verified end to end in Actions (test mode and live). Previous patch 2.55.17.97771 backfilled so deltas work from day one.
 - **Data/localisation**: official Korean names from game strings; portraits, map previews and talent icons from HeroesToolChest (MIT), attributed in the footer.
 - **Design**: Next.js + Tailwind rebuild in progress (branch `feat/next-shell-home`): new design system, header with hero search (초성 too), redesigned 홈; tier/heroes/hero/maps still render their v5 lol.ps-style legacy modules inside the new shell.

@@ -6,7 +6,7 @@ import { searchHeroes, type SearchItem } from "@/lib/search";
 import { cx, Portrait, TierBadge } from "./ui";
 
 /** Hero search combobox: Korean, English and 초성 queries; ↑↓ Enter Esc; "/" focuses the header box. */
-export function HeroSearch({ items, variant = "header", id }: { items: SearchItem[]; variant?: "header" | "hero"; id?: string }) {
+export function HeroSearch({ items, id }: { items: SearchItem[]; id?: string }) {
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(0);
@@ -14,10 +14,8 @@ export function HeroSearch({ items, variant = "header", id }: { items: SearchIte
   const wrap = useRef<HTMLDivElement>(null);
   const listId = useId();
   const results = useMemo(() => searchHeroes(items, query, 8), [items, query]);
-  const big = variant === "hero";
 
   useEffect(() => {
-    if (variant !== "header") return;
     const onKey = (e: KeyboardEvent) => {
       const t = e.target as HTMLElement | null;
       if (e.key !== "/" || e.metaKey || e.ctrlKey || t?.closest("input, textarea, select, [contenteditable]")) return;
@@ -26,7 +24,7 @@ export function HeroSearch({ items, variant = "header", id }: { items: SearchIte
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [variant]);
+  }, []);
 
   useEffect(() => {
     const onDown = (e: PointerEvent) => {
@@ -62,17 +60,14 @@ export function HeroSearch({ items, variant = "header", id }: { items: SearchIte
   const showList = open && query.trim().length > 0;
 
   return (
-    <div ref={wrap} className={cx("relative w-full", big ? "max-w-xl" : "max-w-sm")}>
+    <div ref={wrap} className="relative w-full max-w-sm">
       <label className="sr-only" htmlFor={id ?? `${listId}-input`}>
         영웅 검색
       </label>
       <div
-        className={cx(
-          "flex items-center gap-2 rounded-lg border bg-surface-2 transition-colors focus-within:border-primary",
-          big ? "h-13 border-line-strong px-4 shadow-lg shadow-black/30" : "h-9 border-line px-3",
-        )}
+        className="flex h-9 items-center gap-2 rounded-lg border border-line bg-surface-2 px-3 transition-colors focus-within:border-primary"
       >
-        <svg aria-hidden viewBox="0 0 20 20" className={cx("shrink-0 text-muted", big ? "size-5" : "size-4")} fill="none" stroke="currentColor" strokeWidth="2">
+        <svg aria-hidden viewBox="0 0 20 20" className="size-4 shrink-0 text-muted" fill="none" stroke="currentColor" strokeWidth="2">
           <circle cx="9" cy="9" r="6" />
           <path d="M14 14l4 4" />
         </svg>
@@ -88,7 +83,7 @@ export function HeroSearch({ items, variant = "header", id }: { items: SearchIte
           autoComplete="off"
           spellCheck={false}
           value={query}
-          placeholder={big ? "영웅 이름을 검색하세요 (예: 일리단, Illidan, ㅇㄹㄷ)" : "영웅 검색"}
+          placeholder="영웅 검색 (예: 일리단, ㅇㄹㄷ)"
           onChange={(e) => {
             setQuery(e.target.value);
             setActive(0);
@@ -96,13 +91,11 @@ export function HeroSearch({ items, variant = "header", id }: { items: SearchIte
           }}
           onFocus={() => setOpen(true)}
           onKeyDown={onKeyDown}
-          className={cx("min-w-0 flex-1 bg-transparent text-fg outline-none placeholder:text-muted [&::-webkit-search-cancel-button]:hidden", big ? "text-base" : "text-[13px]")}
+          className="min-w-0 flex-1 bg-transparent text-[13px] text-fg outline-none placeholder:text-muted [&::-webkit-search-cancel-button]:hidden"
         />
-        {variant === "header" && (
-          <kbd className="hidden rounded border border-line px-1.5 text-2xs text-muted sm:inline" aria-hidden>
-            /
-          </kbd>
-        )}
+        <kbd className="hidden rounded border border-line px-1.5 text-2xs text-muted sm:inline" aria-hidden>
+          /
+        </kbd>
       </div>
       {showList && (
         <ul

@@ -34,7 +34,7 @@ def mock_api(
         q = dict(httpx.QueryParams(request.url.query))
         assert q["group_by_map"] == "true"
         assert q["timeframe_type"] == "minor" and q["timeframe"] == "2.55.17.97771"
-        if fail_key == "sl_high" and q.get("league_tier") == "5,6":
+        if fail_key == "sl_high" and q.get("league_tier") == "6":
             return httpx.Response(500, json={"error": {"code": "server_error", "message": "x"}})
         return httpx.Response(200, json=raw_by_map)
 
@@ -102,9 +102,9 @@ async def test_run_passes_league_tier_and_game_type_per_spec(
     assert [(c["game_type"], c.get("league_tier")) for c in calls] == [
         ("qm", None),
         ("sl", None),
-        ("sl", "1,2"),
-        ("sl", "3,4"),
-        ("sl", "5,6"),
+        ("sl", "1,2,3"),
+        ("sl", "4,5"),
+        ("sl", "6"),
     ]
 
 

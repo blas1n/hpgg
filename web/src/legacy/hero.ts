@@ -1,13 +1,13 @@
 import { computeTiers, PRESETS, type Snapshot } from "../formula";
 import { wilson } from "../wilson";
-import { assetUrl, hotsHref, loadBuilds, loadHeroes, loadMaps, loadMeta, loadSnapshot, loadTalents, type Meta, type Mode } from "../data";
+import { assetUrl, BRACKET_LABEL, loadBuilds, loadHeroes, loadMaps, loadMeta, loadSnapshot, loadTalents, type Meta, type Mode } from "../data";
 
 const fmt1 = (n: number) => n.toFixed(1);
 const fmtInt = (n: number) => n.toLocaleString("ko-KR");
 const BRACKETS: { key: string; label: string }[] = [
-  { key: "sl_low", label: "브론즈 – 실버" },
-  { key: "sl_mid", label: "골드 – 플래티넘" },
-  { key: "sl_high", label: "다이아 – 마스터" },
+  { key: "sl_low", label: BRACKET_LABEL.low },
+  { key: "sl_mid", label: BRACKET_LABEL.mid },
+  { key: "sl_high", label: BRACKET_LABEL.high },
 ];
 
 async function main(slug: string): Promise<void> {
@@ -68,9 +68,10 @@ async function main(slug: string): Promise<void> {
     document.getElementById("meta-line")!.textContent = `${mode === "qm" ? "빠른 대전" : "폭풍 리그"} · 패치 ${snap.patch} · ${snap.collected_at.slice(5, 10).replace("-", "/")} 갱신`;
     const stats = document.getElementById("stats")!;
     stats.innerHTML = "";
-    const card = (k: string, v: string, s: string, cls = "") => {
+    const card = (k: string, v: string, s: string, id = "") => {
       const d = document.createElement("div");
-      d.className = "stat-card " + cls;
+      d.className = "stat-card";
+      if (id) d.dataset.k = id;
       d.innerHTML = `<div class="k">${k}</div><div class="v">${v}</div><div class="s">${s}</div>`;
       stats.appendChild(d);
     };
@@ -81,13 +82,15 @@ async function main(slug: string): Promise<void> {
       hb.textContent = r.tier;
     } else hb.hidden = true;
     if (r) {
+      // same wording as the tier table: ▲ 3 / ▼ 2 / — 0
       const d = pr ? pr.rank - r.rank : null;
-      const delta = d === null ? (prev ? "직전 패치 표본 부족" : "") : d === 0 ? "직전 패치와 같음" : d > 0 ? `▲ ${d} (직전 #${pr!.rank})` : `▼ ${-d} (직전 #${pr!.rank})`;
-      card("티어", `<span class="badge badge-${r.tier}">${r.tier}</span> #${r.rank}`, `${n}명 중 · ${delta}`);
+      const delta = d === null ? (prev ? " · 직전 패치 표본 부족" : "") : ` · ${d === 0 ? "— 0" : d > 0 ? `▲ ${d}` : `▼ ${-d}`} (직전 #${pr!.rank})`;
+      card("티어", `<span class="badge badge-${r.tier}">${r.tier}</span> #${r.rank}`, `${n}명 중${delta}`, "tier");
       const [lo, hi] = wilson(r.row.wins, r.row.games);
-      card("승률", `${fmt1(r.row.win_rate)}%`, `±${fmt1((hi - lo) / 2)} · ${fmtInt(r.row.games)}게임`);
-      card("픽률", `${fmt1(r.row.pick)}%`, mode === "sl" ? `밴률 ${fmt1(r.row.ban_rate)}%` : "빠른 대전은 밴 없음");
-      card("점수", `${r.score >= 0 ? "+" : ""}${r.score.toFixed(0)}`, ro ? `${mode === "qm" ? "폭풍 리그" : "빠른 대전"}에선 ${ro.tier} #${ro.rank}` : "");
+      card("승률", `${fmt1(r.row.win_rate)}%`, `±${fmt1((hi - lo) / 2)} · ${fmtInt(r.row.games)}게임`, "wr");
+      card("픽률", `${fmt1(r.row.pick)}%`, mode === "sl" ? `밴률 ${fmt1(r.row.ban_rate)}%` : "", "pick");
+      const otherLabel = mode === "qm" ? "폭풍 리그" : "빠른 대전";
+      card(otherLabel, ro ? `<span class="badge badge-${ro.tier}">${ro.tier}</span> #${ro.rank}` : "–", ro ? "" : "표본 부족", "other");
     } else if (grey) {
       card("티어", "–", `표본 부족 (${fmtInt(grey.games)}게임 < ${meta.min_games_for_tier})`);
       card("승률", `${fmt1(grey.win_rate)}%`, `${fmtInt(grey.games)}게임`);
@@ -105,9 +108,8 @@ async function main(slug: string): Promise<void> {
       .sort((a, b) => b.row.win_rate - a.row.win_rate);
     const span = Math.max(...perMap.map((x) => Math.abs(x.row.win_rate - 50)), 5);
     for (const { m, row } of perMap) {
-      const a = document.createElement("a");
+      const a = document.createElement("div"); // not a link: the per-map tier table is a different view (owner, 2026-09-28)
       a.className = "rowbar" + (row.win_rate < 50 ? " neg" : "");
-      a.href = hotsHref.tier(new URLSearchParams({ mode, map: m.name }));
       a.dataset.map = m.slug;
       const thin = row.games < meta.min_games_for_tier;
       a.innerHTML = `<img alt="" loading="lazy" src="${m.image ? assetUrl(m.image) : ""}" /><span><span class="lbl">${m.ko}</span> <span class="sub">${fmtInt(row.games)}게임${thin ? " · 표본 부족" : ""}</span><span class="bar"><i style="width:${Math.min(100, (Math.abs(row.win_rate - 50) / span) * 100)}%"></i></span></span><span class="val">${fmt1(row.win_rate)}%<br><span class="sub">픽 ${fmt1(row.pick)}%</span></span>`;
@@ -142,6 +144,29 @@ async function main(slug: string): Promise<void> {
   }
   await render();
   renderBuilds();
+  spySections();
+
+  /** Highlight the tab of the section currently under the sticky tabs. */
+  function spySections(): void {
+    const nav = document.querySelector<HTMLElement>("nav.subnav");
+    if (!nav) return;
+    const links = [...nav.querySelectorAll<HTMLAnchorElement>("a")];
+    const update = () => {
+      const line = nav.getBoundingClientRect().bottom + 8;
+      let current = links[0];
+      for (const a of links) {
+        const id = a.getAttribute("href")!.slice(1);
+        const target = id === "top" ? null : document.getElementById(id);
+        if (a.hidden || (target && target.hidden)) continue;
+        if (target && target.getBoundingClientRect().top <= line) current = a;
+      }
+      for (const a of links) a.classList.toggle("active", a === current);
+    };
+    // a click decides immediately; scrolling afterwards keeps it in sync
+    for (const a of links) a.addEventListener("click", () => setTimeout(update, 450));
+    window.addEventListener("scroll", update, { passive: true });
+    update();
+  }
 
   function renderBuilds(): void {
     const title = document.getElementById("builds-title")!;

@@ -9,7 +9,7 @@
     "preview": "vite preview --port 4173 --strictPort",
     "test": "vitest run",
     "test:cov": "vitest run --coverage",
-    "e2e": "DATA_DIR=tests/e2e-data NEXT_DIST_DIR=dist-e2e npm run build && playwright test"
+    "e2e": "DATA_DIR=tests/e2e-data NEXT_DIST_DIR=dist-e2e npm run build && playwright test; s=$?; node scripts/sync-data.mjs; exit $s"
   },
   "devDependencies": {
     "@playwright/test": "^1.48.0",

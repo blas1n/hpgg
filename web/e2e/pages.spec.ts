@@ -21,18 +21,46 @@ test("heroes: grid of 90 with tier badges, search and role filter", async ({ pag
   expect(n).toBeLessThan(90);
 });
 
-test("hero detail: stats, cross-mode line, per-map bars in SL, brackets, no vote", async ({ page }) => {
+test("hero detail: stats, other-mode card, per-map rows (not links) in SL, brackets, no vote", async ({ page }) => {
   await page.goto("./heroes/illidan/");
   await expect(page.locator("h1")).toHaveText("일리단");
-  await expect(page.locator("#stats .stat-card").first()).toContainText("B"); // QM tier from the fixture
-  await expect(page.locator("#stats")).toContainText("폭풍 리그에선 A");
+  const cards = page.locator("#stats .stat-card");
+  await expect(cards).toHaveCount(4);
+  await expect(cards.first()).toContainText("B"); // QM tier from the fixture
+  await expect(cards.first()).toContainText("— 0"); // same rank as the previous patch, written like the table
+  await expect(page.locator("#stats")).not.toContainText("점수");
+  await expect(page.locator("#stats")).not.toContainText("밴 없음");
+  await expect(page.locator('#stats .stat-card[data-k="other"]')).toContainText("폭풍 리그");
+  await expect(page.locator('#stats .stat-card[data-k="other"]')).toContainText("A");
   await page.locator("#mode-sl").click();
   await expect(page).toHaveURL(/mode=sl/);
-  await expect(page.locator("#stats .stat-card").first()).toContainText("A");
+  await expect(cards.first()).toContainText("A");
+  await expect(page.locator('#stats .stat-card[data-k="other"]')).toContainText("빠른 대전");
   await expect(page.locator("#maps .rowbar")).toHaveCount(1); // fixture SL has one real map (Cursed Hollow)
   await expect(page.locator('#maps .rowbar[data-map="cursed-hollow"]')).toContainText("저주받은 골짜기");
+  await expect(page.locator("#maps a")).toHaveCount(0); // map rows do not navigate
   await expect(page.locator("#brackets")).toBeVisible();
   await expect(page.locator("main button:not([id^=mode-])")).toHaveCount(0); // only the mode toggle is a button
+});
+
+test("hero detail: section tabs stick under the header and land each section just below them", async ({ page }) => {
+  await page.goto("./heroes/illidan/");
+  await expect(page.locator("#builds .build")).toHaveCount(5);
+  const nav = page.locator("nav.subnav");
+  const header = page.locator("body > header, header.sticky").first();
+  const headerBottom = async () => (await header.boundingBox())!.y + (await header.boundingBox())!.height;
+  for (const [link, target] of [["#nav-builds", "#builds-title"], ["a[href='#maps-title']", "#maps-title"]] as const) {
+    await nav.locator(link).click();
+    await expect.poll(async () => {
+      const t = (await page.locator(target).boundingBox())!.y;
+      const n = await nav.boundingBox();
+      return t >= n!.y + n!.height - 1 && t <= n!.y + n!.height + 40;
+    }, { message: `${target} lands right under the tabs` }).toBe(true);
+    expect((await nav.boundingBox())!.y).toBeCloseTo(await headerBottom(), 0); // tabs stuck under the header
+    await expect(nav.locator(link)).toHaveClass(/active/);
+  }
+  await nav.locator("a[href='#top']").click();
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0);
 });
 
 test("hero detail: unknown slug is a 404 page with a way back", async ({ page }) => {
@@ -62,10 +90,10 @@ test("tier table: Storm League rank-bracket selector loads sl_<bracket>.json and
   await expect(page.locator("#bracket-wrap")).toBeVisible();
   await page.locator("#bracket").selectOption("high");
   await expect(page).toHaveURL(/tier=high/);
-  await expect(page.locator("#meta-line")).toContainText("다이아 – 마스터");
+  await expect(page.locator("#meta-line")).toContainText("마스터 – 그랜드마스터");
   await page.goto("./tier/?mode=sl&tier=low");
   await expect(page.locator("#bracket")).toHaveValue("low");
-  await expect(page.locator("#meta-line")).toContainText("브론즈 – 실버");
+  await expect(page.locator("#meta-line")).toContainText("브론즈 – 골드");
   await page.locator("#mode-qm").click();
   await expect(page.locator("#bracket-wrap")).toBeHidden();
   await expect(page).not.toHaveURL(/tier=/);

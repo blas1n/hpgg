@@ -48,7 +48,16 @@
 }
 
 @layer base {
+  :root {
+    --header-h: 98px; /* measured by SiteHeader at runtime; this is the phone value before hydration */
+  }
+  @media (min-width: 768px) {
+    :root {
+      --header-h: 57px;
+    }
+  }
   html {
+    scroll-behavior: smooth;
     color-scheme: dark;
     -webkit-text-size-adjust: 100%;
   }

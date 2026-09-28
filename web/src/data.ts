@@ -41,7 +41,7 @@ export const hotsHref = {
 export type Mode = "qm" | "sl";
 export const MODE_LABEL: Record<Mode, string> = { qm: "빠른 대전", sl: "폭풍 리그" };
 export type Bracket = "all" | "low" | "mid" | "high";
-export const BRACKET_LABEL: Record<Bracket, string> = { all: "전체 구간", low: "브론즈 – 실버", mid: "골드 – 플래티넘", high: "다이아 – 마스터" };
+export const BRACKET_LABEL: Record<Bracket, string> = { all: "전체 구간", low: "브론즈 – 골드", mid: "플래티넘 – 다이아", high: "마스터 – 그랜드마스터" };
 /** Snapshot file key for a mode + bracket (brackets exist for Storm League only). */
 export const snapshotKey = (mode: Mode, bracket: Bracket): string => (mode === "sl" && bracket !== "all" ? `sl_${bracket}` : mode);
 export type PatchChoice = "current" | "previous";

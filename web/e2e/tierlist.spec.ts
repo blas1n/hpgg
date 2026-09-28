@@ -88,6 +88,18 @@ test("detail row links to the hero page and asks for no vote (voting removed 202
   await expect(d.locator("button")).toHaveCount(0);
 });
 
+test("an opened row spans exactly the visible columns, so the table keeps its full width on a phone", async ({ page }) => {
+  await page.goto("./tier/");
+  await row(page, "qhira").click();
+  const visibleCols = await page.locator("#table thead th:visible").count();
+  expect(visibleCols).toBe(5); // phone: rank, hero, score, win rate, pick
+  await expect(detail(page, "qhira").locator("td")).toHaveAttribute("colspan", String(visibleCols));
+  const tableW = (await page.locator("#table").boundingBox())!.width;
+  const rowW = (await row(page, "qhira").boundingBox())!.width;
+  expect(Math.abs(tableW - rowW)).toBeLessThanOrEqual(1);
+  await expect(row(page, "qhira").locator(".name")).toBeVisible();
+});
+
 test("?patch=previous shows the banner and previous-patch data; state round-trips through the URL", async ({ page }) => {
   await page.goto("./tier/?patch=previous");
   await expect(page.locator("#patch-banner")).toBeVisible();

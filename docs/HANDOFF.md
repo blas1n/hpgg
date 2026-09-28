@@ -17,7 +17,7 @@ GitHub Actions (cron 03:20 KST, workflow_dispatch, push:main)
   collect job (cron/dispatch only)
     uv run python -m collector
       GET /v1/patches                       → newest build with valid_globals
-      5× GET /v1/heroes/stats?group_by_map  → qm, sl, sl_low(1-2), sl_mid(3-4), sl_high(5-6)   (60 s apart)
+      5× GET /v1/heroes/stats?group_by_map  → qm, sl, sl_low(1-3), sl_mid(4-5), sl_high(6)   (60 s apart)
       1× GET /v1/heroes/talents/builds/all  → popular builds, qm+sl combined                    (7/week cap!)
       atomic swap → data/latest/{qm,sl,sl_low,sl_mid,sl_high,builds,meta}.json (+ data/previous/ on patch change)
       raw + normalised gz → data/.snapshot_out/<day>/ → committed to the `snapshots` branch
@@ -55,6 +55,7 @@ Error responses and 202 job polling are not charged. `group_by_map=true` is rate
 - Local runs write `data/latest/`; **never commit it** (`git reset data/latest` before committing). The bot owns that path. Always `git pull --rebase --autostash` before pushing.
 - Previous-patch data (`data/previous/`) rotates automatically on a patch change. To seed it after a gap: `uv run python -m collector --previous <build>` (5 calls).
 - New hero or map: rerun `uv run python tools/build_assets.py --build <heroes-data build>` to refresh `data/talents_ko.json` and talent icons; extend `data/heroes_ko.json` / `data/maps_ko.json` the same way (names come from the game's Korean strings in HeroesToolChest/heroes-data, portraits/maps/icons from heroes-images, both MIT). Known gap: Xal'atath appears in builds/all but not yet in stats or the 2.55.16.97039 game-data dump.
+- Brackets are 브실골 (1-3) / 플다 (4-5) / 마그마 (6) since 2026-09-28 (was 1-2 / 3-4 / 5-6). HP has no grandmaster id: grandmasters are inside master (6). A previous-patch bracket file with a different `league_tier` is a different cohort, so the tier page shows no ▲▼ for it (`web/src/lib/cohort.ts`).
 - Bracket match counts overlap (a match counts in every bracket its players belong to); never add bracket totals together.
 - Playwright e2e runs against a frozen data set in `web/tests/e2e-data` (2026-09-28 fixtures) so tier expectations are deterministic. Unit fixtures for the formula are the same day's web-scraped tables in `web/tests/fixtures`.
 
