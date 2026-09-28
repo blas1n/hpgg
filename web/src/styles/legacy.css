@@ -24,7 +24,6 @@
   color-scheme: dark;
 }
 .muted { color: var(--muted); font-weight: 400; font-size: 12px; }
-.visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
 
 /* ---- title band + page frame ---- */
 .title-in { max-width: var(--max); margin: 0 auto; padding: 18px 16px 6px; display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px; }
@@ -34,8 +33,6 @@ main.page { max-width: var(--max); margin: 0 auto; padding: 0 16px 40px; }
 .section-title { font-size: 16px; margin: 22px 0 10px; color: #cfe6ff; font-weight: 800; }
 .section-title a { font-weight: 500; }
 
-.banner { background: #3b2f12; border: 1px solid #6b5416; color: #ffd8a8; padding: 10px 12px; border-radius: 8px; margin: 8px 0; font-size: 13px; }
-.banner button { margin-left: 8px; }
 
 /* ---- filter card (pills left, selects right) ---- */
 .controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 10px 12px; margin: 8px 0 10px; background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); }
@@ -46,74 +43,17 @@ main.page { max-width: var(--max); margin: 0 auto; padding: 0 16px 40px; }
 .scroll-x { overflow-x: auto; scrollbar-width: none; max-width: 100%; }
 .scroll-x::-webkit-scrollbar { display: none; }
 .chip { flex: 0 0 auto; font-size: 13px; padding: 6px 10px; }
-.selects { display: flex; gap: 6px; margin-left: auto; }
-select { background: var(--panel-2); color: var(--text); border: 1px solid var(--line); border-radius: 8px; padding: 7px 10px; font-size: 13px; max-width: 100%; }
 .search { width: 100%; background: var(--panel-2); color: var(--text); border: 1px solid var(--line); border-radius: 8px; padding: 9px 12px; font-size: 14px; }
 
-/* ---- tier table (lol.ps: plain numbers, rank + change pill, portrait with tier badge) ---- */
-.table-wrap { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
-.tier-table { width: 100%; border-collapse: collapse; table-layout: fixed; font-variant-numeric: tabular-nums; }
-.tier-table th { color: var(--muted); font-weight: 600; font-size: 12px; text-align: right; padding: 10px 6px; border-bottom: 1px solid var(--line); white-space: nowrap; }
-.tier-table th.col-rank, .tier-table th.col-hero { text-align: left; }
-.col-rank { width: 62px; }
-.col-hero { width: auto; }
-.col-num { width: 60px; }
-.col-games { width: 62px; }
-.sort { background: none; border: 0; color: inherit; font: inherit; cursor: pointer; padding: 0; }
-th[aria-sort] .sort { color: #fff; }
-th[aria-sort="descending"] .sort::after { content: " ▾"; color: var(--accent); }
-th[aria-sort="ascending"] .sort::after { content: " ▴"; color: var(--accent); }
-tr.hero { border-bottom: 1px solid var(--line); cursor: pointer; }
-tr.hero:hover, tr.hero[aria-expanded="true"] { background: var(--panel-2); }
-tr.hero td { padding: 8px 6px; vertical-align: middle; }
-td.col-rank .cell { display: flex; flex-direction: column; gap: 3px; align-items: flex-start; }
-.rank { font-weight: 700; font-size: 13px; }
-.delta { display: inline-block; font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 999px; background: #262d40; color: var(--muted); white-space: nowrap; }
-.delta.up { background: #123b2e; color: var(--pos); }
-.delta.down { background: #4a1d24; color: var(--neg); }
-.delta.new { background: #17324a; color: var(--accent); }
-td.col-hero .cell { display: flex; align-items: center; gap: 8px; min-width: 0; }
-td.col-hero { overflow: hidden; }
-.avatar { position: relative; flex: 0 0 auto; width: 36px; height: 36px; border-radius: 8px; background: var(--panel-2); border: 1px solid var(--line); overflow: visible; display: inline-grid; place-items: center; font-weight: 700; }
-.avatar img { width: 100%; height: 100%; object-fit: cover; object-position: top; display: block; border-radius: 7px; }
-.avatar .badge { position: absolute; left: -6px; top: -6px; }
-.names { display: flex; flex-direction: column; min-width: 0; }
-.name { font-weight: 700; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.en { color: var(--muted); font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-td.col-num, td.col-games { text-align: right; font-size: 13px; }
-td.col-num .v { display: block; }
-td.score.neg .v { color: var(--neg); }
-td.score .v { color: #cfe6ff; font-weight: 700; }
-.bar { display: none; }
-.hide-ban .col-ban { display: none; }
+/* ---- tier badges (hero, heroes, maps) ---- */
 .badge { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; font-weight: 900; font-size: 12px; color: #0b0f16; border: 2px solid var(--bg); }
 .badge-S { background: var(--s); color: #fff; } .badge-A { background: var(--a); } .badge-B { background: var(--b); } .badge-C { background: var(--c); } .badge-D { background: var(--d); } .badge-F { background: var(--f); }
 .badge-sm { width: 18px; height: 18px; font-size: 10px; }
 .badge-lg { width: 34px; height: 34px; font-size: 18px; }
 
-.detail-row td { padding: 0 8px 12px; border-bottom: 1px solid var(--line); background: var(--panel-2); }
-.detail-row dl { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px 8px; margin: 8px 0; }
-.detail-row dl div { background: var(--panel); border-radius: 6px; padding: 6px 8px; }
-.detail-row dt { font-size: 11px; color: var(--muted); }
-.detail-row dd { margin: 0; font-size: 13px; }
-.vote { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); flex-wrap: wrap; }
-.d-link { border: 1px solid var(--line); }
-
-.grey-wrap h2 { font-size: 14px; margin: 16px 0 6px; color: var(--muted); }
-.grey { flex-wrap: wrap; }
-.grey .chip { opacity: 0.7; cursor: default; border-color: var(--line); }
-
-.formula { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; margin: 14px 0 8px; overflow-wrap: anywhere; color: #cfe6ff; }
-.more summary { cursor: pointer; color: var(--link); font-size: 13px; }
-.more pre { white-space: pre-wrap; font-size: 12px; background: var(--panel); border-radius: 8px; padding: 10px; overflow-wrap: anywhere; }
-
 /* ---- footer ---- */
 
-/* ---- map banner + map cards ---- */
-.map-hero { position: relative; border-radius: var(--radius); overflow: hidden; margin: 10px 0 6px; min-height: 120px; background: var(--panel); border: 1px solid var(--line); }
-.map-hero img { width: 100%; height: 160px; object-fit: cover; display: block; opacity: 0.85; }
-.map-hero-text { position: absolute; left: 12px; bottom: 10px; text-shadow: 0 1px 6px #000; }
-.map-hero-text h1 { margin: 0; font-size: 22px; }
+/* ---- map cards ---- */
 .map-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 10px; }
 @media (min-width: 640px) { .map-grid { grid-template-columns: repeat(3, 1fr); } }
 .map-card { display: block; background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; color: inherit; }
@@ -187,30 +127,3 @@ td.score .v { color: #cfe6ff; font-weight: 700; }
 .build-stats .bar { display: block; height: 3px; background: var(--panel-2); border-radius: 2px; margin-top: 4px; }
 .build-stats .bar i { display: block; height: 100%; background: var(--accent); }
 @media (min-width: 640px) { .talent img { width: 44px; height: 44px; } .talent .tn { font-size: 11px; } }
-
-/* ---- home ---- */
-.home-section { margin-top: 12px; }
-@media (min-width: 640px) { .role-strip { grid-template-columns: repeat(3, 1fr); } }
-
-/* ---- responsive table density ---- */
-@media (max-width: 639px) {
-  .col-rank { width: 44px; }
-  .col-num { width: 48px; }
-  .col-games { display: none; }
-  .hide-ban .col-num { width: 60px; }
-  .en { display: none; }
-  .rank { font-size: 12px; }
-  .avatar { width: 32px; height: 32px; }
-  .name { font-size: 13px; }
-  td.col-num { font-size: 12.5px; padding-left: 2px; padding-right: 4px; }
-  .delta { padding: 1px 4px; }
-  .selects { margin-left: 0; width: 100%; }
-  .selects select { flex: 1; }
-}
-@media (min-width: 640px) {
-  .col-rank { width: 76px; }
-  .col-num { width: 92px; }
-  .col-games { width: 84px; }
-  td.col-num, td.col-games { font-size: 14px; }
-  .names { flex-direction: row; align-items: baseline; gap: 6px; }
-}

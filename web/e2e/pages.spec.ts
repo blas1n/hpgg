@@ -82,12 +82,12 @@ test("maps: cards with images, match counts and top heroes; card links to the ma
   await card.click();
   await expect(page).toHaveURL(/tier\/\?mode=sl&map=Cursed(\+|%20)Hollow/);
   await expect(page.locator("#map-hero")).toBeVisible();
-  await expect(page.locator("#map-hero h1")).toHaveText("저주받은 골짜기");
+  await expect(page.locator("#map-hero h2")).toHaveText("저주받은 골짜기");
 });
 
 test("tier table shows ▲▼ deltas against the previous patch", async ({ page }) => {
   await page.goto("./tier/");
-  await expect(page.locator('tr.hero[data-hero="qhira"] .delta')).toHaveText("— 0"); // fixture previous == current
+  await expect(page.locator('#rows tr[data-hero="qhira"] [data-delta]')).toHaveText("— 0"); // fixture previous == current
 });
 
 test("tier table: Storm League rank-bracket selector loads sl_<bracket>.json and lands in the URL", async ({ page }) => {
