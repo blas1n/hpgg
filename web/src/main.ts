@@ -1,6 +1,7 @@
 import { computeTiers, formulaLine, PRESETS, type Ranked, type Row, type Snapshot } from "./formula";
 import { wilson } from "./wilson";
 import {
+  assetUrl,
   daysSince,
   loadHeroes,
   loadMaps,
@@ -326,9 +327,19 @@ class App {
     badge.classList.add(`badge-${x.tier}`);
     tr.querySelector(".rank")!.textContent = `#${x.rank}`;
     const av = tr.querySelector<HTMLElement>(".avatar")!;
-    av.textContent = this.ko(r.hero).slice(0, 1);
     av.style.borderColor = ROLE_COLOR[info?.role ?? ""] ?? "";
     av.title = info?.role_ko ?? "";
+    if (info?.portrait) {
+      const img = document.createElement("img");
+      img.src = assetUrl(info.portrait);
+      img.alt = "";
+      img.loading = "lazy";
+      img.width = 30;
+      img.height = 30;
+      av.appendChild(img);
+    } else {
+      av.textContent = this.ko(r.hero).slice(0, 1);
+    }
     tr.querySelector(".name")!.textContent = this.ko(r.hero);
     tr.querySelector(".en")!.textContent = `${r.hero}${info ? ` · ${info.role_ko}` : ""}`;
 

@@ -77,7 +77,8 @@ td.col-tier .cell { display: flex; flex-direction: column; align-items: center; 
 .rank { font-size: 10px; color: var(--muted); }
 td.col-hero .cell { display: flex; align-items: center; gap: 8px; min-width: 0; }
 td.col-hero { overflow: hidden; }
-.avatar { flex: 0 0 auto; display: inline-grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; background: var(--panel-2); border: 1px solid var(--line); font-weight: 700; font-size: 13px; }
+.avatar { flex: 0 0 auto; display: inline-grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; background: var(--panel-2); border: 2px solid var(--line); font-weight: 700; font-size: 13px; overflow: hidden; }
+.avatar img { width: 100%; height: 100%; object-fit: cover; object-position: top; display: block; }
 .names { display: flex; flex-direction: column; min-width: 0; }
 .name { font-weight: 600; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .en { color: var(--muted); font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

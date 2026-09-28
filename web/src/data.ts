@@ -15,14 +15,17 @@ export interface HeroInfo {
   ko: string;
   role: string;
   role_ko: string;
+  portrait?: string; // e.g. img/heroes/qhira.png (relative to BASE_URL)
 }
 export interface HeroTable {
   roles: { name: string; ko: string }[];
   heroes: HeroInfo[];
 }
 export interface MapTable {
-  maps: { name: string; ko: string; slug: string }[];
+  maps: { name: string; ko: string; slug: string; image?: string }[];
 }
+
+export const assetUrl = (rel: string): string => base + rel;
 
 export type Mode = "qm" | "sl";
 export type PatchChoice = "current" | "previous";
