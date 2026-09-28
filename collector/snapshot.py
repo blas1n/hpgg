@@ -154,7 +154,15 @@ def normalize_by_map(
     for map_name, map_payload in payload.items():
         if not isinstance(map_name, str) or map_name.startswith("average_"):
             continue
-        for row in _rows_of(map_payload):
+        map_rows = _rows_of(map_payload)
+        # Live v1 rows carry ban_rate (%) but no ban count: derive it from the map's match
+        # count (Σgames / 10) so the "all" aggregation can sum bans across maps.
+        map_matches = (
+            sum(_num(r, "games_played", _num(r, "wins") + _num(r, "losses")) for r in map_rows) / 10
+        )
+        for row in map_rows:
+            if "bans" not in row and "ban_rate" in row and map_matches:
+                row = {**row, "bans": round(_num(row, "ban_rate") / 100 * map_matches)}
             stat = _row_to_stat(row, map_name)
             if stat is not None:
                 per_map.append(stat)

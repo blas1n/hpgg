@@ -16,6 +16,7 @@ from collector.snapshot import (
     normalize_by_map,
     snapshot_to_json,
 )
+from tests.conftest import FIXTURES
 
 
 def test_specs_are_the_five_daily_calls() -> None:
@@ -94,6 +95,60 @@ def test_normalize_flat_payload_becomes_all_rows_only() -> None:
     assert {r.map for r in snap.rows} == {"all"}
     assert {r.hero: r.games for r in snap.rows} == {"Qhira": 100, "Nova": 50}
     assert snap.matches == 15
+
+
+def test_normalize_derives_ban_count_from_ban_rate_when_live_rows_lack_bans() -> None:
+    # live v1 shape (probe 2026-09-28): ban_rate % present, no `bans` count
+    raw = {
+        "Cursed Hollow": {
+            "average_win_rate": 50,
+            "data": [
+                {
+                    "name": "Qhira",
+                    "wins": 600,
+                    "losses": 400,
+                    "games_played": 1000,
+                    "ban_rate": 40.0,
+                    "pick_rate": 50.0,
+                },
+                {
+                    "name": "Nova",
+                    "wins": 500,
+                    "losses": 500,
+                    "games_played": 1000,
+                    "ban_rate": 0,
+                    "pick_rate": 50.0,
+                },
+            ],
+        }
+    }
+    snap = normalize_by_map(
+        raw, key="sl", game_type="sl", league_tier=None, patch="p", collected_at="t"
+    )
+    rows = {(r.map, r.hero): r for r in snap.rows}
+    # map matches = 2000/10 = 200 → Qhira bans = 40% × 200 = 80
+    assert rows[("Cursed Hollow", "Qhira")].bans == 80
+    assert rows[("all", "Qhira")].bans == 80 and rows[("all", "Qhira")].ban_rate == pytest.approx(
+        40.0
+    )
+    assert rows[("all", "Nova")].bans == 0
+
+
+def test_live_probe_fixture_normalizes_per_map() -> None:
+    import gzip
+
+    path = FIXTURES / "live_probe_qm_2.55.17.98025.json.gz"
+    with gzip.open(path, "rt", encoding="utf-8") as f:
+        raw = json.load(f)
+    snap = normalize_by_map(
+        raw, key="qm", game_type="qm", league_tier=None, patch="2.55.17.98025", collected_at="t"
+    )
+    maps = {r.map for r in snap.rows}
+    assert "all" in maps and "Cursed Hollow" in maps and len(maps) > 10
+    qhira = {(r.map, r.hero): r for r in snap.rows}[("all", "Qhira")]
+    assert qhira.games > 1000 and 50 < qhira.win_rate < 65 and qhira.ci is None
+    per_map_qhira = next(r for r in snap.rows if r.hero == "Qhira" and r.map == "Alterac Pass")
+    assert per_map_qhira.ci == 3.63 and per_map_qhira.games == 706
 
 
 def test_normalize_rejects_empty_payload() -> None:

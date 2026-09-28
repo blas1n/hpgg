@@ -1,4 +1,4 @@
-# Heroes Profile API v1 — Variables (docs 스냅샷 2026-09-28)
+# Heroes Profile API v1 — Variables (docs snapshot, 2026-09-28)
 
 base: https://www.heroesprofile.com/api/external/v1 · auth: Authorization: Bearer <key>
 
