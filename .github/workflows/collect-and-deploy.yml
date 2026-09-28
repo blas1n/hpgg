@@ -2,7 +2,10 @@ name: collect-and-deploy
 
 on:
   schedule:
-    - cron: "20 18 * * *" # 03:20 KST daily
+    # 03:20 KST daily. GitHub registers a schedule from the default branch's workflow file; after the repo rename
+    # (hotsmeta → hpgg, 2026-09-28) the first night (2026-09-29) produced no scheduled run at all — this commit
+    # re-registers it. If a night is missed again: `gh run list --event schedule` is empty → dispatch once by hand.
+    - cron: "20 18 * * *"
   workflow_dispatch:
   push:
     branches: [main]
