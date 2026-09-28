@@ -244,6 +244,51 @@ def _write_json(path: Path, obj: Any) -> None:
     path.write_text(json.dumps(obj, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
 
 
+LEVEL_KEYS = (
+    ("level_one", 1),
+    ("level_four", 4),
+    ("level_seven", 7),
+    ("level_ten", 10),
+    ("level_thirteen", 13),
+    ("level_sixteen", 16),
+    ("level_twenty", 20),
+)
+
+
+def normalize_builds(raw: Any, *, patch: str, game_type: str, collected_at: str) -> dict[str, Any]:
+    """`/heroes/talents/builds/all` → latest/builds.json: per hero a list of popular builds
+    (games, win_rate, seven talents by level). Heroes that answered `{"error": ...}` get []."""
+    if not isinstance(raw, dict) or not raw:
+        raise ValueError("empty builds payload")
+    heroes: dict[str, list[dict[str, Any]]] = {}
+    for hero, builds in raw.items():
+        out: list[dict[str, Any]] = []
+        if isinstance(builds, list):
+            for b in builds:
+                if not isinstance(b, dict):
+                    continue
+                talents = []
+                for key, level in LEVEL_KEYS:
+                    t = b.get(key)
+                    if isinstance(t, dict) and t.get("talent_name"):
+                        talents.append(
+                            {
+                                "level": level,
+                                "name": str(t["talent_name"]),
+                                "title": str(t.get("title", "")),
+                            }
+                        )
+                out.append(
+                    {
+                        "games": int(_num(b, "games_played")),
+                        "win_rate": round(_num(b, "win_rate"), 2),
+                        "talents": talents,
+                    }
+                )
+        heroes[str(hero)] = out
+    return {"patch": patch, "game_type": game_type, "collected_at": collected_at, "heroes": heroes}
+
+
 def commit_atomic(
     *,
     data_dir: Path,
@@ -251,6 +296,7 @@ def commit_atomic(
     snapshots: dict[str, dict[str, Any]],
     meta: dict[str, Any],
     prev_meta: dict[str, Any] | None,
+    extra_files: dict[str, Any] | None = None,
 ) -> None:
     """Stage everything under tmp_dir, then swap directories in one rename set.
 
@@ -264,6 +310,8 @@ def commit_atomic(
     stage_latest.mkdir(parents=True)
     for key, snap in snapshots.items():
         _write_json(stage_latest / f"{key}.json", snap)
+    for name, obj in (extra_files or {}).items():
+        _write_json(stage_latest / name, obj)
     _write_json(stage_latest / "meta.json", meta)
 
     patch_changed = (

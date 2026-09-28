@@ -11,7 +11,7 @@ async function main(): Promise<void> {
   const grid = document.getElementById("map-grid")!;
   const tpl = document.getElementById("tpl-map") as HTMLTemplateElement;
   document.getElementById("maps-count")!.textContent = `${maps.maps.length}`;
-  document.getElementById("meta-line")!.textContent = `스톰 리그 · 패치 ${sl.patch} · ${sl.matches.toLocaleString("ko-KR")} 매치 · ${sl.collected_at.slice(5, 10).replace("-", "/")} 갱신 · 전장을 누르면 그 전장의 티어표로 갑니다.`;
+  document.getElementById("meta-line")!.textContent = `폭풍 리그 · 패치 ${sl.patch} · ${sl.matches.toLocaleString("ko-KR")} 매치 · ${sl.collected_at.slice(5, 10).replace("-", "/")} 갱신 · 전장을 누르면 그 전장의 티어표로 갑니다.`;
 
   const cards = maps.maps.map((m) => {
     const rows = sl.rows.filter((r) => r.map === m.name);

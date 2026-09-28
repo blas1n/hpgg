@@ -28,6 +28,10 @@ export interface MapTable {
 export const assetUrl = (rel: string): string => base + rel;
 
 export type Mode = "qm" | "sl";
+export type Bracket = "all" | "low" | "mid" | "high";
+export const BRACKET_LABEL: Record<Bracket, string> = { all: "전체 구간", low: "브론즈 – 실버", mid: "골드 – 플래티넘", high: "다이아 – 마스터" };
+/** Snapshot file key for a mode + bracket (brackets exist for Storm League only). */
+export const snapshotKey = (mode: Mode, bracket: Bracket): string => (mode === "sl" && bracket !== "all" ? `sl_${bracket}` : mode);
 export type PatchChoice = "current" | "previous";
 
 const base = import.meta.env.BASE_URL;
@@ -41,8 +45,8 @@ async function getJson<T>(path: string): Promise<T> {
 export const loadMeta = (): Promise<Meta> => getJson<Meta>("latest/meta.json");
 export const loadHeroes = (): Promise<HeroTable> => getJson<HeroTable>("heroes_ko.json");
 export const loadMaps = (): Promise<MapTable> => getJson<MapTable>("maps_ko.json");
-export const loadSnapshot = (mode: Mode, patch: PatchChoice): Promise<Snapshot> =>
-  getJson<Snapshot>(`${patch === "previous" ? "previous" : "latest"}/${mode}.json`);
+export const loadSnapshot = (key: string, patch: PatchChoice): Promise<Snapshot> =>
+  getJson<Snapshot>(`${patch === "previous" ? "previous" : "latest"}/${key}.json`);
 
 /** Right after a patch the current build is thin; fall back to the previous patch for that mode. */
 export function thinSample(meta: Meta, mode: Mode): boolean {
@@ -55,3 +59,25 @@ export function daysSince(isoDate: string, now = new Date()): number {
   const start = new Date(isoDate + "T00:00:00Z").getTime();
   return Math.max(0, Math.floor((now.getTime() - start) / 86_400_000));
 }
+
+export interface BuildTalent {
+  level: number;
+  name: string; // HP talent_name == game nameId
+  title: string; // English
+}
+export interface Build {
+  games: number;
+  win_rate: number;
+  talents: BuildTalent[];
+}
+export interface BuildsFile {
+  patch: string;
+  game_type: string;
+  collected_at: string;
+  heroes: Record<string, Build[]>;
+}
+export interface TalentTable {
+  talents: Record<string, { ko: string; icon: string }>;
+}
+export const loadBuilds = (): Promise<BuildsFile | null> => getJson<BuildsFile>("latest/builds.json").catch(() => null);
+export const loadTalents = (): Promise<TalentTable | null> => getJson<TalentTable>("talents_ko.json").catch(() => null);

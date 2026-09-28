@@ -202,3 +202,19 @@ dd { margin: 0; font-size: 13px; }
 .role-card .rk { font-size: 11px; color: var(--muted); }
 .role-card .rn { font-weight: 700; }
 .role-card .rs { font-size: 12px; color: var(--muted); }
+
+/* ---- popular builds ---- */
+.builds { display: flex; flex-direction: column; gap: 8px; }
+.build { display: grid; grid-template-columns: 1fr 76px; gap: 8px; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 8px; }
+.build-talents { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+.talent { display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 0; }
+.talent img { width: 36px; height: 36px; border-radius: 6px; border: 1px solid var(--line); background: var(--panel-2); }
+.talent .tl { font-size: 10px; color: var(--muted); }
+.talent .tn { font-size: 10px; text-align: center; line-height: 1.15; max-height: 2.3em; overflow: hidden; }
+.build-stats { display: grid; grid-template-columns: 1fr; align-content: center; text-align: right; }
+.build-stats .v { font-size: 18px; font-weight: 800; color: var(--pos); }
+.build.neg .build-stats .v { color: var(--neg); }
+.build-stats .v2 { font-size: 13px; }
+.build-stats .sub { font-size: 10px; color: var(--muted); }
+.build-stats .bar i { background: var(--pick); }
+@media (min-width: 640px) { .talent img { width: 44px; height: 44px; } .talent .tn { font-size: 11px; } }

@@ -51,7 +51,7 @@ async function main(): Promise<void> {
     document.getElementById("mode-qm")!.setAttribute("aria-pressed", String(mode === "qm"));
     document.getElementById("mode-sl")!.setAttribute("aria-pressed", String(mode === "sl"));
     for (const b of rolesEl.querySelectorAll<HTMLButtonElement>(".chip")) b.setAttribute("aria-pressed", String(b.dataset.role === role));
-    document.getElementById("meta-line")!.textContent = `${mode === "qm" ? "빠른 대전" : "스톰 리그"} 티어 · 패치 ${snap.patch} · 이름을 누르면 상세로`;
+    document.getElementById("meta-line")!.textContent = `${mode === "qm" ? "빠른 대전" : "폭풍 리그"} 티어 · 패치 ${snap.patch} · 이름을 누르면 상세로`;
     const qs = new URLSearchParams();
     if (mode !== "qm") qs.set("mode", mode);
     if (role !== "all") qs.set("role", role);

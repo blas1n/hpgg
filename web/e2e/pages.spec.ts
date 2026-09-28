@@ -11,7 +11,7 @@ test("home: role leaders, movers vs previous patch, map cards, mode toggle", asy
   await expect(page.locator("#map-grid .map-card")).toHaveCount(6);
   await page.locator("#mode-sl").click();
   await expect(page).toHaveURL(/mode=sl/);
-  await expect(page.locator("#meta-line")).toContainText("스톰 리그");
+  await expect(page.locator("#meta-line")).toContainText("폭풍 리그");
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
   expect(overflow).toBeLessThanOrEqual(0);
   await expect(page.locator("nav.tabs .tab.active")).toHaveText(/홈/);
@@ -36,7 +36,7 @@ test("hero detail: stats, cross-mode line, per-map bars in SL, brackets, vote", 
   await page.goto("./hero.html?hero=illidan");
   await expect(page.locator("h1")).toHaveText("일리단");
   await expect(page.locator("#stats .stat-card").first()).toContainText("B"); // QM tier from the fixture
-  await expect(page.locator("#stats")).toContainText("스톰 리그에선 A");
+  await expect(page.locator("#stats")).toContainText("폭풍 리그에선 A");
   await page.locator("#mode-sl").click();
   await expect(page).toHaveURL(/mode=sl/);
   await expect(page.locator("#stats .stat-card").first()).toContainText("A");
@@ -67,4 +67,37 @@ test("maps: cards with images, match counts and top heroes; card links to the ma
 test("tier table shows ▲▼ deltas against the previous patch", async ({ page }) => {
   await page.goto("./tier.html");
   await expect(page.locator('tr.hero[data-hero="qhira"] .delta')).toHaveText("–"); // fixture previous == current
+});
+
+test("tier table: Storm League rank-bracket selector loads sl_<bracket>.json and lands in the URL", async ({ page }) => {
+  await page.goto("./tier.html?mode=sl");
+  await expect(page.locator("#bracket-wrap")).toBeVisible();
+  await page.locator("#bracket").selectOption("high");
+  await expect(page).toHaveURL(/tier=high/);
+  await expect(page.locator("#meta-line")).toContainText("다이아 – 마스터");
+  await page.goto("./tier.html?mode=sl&tier=low");
+  await expect(page.locator("#bracket")).toHaveValue("low");
+  await expect(page.locator("#meta-line")).toContainText("브론즈 – 실버");
+  await page.locator("#mode-qm").click();
+  await expect(page.locator("#bracket-wrap")).toBeHidden();
+  await expect(page).not.toHaveURL(/tier=/);
+});
+
+test("hero detail: popular talent builds with Korean names, icons, games and win rate", async ({ page }) => {
+  await page.goto("./hero.html?hero=illidan");
+  await expect(page.locator("#builds-title")).toBeVisible();
+  await expect(page.locator("#builds .build")).toHaveCount(5);
+  const first = page.locator('#builds .build[data-build="1"]');
+  await expect(first.locator(".talent")).toHaveCount(7);
+  await expect(first.locator(".talent .tl").first()).toHaveText("1");
+  await expect(first.locator(".talent .tn").first()).toContainText("끝없는 증오"); // Korean talent name from game strings
+  await expect(first.locator(".build-stats .v")).toContainText("%");
+  const imgs = await first.locator(".talent img").count();
+  expect(imgs).toBeGreaterThan(0);
+  await expect(page.locator("#builds-sub")).toContainText("합산");
+});
+
+test("hero detail: a hero without builds hides the section", async ({ page }) => {
+  await page.goto("./hero.html?hero=xal-atath");
+  await expect(page.locator("#meta-line")).toContainText("그런 영웅이 없습니다"); // not in heroes_ko yet
 });

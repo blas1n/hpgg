@@ -28,7 +28,7 @@ async function main(): Promise<void> {
     const prev = meta.previous_patch ? await loadSnapshot(mode, "previous").catch(() => null) : null;
     const all = snap.rows.filter((r) => r.map === "all");
     const tiers = computeTiers(all, PRESETS.aichi, meta.min_games_for_tier);
-    document.getElementById("meta-line")!.textContent = `${mode === "qm" ? "빠른 대전" : "스톰 리그"} · 패치 ${snap.patch} · ${snap.matches.toLocaleString("ko-KR")} 매치 · ${snap.collected_at.slice(5, 10).replace("-", "/")} 갱신`;
+    document.getElementById("meta-line")!.textContent = `${mode === "qm" ? "빠른 대전" : "폭풍 리그"} · 패치 ${snap.patch} · ${snap.matches.toLocaleString("ko-KR")} 매치 · ${snap.collected_at.slice(5, 10).replace("-", "/")} 갱신`;
 
     // role leaders
     const strip = document.getElementById("role-top")!;
@@ -87,7 +87,7 @@ async function main(): Promise<void> {
       a.className = "map-card";
       a.href = `./tier.html?mode=sl&map=${encodeURIComponent(m.name)}`;
       a.dataset.map = m.slug;
-      a.innerHTML = `<img class="map-img" alt="" loading="lazy" src="${m.image ? assetUrl(m.image) : ""}" /><span class="map-body"><span class="map-name">${m.ko}</span><span class="map-sub">${matches.toLocaleString("ko-KR")} 매치 · 스톰 리그</span></span>`;
+      a.innerHTML = `<img class="map-img" alt="" loading="lazy" src="${m.image ? assetUrl(m.image) : ""}" /><span class="map-body"><span class="map-name">${m.ko}</span><span class="map-sub">${matches.toLocaleString("ko-KR")} 매치 · 폭풍 리그</span></span>`;
       grid.appendChild(a);
     }
   }

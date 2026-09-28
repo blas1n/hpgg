@@ -1,6 +1,6 @@
 import { computeTiers, PRESETS, type Snapshot } from "../formula";
 import { wilson } from "../wilson";
-import { assetUrl, loadHeroes, loadMaps, loadMeta, loadSnapshot, type Meta, type Mode } from "../data";
+import { assetUrl, loadBuilds, loadHeroes, loadMaps, loadMeta, loadSnapshot, loadTalents, type Meta, type Mode } from "../data";
 import { mountFooter, mountNav } from "../lib/nav";
 
 const fmt1 = (n: number) => n.toFixed(1);
@@ -17,7 +17,7 @@ async function main(): Promise<void> {
   const q = new URLSearchParams(location.search);
   const slug = q.get("hero") ?? "";
   let mode: Mode = q.get("mode") === "sl" ? "sl" : "qm";
-  const [meta, heroes, maps] = await Promise.all([loadMeta(), loadHeroes(), loadMaps()]);
+  const [meta, heroes, maps, builds, talents] = await Promise.all([loadMeta(), loadHeroes(), loadMaps(), loadBuilds(), loadTalents()]);
   const info = heroes.heroes.find((h) => h.slug === slug);
   if (!info) {
     document.getElementById("meta-line")!.textContent = "그런 영웅이 없습니다.";
@@ -70,7 +70,7 @@ async function main(): Promise<void> {
     const other = await get(mode === "qm" ? "sl" : "qm");
     const ro = other ? pick(other, "all").r : undefined;
 
-    document.getElementById("meta-line")!.textContent = `${mode === "qm" ? "빠른 대전" : "스톰 리그"} · 패치 ${snap.patch} · ${snap.collected_at.slice(5, 10).replace("-", "/")} 갱신`;
+    document.getElementById("meta-line")!.textContent = `${mode === "qm" ? "빠른 대전" : "폭풍 리그"} · 패치 ${snap.patch} · ${snap.collected_at.slice(5, 10).replace("-", "/")} 갱신`;
     const stats = document.getElementById("stats")!;
     stats.innerHTML = "";
     const card = (k: string, v: string, s: string, cls = "") => {
@@ -86,7 +86,7 @@ async function main(): Promise<void> {
       const [lo, hi] = wilson(r.row.wins, r.row.games);
       card("승률", `${fmt1(r.row.win_rate)}%`, `±${fmt1((hi - lo) / 2)} · ${fmtInt(r.row.games)}게임`);
       card("픽률", `${fmt1(r.row.pick)}%`, mode === "sl" ? `밴률 ${fmt1(r.row.ban_rate)}%` : "빠른 대전은 밴 없음");
-      card("점수", `${r.score >= 0 ? "+" : ""}${r.score.toFixed(0)}`, ro ? `${mode === "qm" ? "스톰 리그" : "빠른 대전"}에선 ${ro.tier} #${ro.rank}` : "");
+      card("점수", `${r.score >= 0 ? "+" : ""}${r.score.toFixed(0)}`, ro ? `${mode === "qm" ? "폭풍 리그" : "빠른 대전"}에선 ${ro.tier} #${ro.rank}` : "");
     } else if (grey) {
       card("티어", "–", `표본 부족 (${fmtInt(grey.games)}게임 < ${meta.min_games_for_tier})`);
       card("승률", `${fmt1(grey.win_rate)}%`, `${fmtInt(grey.games)}게임`);
@@ -112,7 +112,7 @@ async function main(): Promise<void> {
       a.innerHTML = `<img alt="" loading="lazy" src="${m.image ? assetUrl(m.image) : ""}" /><span><span class="lbl">${m.ko}</span> <span class="sub">${fmtInt(row.games)}게임${thin ? " · 표본 부족" : ""}</span><span class="bar"><i style="width:${Math.min(100, (Math.abs(row.win_rate - 50) / span) * 100)}%"></i></span></span><span class="val">${fmt1(row.win_rate)}%<br><span class="sub">픽 ${fmt1(row.pick)}%</span></span>`;
       mapsEl.appendChild(a);
     }
-    document.getElementById("maps-title")!.textContent = mode === "sl" ? "전장별 승률 (스톰 리그)" : "전장별 승률 (빠른 대전)";
+    document.getElementById("maps-title")!.textContent = mode === "sl" ? "전장별 승률 (폭풍 리그)" : "전장별 승률 (빠른 대전)";
 
     // brackets (SL only)
     const bt = document.getElementById("brackets-title")!;
@@ -167,6 +167,43 @@ async function main(): Promise<void> {
     }
   }
   await render();
+  renderBuilds();
+
+  function renderBuilds(): void {
+    const title = document.getElementById("builds-title")!;
+    const box = document.getElementById("builds")!;
+    const list = builds?.heroes[info!.name] ?? [];
+    if (!builds || !list.length) {
+      title.hidden = true;
+      box.hidden = true;
+      return;
+    }
+    title.hidden = false;
+    box.hidden = false;
+    document.getElementById("builds-sub")!.textContent = `빠른 대전 + 폭풍 리그 합산 · 패치 ${builds.patch} · 많이 쓴 순`;
+    box.innerHTML = "";
+    const maxGames = Math.max(...list.map((b) => b.games), 1);
+    list.forEach((b, i) => {
+      const card = document.createElement("div");
+      card.className = "build" + (b.win_rate < 50 ? " neg" : "");
+      card.dataset.build = String(i + 1);
+      const row = document.createElement("div");
+      row.className = "build-talents";
+      for (const t of b.talents) {
+        const meta = talents?.talents[t.name];
+        const cell = document.createElement("span");
+        cell.className = "talent";
+        cell.title = `${t.level}레벨 · ${meta?.ko ?? t.title}`;
+        cell.innerHTML = `${meta?.icon ? `<img alt="" loading="lazy" src="${assetUrl(`img/talents/${meta.icon}`)}" onerror="this.remove()" />` : ""}<span class="tl">${t.level}</span><span class="tn">${meta?.ko ?? t.title}</span>`;
+        row.appendChild(cell);
+      }
+      const stats = document.createElement("div");
+      stats.className = "build-stats";
+      stats.innerHTML = `<span class="v">${fmt1(b.win_rate)}%</span><span class="sub">승률</span><span class="v2">${fmtInt(b.games)}</span><span class="sub">게임</span><span class="bar"><i style="width:${(b.games / maxGames) * 100}%"></i></span>`;
+      card.append(row, stats);
+      box.appendChild(card);
+    });
+  }
 }
 
 main().catch((e: unknown) => {

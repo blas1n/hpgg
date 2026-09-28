@@ -21,9 +21,47 @@ from collector.snapshot import (
     choose_patch,
     commit_atomic,
     load_meta,
+    normalize_builds,
     normalize_by_map,
     snapshot_to_json,
 )
+
+BUILDS_GAME_TYPE = "qm,sl"
+BUILDS_TOTAL = 5
+
+
+def _load_json(path: Path) -> Any:
+    return json.loads(path.read_text(encoding="utf-8")) if path.exists() else None
+
+
+async def _collect_builds(
+    c: HPClient, settings: Settings, *, patch: str, collected_at: str, sleep: SleepFn
+) -> tuple[Any, dict[str, Any]] | None:
+    """One `/heroes/talents/builds/all` call (1 req/min, 7 per week on Basic). Returns None when
+    the weekly allowance is spent — the caller keeps yesterday's builds.json in that case."""
+    await sleep(settings.map_call_spacing_seconds)
+    params = {
+        "timeframe_type": "minor",
+        "timeframe": patch,
+        "game_type": BUILDS_GAME_TYPE,
+        "talentbuildtype": "Popular",
+        "total_builds": str(BUILDS_TOTAL),
+        "mode": "json",
+    }
+    log.info("run.call", key="builds", patch=patch)
+    try:
+        raw = await c.get_json("/heroes/talents/builds/all", params=params)
+    except HPError as e:
+        if e.code in {"quota_exceeded", "rate_limited"} or e.status == 429:
+            log.warning("run.builds_skipped", code=e.code, message=e.message)
+            return None
+        raise
+    builds = normalize_builds(
+        raw, patch=patch, game_type=BUILDS_GAME_TYPE, collected_at=collected_at
+    )
+    log.info("run.normalized", key="builds", heroes=len(builds["heroes"]))
+    return raw, builds
+
 
 log = structlog.get_logger(__name__)
 
@@ -174,6 +212,9 @@ async def run(
         raw_by_key, snapshots = await _collect_all(
             c, settings, patch=patch, collected_at=collected_at, sleep=sleep
         )
+        builds_result = await _collect_builds(
+            c, settings, patch=patch, collected_at=collected_at, sleep=sleep
+        )
     except HPError as e:
         log.error("run.api_failed", status=e.status, code=e.code, message=e.message)
         return 1
@@ -186,13 +227,25 @@ async def run(
 
     prev_meta = load_meta(settings.data_dir)
     meta = build_meta(prev_meta, patch=patch, collected_at=collected_at, snapshots=snapshots)
+    extra: dict[str, Any] = {}
+    if builds_result is not None:
+        extra["builds.json"] = builds_result[1]
+    else:
+        kept = _load_json(settings.data_dir / "latest" / "builds.json")
+        if kept is not None:
+            extra["builds.json"] = kept
     commit_atomic(
         data_dir=settings.data_dir,
         tmp_dir=settings.tmp_dir,
         snapshots=snapshots,
         meta=meta,
         prev_meta=prev_meta,
+        extra_files=extra,
     )
+    if builds_result is not None:
+        day_dir_b = settings.snapshot_out_dir / collected_at[:10]
+        _write_gz(day_dir_b / "raw_builds.json.gz", builds_result[0])
+        _write_gz(day_dir_b / "builds.json.gz", builds_result[1])
     day_dir = settings.snapshot_out_dir / collected_at[:10]
     for key, raw in raw_by_key.items():
         _write_gz(day_dir / f"raw_{key}.json.gz", raw)

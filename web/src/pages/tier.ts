@@ -3,6 +3,7 @@ import { wilson } from "../wilson";
 import { mountFooter, mountNav } from "../lib/nav";
 import {
   assetUrl,
+  BRACKET_LABEL,
   daysSince,
   loadHeroes,
   loadMaps,
@@ -12,6 +13,8 @@ import {
   type HeroInfo,
   type HeroTable,
   type MapTable,
+  snapshotKey,
+  type Bracket,
   type Meta,
   type Mode,
   type PatchChoice,
@@ -27,6 +30,7 @@ type SortKey = "score" | "win_rate" | "pick" | "ban_rate";
 
 interface State {
   mode: Mode;
+  bracket: Bracket; // Storm League rank bracket (sl_low / sl_mid / sl_high files)
   map: string; // "all" or a map name
   role: string; // "all" or a role name
   patch: PatchChoice;
@@ -48,8 +52,10 @@ function readState(): State {
   const q = new URLSearchParams(location.search);
   const mode: Mode = q.get("mode") === "sl" ? "sl" : "qm";
   const sort = q.get("sort") as SortKey | null;
+  const bracket = q.get("tier") as Bracket | null;
   return {
     mode,
+    bracket: mode === "sl" && bracket && ["low", "mid", "high"].includes(bracket) ? bracket : "all",
     map: mode === "sl" ? (q.get("map") ?? "all") : "all",
     role: q.get("role") ?? "all",
     patch: q.get("patch") === "previous" ? "previous" : "current",
@@ -61,6 +67,7 @@ function readState(): State {
 function writeState(s: State): void {
   const q = new URLSearchParams();
   if (s.mode !== "qm") q.set("mode", s.mode);
+  if (s.mode === "sl" && s.bracket !== "all") q.set("tier", s.bracket);
   if (s.mode === "sl" && s.map !== "all") q.set("map", s.map);
   if (s.role !== "all") q.set("role", s.role);
   if (s.patch === "previous") q.set("patch", "previous");
@@ -122,6 +129,11 @@ class App {
   private bind(): void {
     $("#mode-qm").addEventListener("click", () => this.setMode("qm"));
     $("#mode-sl").addEventListener("click", () => this.setMode("sl"));
+    $<HTMLSelectElement>("#bracket").addEventListener("change", (e) => {
+      this.state.bracket = (e.target as HTMLSelectElement).value as Bracket;
+      this.expanded = null;
+      void this.refresh();
+    });
     $<HTMLSelectElement>("#map").addEventListener("change", (e) => {
       this.state.map = (e.target as HTMLSelectElement).value;
       this.expanded = null;
@@ -144,6 +156,7 @@ class App {
     if (this.state.mode === mode) return;
     this.state.mode = mode;
     this.state.map = "all";
+    this.state.bracket = "all";
     this.state.patch = "current";
     this.expanded = null;
     void this.refresh();
@@ -193,12 +206,13 @@ class App {
     } else if (this.state.patch === "previous" && !this.meta.previous_patch) {
       this.state.patch = "current";
     }
-    const key = `${mode}:${this.state.patch}`;
+    const file = snapshotKey(mode, this.state.bracket);
+    const key = `${file}:${this.state.patch}`;
     if (this.loadedKey !== key) {
-      this.snapshot = await loadSnapshot(mode, this.state.patch);
+      this.snapshot = await loadSnapshot(file, this.state.patch);
       this.previous = null;
       if (this.state.patch === "current" && this.meta.previous_patch) {
-        this.previous = await loadSnapshot(mode, "previous").catch(() => null);
+        this.previous = await loadSnapshot(file, "previous").catch(() => null);
       }
       this.loadedKey = key;
     }
@@ -242,7 +256,9 @@ class App {
       b.setAttribute("aria-pressed", String(b.dataset.role === role));
     }
     $("#map-wrap").hidden = mode !== "sl";
+    $("#bracket-wrap").hidden = mode !== "sl";
     $<HTMLSelectElement>("#map").value = map;
+    $<HTMLSelectElement>("#bracket").value = this.state.bracket;
     this.renderBanner();
 
     const hasBans = mode === "sl";
@@ -265,7 +281,8 @@ class App {
 
     const mapKo = map === "all" ? "전체 전장" : (this.maps.maps.find((m) => m.name === map)?.ko ?? map);
     const matches = map === "all" ? snap.matches : Math.round(rows.reduce((a, r) => a + r.games, 0) / 10);
-    $("#meta-line").textContent = `${mode === "qm" ? "빠른 대전" : "스톰 리그"} · ${mapKo} · 패치 ${snap.patch} · ${fmtInt(matches)} 매치 · ${snap.collected_at.slice(5, 10).replace("-", "/")} 갱신`;
+    const bracketKo = mode === "sl" && this.state.bracket !== "all" ? ` · ${BRACKET_LABEL[this.state.bracket]}` : "";
+    $("#meta-line").textContent = `${mode === "qm" ? "빠른 대전" : "폭풍 리그"}${bracketKo} · ${mapKo} · 패치 ${snap.patch} · ${fmtInt(matches)} 매치 · ${snap.collected_at.slice(5, 10).replace("-", "/")} 갱신`;
 
     // sort the ranked rows for display; tier/rank stay from the score order
     const visible = tiers.ranked.filter((x) => this.roleOk(x.row.hero, role));
@@ -321,7 +338,7 @@ class App {
       return;
     }
     box.hidden = false;
-    box.innerHTML = `<img alt="" src="${m.image ? assetUrl(m.image) : ""}" /><div class="map-hero-text"><h1>${m.ko}</h1><span class="muted">${m.name} · 스톰 리그 · 이 전장 표본으로만 계산</span></div>`;
+    box.innerHTML = `<img alt="" src="${m.image ? assetUrl(m.image) : ""}" /><div class="map-hero-text"><h1>${m.ko}</h1><span class="muted">${m.name} · 폭풍 리그 · 이 전장 표본으로만 계산</span></div>`;
   }
 
   private roleOk(hero: string, role: string): boolean {

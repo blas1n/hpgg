@@ -39,6 +39,9 @@ def mock_api(
         return httpx.Response(200, json=raw_by_map)
 
     respx.get(f"{BASE}/heroes/stats").mock(side_effect=stats)
+    respx.get(f"{BASE}/heroes/talents/builds/all").mock(
+        return_value=httpx.Response(200, json={"Nova": []})
+    )
 
 
 @respx.mock
@@ -51,6 +54,7 @@ async def test_run_writes_five_files_meta_and_raw_gz(
     assert code == 0
     latest = s.data_dir / "latest"
     assert sorted(p.name for p in latest.iterdir()) == [
+        "builds.json",
         "meta.json",
         "qm.json",
         "sl.json",
@@ -66,8 +70,10 @@ async def test_run_writes_five_files_meta_and_raw_gz(
     # raw responses kept gzipped for the snapshots branch
     day = s.snapshot_out_dir / "2026-09-28"
     assert sorted(p.name for p in day.iterdir()) == [
+        "builds.json.gz",
         "meta.json",
         "qm.json.gz",
+        "raw_builds.json.gz",
         "raw_qm.json.gz",
         "raw_sl.json.gz",
         "raw_sl_high.json.gz",
@@ -78,8 +84,8 @@ async def test_run_writes_five_files_meta_and_raw_gz(
         "sl_low.json.gz",
         "sl_mid.json.gz",
     ]
-    # 60 s spacing between the five group_by_map calls → 4 waits
-    assert fake_sleep.calls == [60.0] * 4
+    # 60 s spacing between the five group_by_map calls → 4 waits, + 1 before builds/all
+    assert fake_sleep.calls == [60.0] * 5
 
 
 @respx.mock
@@ -226,3 +232,80 @@ async def test_backfill_refuses_the_current_patch_and_needs_latest(
         await run_backfill_previous(s, patch="2.55.17.97771", sleep=fake_sleep, now=lambda: "t")
         == 2
     )
+
+
+def _builds_payload() -> dict[str, Any]:
+    def talent(lvl: int, name: str, title: str) -> dict[str, Any]:
+        return {"talent_id": 1, "title": title, "talent_name": name, "level": lvl, "icon": "i.png"}
+
+    build = {
+        "hero": {"name": "Illidan"},
+        "level_one": talent(1, "IllidanUnendingHatredPassive", "Unending Hatred"),
+        "level_four": talent(4, "IllidanRapidChase", "Rapid Chase"),
+        "level_seven": talent(7, "IllidanReflexiveBlock", "Reflexive Block"),
+        "level_ten": talent(10, "IllidanMetamorphosis", "Metamorphosis"),
+        "level_thirteen": talent(13, "IllidanElusiveStrikes", "Elusive Strikes"),
+        "level_sixteen": talent(16, "IllidanFieryBrand", "Fiery Brand"),
+        "level_twenty": talent(20, "IllidanNexusBlades", "Nexus Blades"),
+        "games_played": 386,
+        "buildData": {},
+        "win_rate": 51.3,
+        "total_filter_type": 0,
+    }
+    return {"Illidan": [build, {**build, "games_played": 120, "win_rate": 48.0}], "Nova": []}
+
+
+@respx.mock
+async def test_run_collects_popular_builds_after_stats(
+    tmp_path: Path, raw_by_map, patches_payload, fake_sleep
+) -> None:
+    mock_api(raw_by_map, patches_payload)
+    route = respx.get(f"{BASE}/heroes/talents/builds/all").mock(
+        return_value=httpx.Response(200, json=_builds_payload())
+    )
+    s = settings(tmp_path)
+    assert await run(s, sleep=fake_sleep, now=lambda: "2026-09-28T00:00:00Z") == 0
+    q = dict(httpx.QueryParams(route.calls[0].request.url.query))
+    assert (q["timeframe"], q["game_type"], q["talentbuildtype"], q["total_builds"]) == (
+        "2.55.17.97771",
+        "qm,sl",
+        "Popular",
+        "5",
+    )
+    b = json.loads((s.data_dir / "latest" / "builds.json").read_text())
+    assert b["patch"] == "2.55.17.97771" and b["game_type"] == "qm,sl"
+    assert [x["games"] for x in b["heroes"]["Illidan"]] == [386, 120]
+    assert b["heroes"]["Illidan"][0]["win_rate"] == 51.3
+    assert [t["level"] for t in b["heroes"]["Illidan"][0]["talents"]] == [1, 4, 7, 10, 13, 16, 20]
+    assert b["heroes"]["Illidan"][0]["talents"][0] == {
+        "level": 1,
+        "name": "IllidanUnendingHatredPassive",
+        "title": "Unending Hatred",
+    }
+    assert b["heroes"]["Nova"] == []
+    assert fake_sleep.calls == [60.0] * 5  # 4 between stats + 1 before builds (1 req/min)
+    assert (s.snapshot_out_dir / "2026-09-28" / "raw_builds.json.gz").exists()
+
+
+@respx.mock
+async def test_builds_quota_exceeded_keeps_yesterdays_file_and_still_succeeds(
+    tmp_path: Path, raw_by_map, patches_payload, fake_sleep
+) -> None:
+    mock_api(raw_by_map, patches_payload)
+    respx.get(f"{BASE}/heroes/talents/builds/all").mock(
+        return_value=httpx.Response(200, json=_builds_payload())
+    )
+    s = settings(tmp_path)
+    assert await run(s, sleep=fake_sleep, now=lambda: "2026-09-28T00:00:00Z") == 0
+    respx.get(f"{BASE}/heroes/talents/builds/all").mock(
+        return_value=httpx.Response(
+            429,
+            json={"error": {"code": "quota_exceeded", "message": "week"}},
+            headers={"Retry-After": "1"},
+        )
+    )
+    assert await run(s, sleep=fake_sleep, now=lambda: "2026-09-29T00:00:00Z") == 0
+    b = json.loads((s.data_dir / "latest" / "builds.json").read_text())
+    assert b["collected_at"] == "2026-09-28T00:00:00Z"  # yesterday's kept
+    meta = json.loads((s.data_dir / "latest" / "meta.json").read_text())
+    assert meta["collected_at"] == "2026-09-29T00:00:00Z"
