@@ -13,6 +13,13 @@ Automated as Playwright specs in `web/e2e/tierlist.spec.ts`, run with `npm run e
 - [x] `?patch=previous` shows the banner and the previous patch's data; `?mode=sl&map=…&role=…` restores the controls
 - [x] No horizontal scroll at 390 px; formula line and "Data provided by Heroes Profile" present
 
+## Automated — pages (`e2e/pages.spec.ts`, 6/6 passed 2026-09-28)
+- [x] Home: 6 role-leader cards, movers vs previous patch, 6 map cards, mode toggle in URL, no horizontal scroll, active tab
+- [x] Heroes: 90 cards with tier badges, search narrows to 일리단, role filter in URL
+- [x] Hero detail: tier/rank card, cross-mode line, SL per-map bars with Korean map names, brackets, one-shot vote; unknown slug shows a message
+- [x] Maps: 15 cards with images/matches/top-3; card → tier.html?mode=sl&map=… with the map banner
+- [x] Tier table ▲▼ deltas against the previous patch
+
 ## Human, against the live site
 - [ ] https://blas1n.github.io/hotsmeta/ loads today's patch and match count in the meta line
 - [ ] Switching to Storm League and picking a map re-tiers within a second on a phone
