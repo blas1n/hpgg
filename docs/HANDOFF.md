@@ -1,6 +1,6 @@
 # HANDOFF — HPGG (hpgg.win)
 
-Last updated 2026-09-28. Read `docs/STATUS.md` first for the current state; this file is how to operate and extend the project.
+Last updated 2026-09-29. Read `docs/STATUS.md` first for the current state; this file is how to operate and extend the project.
 
 ## What this is
 A static Korean-language Heroes of the Storm tier site. A Python collector pulls hero statistics once a day from the Heroes Profile API v1, commits JSON to `main`, and a Next.js static export (React 19 + Tailwind 4, `output: "export"`) renders the site; tiers are computed from the same JSON at build time (홈, search index) and in the browser (tier table, hero detail) with the formula printed on the page. No server, no database, no accounts.
@@ -74,12 +74,12 @@ cd web && npx tsc --noEmit && npm run test:cov && npm run e2e     # 43 vitest (9
 - `.github/workflows/collect-and-deploy.yml` (collect + deploy on main), `.github/workflows/ci.yml` (all gates on every PR)
 - `docs/hp-api-v1-variables.md` accepted parameter values (from the v1 docs)
 
-## UI/UX work (in progress)
+## UI/UX work
 - Direction from the owner: production-site level; main UI follows LoL stat sites (lol.ps first), Overwatch sites only as a reference for maps; brand palette from `docs/BRAND.md` (tokens in `web/src/styles/globals.css`). Tier badge colours stay separate from the brand palette.
 - Copy: never claim the tiers "match your gut feel" (owner, 2026-09-28) — state what the site does. No voting.
 - Korean-first UI, but do not add Korea-only framing: the long-term goal is a global, multi-game community (issue #10 for i18n). Player search and community come later, so keep the header search generic.
 - Loop: `cd web && npm run dev` serves live data at http://localhost:5173/hots/ (dev builds into `.next-dev`, so a build or `npm run e2e` never breaks a running dev server); check phone (390 px) and desktop (1280 px) widths. On a real phone over Tailscale use the Mac's MagicDNS name or put its Tailscale IP in `web/.env.local` as `DEV_ORIGINS=100.x.y.z` (Next 16 blocks other dev origins). A `window.ethereum` error in the dev overlay comes from the Brave wallet, not from the site; `npm run e2e` pins behaviour (selectors are ids/data-attributes, not styles).
-- Next: rebuild the legacy pages in React one PR each (tier table → hero detail → heroes → maps), then #1 light theme, #2 formula presets, #3 desktop density.
+- Next: #12 — rebuild the legacy pages in React one PR each (tier table → hero detail → heroes → maps, with #3 desktop density), then #1 light theme, #2 formula presets. Player search (#8) and community (#7) need a design session first (quota; no backend today) — see STATUS "Next session".
 
 ## Backlog (see GitHub issues)
 UI polish (#1 light theme, #2 formula presets, #3 desktop density), i18n (#10), community/comments (#7), player search (Basic plan gives only 25 player calls/week — needs a plan change or a different design), Xal'atath assets.
