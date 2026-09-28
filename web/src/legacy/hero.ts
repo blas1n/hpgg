@@ -1,5 +1,4 @@
 import { computeTiers, PRESETS, type Snapshot } from "../formula";
-import { wilson } from "../wilson";
 import { assetUrl, BRACKET_LABEL, loadBuilds, loadHeroes, loadMaps, loadMeta, loadSnapshot, loadTalents, type Meta, type Mode } from "../data";
 
 const fmt1 = (n: number) => n.toFixed(1);
@@ -59,7 +58,7 @@ async function main(slug: string): Promise<void> {
     const snap = await get(mode);
     if (!snap) return;
     const prev = meta.previous_patch ? await get(mode, "previous") : null;
-    const { r, grey, n } = pick(snap, "all");
+    const { r, grey } = pick(snap, "all");
     const pr = prev ? pick(prev, "all").r : undefined;
 
     document.getElementById("meta-line")!.textContent = `${mode === "qm" ? "빠른 대전" : "폭풍 리그"} · 패치 ${snap.patch} · ${snap.collected_at.slice(5, 10).replace("-", "/")} 갱신`;
@@ -81,10 +80,10 @@ async function main(slug: string): Promise<void> {
     if (r) {
       // same wording as the tier table: ▲ 3 / ▼ 2 / — 0
       const d = pr ? pr.rank - r.rank : null;
-      const delta = d === null ? (prev ? " · 직전 패치 표본 부족" : "") : ` · ${d === 0 ? "— 0" : d > 0 ? `▲ ${d}` : `▼ ${-d}`} (직전 #${pr!.rank})`;
-      card("티어", `<span class="badge badge-${r.tier}">${r.tier}</span> #${r.rank}`, `${n}명 중${delta}`, "tier");
-      const [lo, hi] = wilson(r.row.wins, r.row.games);
-      card("승률", `${fmt1(r.row.win_rate)}%`, `±${fmt1((hi - lo) / 2)} · ${fmtInt(r.row.games)}게임`, "wr");
+      const delta = d === null ? (prev ? "직전 표본 부족" : "") : d === 0 ? "— 0" : d > 0 ? `▲ ${d}` : `▼ ${-d}`;
+      card("티어", `<span class="badge badge-${r.tier}">${r.tier}</span> #${r.rank}`, delta, "tier");
+      if (pr) stats.lastElementChild!.querySelector<HTMLElement>(".s")!.title = `직전 패치 #${pr.rank}`;
+      card("승률", `${fmt1(r.row.win_rate)}%`, `${fmtInt(r.row.games)}게임`, "wr");
       card("픽률", `${fmt1(r.row.pick)}%`, mode === "sl" ? `밴률 ${fmt1(r.row.ban_rate)}%` : "", "pick");
     } else if (grey) {
       card("티어", "–", `표본 부족 (${fmtInt(grey.games)}게임 < ${meta.min_games_for_tier})`);

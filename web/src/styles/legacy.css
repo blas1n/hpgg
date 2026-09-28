@@ -150,7 +150,7 @@ td.score .v { color: #cfe6ff; font-weight: 700; }
 .stat-card { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 10px 12px; }
 .stat-card .k { font-size: 11px; color: var(--muted); }
 .stat-card .v { font-size: 22px; font-weight: 800; margin: 2px 0; }
-.stat-card .s { font-size: 12px; color: var(--muted); }
+.stat-card .s { font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .rows { display: flex; flex-direction: column; gap: 6px; }
 .rowbar { display: grid; grid-template-columns: 44px 1fr 64px; align-items: center; gap: 8px; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 6px 8px; color: inherit; }
 .rowbar img { width: 44px; height: 26px; object-fit: cover; border-radius: 4px; }

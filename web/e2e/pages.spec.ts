@@ -30,6 +30,12 @@ test("hero detail: three stat cards, per-map rows (not links) in SL, brackets, n
   await expect(cards.first()).toContainText("— 0"); // same rank as the previous patch, written like the table
   await expect(page.locator("#stats")).not.toContainText("점수");
   await expect(page.locator("#stats")).not.toContainText("밴 없음");
+  await expect(page.locator("#stats")).not.toContainText("명 중"); // owner: not what people look at, and it wrapped
+  await expect(page.locator("#stats")).not.toContainText("±");
+  for (const sub of await page.locator("#stats .stat-card .s").all()) {
+    const lh = await sub.evaluate((el) => parseFloat(getComputedStyle(el).lineHeight) || 16);
+    expect((await sub.boundingBox())!.height, "card note fits on one line").toBeLessThanOrEqual(lh * 1.5);
+  }
   await page.locator("#mode-sl").click();
   await expect(page).toHaveURL(/mode=sl/);
   await expect(cards.first()).toContainText("A");
