@@ -408,7 +408,6 @@ class App {
     const banRow = detail.querySelector<HTMLElement>(".ban-row")!;
     if (hasBans) detail.querySelector(".d-ban")!.textContent = `${fmt1(r.ban_rate)}%`;
     else banRow.hidden = true;
-    detail.querySelector(".d-score")!.textContent = x.score.toFixed(1);
     detail.querySelector<HTMLAnchorElement>(".d-link")!.href = hotsHref.hero(slug);
 
     const open = this.expanded === slug;

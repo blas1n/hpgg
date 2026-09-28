@@ -86,6 +86,8 @@ test("detail row links to the hero page and asks for no vote (voting removed 202
   await expect(d).toBeVisible(); // control: the row we inspect is really open
   await expect(d.locator("a.d-link")).toHaveAttribute("href", "/hots/heroes/illidan/");
   await expect(d.locator("button")).toHaveCount(0);
+  await expect(d.locator("dt")).not.toContainText(["점수"]); // the score is internal: table column only
+  await expect(d.locator("dt").first()).toHaveText("순위"); // control: the detail list is rendered
 });
 
 test("an opened row spans exactly the visible columns, so the table keeps its full width on a phone", async ({ page }) => {
