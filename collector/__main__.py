@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import argparse
 import asyncio
 import logging
 import sys
@@ -9,7 +10,7 @@ import sys
 import structlog
 
 from collector.config import Settings
-from collector.run import run
+from collector.run import run, run_backfill_previous
 
 
 def configure_logging(level: str) -> None:
@@ -32,9 +33,18 @@ def configure_logging(level: str) -> None:
     )
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
+    ap = argparse.ArgumentParser(prog="collector", description="hotsmeta daily collector")
+    ap.add_argument(
+        "--previous",
+        metavar="BUILD",
+        help="one-off: collect this older build into data/previous/ (e.g. 2.55.17.97771)",
+    )
+    args = ap.parse_args(argv)
     settings = Settings()  # type: ignore[call-arg]  # hp_api_token comes from env/.env
     configure_logging(settings.log_level)
+    if args.previous:
+        return asyncio.run(run_backfill_previous(settings, patch=args.previous))
     return asyncio.run(run(settings))
 
 

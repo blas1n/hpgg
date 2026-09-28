@@ -164,3 +164,65 @@ def test_main_module_exists() -> None:
     import collector.__main__  # noqa: F401
 
     assert callable(collector.__main__.main)
+
+
+@respx.mock
+async def test_backfill_previous_writes_previous_and_meta_without_touching_latest(
+    tmp_path: Path, raw_by_map, patches_payload, fake_sleep
+) -> None:
+    """`--previous <build>` collects an older build into data/previous/ and records it in meta."""
+    from collector.run import run_backfill_previous
+
+    mock_api(raw_by_map, patches_payload)
+    s = settings(tmp_path)
+    assert await run(s, sleep=fake_sleep, now=lambda: "2026-09-28T00:00:00Z") == 0
+    before = {
+        p.name: p.read_bytes() for p in (s.data_dir / "latest").iterdir() if p.name != "meta.json"
+    }
+    respx.reset()
+
+    def stats(request: httpx.Request) -> httpx.Response:
+        assert dict(httpx.QueryParams(request.url.query))["timeframe"] == "2.55.17.97650"
+        return httpx.Response(200, json=raw_by_map)
+
+    respx.get(f"{BASE}/heroes/stats").mock(side_effect=stats)
+    code = await run_backfill_previous(
+        s, patch="2.55.17.97650", sleep=fake_sleep, now=lambda: "2026-09-28T01:00:00Z"
+    )
+    assert code == 0
+    prev = s.data_dir / "previous"
+    assert sorted(p.name for p in prev.iterdir()) == [
+        "qm.json",
+        "sl.json",
+        "sl_high.json",
+        "sl_low.json",
+        "sl_mid.json",
+    ]
+    assert json.loads((prev / "qm.json").read_text())["patch"] == "2.55.17.97650"
+    meta = json.loads((s.data_dir / "latest" / "meta.json").read_text())
+    assert meta["previous_patch"] == "2.55.17.97650" and meta["current_patch"] == "2.55.17.97771"
+    after = {
+        p.name: p.read_bytes() for p in (s.data_dir / "latest").iterdir() if p.name != "meta.json"
+    }
+    assert after == before  # latest untouched
+
+
+@respx.mock
+async def test_backfill_refuses_the_current_patch_and_needs_latest(
+    tmp_path: Path, raw_by_map, patches_payload, fake_sleep
+) -> None:
+    from collector.run import run_backfill_previous
+
+    s = settings(tmp_path)
+    mock_api(raw_by_map, patches_payload)
+    # no latest yet → refuse
+    assert (
+        await run_backfill_previous(s, patch="2.55.17.97650", sleep=fake_sleep, now=lambda: "t")
+        == 2
+    )
+    assert await run(s, sleep=fake_sleep, now=lambda: "2026-09-28T00:00:00Z") == 0
+    # same build as current → refuse
+    assert (
+        await run_backfill_previous(s, patch="2.55.17.97771", sleep=fake_sleep, now=lambda: "t")
+        == 2
+    )
