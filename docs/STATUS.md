@@ -10,6 +10,6 @@ Start every session here. Handoff notes live in `docs/HANDOFF.md`.
 - Domains hotsmeta.kr / hotsmeta.gg: **not registered yet** (owner).
 
 ## Next
-1. First live full run (dispatch or tonight's cron) → check the per-map path in the run log and the resulting `data/latest/*.json` sizes.
+1. ~~First live full run~~ done (run 36376346599): per-map path works, files 185–230 KB each, win rates match the web within drift. Open observation: bracket match counts overlap (see checklist). Today's quota use: 6 of 70.
 2. `web/`: the tier-list page. `formula.ts` gets vitest cases from the design doc's 13-hero verification table first.
 3. Custom domain on Pages once the domain exists.

@@ -14,6 +14,6 @@ Preconditions: `HP_API_TOKEN` in `~/Works/hotsmeta/.env`. Test Data mode costs n
 ## Live Data mode
 - [x] Real `group_by_map=true` shape recorded from one probe call (1 of 70/week): `{map: {average_*, data: [rows]}}`, rows = `wins, losses, games_played, win_rate, ban_rate, win_rate_change, popularity, pick_rate, influence, confidence_interval, total_filter_type` (no `bans` count → derived from `ban_rate`). Fixture `tests/fixtures/live_probe_qm_2.55.17.98025.json.gz`, unit test `test_live_probe_fixture_normalizes_per_map`
 - [x] A cold query answers 202 and the poll loop finishes with 200 — probe: `hp.job_started` → 2 polls → `hp.job_done` in 24 s
-- [ ] First full live run (dispatch or cron): all five files carry per-map rows and `meta.modes.*.heroes_over_200` is non-zero
-- [ ] `qm.json` `map: "all"` row for Illidan has a `win_rate` within ±0.1 of the Heroes Profile web page (Global/Hero, QM, newest minor patch)
-- [ ] `sl_high.json` (league_tier 5,6) has fewer matches than `sl.json`
+- [x] First full live run (dispatch 36376346599, 2026-09-28): patch 2.55.17.98025, QM 47,789 matches / 16 maps / 1,440 rows, SL 16,980, sl_low 3,362 (63/90 heroes over 200), sl_mid 13,573 (89/90), sl_high 7,308 (85/90); two calls answered 202 and finished after 2 polls each; data committed by the bot and deployed
+- [x] `qm.json` `map: "all"` Illidan win_rate 50.79 vs web 50.70 (+0.09, four hours of drift); pick rates identical to two decimals for all five spot-checked heroes; across all 90 heroes max |Δ| 0.63, mean +0.01 → the Σgames/10 derivation matches the site
+- [x] `sl_high.json` 7,308 < `sl.json` 16,980. Observation: the three brackets sum to 24,243 > 16,980, so a match is counted in every bracket its players belong to (or overall excludes untiered players) — bracket "matches" is a per-bracket slot normaliser, not a partition. Pick/ban rates within a bracket remain correct; do not add bracket matches together
