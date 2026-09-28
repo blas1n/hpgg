@@ -1,0 +1,97 @@
+import { describe, expect, it } from "vitest";
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+import { dirname, join } from "node:path";
+import type { Snapshot } from "../src/formula";
+import type { BuildsFile, MapTable, TalentTable } from "../src/data";
+import { bracketRows, descParts, heroBuilds, heroSummary, mapRows } from "../src/lib/hero";
+
+const dataDir = join(dirname(fileURLToPath(import.meta.url)), "e2e-data");
+const json = <T>(rel: string): T => JSON.parse(readFileSync(join(dataDir, rel), "utf-8")) as T;
+const maps = json<MapTable>("maps_ko.json");
+const qm = json<Snapshot>("latest/qm.json");
+const sl = json<Snapshot>("latest/sl.json");
+const qmPrev = json<Snapshot>("previous/qm.json");
+const builds = json<BuildsFile>("latest/builds.json");
+const talents = json<TalentTable>("talents/illidan.json");
+
+describe("heroSummary", () => {
+  it("ranked hero: tier, rank, win rate, games, pick; delta 0 against an identical previous patch", () => {
+    const s = heroSummary(qm, qmPrev, "Illidan", 200);
+    expect(s.kind).toBe("ranked");
+    if (s.kind !== "ranked") return;
+    expect(s.tier).toBe("B");
+    expect(s.delta).toBe(0);
+    expect(s.prevRank).toBe(s.rank);
+    expect(s.games).toBeGreaterThan(200);
+    expect(s.win_rate).toBeGreaterThan(0);
+  });
+
+  it("uses the mode's own snapshot (Storm League: A)", () => {
+    const s = heroSummary(sl, null, "Illidan", 200);
+    expect(s.kind === "ranked" && s.tier).toBe("A");
+    expect(s.kind === "ranked" && s.delta).toBeNull();
+    expect(s.kind === "ranked" && s.hasPrevious).toBe(false);
+  });
+
+  it("unranked on the previous patch: delta null but hasPrevious true", () => {
+    const prev: Snapshot = { ...qmPrev, rows: qmPrev.rows.filter((r) => r.hero !== "Illidan") };
+    const s = heroSummary(qm, prev, "Illidan", 200);
+    expect(s.kind === "ranked" && s.delta).toBeNull();
+    expect(s.kind === "ranked" && s.hasPrevious).toBe(true);
+  });
+
+  it("below the sample floor: grey with its games; absent: none", () => {
+    const thin: Snapshot = { ...qm, rows: qm.rows.map((r) => (r.hero === "Illidan" && r.map === "all" ? { ...r, games: 120 } : r)) };
+    expect(heroSummary(thin, null, "Illidan", 200)).toMatchObject({ kind: "grey", games: 120 });
+    expect(heroSummary(qm, null, "Nobody", 200)).toEqual({ kind: "none" });
+  });
+});
+
+describe("mapRows", () => {
+  it("real maps only, best win rate first, thin rows flagged", () => {
+    const rows = mapRows(sl, "Illidan", maps, 200);
+    expect(rows.map((r) => r.slug)).toEqual(["cursed-hollow"]); // the SL fixture has one real map
+    expect(rows[0]!.ko).toBe("저주받은 골짜기");
+    expect(rows[0]!.thin).toBe(rows[0]!.games < 200);
+    const two = mapRows({ ...sl, rows: [...sl.rows, { ...sl.rows.find((r) => r.hero === "Illidan" && r.map === "Cursed Hollow")!, map: "Towers of Doom", win_rate: 99 }] }, "Illidan", maps, 200);
+    expect(two[0]!.name).toBe("Towers of Doom");
+  });
+});
+
+describe("bracketRows", () => {
+  it("one row per published bracket with its tier and rank; missing files are skipped", () => {
+    const rows = bracketRows([{ key: "low", snap: sl }, { key: "high", snap: null }], "Illidan", 200);
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toMatchObject({ key: "low", label: "브론즈 – 플래티넘", tier: "A" });
+    expect(rows[0]!.rank).toBeGreaterThan(0);
+  });
+});
+
+describe("heroBuilds", () => {
+  it("joins every build talent with its Korean name, icon and tooltip; English title when the game text is missing", () => {
+    const list = heroBuilds(builds, talents, "Illidan");
+    expect(list).toHaveLength(5);
+    expect(list[0]!.talents).toHaveLength(7);
+    expect(list[0]!.talents[0]).toMatchObject({ level: 1, ko: "끝없는 증오" });
+    expect(list[0]!.talents[0]!.icon).toMatch(/\.png$/);
+    expect(list[0]!.share).toBeCloseTo(list[0]!.games / Math.max(...list.map((b) => b.games)));
+    const bare = heroBuilds(builds, null, "Illidan");
+    expect(bare[0]!.talents[0]!.ko).toBe("Unending Hatred");
+    expect(heroBuilds(builds, talents, "Nobody")).toEqual([]);
+    expect(heroBuilds(null, talents, "Illidan")).toEqual([]);
+  });
+});
+
+describe("descParts", () => {
+  it("splits {{…}} markers into highlighted parts and never keeps the braces", () => {
+    expect(descParts("매초 {{22}}의 피해, {{4}}초")).toEqual([
+      { text: "매초 ", hl: false },
+      { text: "22", hl: true },
+      { text: "의 피해, ", hl: false },
+      { text: "4", hl: true },
+      { text: "초", hl: false },
+    ]);
+    expect(descParts(undefined)).toEqual([{ text: "설명이 아직 없습니다.", hl: false }]);
+  });
+});

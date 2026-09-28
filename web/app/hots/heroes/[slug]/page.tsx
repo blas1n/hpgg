@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { LegacyPage } from "@/legacy/LegacyPage";
-import { HERO_HTML } from "@/legacy/markup";
-import { readHeroes } from "@/server/data";
+import { HeroView, type HeroModeModel } from "@/components/hero/HeroView";
+import type { Mode } from "@/data";
+import { bracketRows, heroBuilds, heroSummary, mapRows } from "@/lib/hero";
+import { readBuilds, readHeroes, readMaps, readMeta, readSnapshot, readTalents } from "@/server/data";
 
 export const dynamicParams = false;
 
@@ -21,8 +22,24 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   };
 }
 
+/** 영웅 상세 — both modes computed at build time; the page fetches nothing. */
 export default async function HeroPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  if (!readHeroes().heroes.some((h) => h.slug === slug)) notFound();
-  return <LegacyPage page="hero" html={HERO_HTML} slug={slug} />;
+  const hero = readHeroes().heroes.find((h) => h.slug === slug);
+  if (!hero) notFound();
+  const meta = readMeta();
+  const maps = readMaps();
+  const min = meta.min_games_for_tier;
+  const model = (mode: Mode): HeroModeModel => {
+    const snap = readSnapshot(mode)!;
+    return {
+      patch: snap.patch,
+      collectedAt: snap.collected_at,
+      summary: heroSummary(snap, meta.previous_patch ? readSnapshot(mode, "previous") : null, hero.name, min),
+      maps: mapRows(snap, hero.name, maps, min),
+      brackets: mode === "sl" ? bracketRows([{ key: "low", snap: readSnapshot("sl_low") }, { key: "high", snap: readSnapshot("sl_high") }], hero.name, min) : [],
+    };
+  };
+  const builds = readBuilds();
+  return <HeroView hero={hero} models={{ qm: model("qm"), sl: model("sl") }} builds={heroBuilds(builds, readTalents(slug), hero.name)} buildsPatch={builds?.patch ?? null} minGames={min} />;
 }

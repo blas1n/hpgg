@@ -3,7 +3,7 @@ import "server-only";
 import { existsSync, readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { computeTiers, PRESETS, type Snapshot } from "../formula";
-import type { HeroTable, MapTable, Meta, Mode } from "../data";
+import type { BuildsFile, HeroTable, MapTable, Meta, Mode, TalentTable } from "../data";
 import type { SearchItem } from "../lib/search";
 
 const dir = resolve(process.cwd(), process.env.DATA_DIR ?? "../data");
@@ -16,6 +16,11 @@ export const readSnapshot = (key: string, patch: "current" | "previous" = "curre
   const rel = `${patch === "previous" ? "previous" : "latest"}/${key}.json`;
   return existsSync(join(dir, rel)) ? read<Snapshot>(rel) : null;
 };
+
+const opt = <T>(rel: string): T | null => (existsSync(join(dir, rel)) ? read<T>(rel) : null);
+let builds: BuildsFile | null | undefined; // 270 KB, read once per build rather than once per hero page
+export const readBuilds = (): BuildsFile | null => (builds === undefined ? (builds = opt<BuildsFile>("latest/builds.json")) : builds);
+export const readTalents = (slug: string): TalentTable | null => opt<TalentTable>(`talents/${slug}.json`);
 
 /** Header search index: every hero, sorted by Korean name, with the current Quick Match tier. */
 export function readSearchIndex(mode: Mode = "qm"): SearchItem[] {
