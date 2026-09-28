@@ -1,21 +1,22 @@
 # STATUS — hotsmeta.kr
 
-Start every session here. Handoff notes live in `docs/HANDOFF.md`.
+Start every session here. Operating guide and architecture: `docs/HANDOFF.md`. Backlog: GitHub issues.
 
-## 2026-09-28
-- Design frozen: `docs/DESIGN-2026-09-28.md` (office-hours session, three adversarial review rounds at 8/10, API v1 measurements folded in).
-- **Collector v1 shipped** (`05d6e0b` and follow-ups): 33 tests, 92% coverage, ruff and mypy clean. E2E checklist `docs/e2e/collector-checklist.md` — all test-mode items verified; the "second run keeps `patch_started_at`" item is covered by a unit test and will be confirmed by the first two cron days.
-- **GitHub**: https://github.com/blas1n/hotsmeta (public). `main` plus the orphan `snapshots` branch, Actions secret `HP_API_TOKEN`, Pages built by Actions. Both workflow paths verified: push → deploy, and dispatch → collect (5 calls) → data commit → snapshots → deploy (run 36374451271). Cron runs daily at 03:20 KST. Site: https://blas1n.github.io/hotsmeta/ (placeholder page + `data/latest`).
-- **Live Data mode is on** (switched by the owner). One live probe call confirmed the real `group_by_map=true` shape: `{map: {average_*, data: [rows]}}`; rows carry `wins, losses, games_played, win_rate, ban_rate, win_rate_change, popularity, pick_rate, influence, confidence_interval, total_filter_type` — no `bans` count, so the collector derives it from `ban_rate` and the map's match count. Fixture: `tests/fixtures/live_probe_qm_2.55.17.98025.json.gz`. A cold query answered 202 and finished after two polls (24 s).
-- **UI v2 (table)** 2026-09-28: op.gg/lol.ps/owtics-style sortable table — tier badge + rank, hero (avatar initial, Korean name, English + role), score / win rate / pick rate / ban rate each with a bar (win-rate bar spans the view's min–max so it does not read as a win-rate ranking), role chips scroll horizontally, expandable detail row with Wilson CI and votes. Reference screenshots and a Stitch mockup are in `~/.playwright-mcp/` (not committed). 9 Playwright specs.
-- **v5 (lol.ps skin)** 2026-09-28: owner asked for the main UI to follow LoL stat sites (lol.ps first) with Overwatch sites only as a reference for maps. Navy theme, sticky top bar with primary nav (bottom tabs removed), title band + meta line, filter card (pills left, selects right), tier table as plain numbers with rank + ▲▼ change pill and a tier badge on the portrait, 표본수 column (desktop), hero page with badge on the portrait and a section sub-nav. Reference captures (desktop + phone) in `~/.playwright-mcp/ref-lolps-*.png`.
-- **v4** 2026-09-28: official mode name 폭풍 리그; Storm League rank-bracket selector on the tier page (data already collected daily); **popular talent builds** on hero pages from `/heroes/talents/builds/all` (one call/day, `heroes_talents_builds_all` allowance is **7/week** on Basic — the collector keeps yesterday's `builds.json` on quota_exceeded). Talent Korean names + icons via `tools/build_assets.py` (HeroesToolChest game strings/images). Note: builds/all lists a 91st hero, Xal'atath, that the stats endpoint and our hero table do not have yet — rerun the asset tool against a newer heroes-data build when it lands.
-- **Site v3 (five pages)** 2026-09-28: `index.html` 홈 (role leaders, movers vs previous patch, map cards) · `tier.html` 티어표 (map banner, ▲▼ deltas, link to detail) · `heroes.html` grid with tier badges/search/role · `hero.html` detail (stat cards, cross-mode line, per-map win-rate bars with map thumbnails, SL brackets, vote) · `maps.html` cards (image, matches, top-3). Bottom tab nav on phones. 15 Playwright specs + 26 vitest. Assets: official Korean names from game strings, draft portraits (96 px) and map previews (480 px JPEG) from HeroesToolChest (MIT), attributed in the footer.
-- **Previous-patch data**: `python -m collector --previous 2.55.17.97771` backfilled `data/previous/` (5 calls), so "메타 변동" and ▲▼ work from day one. On the next natural patch change the collector rotates latest → previous automatically. Quota used today: Heroes/Stats 16 of 70, builds/all 1 of 7 (probe) + 1/day from tonight.
-- **Tier-list page live** at https://blas1n.github.io/hotsmeta/ (deploy run 36380809842). GoatCounter site code not configured yet — votes are stored locally only until `VITE_GOATCOUNTER`/script is added. Korean hero names in `data/heroes_ko.json` were written from memory and need an owner pass.
-- Domains hotsmeta.kr / hotsmeta.gg: **not registered yet** (owner).
+## State on 2026-09-28 (core features complete)
+- **Live**: https://blas1n.github.io/hotsmeta/ — 홈 (role leaders, movers vs previous patch, map cards) · 영웅 티어 (QM/SL, SL rank brackets, per-map, ▲▼ vs previous patch, sortable) · 영웅 (grid, search, roles) · 영웅 상세 (tier/rank, cross-mode line, per-map win rates, brackets, popular talent builds with Korean names and icons, votes) · 전장 (cards → per-map tier table).
+- **Pipeline**: daily cron collects 5 stats calls + 1 builds call, commits to `main`, archives to `snapshots`, deploys Pages. Verified end to end in Actions (test mode and live). Previous patch 2.55.17.97771 backfilled so deltas work from day one.
+- **Data/localisation**: official Korean names from game strings; portraits, map previews and talent icons from HeroesToolChest (MIT), attributed in the footer.
+- **Design**: v5 lol.ps-style navy skin (owner direction: LoL sites for the main UI, Overwatch sites only for maps).
+- **Quality**: pytest 40 (90 % cov), vitest 26, Playwright 18; ruff/mypy/tsc clean.
+- **Quota today**: Heroes/Stats 16/70, builds/all 1/7 (+1 tonight).
 
-## Next
-1. ~~First live full run~~ done (run 36376346599): per-map path works, files 185–230 KB each, win rates match the web within drift. Open observation: bracket match counts overlap (see checklist). Today's quota use: 6 of 70.
-2. ~~`web/` tier-list page~~ built 2026-09-28: 26 vitest cases (13-hero table, presets 45/31 moves, monotonic cuts, Wilson) and 7 Playwright specs all green; live-data preview checked visually. Deployed by the same workflow.
-3. GoatCounter account + script tag (then the 👍👎 events flow), custom domain on Pages once it exists, first post to Inven/Arca with a screenshot. Korean names are now official (game strings) — no owner review needed.
+## Owner actions still open
+1. Register hotsmeta.kr (and .gg) and attach the custom domain to Pages (then set Vite `base` to `/`). Issue #5.
+2. Create a GoatCounter site and add its script tag — until then 👍👎 votes stay in each visitor's browser. Issue #4.
+3. First community post (Inven / Arca) with a screenshot; watch day-7 uniques vs day-1 (success criterion in the design doc).
+
+## Next work
+Issues #1–#9: UI polish (light theme, formula presets, desktop density), GoatCounter, custom domain, Xal'atath assets, community, player search (quota-constrained), map detail.
+
+## History
+- 2026-09-28: design (office-hours) → collector → repo/Actions/Pages → live data → five pages → table UI → official names + images → 폭풍 리그 naming, brackets, talent builds → lol.ps skin → handoff. Full detail in `git log` and `docs/DESIGN-2026-09-28.md` ("As built").

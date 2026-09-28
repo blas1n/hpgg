@@ -1,6 +1,6 @@
 # hotsmeta.kr
 
-A Korean-language Heroes of the Storm tier list that matches how the game actually feels: Quick Match first, Storm League per map and per rank bracket, and the formula printed on the page. Data comes from the Heroes Profile API v1 once a day and is served as a static site. Design: `docs/DESIGN-2026-09-28.md`.
+A Korean-language Heroes of the Storm tier list that matches how the game actually feels: Quick Match first, Storm League per map and per rank bracket, and the formula printed on the page. Data comes from the Heroes Profile API v1 once a day and is served as a static site. Design: `docs/DESIGN-2026-09-28.md`. Current state: `docs/STATUS.md`. How to operate and extend: `docs/HANDOFF.md`.
 
 ## Layout
 - `collector/` — Python 3.11+ collector. `uv run python -m collector` makes the five daily calls (Quick Match, Storm League overall, Storm League league_tier 1-2 / 3-4 / 5-6, all with `group_by_map=true`) 60 seconds apart and **atomically** replaces `data/latest/{qm,sl,sl_low,sl_mid,sl_high,meta}.json`. Raw responses are kept as `data/.snapshot_out/<date>/*.json.gz` and archived on the `snapshots` branch.
