@@ -1,0 +1,6 @@
+{"patches":[
+ {"id":264,"season":33,"game_version":"2.55.17.97771","major":2,"minor":55,"patch":17,"build":97771,"date_added":"2026-08-12T14:32:30.000000Z","valid_globals":true,"patch_notes_url":null},
+ {"id":265,"season":33,"game_version":"2.55.17.98025","major":2,"minor":55,"patch":17,"build":98025,"date_added":"2026-09-10T10:00:00.000000Z","valid_globals":false,"patch_notes_url":null},
+ {"id":263,"season":33,"game_version":"2.55.17.97650","major":2,"minor":55,"patch":17,"build":97650,"date_added":"2026-07-24T13:39:29.000000Z","valid_globals":true,"patch_notes_url":null},
+ {"id":200,"season":30,"game_version":"2.55.9.90000","major":2,"minor":55,"patch":9,"build":90000,"date_added":"2025-01-01T00:00:00.000000Z","valid_globals":true,"patch_notes_url":null}
+]}

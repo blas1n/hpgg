@@ -1,0 +1,97 @@
+name: collect-and-deploy
+
+on:
+  schedule:
+    - cron: "20 18 * * *" # 03:20 KST daily
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+concurrency:
+  group: collect-and-deploy
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+  issues: write
+
+jobs:
+  collect:
+    # cron / manual only — a push just rebuilds and deploys what is already in data/
+    if: github.event_name != 'push'
+    runs-on: ubuntu-latest
+    outputs:
+      day: ${{ steps.run.outputs.day }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - uses: astral-sh/setup-uv@v5
+      - run: uv sync --frozen --no-dev
+      - name: Collect (5 calls, ~5 min because group_by_map is 1 req/min)
+        id: run
+        env:
+          HP_API_TOKEN: ${{ secrets.HP_API_TOKEN }}
+        run: |
+          uv run python -m collector
+          echo "day=$(date -u +%F)" >> "$GITHUB_OUTPUT"
+      - name: Commit data/latest (+ previous) to main
+        run: |
+          git config user.name "hotsmeta-bot"
+          git config user.email "bot@hotsmeta.kr"
+          git add data/latest data/previous 2>/dev/null || git add data/latest
+          git commit -m "data: $(date -u +%F) $(python3 -c 'import json;print(json.load(open("data/latest/meta.json"))["current_patch"])')" || echo "nothing to commit"
+          git pull --rebase --autostash origin main
+          git push origin main
+      - name: Archive raw + normalised snapshots to the orphan `snapshots` branch
+        run: |
+          set -e
+          DAY="${{ steps.run.outputs.day }}"
+          git fetch origin snapshots:snapshots || { echo "create the orphan branch once: git checkout --orphan snapshots && git commit --allow-empty -m init && git push origin snapshots"; exit 1; }
+          git worktree add ../snap snapshots
+          mkdir -p "../snap/snapshots/$DAY"
+          cp -r "data/.snapshot_out/$DAY/." "../snap/snapshots/$DAY/"
+          cd ../snap && git add snapshots && git commit -m "snapshot $DAY" && git push origin snapshots
+      - name: Open an issue when the collector fails
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.create({
+              owner: context.repo.owner, repo: context.repo.repo,
+              title: `collector failed ${new Date().toISOString().slice(0,10)}`,
+              body: `Run: ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`,
+              labels: ["collector"],
+            });
+
+  deploy:
+    needs: [collect]
+    # run after a successful collect, or on push (collect is skipped then)
+    if: always() && (needs.collect.result == 'success' || needs.collect.result == 'skipped')
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Build web (skipped until web/ exists)
+        run: |
+          if [ -f web/package.json ]; then
+            cd web && npm ci && npm run build
+          else
+            echo "web/ not present yet — publishing data/ only"
+            mkdir -p web/dist && cp -r data web/dist/
+          fi
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: web/dist
+      - id: deployment
+        uses: actions/deploy-pages@v4

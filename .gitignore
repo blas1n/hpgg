@@ -1,0 +1,14 @@
+.env
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+htmlcov/
+.coverage
+data/.tmp/
+data/.snapshot_out/
+web/node_modules/
+web/dist/
+data/.e2e_*.log
