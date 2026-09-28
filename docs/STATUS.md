@@ -6,7 +6,7 @@
 - 설계 확정: `docs/DESIGN-2026-09-28.md` (office-hours, 적대 리뷰 3회 8/10, API v1 실측 반영).
 - **collector 1차 완료** (`05d6e0b`): 31 tests, 92% cov, ruff·mypy clean. E2E 체크리스트 `docs/e2e/collector-checklist.md` — 테스트 모드 6/7 확인, 연속 실행(patch_started_at 유지)은 Actions 첫 cron 이틀치로 확인.
 - HP API 계정: Basic $5, **Data mode = Test Data**(무과금, group_by_map 무시된 flat 5영웅 응답). Live 전환은 형님이 결정.
-- **GitHub: https://github.com/blas1n/hotsmeta (public)** — main + orphan `snapshots` 푸시됨, Actions secret `HP_API_TOKEN` 설정, Pages = GitHub Actions 빌드. 첫 push 워크플로 결과는 아래 "다음 1" 에서 확인.
+- **GitHub: https://github.com/blas1n/hotsmeta (public)** — main + orphan `snapshots` 푸시됨, Actions secret `HP_API_TOKEN` 설정, Pages = GitHub Actions 빌드. push→deploy 경로 검증됨: https://blas1n.github.io/hotsmeta/ (플레이스홀더, HTTP 200).
 - 도메인 hotsmeta.kr / .gg: **아직 미등록**(형님 직접).
 
 ## 다음
