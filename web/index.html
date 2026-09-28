@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="ko" data-theme="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>히오스 티어표 | hotsmeta.kr</title>
+    <meta name="description" content="체감과 맞는 히어로즈 오브 더 스톰 티어표. 빠른 대전 기본, 스톰 리그는 맵별. 공식 공개." />
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Crect width=%2732%27 height=%2732%27 rx=%276%27 fill=%27%23ff6b6b%27/%3E%3Ctext x=%2716%27 y=%2723%27 font-size=%2720%27 font-weight=%27800%27 text-anchor=%27middle%27 fill=%27%231a0000%27 font-family=%27system-ui%27%3ES%3C/text%3E%3C/svg%3E" />
+    <link rel="stylesheet" href="./src/style.css" />
+  </head>
+  <body>
+    <header class="top">
+      <h1>히오스 티어표</h1>
+      <p class="meta" id="meta-line">불러오는 중…</p>
+    </header>
+
+    <div id="patch-banner" class="banner" hidden></div>
+
+    <section class="controls" aria-label="필터">
+      <div class="seg" role="group" aria-label="게임 모드">
+        <button type="button" id="mode-qm" class="seg-btn" aria-pressed="true">빠른 대전</button>
+        <button type="button" id="mode-sl" class="seg-btn" aria-pressed="false">스톰 리그</button>
+      </div>
+      <div class="chips" id="roles" role="group" aria-label="역할"></div>
+      <label class="map-wrap" id="map-wrap" hidden>
+        <span class="visually-hidden">전장</span>
+        <select id="map"></select>
+      </label>
+    </section>
+
+    <main id="tiers" aria-live="polite"></main>
+
+    <section class="grey-wrap" id="grey-wrap" hidden>
+      <h2>표본 부족 <span class="muted">(200게임 미만, 티어 없음)</span></h2>
+      <div class="chips" id="grey"></div>
+    </section>
+
+    <footer class="foot">
+      <p id="formula" class="formula"></p>
+      <details class="more">
+        <summary>자세히</summary>
+        <div id="formula-detail"></div>
+      </details>
+      <p class="muted">Data provided by <a href="https://www.heroesprofile.com/" rel="noopener">Heroes Profile</a>. 매일 갱신. 티어 옆 👍👎 로 체감과 맞는지 알려 주세요.</p>
+    </footer>
+
+    <template id="tpl-hero">
+      <details class="hero">
+        <summary>
+          <span class="name"></span><span class="en"></span>
+          <span class="stat wr"></span>
+        </summary>
+        <div class="detail">
+          <dl>
+            <div><dt>순위</dt><dd class="rank"></dd></div>
+            <div><dt>승률</dt><dd class="wr-ci"></dd></div>
+            <div><dt>픽률</dt><dd class="pick"></dd></div>
+            <div class="ban-row"><dt>밴률</dt><dd class="ban"></dd></div>
+            <div><dt>표본</dt><dd class="games"></dd></div>
+            <div><dt>점수</dt><dd class="score"></dd></div>
+          </dl>
+          <div class="vote">
+            <span>체감과 맞나요?</span>
+            <button type="button" class="vote-btn" data-vote="up" aria-label="맞다">👍</button>
+            <button type="button" class="vote-btn" data-vote="down" aria-label="아니다">👎</button>
+          </div>
+        </div>
+      </details>
+    </template>
+
+    <script type="module" src="./src/main.ts"></script>
+  </body>
+</html>

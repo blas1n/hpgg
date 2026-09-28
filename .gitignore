@@ -12,3 +12,6 @@ data/.snapshot_out/
 web/node_modules/
 web/dist/
 data/.e2e_*.log
+web/dist-e2e/
+web/playwright-report/
+web/test-results/

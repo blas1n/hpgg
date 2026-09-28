@@ -11,5 +11,5 @@ Start every session here. Handoff notes live in `docs/HANDOFF.md`.
 
 ## Next
 1. ~~First live full run~~ done (run 36376346599): per-map path works, files 185–230 KB each, win rates match the web within drift. Open observation: bracket match counts overlap (see checklist). Today's quota use: 6 of 70.
-2. `web/`: the tier-list page. `formula.ts` gets vitest cases from the design doc's 13-hero verification table first.
+2. ~~`web/` tier-list page~~ built 2026-09-28: 26 vitest cases (13-hero table, presets 45/31 moves, monotonic cuts, Wilson) and 7 Playwright specs all green; live-data preview checked visually. Deployed by the same workflow.
 3. Custom domain on Pages once the domain exists.
