@@ -19,21 +19,20 @@ from collector.snapshot import (
 from tests.conftest import FIXTURES
 
 
-def test_specs_are_the_five_daily_calls() -> None:
+def test_specs_are_the_four_daily_calls() -> None:
     keys = [s.key for s in SPECS]
-    assert keys == ["qm", "sl", "sl_low", "sl_mid", "sl_high"]
+    assert keys == ["qm", "sl", "sl_low", "sl_high"]
     by = {s.key: s for s in SPECS}
     assert by["qm"].game_type == "qm" and by["qm"].league_tier is None
     assert by["sl"].game_type == "sl" and by["sl"].league_tier is None
-    # 브실골 / 플다 / 마그마 — HP has no grandmaster id; grandmasters are inside master (6)
-    assert by["sl_low"].league_tier == (1, 2, 3)
-    assert by["sl_mid"].league_tier == (4, 5)
-    assert by["sl_high"].league_tier == (6,)
+    # two brackets while the player base is small: 브실골플 / 다마그 (HP has no grandmaster id;
+    # grandmasters are inside master, 6)
+    assert by["sl_low"].league_tier == (1, 2, 3, 4)
+    assert by["sl_high"].league_tier == (5, 6)
     assert {s.filename for s in SPECS} == {
         "qm.json",
         "sl.json",
         "sl_low.json",
-        "sl_mid.json",
         "sl_high.json",
     }
 

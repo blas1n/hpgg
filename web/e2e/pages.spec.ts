@@ -21,25 +21,24 @@ test("heroes: grid of 90 with tier badges, search and role filter", async ({ pag
   expect(n).toBeLessThan(90);
 });
 
-test("hero detail: stats, other-mode card, per-map rows (not links) in SL, brackets, no vote", async ({ page }) => {
+test("hero detail: three stat cards, per-map rows (not links) in SL, brackets, no vote", async ({ page }) => {
   await page.goto("./heroes/illidan/");
   await expect(page.locator("h1")).toHaveText("일리단");
   const cards = page.locator("#stats .stat-card");
-  await expect(cards).toHaveCount(4);
+  await expect(cards).toHaveCount(3); // tier, win rate, pick — no other-mode card (owner: confusing)
   await expect(cards.first()).toContainText("B"); // QM tier from the fixture
   await expect(cards.first()).toContainText("— 0"); // same rank as the previous patch, written like the table
   await expect(page.locator("#stats")).not.toContainText("점수");
   await expect(page.locator("#stats")).not.toContainText("밴 없음");
-  await expect(page.locator('#stats .stat-card[data-k="other"]')).toContainText("폭풍 리그");
-  await expect(page.locator('#stats .stat-card[data-k="other"]')).toContainText("A");
   await page.locator("#mode-sl").click();
   await expect(page).toHaveURL(/mode=sl/);
   await expect(cards.first()).toContainText("A");
-  await expect(page.locator('#stats .stat-card[data-k="other"]')).toContainText("빠른 대전");
+  await expect(cards).toHaveCount(3);
   await expect(page.locator("#maps .rowbar")).toHaveCount(1); // fixture SL has one real map (Cursed Hollow)
   await expect(page.locator('#maps .rowbar[data-map="cursed-hollow"]')).toContainText("저주받은 골짜기");
   await expect(page.locator("#maps a")).toHaveCount(0); // map rows do not navigate
   await expect(page.locator("#brackets")).toBeVisible();
+  await expect(page.locator("#brackets .rowbar")).toHaveCount(2); // 브실골플 / 다마그
   await expect(page.locator("main button:not([id^=mode-])")).toHaveCount(0); // only the mode toggle is a button
 });
 
@@ -88,12 +87,13 @@ test("tier table shows ▲▼ deltas against the previous patch", async ({ page 
 test("tier table: Storm League rank-bracket selector loads sl_<bracket>.json and lands in the URL", async ({ page }) => {
   await page.goto("./tier/?mode=sl");
   await expect(page.locator("#bracket-wrap")).toBeVisible();
+  await expect(page.locator("#bracket option")).toHaveText(["전체 구간", "브론즈 – 플래티넘", "다이아 – 그랜드마스터"]);
   await page.locator("#bracket").selectOption("high");
   await expect(page).toHaveURL(/tier=high/);
-  await expect(page.locator("#meta-line")).toContainText("마스터 – 그랜드마스터");
+  await expect(page.locator("#meta-line")).toContainText("다이아 – 그랜드마스터");
   await page.goto("./tier/?mode=sl&tier=low");
   await expect(page.locator("#bracket")).toHaveValue("low");
-  await expect(page.locator("#meta-line")).toContainText("브론즈 – 골드");
+  await expect(page.locator("#meta-line")).toContainText("브론즈 – 플래티넘");
   await page.locator("#mode-qm").click();
   await expect(page.locator("#bracket-wrap")).toBeHidden();
   await expect(page).not.toHaveURL(/tier=/);

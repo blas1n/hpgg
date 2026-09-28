@@ -145,8 +145,8 @@ td.score .v { color: #cfe6ff; font-weight: 700; }
 .subnav a { padding: 8px 12px; color: var(--muted); font-weight: 600; white-space: nowrap; border-bottom: 2px solid transparent; }
 .subnav a.active { color: #fff; border-bottom-color: #fff; }
 .subnav a:hover { color: #fff; }
-.stat-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin: 10px 0; }
-@media (min-width: 640px) { .stat-grid { grid-template-columns: repeat(4, 1fr); } }
+.stat-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin: 10px 0; }
+@media (max-width: 639px) { .stat-card .v { font-size: 19px; } .stat-card .s { font-size: 11px; } }
 .stat-card { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 10px 12px; }
 .stat-card .k { font-size: 11px; color: var(--muted); }
 .stat-card .v { font-size: 22px; font-weight: 800; margin: 2px 0; }

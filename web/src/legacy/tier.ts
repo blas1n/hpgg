@@ -25,7 +25,7 @@ type SortKey = "score" | "win_rate" | "pick" | "ban_rate" | "games";
 
 interface State {
   mode: Mode;
-  bracket: Bracket; // Storm League rank bracket (sl_low / sl_mid / sl_high files)
+  bracket: Bracket; // Storm League rank bracket (sl_low / sl_high files)
   map: string; // "all" or a map name
   role: string; // "all" or a role name
   patch: PatchChoice;
@@ -50,7 +50,7 @@ function readState(): State {
   const bracket = q.get("tier") as Bracket | null;
   return {
     mode,
-    bracket: mode === "sl" && bracket && ["low", "mid", "high"].includes(bracket) ? bracket : "all",
+    bracket: mode === "sl" && bracket && ["low", "high"].includes(bracket) ? bracket : "all",
     map: mode === "sl" ? (q.get("map") ?? "all") : "all",
     role: q.get("role") ?? "all",
     patch: q.get("patch") === "previous" ? "previous" : "current",

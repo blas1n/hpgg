@@ -14,15 +14,14 @@ from collector.models import HeroStat, JobSpec, ModeSnapshot
 
 log = structlog.get_logger(__name__)
 
-# The five daily calls (design doc, 2026-09-28). league_tier ids: 1 bronze … 6 master; HP has
-# no grandmaster id, so grandmasters are counted inside master.
-# Brackets follow the usual 브실골 / 플다 / 마그마.
+# The four daily calls. league_tier ids: 1 bronze … 6 master; HP has no grandmaster id, so
+# grandmasters are counted inside master. Two brackets while the player base is small
+# (브실골플 / 다마그, owner 2026-09-29); split further when samples allow.
 SPECS: tuple[JobSpec, ...] = (
     JobSpec("qm", "qm", None, "qm.json"),
     JobSpec("sl", "sl", None, "sl.json"),
-    JobSpec("sl_low", "sl", (1, 2, 3), "sl_low.json"),
-    JobSpec("sl_mid", "sl", (4, 5), "sl_mid.json"),
-    JobSpec("sl_high", "sl", (6,), "sl_high.json"),
+    JobSpec("sl_low", "sl", (1, 2, 3, 4), "sl_low.json"),
+    JobSpec("sl_high", "sl", (5, 6), "sl_high.json"),
 )
 
 MIN_GAMES_FOR_TIER = 200

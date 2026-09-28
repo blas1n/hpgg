@@ -6,7 +6,6 @@ const fmt1 = (n: number) => n.toFixed(1);
 const fmtInt = (n: number) => n.toLocaleString("ko-KR");
 const BRACKETS: { key: string; label: string }[] = [
   { key: "sl_low", label: BRACKET_LABEL.low },
-  { key: "sl_mid", label: BRACKET_LABEL.mid },
   { key: "sl_high", label: BRACKET_LABEL.high },
 ];
 
@@ -62,8 +61,6 @@ async function main(slug: string): Promise<void> {
     const prev = meta.previous_patch ? await get(mode, "previous") : null;
     const { r, grey, n } = pick(snap, "all");
     const pr = prev ? pick(prev, "all").r : undefined;
-    const other = await get(mode === "qm" ? "sl" : "qm");
-    const ro = other ? pick(other, "all").r : undefined;
 
     document.getElementById("meta-line")!.textContent = `${mode === "qm" ? "빠른 대전" : "폭풍 리그"} · 패치 ${snap.patch} · ${snap.collected_at.slice(5, 10).replace("-", "/")} 갱신`;
     const stats = document.getElementById("stats")!;
@@ -89,8 +86,6 @@ async function main(slug: string): Promise<void> {
       const [lo, hi] = wilson(r.row.wins, r.row.games);
       card("승률", `${fmt1(r.row.win_rate)}%`, `±${fmt1((hi - lo) / 2)} · ${fmtInt(r.row.games)}게임`, "wr");
       card("픽률", `${fmt1(r.row.pick)}%`, mode === "sl" ? `밴률 ${fmt1(r.row.ban_rate)}%` : "", "pick");
-      const otherLabel = mode === "qm" ? "폭풍 리그" : "빠른 대전";
-      card(otherLabel, ro ? `<span class="badge badge-${ro.tier}">${ro.tier}</span> #${ro.rank}` : "–", ro ? "" : "표본 부족", "other");
     } else if (grey) {
       card("티어", "–", `표본 부족 (${fmtInt(grey.games)}게임 < ${meta.min_games_for_tier})`);
       card("승률", `${fmt1(grey.win_rate)}%`, `${fmtInt(grey.games)}게임`);
