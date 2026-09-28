@@ -13,5 +13,8 @@ export default function config(phase: string): NextConfig {
     distDir: phase === PHASE_DEVELOPMENT_SERVER ? ".next-dev" : (process.env.NEXT_DIST_DIR ?? "dist"),
     images: { unoptimized: true },
     reactStrictMode: true,
+    // Dev server reached from a phone over Tailscale (MagicDNS names, or IPs listed in DEV_ORIGINS in
+    // web/.env.local). Next 16 refuses cross-origin dev resources and the HMR socket otherwise.
+    allowedDevOrigins: ["*.ts.net", ...(process.env.DEV_ORIGINS?.split(",").filter(Boolean) ?? [])],
   };
 }

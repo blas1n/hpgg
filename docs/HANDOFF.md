@@ -78,7 +78,7 @@ cd web && npx tsc --noEmit && npm run test:cov && npm run e2e     # 43 vitest (9
 - Direction from the owner: production-site level; main UI follows LoL stat sites (lol.ps first), Overwatch sites only as a reference for maps; brand palette from `docs/BRAND.md` (tokens in `web/src/styles/globals.css`). Tier badge colours stay separate from the brand palette.
 - Copy: never claim the tiers "match your gut feel" (owner, 2026-09-28) — state what the site does. No voting.
 - Korean-first UI, but do not add Korea-only framing: the long-term goal is a global, multi-game community (issue #10 for i18n). Player search and community come later, so keep the header search generic.
-- Loop: `cd web && npm run dev` serves live data at http://localhost:5173/hots/ ; check phone (390 px) and desktop (1280 px) widths; `npm run e2e` pins behaviour (selectors are ids/data-attributes, not styles).
+- Loop: `cd web && npm run dev` serves live data at http://localhost:5173/hots/ (dev builds into `.next-dev`, so a build or `npm run e2e` never breaks a running dev server); check phone (390 px) and desktop (1280 px) widths. On a real phone over Tailscale use the Mac's MagicDNS name or put its Tailscale IP in `web/.env.local` as `DEV_ORIGINS=100.x.y.z` (Next 16 blocks other dev origins). A `window.ethereum` error in the dev overlay comes from the Brave wallet, not from the site; `npm run e2e` pins behaviour (selectors are ids/data-attributes, not styles).
 - Next: rebuild the legacy pages in React one PR each (tier table → hero detail → heroes → maps), then #1 light theme, #2 formula presets, #3 desktop density.
 
 ## Backlog (see GitHub issues)
