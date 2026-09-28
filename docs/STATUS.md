@@ -10,6 +10,6 @@
 - 도메인 hotsmeta.kr / .gg: **아직 미등록**(형님 직접).
 
 ## 다음
-1. ~~레포·secret·snapshots·Pages~~ 완료. 워크플로 `.github/workflows/collect-and-deploy.yml` 은 push(deploy 만) 로 첫 검증 중, cron(collect) 경로는 `workflow_dispatch` 로 한 번 돌려 확인할 것(테스트 모드라 무과금).
+1. ~~레포·secret·snapshots·Pages~~ 완료. 워크플로 두 경로 모두 검증됨 — push→deploy, dispatch→collect(5콜, 테스트 모드)→data 커밋→snapshots 브랜치→deploy 전부 success (run 36374451271). cron 은 매일 03:20 KST. bot 이 main 에 직접 커밋하므로 로컬은 push 전 `git pull --rebase`, 로컬 `data/latest` 는 커밋하지 않는다.
 2. Live 전환 후 첫 실행 → `raw_qm.json.gz` 로 `data[]` 행 실제 필드 확정 → 픽스처·정규화 갱신(설계 문서 미지수 하나).
 3. web/ (Vite+TS): 티어표 1페이지 — 공식 `formula.ts` 는 설계 문서 검산표 13영웅으로 vitest.
