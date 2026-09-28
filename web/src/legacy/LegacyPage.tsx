@@ -2,11 +2,10 @@
 
 import { useEffect, useRef } from "react";
 
-type Page = "heroes" | "hero" | "maps";
+type Page = "heroes" | "maps";
 
 const loaders: Record<Page, () => Promise<{ run: (slug: string) => void }>> = {
   heroes: () => import("./heroes"),
-  hero: () => import("./hero"),
   maps: () => import("./maps"),
 };
 
