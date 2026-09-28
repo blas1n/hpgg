@@ -11,7 +11,7 @@ Start every session here. Operating guide and architecture: `docs/HANDOFF.md`. B
 - **Quota today**: Heroes/Stats 16/70, builds/all 1/7 (+1 tonight).
 
 ## Brand (2026-09-28, final)
-- **hpgg.win — Happy Good Game** (owner purchased; logo + palette by the owner, see `docs/BRAND.md`). Custom domain attached to Pages 2026-09-28 (CNAME shipped from `data/`, Vite base `/`); HTTPS enforcement flips on once GitHub issues the certificate. Umbrella brand for a multi-game meta site; Heroes of the Storm is the first game and lives under `/hots/`. Repo renamed to `blas1n/hpgg`; Pages at https://blas1n.github.io/hpgg/hots/ until the domain is attached (issue #5). Naming history (hotsmeta.kr → hotsmeta.gg → diff.win (not purchasable) → hpgg.win) is in the design doc.
+- **hpgg.win — Happy Good Game** (owner purchased; logo + palette by the owner, see `docs/BRAND.md`). Custom domain attached to Pages 2026-09-28 (CNAME shipped from `data/`, Vite base `/`); HTTPS enforced. Umbrella brand for a multi-game meta site; Heroes of the Storm is the first game and lives under `/hots/`. Repo renamed to `blas1n/hpgg`. Naming history (hotsmeta.kr → hotsmeta.gg → diff.win (not purchasable) → hpgg.win) is in the design doc.
 
 ## Owner actions still open
 1. Attach the purchased hpgg.win domain the custom domain to Pages (then set Vite `base` to `/`). Issue #5.
