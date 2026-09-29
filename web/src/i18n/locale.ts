@@ -74,6 +74,8 @@ export function chooseLocale(locale: Locale, storage: () => Pick<Storage, "setIt
 /**
  * Runs inline in <head> before the body is parsed: when the visitor chose another language, go to this page in that
  * language before anything is painted (same query and hash). No choice = stay; the URL decides the language.
+ * Arriving from another-language page of this site means the visitor switched (the switch is a plain link, so a click
+ * before hydration skips its handler and leaves the old choice stored): record this page's language, never bounce.
  */
 export const LOCALE_REDIRECT_SCRIPT = (locale: Locale): string =>
-  `(function(){try{var L=${JSON.stringify(LOCALES)},s=localStorage.getItem(${JSON.stringify(LOCALE_KEY)});if(L.indexOf(s)>=0&&s!==${JSON.stringify(locale)}){var p=location.pathname.replace(/^\\/(${LOCALES.join("|")})(?=\\/|$)/,"")||"/";location.replace("/"+s+p+location.search+location.hash)}}catch(e){}})()`;
+  `(function(){try{var L=${JSON.stringify(LOCALES)},K=${JSON.stringify(LOCALE_KEY)},H=${JSON.stringify(locale)},R=/^\\/(${LOCALES.join("|")})(?=\\/|$)/,r=document.referrer||"",o=location.origin+"/";if(r.indexOf(o)===0){var m=r.slice(o.length-1).match(R);if(m&&m[1]!==H)localStorage.setItem(K,H);return}var s=localStorage.getItem(K);if(L.indexOf(s)>=0&&s!==H){var p=location.pathname.replace(R,"")||"/";location.replace("/"+s+p+location.search+location.hash)}}catch(e){}})()`;

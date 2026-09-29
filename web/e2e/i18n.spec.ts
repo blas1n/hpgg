@@ -175,6 +175,20 @@ test("the choice is a redirect hint: a Korean link opens in English once English
   await expect(page.locator("html")).toHaveAttribute("lang", "ko");
 });
 
+test("a switch clicked before hydration is not bounced back: arriving from the other language in-site wins and becomes the choice", async ({ page }) => {
+  await page.goto("/en/hots/heroes/");
+  await page.evaluate((k) => localStorage.setItem(k, "en"), "hpgg-locale"); // English chosen earlier
+  // the plain link without its click handler: same navigation, old choice still stored
+  await page.goto("/ko/hots/heroes/", { referer: new URL("/en/hots/heroes/", page.url()).href });
+  await expect(page).toHaveURL(/\/ko\/hots\/heroes\/$/);
+  await expect(page.locator("html")).toHaveAttribute("lang", "ko");
+  expect(await page.evaluate((k) => localStorage.getItem(k), "hpgg-locale")).toBe("ko");
+  // control: the same URL entered from outside still follows the stored choice
+  await page.evaluate((k) => localStorage.setItem(k, "en"), "hpgg-locale");
+  await page.goto("/ko/hots/heroes/", { referer: "https://www.google.com/" });
+  await expect(page).toHaveURL(/\/en\/hots\/heroes\/$/);
+});
+
 test("without a choice nothing redirects, whatever the browser language", async ({ browser }) => {
   const ctx = await browser.newContext({ locale: "en-US" });
   const page = await ctx.newPage();
