@@ -18,7 +18,7 @@ Start every session here. Operating guide and architecture: `docs/HANDOFF.md`. B
 4. When most heroes pass 200 games on 2.57, the previous-patch fallback ends by itself; Xal'atath stays hidden until HeroesToolChest heroes-data ships a 2.57 build → `uv run python tools/build_assets.py --build <that build>` and commit (see #6 comment).
 
 ## Open threads
-- **Heroes Profile Discussions post** (owner to post, or tell the session to): draft in `docs/drafts/hp-discussion-upload-cors.md` — asks HP to allow `https://hpgg.win` in CORS for the keyless upload routes (`POST /v1/upload/heroesprofile/{source}`, `GET /v1/replays/fingerprints/{fp}`; per-IP 60/min, 20,000/day; `source` decides leaderboard eligibility). Facts from HP's open-source site (`routes/api-external.php`, `config/cors.php`, `config/api.php`) and uploader (`Uploader.cs`). Relaying through our server is technically possible but not without HP's OK. Post at https://github.com/Heroes-Profile/heroesprofile/discussions (category Ideas).
+- **Heroes Profile upload access — email sent 2026-09-29, waiting for a reply**: owner emailed ZEMILL@heroesprofile.com (HP's contact address) asking to allow `https://hpgg.win` in CORS for the keyless upload routes (`POST /v1/upload/heroesprofile/{source}`, `GET /v1/replays/fingerprints/{fp}`; per-IP 60/min, 20,000/day; `source` decides leaderboard eligibility), whether relaying through our server is acceptable, and how a `hpgg` source counts for leaderboards. Sent as email, not a public Discussion: it is a one-to-one access request that touches abuse limits. Text, facts and what to do for each answer: `docs/outreach/2026-09-29-heroes-profile-upload-cors.md`. Build nothing upload-related until HP answers.
 - **Issues**: #36 party-corrected win rate inside the tier formula (probe `Global/Party` first; printed formula must say so — the footer promises the formula is shown) · #37 hero summary sentences (review only; template sentences from numbers, playstyle via HP `Replay/Data` sampling) · #25 ban/pick simulator + recommendation · #28 accounts with Battle.net login · #7 community (on hold until traffic).
 - **Decided against** (owner, 2026-09-29): replay viewer, tier-list maker (hots-scrap has them), herossearch's meta map / map meta heroes (the tier table covers it), time-of-day analysis. Tier C/D colours equal to brand accent/primary: fine as is.
 - **Still open from the #30 design review**: footer/formula line length, `role="button"` rows, 홈 sub-line.
@@ -27,7 +27,7 @@ Start every session here. Operating guide and architecture: `docs/HANDOFF.md`. B
 ## Owner actions
 1. First community post (Inven / Arca) — URLs are now `/ko/hots/…`.
 2. Upload your own replays to Heroes Profile (Player11#1011 has no games there yet): https://www.heroesprofile.com/Upload → "Select a folder" → `~/Library/Application Support/Blizzard/Heroes of the Storm/Accounts` (macOS) or `Documents\Heroes of the Storm\Accounts` (Windows).
-3. HP Discussions post (above).
+3. ~~HP upload-access question~~: emailed 2026-09-29. Forward HP's reply to the session when it arrives (see Open threads).
 
 ## Operating notes learned 2026-09-29
 - Merges: the owner's rule is "CI all green → merge", but the auto-mode classifier refuses a merge the session starts on its own (e.g. after a background notification) or delegates to a subagent — ask the owner per PR ("머지해"), then merge and watch the deploy.
