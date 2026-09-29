@@ -94,7 +94,7 @@ export const ko = {
     role: "역할",
     allRoles: "전체",
     universe: "세계관",
-    allUniverses: "모든 세계관",
+    allUniverses: "전체",
     // #43: the five universes and their names exactly as Blizzard's Korean heroes page printed them
     // (https://web.archive.org/web/20230402075053/https://heroesofthestorm.com/ko-kr/heroes/, locStrings)
     universes: { Warcraft: "워크래프트", Starcraft: "스타크래프트", Diablo: "디아블로", Overwatch: "오버워치", Nexus: "시공의 폭풍" } as Record<string, string>,
