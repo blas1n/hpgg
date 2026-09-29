@@ -360,3 +360,80 @@ def test_main_writes_english_names_next_to_the_korean_ones(
     talents = json.loads((data / "talents" / "abathur.json").read_text())
     assert talents["talents"]["AbathurPressureConvergence"]["en"] == "Pressure Convergence"
     assert "enus" in talents["source"]
+
+
+REPO_DATA = Path(__file__).parents[1] / "data"
+
+
+def missing_talent_icons(data: Path) -> dict[str, list[str]]:
+    """Talent file → icons it names that are not in data/img/talents/."""
+    shipped = {p.name for p in (data / "img" / "talents").iterdir()}
+    out: dict[str, list[str]] = {}
+    for f in sorted((data / "talents").glob("*.json")):
+        talents = json.loads(f.read_text(encoding="utf-8"))["talents"]
+        gone = sorted({t["icon"] for t in talents.values() if t.get("icon")} - shipped)
+        if gone:
+            out[f.name] = gone
+    return out
+
+
+def test_every_talent_icon_named_in_the_talent_files_is_shipped() -> None:
+    """A hero page shows the icon of every talent in its builds, and the builds change daily:
+    an icon missing from data/img/talents/ is a 404 on the site (Illidan, 2026-09-29)."""
+    assert len(list((REPO_DATA / "talents").glob("*.json"))) >= 90
+    assert missing_talent_icons(REPO_DATA) == {}
+
+
+def test_missing_talent_icons_reports_what_a_talent_file_names_but_the_folder_lacks(
+    tmp_path: Path,
+) -> None:
+    """Control for the guard above: it can go red."""
+    (tmp_path / "img" / "talents").mkdir(parents=True)
+    (tmp_path / "talents").mkdir()
+    (tmp_path / "img" / "talents" / "a.png").write_bytes(b"")
+    talents = {"A": {"icon": "a.png"}, "B": {"icon": "b.png"}, "C": {"icon": ""}}
+    (tmp_path / "talents" / "x.json").write_text(json.dumps({"talents": talents}))
+    assert missing_talent_icons(tmp_path) == {"x.json": ["b.png"]}
+
+
+def test_main_downloads_the_icon_of_every_talent_not_only_those_in_one_days_builds(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The builds change every day, so any talent can reach a hero page tomorrow: the generator
+    fetches every talent's icon and has no option to narrow that to one day's builds (--icons
+    did, which is how three Illidan icons went missing)."""
+    data, cache = tmp_path / "data", tmp_path / "cache"
+    (data / "latest").mkdir(parents=True)
+    cache.mkdir()
+    table = {"roles": ROLES, "heroes": [{"name": "Abathur"}, {"name": "Li-Ming"}], "source": {}}
+    (data / "heroes_ko.json").write_text(json.dumps(table))
+    unit = {
+        "name": {"Abathur": "아바투르", "Wizard": "리밍"},
+        "expandedrole": {"Abathur": "지원가", "Wizard": "원거리 암살자"},
+    }
+    kokr = {"gamestrings": {"unit": unit, "abiltalent": KOKR["gamestrings"]["abiltalent"]}}
+    (cache / "herodata_99999.json").write_text(json.dumps(HERODATA))
+    (cache / "kokr_99999.json").write_text(json.dumps(kokr))
+    (cache / "enus_99999.json").write_text(json.dumps(ENUS))
+    fetched: list[str] = []
+
+    def fake_fetch(url: str, dest: Path) -> bool:
+        fetched.append(url.rsplit("/", 1)[-1])
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        dest.write_bytes(b"png")
+        return True
+
+    def fake_resize(src: Path, dst: Path, px: int) -> None:
+        dst.parent.mkdir(parents=True, exist_ok=True)
+        dst.write_bytes(src.read_bytes())
+
+    monkeypatch.setattr(ba, "fetch", fake_fetch)
+    monkeypatch.setattr(ba, "resize", fake_resize)
+    argv = ["build_assets", "--build", "2.55.16.99999", "--data", str(data), "--cache", str(cache)]
+    monkeypatch.setattr("sys.argv", argv)
+    ba.main()
+    assert {"a.png", "b.png"} <= set(fetched)
+    assert missing_talent_icons(data) == {}
+    monkeypatch.setattr("sys.argv", [*argv, "--icons", "builds.json"])
+    with pytest.raises(SystemExit):
+        ba.main()
