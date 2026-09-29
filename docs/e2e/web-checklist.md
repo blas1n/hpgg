@@ -22,6 +22,17 @@ Automated as Playwright specs in `web/e2e/tierlist.spec.ts`, run with `npm run e
 - [x] Storm League bracket selector loads sl_<bracket>.json, lands in the URL (`tier=`), hidden in Quick Match
 - [x] Hero page: 5 popular builds, 7 talents each with Korean names and icons, games and win rate; unknown hero shows a message
 
+## Automated — languages (`e2e/i18n.spec.ts`, #10)
+- [x] Every page type (홈, 티어, 영웅, 영웅 상세, 전장, 전장 상세, 전적 검색): `#lang-toggle` links to `/en` + the same path; ko → en → ko, `html[lang]` and the heading follow
+- [x] English pages: `lang="en"`, canonical = the English URL, `hreflang` ko / en / x-default (= ko); Korean pages keep their URLs and point back
+- [x] No visible Korean on English pages, including browser-built views (SL, map + preset, bracket, region, player result, talent popover, tier row detail); control: the same check finds Korean on 홈
+- [x] English player page: Storm League / Diamond 2 / Unranked Draft / ARAM, ARAM map names, hero links under `/en/`; Korean: 일반 선발전, 무작위 영웅 대전, 브락시스 전초기지
+- [x] Links stay in the language (nav, hero search incl. Korean query on English pages, map objective with its en-us source)
+- [x] The switch keeps query and hash; the stored choice redirects a Korean link to English before DOMContentLoaded and back; no choice = no redirect even with an English browser; blocked storage still switches without errors
+- [x] `/en/` forwards to `/en/hots/`; the 404 is bilingual; the switch sits next to the theme toggle at 390 and 1280 px without horizontal scroll
+- [x] Contrast sweep (below) runs on the English pages too
+- [ ] Human: read the English pages on a phone once (wording, line breaks — long talent names break mid-word under the icons at 390 px)
+
 ## Automated — light theme (`e2e/theme.spec.ts`, #1)
 - [x] Navy by default, also when the system prefers light; toggle `#theme-toggle` in the header at 390 and 1280 px
 - [x] Toggle → `html[data-theme=light]`, remembered across pages and reloads, set before DOMContentLoaded (no flash); toggling back returns to navy

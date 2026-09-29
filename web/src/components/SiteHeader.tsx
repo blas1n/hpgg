@@ -7,6 +7,7 @@ import { useLocale, useT } from "@/i18n/client";
 import { localizedPath } from "@/i18n/locale";
 import type { SearchItem } from "@/lib/search";
 import { HeroSearch } from "./HeroSearch";
+import { LanguageToggle } from "./LanguageToggle";
 import { ThemeToggle } from "./ThemeToggle";
 import { cx } from "./ui";
 
@@ -61,7 +62,10 @@ export function SiteHeader({ searchIndex }: { searchIndex: SearchItem[] }) {
         <div className="ml-auto flex min-w-0 flex-1 justify-end">
           <HeroSearch items={searchIndex} id="site-search" />
         </div>
-        <ThemeToggle />
+        <div className="flex shrink-0 items-center gap-1.5">
+          <LanguageToggle />
+          <ThemeToggle />
+        </div>
       </div>
       <nav aria-label={t.nav.mobile} className="page-x scrollbar-none flex h-10 items-stretch overflow-x-auto border-t border-line md:hidden">
         {nav.map((n) => (

@@ -1,8 +1,8 @@
-/** The HTML document, once per language (#10): <html lang>, metadata defaults, the pre-paint theme script. */
+/** The HTML document, once per language (#10): <html lang>, metadata defaults, the pre-paint scripts. */
 import type { Metadata, Viewport } from "next";
 import Script from "next/script";
 import { LocaleProvider } from "@/i18n/client";
-import { OG_LOCALE, type Locale } from "@/i18n/locale";
+import { LOCALE_REDIRECT_SCRIPT, localizedPath, OG_LOCALE, type Locale } from "@/i18n/locale";
 import { messages } from "@/i18n/messages";
 import { THEME_INIT_SCRIPT } from "@/lib/theme";
 import "@/styles/globals.css";
@@ -22,6 +22,8 @@ export function RootDocument({ locale, children }: { locale: Locale; children: R
     // the init script sets data-theme before paint (light theme, #1): React must keep what it finds there
     <html lang={locale} suppressHydrationWarning>
       <head>
+        {/* a visitor who chose the other language goes to this page in it before anything paints (i18n/locale.ts) */}
+        <script dangerouslySetInnerHTML={{ __html: LOCALE_REDIRECT_SCRIPT(locale) }} />
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
         <link rel="preconnect" href="https://cdn.jsdelivr.net" crossOrigin="anonymous" />
         <link
@@ -34,5 +36,20 @@ export function RootDocument({ locale, children }: { locale: Locale; children: R
         <Script data-goatcounter="https://hpgg.goatcounter.com/count" src="https://gc.zgo.at/count.js" strategy="afterInteractive" />
       </body>
     </html>
+  );
+}
+
+/** A language's root (/ or /en/): one game so far — forward to its Heroes of the Storm section. */
+export function RootRedirect({ locale }: { locale: Locale }) {
+  const to = localizedPath("/hots/", locale);
+  return (
+    <>
+      <meta httpEquiv="refresh" content={`0; url=${to}`} />
+      <main className="grid min-h-screen place-items-center">
+        <a href={to} className="text-primary">
+          {messages[locale].site.rootLink}
+        </a>
+      </main>
+    </>
   );
 }

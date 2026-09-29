@@ -55,6 +55,18 @@ export function writeLocale(locale: Locale, storage: Put): boolean {
   }
 }
 
+/** The language switch: remember the choice, and if the browser refuses, drop any older choice rather than keep it
+ *  (a stale hint would redirect the visitor away from the language they just picked). */
+export function chooseLocale(locale: Locale, storage: () => Pick<Storage, "setItem" | "removeItem"> | null | undefined): boolean {
+  if (writeLocale(locale, storage)) return true;
+  try {
+    storage()?.removeItem(LOCALE_KEY);
+  } catch {
+    // storage is blocked altogether: there is no stored hint either
+  }
+  return false;
+}
+
 /**
  * Runs inline in <head> before the body is parsed: when the visitor chose the other language, go to this page in that
  * language before anything is painted (same query and hash). No choice = stay; the URL decides the language.

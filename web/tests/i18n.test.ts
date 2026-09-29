@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import { messages, type Messages } from "../src/i18n/messages";
-import { LOCALES, localeOfPath, localizedPath, readLocale, writeLocale, LOCALE_KEY, alternates, LOCALE_REDIRECT_SCRIPT } from "../src/i18n/locale";
+import { LOCALES, localeOfPath, localizedPath, readLocale, writeLocale, chooseLocale, LOCALE_KEY, alternates, LOCALE_REDIRECT_SCRIPT } from "../src/i18n/locale";
 import { localizeHeroes, localizeMaps } from "../src/i18n/names";
 import type { HeroTable, MapTable } from "../src/data";
 
@@ -101,6 +101,18 @@ describe("stored language choice (a redirect hint only)", () => {
         throw new Error("SecurityError");
       }),
     ).toBe(false);
+  });
+
+  it("choosing a language never leaves an old choice behind: when the write fails the stored hint is removed", () => {
+    // otherwise a stored "en" + a refused write of "ko" would send the Korean page straight back to English
+    const store: Record<string, string> = { [LOCALE_KEY]: "en" };
+    const quotaFull = { setItem: () => { throw new Error("QuotaExceededError"); }, removeItem: (k: string) => void delete store[k] };
+    expect(chooseLocale("ko", () => quotaFull)).toBe(false);
+    expect(store[LOCALE_KEY]).toBeUndefined();
+    const ok = { setItem: (k: string, v: string) => void (store[k] = v), removeItem: () => {} };
+    expect(chooseLocale("en", () => ok)).toBe(true);
+    expect(store[LOCALE_KEY]).toBe("en");
+    expect(chooseLocale("ko", () => { throw new Error("SecurityError"); })).toBe(false); // blocked storage: nothing to clear, no throw
   });
 
   it("the head script redirects only when a different language was chosen, keeping the query and hash", () => {

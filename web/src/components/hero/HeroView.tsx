@@ -458,7 +458,7 @@ function Builds({ builds }: { builds: BuildView[] }) {
                 <span data-level className="text-2xs text-muted">
                   {tl.level}
                 </span>
-                <span data-tname className="line-clamp-2 text-center text-2xs leading-tight text-fg-2">
+                <span data-tname className="line-clamp-2 w-full hyphens-auto text-center text-2xs leading-tight text-fg-2 [overflow-wrap:anywhere]">
                   {tl.ko}
                 </span>
               </button>

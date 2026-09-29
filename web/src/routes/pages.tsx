@@ -15,7 +15,7 @@ import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 import { TierView } from "@/components/tier/TierView";
 import type { Mode } from "@/data";
-import type { Locale } from "@/i18n/locale";
+import { alternates, type Locale } from "@/i18n/locale";
 import { messages } from "@/i18n/messages";
 import { bracketRows, heroBuilds, heroSummary, mapRows, regionRows } from "@/lib/hero";
 import { homeModel, mapCards } from "@/lib/home";
@@ -44,7 +44,7 @@ export function HotsShell({ locale, children }: { locale: Locale; children: Reac
 
 // --- 홈: computed at build time for both modes; the mode toggle only swaps pre-rendered models ---
 /** The section title and description come from the layout (hotsMetadata). */
-export const homeMetadata = (_locale: Locale): Metadata => ({});
+export const homeMetadata = (locale: Locale): Metadata => ({ alternates: alternates("/hots/", locale) });
 
 export function HomePage({ locale }: { locale: Locale }) {
   const meta = readMeta();
@@ -59,7 +59,11 @@ export function HomePage({ locale }: { locale: Locale }) {
 }
 
 // --- 영웅 티어: the default view (Quick Match, all maps) is computed at build time; other views load their snapshot ---
-export const tierMetadata = (locale: Locale): Metadata => ({ title: messages[locale].meta.tierTitle, description: messages[locale].meta.tierDescription });
+export const tierMetadata = (locale: Locale): Metadata => ({
+  title: messages[locale].meta.tierTitle,
+  description: messages[locale].meta.tierDescription,
+  alternates: alternates("/hots/tier/", locale),
+});
 
 export function TierPage({ locale }: { locale: Locale }) {
   const meta = readMeta();
@@ -71,7 +75,11 @@ export function TierPage({ locale }: { locale: Locale }) {
 }
 
 // --- 영웅: every hero with its tier in both modes, computed at build time; the page fetches nothing ---
-export const heroesMetadata = (locale: Locale): Metadata => ({ title: messages[locale].meta.heroesTitle, description: messages[locale].meta.heroesDescription });
+export const heroesMetadata = (locale: Locale): Metadata => ({
+  title: messages[locale].meta.heroesTitle,
+  description: messages[locale].meta.heroesDescription,
+  alternates: alternates("/hots/heroes/", locale),
+});
 
 export function HeroesPage({ locale }: { locale: Locale }) {
   const t = messages[locale];
@@ -99,6 +107,7 @@ export async function heroMetadata(locale: Locale, { params }: Params): Promise<
   return {
     title: h.ko,
     description: messages[locale].meta.heroDescription(h.ko, h.name, h.role_ko),
+    alternates: alternates(`/hots/heroes/${slug}/`, locale),
     openGraph: h.portrait ? { images: [`/${h.portrait}`] } : undefined,
   };
 }
@@ -137,7 +146,11 @@ export async function HeroPage({ locale, params }: { locale: Locale } & Params) 
 }
 
 // --- 전장: every map in the pool, most Storm League matches first; computed at build time ---
-export const mapsMetadata = (locale: Locale): Metadata => ({ title: messages[locale].meta.mapsTitle, description: messages[locale].meta.mapsDescription });
+export const mapsMetadata = (locale: Locale): Metadata => ({
+  title: messages[locale].meta.mapsTitle,
+  description: messages[locale].meta.mapsDescription,
+  alternates: alternates("/hots/maps/", locale),
+});
 
 export function MapsPage({ locale }: { locale: Locale }) {
   const meta = readMeta();
@@ -156,6 +169,7 @@ export async function mapMetadata(locale: Locale, { params }: Params): Promise<M
   return {
     title: m.ko,
     description: messages[locale].meta.mapDescription(m.ko, m.name),
+    alternates: alternates(`/hots/maps/${slug}/`, locale),
     openGraph: m.image ? { images: [`/${m.image}`] } : undefined,
   };
 }
@@ -181,7 +195,11 @@ export async function MapPage({ locale, params }: { locale: Locale } & Params) {
 }
 
 // --- 전적 검색: a static shell; the search runs in the browser against our API (NEXT_PUBLIC_API_BASE) ---
-export const playersMetadata = (locale: Locale): Metadata => ({ title: messages[locale].meta.playersTitle, description: messages[locale].meta.playersDescription });
+export const playersMetadata = (locale: Locale): Metadata => ({
+  title: messages[locale].meta.playersTitle,
+  description: messages[locale].meta.playersDescription,
+  alternates: alternates("/hots/players/", locale),
+});
 
 export function PlayersPage({ locale }: { locale: Locale }) {
   return <PlayerSearchView heroes={readHeroes(locale)} maps={readMaps(locale)} />;
