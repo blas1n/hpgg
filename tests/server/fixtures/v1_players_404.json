@@ -1,0 +1,18 @@
+{
+ "status": 404,
+ "headers": {
+  "content-type": "application/json",
+  "x-hp-quota-limit": "10000",
+  "x-hp-quota-remaining": "10000",
+  "x-hp-quota-reset": "604793",
+  "x-ratelimit-limit": "60",
+  "x-ratelimit-remaining": "56"
+ },
+ "body": {
+  "error": {
+   "code": "player_not_found",
+   "message": "No player found for that battletag and region."
+  }
+ },
+ "_recorded": "2026-09-29 GET /players (Basic plan, Live Data); headers filtered to quota/rate-limit"
+}

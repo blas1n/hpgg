@@ -25,3 +25,6 @@ web/*.tsbuildinfo
 web/coverage/
 web/.next-dev/
 web/.env*.local
+
+# API server (deploy/.env holds the HP key on the host)
+deploy/.env

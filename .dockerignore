@@ -1,0 +1,6 @@
+# Only deploy/Dockerfile builds from the repo root; it needs the lockfile and the server package.
+*
+!pyproject.toml
+!uv.lock
+!server/
+**/__pycache__

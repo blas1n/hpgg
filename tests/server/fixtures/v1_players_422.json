@@ -1,0 +1,21 @@
+{
+ "status": 422,
+ "headers": {
+  "content-type": "application/json",
+  "x-hp-quota-limit": "10000",
+  "x-hp-quota-remaining": "10000",
+  "x-hp-quota-reset": "604799",
+  "x-ratelimit-limit": "60",
+  "x-ratelimit-remaining": "58"
+ },
+ "body": {
+  "error": {
+   "code": "invalid_parameters",
+   "message": "One or more parameters are invalid.",
+   "errors": [
+    "The region field is required."
+   ]
+  }
+ },
+ "_recorded": "2026-09-29 GET /players (Basic plan, Live Data); headers filtered to quota/rate-limit"
+}

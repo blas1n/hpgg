@@ -18,6 +18,7 @@ export interface HeroInfo {
   role: string;
   role_ko: string;
   portrait?: string; // e.g. img/heroes/qhira.png (relative to the site root)
+  short_name?: string; // Heroes Profile short_name (player search matches heroes by it)
 }
 export interface HeroTable {
   roles: { name: string; ko: string }[];
@@ -38,6 +39,7 @@ export const hotsHref = {
   heroes: "/hots/heroes/",
   hero: (slug: string, mode?: Mode) => `/hots/heroes/${encodeURIComponent(slug)}/${mode === "sl" ? "?mode=sl" : ""}`,
   maps: "/hots/maps/",
+  players: "/hots/players/",
 };
 
 export type Mode = "qm" | "sl";

@@ -22,11 +22,13 @@ test("home: role leaders, top 10, movers, map cards and the mode toggle", async 
   await expect(page.locator('#role-top [data-card="role"]').first()).toHaveAttribute("href", /\?mode=sl$/);
 });
 
-test("home: no search banner — today's meta is the first thing on the page", async ({ page }) => {
+test("home: one compact player-search row on top, today's meta right under it", async ({ page }) => {
   await page.goto("./");
   await expect(page.locator("#hero-search")).toHaveCount(0);
+  const box = (await page.locator("#home-player-search").boundingBox())!;
+  expect(box.height).toBeLessThan(60); // one row, not a banner
   const top = (await page.locator("#meta-line").boundingBox())!.y;
-  expect(top).toBeLessThan(260); // above the fold on a phone, right under the header
+  expect(top).toBeLessThan(330); // still above the fold on a phone
 });
 
 test("home: ?mode=sl in the URL opens Storm League", async ({ page }) => {
@@ -36,7 +38,7 @@ test("home: ?mode=sl in the URL opens Storm League", async ({ page }) => {
 });
 
 test("layout: no horizontal overflow on a phone, active nav item marked", async ({ page }) => {
-  for (const path of ["./", "./tier/", "./heroes/", "./heroes/illidan/", "./maps/"]) {
+  for (const path of ["./", "./tier/", "./heroes/", "./heroes/illidan/", "./maps/", "./players/"]) {
     await page.goto(path);
     await expect(page.locator("header").first()).toBeVisible();
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);

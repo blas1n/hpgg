@@ -15,6 +15,17 @@ jobs:
       - run: uv run mypy collector/
       - run: uv run pytest tests/ --cov=collector --cov-fail-under=80
 
+  server:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - run: uv sync --frozen
+      - run: uv run ruff check server/ tests/server/ && uv run ruff format --check server/ tests/server/
+      - run: uv run mypy server/
+      - run: uv run pytest tests/server/ --cov=server --cov-fail-under=80
+      - run: docker build -f deploy/Dockerfile -t hpgg-api:ci .
+
   web:
     runs-on: ubuntu-latest
     defaults:

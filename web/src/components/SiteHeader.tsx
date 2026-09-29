@@ -13,12 +13,14 @@ const NAV = [
   { id: "tier", href: hotsHref.tier(), label: "영웅 티어" },
   { id: "heroes", href: hotsHref.heroes, label: "영웅" },
   { id: "maps", href: hotsHref.maps, label: "전장" },
+  { id: "players", href: hotsHref.players, label: "전적 검색" },
 ] as const;
 
 function activeId(path: string): string {
   if (path.startsWith("/hots/tier")) return "tier";
   if (path.startsWith("/hots/heroes")) return "heroes";
   if (path.startsWith("/hots/maps")) return "maps";
+  if (path.startsWith("/hots/players")) return "players";
   return "home";
 }
 
