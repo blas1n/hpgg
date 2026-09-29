@@ -16,7 +16,7 @@ export function TierBadge({ tier, size = "md", className }: { tier: string; size
   const dim = size === "sm" ? "size-4 text-[10px]" : size === "lg" ? "size-7 text-sm" : "size-5 text-[11px]";
   return (
     <span
-      className={cx("tier-badge inline-grid shrink-0 place-items-center rounded-full font-extrabold leading-none text-[#10131c]", dim, TIER_BG[tier] ?? "bg-tier-f", className)}
+      className={cx("tier-badge inline-grid shrink-0 place-items-center rounded-full font-extrabold leading-none text-tier-ink", dim, TIER_BG[tier] ?? "bg-tier-f", className)}
       aria-label={`${tier} 티어`}
     >
       {tier}

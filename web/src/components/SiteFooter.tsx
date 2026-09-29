@@ -29,7 +29,7 @@ export function SiteFooter() {
           <div className="flex items-center gap-2">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={assetUrl("img/brand/icon-sm.png")} alt="" width={24} height={24} className="size-6 rounded" />
-            <span className="text-lg font-extrabold tracking-tight text-white">
+            <span className="text-lg font-extrabold tracking-tight text-fg">
               hpgg<span className="text-xs font-semibold text-primary">.win</span>
             </span>
           </div>

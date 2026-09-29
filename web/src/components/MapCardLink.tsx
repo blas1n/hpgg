@@ -20,7 +20,7 @@ export function MapCardLink({ c }: { c: MapCard }) {
         )}
         <span className="absolute inset-0 bg-gradient-to-t from-surface-2 via-surface-2/30 to-transparent" />
         <span className="absolute bottom-2 left-3">
-          <span className="block text-sm font-bold text-white drop-shadow sm:text-base">{c.ko}</span>
+          <span className="block text-sm font-bold text-fg drop-shadow sm:text-base">{c.ko}</span>
           <span className="num block text-2xs text-fg-2">{c.matches ? `${int(c.matches)} 매치` : "표본 없음"}</span>
         </span>
       </span>

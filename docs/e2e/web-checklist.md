@@ -22,6 +22,12 @@ Automated as Playwright specs in `web/e2e/tierlist.spec.ts`, run with `npm run e
 - [x] Storm League bracket selector loads sl_<bracket>.json, lands in the URL (`tier=`), hidden in Quick Match
 - [x] Hero page: 5 popular builds, 7 talents each with Korean names and icons, games and win rate; unknown hero shows a message
 
+## Automated — light theme (`e2e/theme.spec.ts`, #1)
+- [x] Navy by default, also when the system prefers light; toggle `#theme-toggle` in the header at 390 and 1280 px
+- [x] Toggle → `html[data-theme=light]`, remembered across pages and reloads, set before DOMContentLoaded (no flash); toggling back returns to navy
+- [x] Storage that throws: page renders navy, toggle still works for the visit, no page error
+- [x] Every visible text run on 홈 / 티어 (QM, SL) / 영웅 / 영웅 상세 (QM, SL) / 전장 reaches WCAG AA against the colour behind it, both themes, 390 and 1280 px (a planted low-contrast line is caught — control)
+
 ## Human, against the live site
 - [ ] https://blas1n.github.io/hpgg/hots/ loads today's patch and match count in the meta line
 - [ ] Switching to Storm League and picking a map re-tiers within a second on a phone

@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { assetUrl, hotsHref } from "@/data";
 import type { SearchItem } from "@/lib/search";
 import { HeroSearch } from "./HeroSearch";
+import { ThemeToggle } from "./ThemeToggle";
 import { cx } from "./ui";
 
 const NAV = [
@@ -41,7 +42,7 @@ export function SiteHeader({ searchIndex }: { searchIndex: SearchItem[] }) {
         <a href={hotsHref.home} className="flex shrink-0 items-center gap-2" aria-label="hpgg.win 홈">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={assetUrl("img/brand/icon-sm.png")} alt="" width={28} height={28} className="size-7 rounded-md" />
-          <span className="text-xl font-extrabold tracking-tight text-white">
+          <span className="text-xl font-extrabold tracking-tight text-fg">
             hpgg<span className="ml-px text-xs font-semibold text-primary">.win</span>
           </span>
         </a>
@@ -57,6 +58,7 @@ export function SiteHeader({ searchIndex }: { searchIndex: SearchItem[] }) {
         <div className="ml-auto flex min-w-0 flex-1 justify-end">
           <HeroSearch items={searchIndex} id="site-search" />
         </div>
+        <ThemeToggle />
       </div>
       <nav aria-label="주 메뉴 (모바일)" className="page-x scrollbar-none flex h-10 items-stretch overflow-x-auto border-t border-line md:hidden">
         {NAV.map((n) => (
@@ -75,7 +77,7 @@ function NavLink({ id, href, label, active }: { id: string; href: string; label:
       aria-current={active ? "page" : undefined}
       className={cx(
         "relative inline-flex items-center whitespace-nowrap px-3 text-sm font-semibold transition-colors",
-        active ? "text-white after:absolute after:inset-x-3 after:bottom-0 after:h-0.5 after:rounded-full after:bg-primary" : "text-muted hover:text-fg",
+        active ? "text-fg after:absolute after:inset-x-3 after:bottom-0 after:h-0.5 after:rounded-full after:bg-primary" : "text-muted hover:text-fg",
       )}
     >
       {label}

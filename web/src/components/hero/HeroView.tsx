@@ -51,7 +51,7 @@ export function HeroView({ hero, models, builds, buildsPatch, minGames }: { hero
       <div className="mt-5 flex items-center gap-4">
         <Portrait src={hero.portrait} size={84} tier={s.kind === "ranked" ? s.tier : undefined} role={hero.role} />
         <div className="min-w-0">
-          <h1 className="text-2xl font-extrabold tracking-tight text-white">{hero.ko}</h1>
+          <h1 className="text-2xl font-extrabold tracking-tight text-fg">{hero.ko}</h1>
           <p className="text-xs text-fg-2">
             {hero.name} · {hero.role_ko}
           </p>
@@ -160,7 +160,7 @@ function SectionTabs({ sections }: { sections: { id: string; label: string; nav?
           id={x.nav}
           href={`#${x.id}`}
           aria-current={active === x.id ? "location" : undefined}
-          className={cx("whitespace-nowrap border-b-2 px-3 py-2.5 text-[13px] font-semibold transition-colors", active === x.id ? "border-fg text-white" : "border-transparent text-muted hover:text-fg")}
+          className={cx("whitespace-nowrap border-b-2 px-3 py-2.5 text-[13px] font-semibold transition-colors", active === x.id ? "border-fg text-fg" : "border-transparent text-muted hover:text-fg")}
         >
           {x.label}
         </a>
@@ -339,7 +339,7 @@ function Builds({ builds }: { builds: BuildView[] }) {
           aria-label={`${pop.t.ko} 설명`}
           onClick={(e) => e.stopPropagation()}
           style={{ left: pop.left, top: pop.top, width: pop.width }}
-          className="absolute z-60 rounded-xl border border-line-strong bg-[#1f2638] px-3.5 py-3 shadow-[0_16px_40px_rgba(0,0,0,0.55)]"
+          className="absolute z-60 rounded-xl border border-line-strong bg-pop px-3.5 py-3 shadow-[0_16px_40px_rgba(0,0,0,0.55)]"
         >
           <div className="flex items-center gap-2.5">
             {pop.t.icon && (
@@ -347,7 +347,7 @@ function Builds({ builds }: { builds: BuildView[] }) {
               <img src={assetUrl(`img/talents/${pop.t.icon}`)} alt="" className="size-9 rounded-md border border-line" />
             )}
             <div>
-              <div data-pop-name className="text-sm font-extrabold text-white">
+              <div data-pop-name className="text-sm font-extrabold text-fg">
                 {pop.t.ko}
               </div>
               <div data-pop-level className="text-2xs text-muted">
@@ -355,7 +355,7 @@ function Builds({ builds }: { builds: BuildView[] }) {
               </div>
             </div>
           </div>
-          <p data-pop-desc className="mt-2 whitespace-pre-line text-[13px] leading-relaxed text-[#cfd6e6]">
+          <p data-pop-desc className="mt-2 whitespace-pre-line text-[13px] leading-relaxed text-pop-fg">
             {descParts(pop.t.desc).map((p, i) =>
               p.hl ? (
                 <span key={i} data-hl className="font-bold text-accent">
