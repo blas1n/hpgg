@@ -16,6 +16,8 @@
   --color-surface: #161b27;
   --color-surface-2: #1b2030;
   --color-surface-3: #232a3d;
+  /* Behind hero portraits (game art, transparent corners): one dark backdrop in both themes. */
+  --color-portrait: #1b2030;
   --color-line: #262e42;
   --color-line-strong: #333d57;
   --color-fg: #e9eef8;
@@ -68,6 +70,7 @@
     --color-surface: #ffffff;
     --color-surface-2: #f6f8fb;
     --color-surface-3: #e6ebf2;
+    --color-portrait: #1b2030; /* unchanged on purpose: portraits stay on the dark backdrop */
     --color-line: #dfe4ec;
     --color-line-strong: #c7cfdb;
     --color-fg: #131a28;

@@ -49,10 +49,10 @@ export function Portrait({ src, size = 40, tier, role, className }: { src?: stri
           width={size}
           height={size}
           loading="lazy"
-          className={cx("size-full rounded-lg bg-surface-3 object-cover", role && "ring-2 ring-offset-0", role && ROLE_RING[role])}
+          className={cx("size-full rounded-lg bg-portrait object-cover", role && "ring-2 ring-offset-0", role && ROLE_RING[role])}
         />
       ) : (
-        <span className="block size-full rounded-lg bg-surface-3" />
+        <span className="block size-full rounded-lg bg-portrait" />
       )}
       {tier && <TierBadge tier={tier} size={size >= 56 ? "md" : "sm"} className="absolute -left-1.5 -top-1.5 ring-2 ring-surface" />}
     </span>

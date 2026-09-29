@@ -145,6 +145,29 @@ describe("stored language choice (a redirect hint only)", () => {
     expect(run("en", null, "https://hpgg.win/en/hots/")).toBeNull();
     expect(run("ko", "fr", "https://hpgg.win/ko/hots/")).toBeNull(); // not a language of the site
   });
+
+  // The switch is a plain link; clicked before hydration its click handler never runs and the old choice stays stored.
+  // Arriving from a page of this site in another language therefore means the visitor switched: keep the URL's
+  // language and make it the new choice, instead of bouncing them back (seen in e2e: ko → en → ko landed on /en).
+  it("the head script never bounces an in-site arrival; it records the page language as the new choice", () => {
+    const run = (locale: "ko" | "en", stored: string | null, href: string, referrer: string) => {
+      const u = new URL(href);
+      const store: Record<string, string> = stored ? { [LOCALE_KEY]: stored } : {};
+      let went: string | null = null;
+      const fn = new Function("document", "localStorage", "location", LOCALE_REDIRECT_SCRIPT(locale));
+      fn(
+        { referrer },
+        { getItem: (k: string) => store[k] ?? null, setItem: (k: string, v: string) => void (store[k] = v) },
+        { origin: u.origin, pathname: u.pathname, search: u.search, hash: u.hash, replace: (to: string) => (went = to) },
+      );
+      return { went, stored: store[LOCALE_KEY] ?? null };
+    };
+    expect(run("ko", "en", "https://hpgg.win/ko/hots/heroes/", "https://hpgg.win/en/hots/heroes/")).toEqual({ went: null, stored: "ko" });
+    expect(run("en", "ko", "https://hpgg.win/en/hots/", "https://hpgg.win/ko/hots/tier/")).toEqual({ went: null, stored: "en" });
+    // entries from outside still follow the stored choice
+    expect(run("ko", "en", "https://hpgg.win/ko/hots/", "https://www.google.com/")).toEqual({ went: "/en/hots/", stored: "en" });
+    expect(run("ko", "en", "https://hpgg.win/ko/hots/", "")).toEqual({ went: "/en/hots/", stored: "en" });
+  });
 });
 
 describe("names in the page language", () => {

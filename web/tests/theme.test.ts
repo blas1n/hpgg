@@ -122,3 +122,23 @@ describe("components use colour tokens", () => {
     expect(files.filter((f) => raw.test(readFileSync(f, "utf-8"))).map((f) => f.slice(root.length))).toEqual([]);
   });
 });
+
+// Hero portraits are game art with transparent corners. A themed surface behind them turns light
+// grey in the light theme and the art looks cut out, so they sit on one dark backdrop in both themes.
+describe("portrait backdrop", () => {
+  const dark = parseTokens(css, "dark");
+  const light = parseTokens(css, "light");
+
+  it("is the same dark colour in both themes", () => {
+    expect(dark["portrait"]).toBeDefined();
+    expect(light["portrait"] ?? dark["portrait"]).toBe(dark["portrait"]);
+    expect(contrast(dark["portrait"]!, "#000000")).toBeLessThan(2); // close to black, not a light grey
+  });
+
+  it("Portrait draws on it, not on a themed surface", () => {
+    const ui = readFileSync(join(dirname(fileURLToPath(import.meta.url)), "..", "src", "components", "ui.tsx"), "utf-8");
+    const portrait = ui.slice(ui.indexOf("export function Portrait"), ui.indexOf("export const wrTone"));
+    expect(portrait).toContain("bg-portrait");
+    expect(portrait).not.toMatch(/bg-surface/);
+  });
+});
