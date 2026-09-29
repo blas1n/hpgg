@@ -1,4 +1,4 @@
-"""One daily collection run: patch → five group_by_map calls → normalise → atomic commit."""
+"""One daily collection run: patch → four group_by_map calls + builds → atomic commit → matchups."""
 
 from __future__ import annotations
 
@@ -15,6 +15,7 @@ import structlog
 
 from collector.client import HPClient, HPError, SleepFn
 from collector.config import Settings
+from collector.matchups import collect_matchups, load_hero_list, matchups_patch
 from collector.snapshot import (
     SPECS,
     build_meta,
@@ -222,6 +223,37 @@ async def run(
     own_client = client is None
     c = client or _client(settings, sleep)
     try:
+        code = await _run_stats(c, settings, collected_at=collected_at, sleep=sleep)
+        if code == 0:
+            await _run_matchups(c, settings, collected_at=collected_at, sleep=sleep)
+        return code
+    finally:
+        if own_client:
+            await c.__aexit__(None, None, None)
+
+
+async def _run_matchups(
+    c: HPClient, settings: Settings, *, collected_at: str, sleep: SleepFn
+) -> None:
+    """After the stats are committed: every due hero's matchups (never fails the run — a hero
+    that could not be collected keeps its previous file and stays due for tomorrow)."""
+    heroes = load_hero_list(settings.data_dir)
+    meta = load_meta(settings.data_dir)
+    if not heroes or meta is None:
+        log.info("matchups.skipped", reason="no heroes_ko.json or meta.json")
+        return
+    patch = matchups_patch(meta)
+    res = await collect_matchups(
+        c, settings, heroes=heroes, patch=patch, collected_at=collected_at, sleep=sleep
+    )
+    if res.written:
+        out = settings.data_dir / "matchups"
+        bundle = {slug: _load_json(out / f"{slug}.json") for slug in res.written}
+        _write_gz(settings.snapshot_out_dir / collected_at[:10] / "matchups.json.gz", bundle)
+
+
+async def _run_stats(c: HPClient, settings: Settings, *, collected_at: str, sleep: SleepFn) -> int:
+    try:
         patches = await c.get_json("/patches")
         patch = choose_patch(patches)
         log.info("run.patch", patch=patch, collected_at=collected_at)
@@ -237,9 +269,6 @@ async def run(
     except ValueError as e:
         log.error("run.bad_payload", error=str(e))
         return 1
-    finally:
-        if own_client:
-            await c.__aexit__(None, None, None)
 
     prev_meta = load_meta(settings.data_dir)
     meta = build_meta(prev_meta, patch=patch, collected_at=collected_at, snapshots=snapshots)

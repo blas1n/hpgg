@@ -2,8 +2,9 @@
 
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { assetUrl, fallbackNote, MODE_LABEL, shortDate, type HeroInfo, type Mode } from "@/data";
+import { assetUrl, fallbackNote, hotsHref, MODE_LABEL, shortDate, type HeroInfo, type Mode } from "@/data";
 import { descParts, type BracketRow, type BuildTalentView, type BuildView, type HeroSummary, type MapRow } from "@/lib/hero";
+import { MATCHUP_RULE, type MatchupRow, type MatchupsView } from "@/lib/matchups";
 import { Card, cx, Portrait, Segmented, TierBadge } from "../ui";
 
 const pct = (n: number) => `${n.toFixed(1)}%`;
@@ -22,7 +23,22 @@ export interface HeroModeModel {
 // section titles land just below the header + sticky tabs
 const SECTION = "scroll-mt-[calc(var(--header-h)+48px)] mb-2.5 mt-6 text-base font-extrabold text-fg";
 
-export function HeroView({ hero, models, builds, buildsPatch, minGames }: { hero: HeroInfo; models: Record<Mode, HeroModeModel>; builds: BuildView[]; buildsPatch: string | null; minGames: number }) {
+export function HeroView({
+  hero,
+  models,
+  builds,
+  buildsPatch,
+  matchups,
+  minGames,
+}: {
+  hero: HeroInfo;
+  models: Record<Mode, HeroModeModel>;
+  builds: BuildView[];
+  buildsPatch: string | null;
+  /** Storm League counters/synergies; null until the first matchups collection. */
+  matchups: MatchupsView | null;
+  minGames: number;
+}) {
   const [mode, setMode] = useState<Mode>("qm");
   useEffect(() => {
     if (new URLSearchParams(location.search).get("mode") !== "sl") return;
@@ -43,6 +59,7 @@ export function HeroView({ hero, models, builds, buildsPatch, minGames }: { hero
     { id: "top", label: "요약" },
     { id: "maps-title", label: "전장" },
     ...(sl && m.brackets.length ? [{ id: "brackets-title", label: "구간", nav: "nav-brackets" }] : []),
+    ...(matchups ? [{ id: "matchups-title", label: "상성", nav: "nav-matchups" }] : []),
     ...(builds.length ? [{ id: "builds-title", label: "특성 빌드", nav: "nav-builds" }] : []),
   ];
 
@@ -114,6 +131,8 @@ export function HeroView({ hero, models, builds, buildsPatch, minGames }: { hero
           </div>
         </>
       )}
+
+      <Matchups hero={hero} v={matchups} />
 
       {builds.length > 0 && (
         <>
@@ -246,6 +265,81 @@ function MapRows({ rows }: { rows: MapRow[] }) {
       </div>
     );
   });
+}
+
+/** 상성 — Storm League only (the draft mode), whatever the mode toggle says; numbers only, no per-pair prose. */
+function Matchups({ hero, v }: { hero: HeroInfo; v: MatchupsView | null }) {
+  return (
+    <>
+      <h2 id="matchups-title" className={SECTION}>
+        상성 ({MODE_LABEL.sl}){" "}
+        {v && (
+          <span id="matchups-sub" className="num text-xs font-normal text-muted">
+            패치 {v.patch} · {shortDate(v.collectedAt)} 수집 · {hero.ko} 승률 {pct(v.win_rate)} ({int(v.games)}게임) 대비
+          </span>
+        )}
+      </h2>
+      <div id="matchups">
+        {!v ? (
+          <p className="rounded-lg border border-line bg-surface px-3 py-4 text-center text-[13px] text-muted">상성 데이터는 다음 정기 수집 후 표시됩니다 (폭풍 리그, 이틀마다 갱신)</p>
+        ) : (
+          <>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <MatchupList id="counters" title="상대하기 어려운 영웅" note="상대 팀에 있을 때의 승률 차" rows={v.counters} />
+              <MatchupList id="synergies" title="잘 맞는 영웅" note="같은 팀일 때의 승률 차" rows={v.synergies} />
+            </div>
+            <p id="matchups-rule" className="num mt-2 text-2xs leading-relaxed text-muted">
+              승률 차 = 그 영웅과 만났을 때 {hero.ko}의 승률 − {hero.ko}의 승률. {MATCHUP_RULE}
+            </p>
+          </>
+        )}
+      </div>
+    </>
+  );
+}
+
+function MatchupList({ id, title, note, rows }: { id: string; title: string; note: string; rows: MatchupRow[] }) {
+  return (
+    <section aria-labelledby={`${id}-title`}>
+      <h3 className="mb-1.5 flex items-baseline justify-between gap-2">
+        <span id={`${id}-title`} className="text-[13px] font-bold text-fg">
+          {title}
+        </span>
+        <span className="text-2xs text-muted">{note}</span>
+      </h3>
+      <div id={id} className="flex flex-col gap-1.5">
+        {rows.length === 0 && <p className="rounded-lg border border-line bg-surface px-3 py-3 text-center text-[13px] text-muted">기준을 넘는 영웅이 아직 없습니다</p>}
+        {rows.map((r) => {
+          const up = r.delta >= 0;
+          const body = (
+            <>
+              <Portrait src={r.portrait} size={32} />
+              <span className="min-w-0">
+                <span className="block truncate text-[13px] font-semibold text-fg">{r.ko}</span>
+                <span className="num block text-2xs text-muted">
+                  {int(r.games)}게임 · 승률 {pct(r.win_rate)}
+                </span>
+              </span>
+              <span data-delta className={cx("num text-right text-[13px] font-bold", up ? "text-pos" : "text-neg")}>
+                {up ? "+" : ""}
+                {r.delta.toFixed(1)}%p
+              </span>
+            </>
+          );
+          const cls = "grid grid-cols-[32px_1fr_auto] items-center gap-3 rounded-lg border border-line bg-surface px-2.5 py-1.5";
+          return r.slug ? (
+            <a key={r.hero} data-matchup={r.slug} href={hotsHref.hero(r.slug)} className={cx(cls, "hover:border-line-strong")}>
+              {body}
+            </a>
+          ) : (
+            <div key={r.hero} data-matchup={r.hero} className={cls}>
+              {body}
+            </div>
+          );
+        })}
+      </div>
+    </section>
+  );
 }
 
 type Pop = { t: BuildTalentView; left: number; top: number; width: number; anchor: DOMRect };

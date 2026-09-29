@@ -101,6 +101,26 @@ export interface TalentInfo {
   desc?: string;
   cd?: string;
 }
+/** One other hero in data/matchups/<slug>.json: the page hero's record with (ally) or against (enemy) it. */
+export interface MatchupPair {
+  hero: string; // API name
+  games: number;
+  wins: number; // the page hero's wins
+  win_rate: number; // the page hero's win rate, %
+}
+/** data/matchups/<slug>.json — Storm League, one hero per file, collected every other day (collector/matchups.py). */
+export interface MatchupsFile {
+  hero: string;
+  patch: string;
+  game_type: string;
+  collected_at: string;
+  /** The hero's own record in the same sample. */
+  games: number;
+  wins: number;
+  win_rate: number;
+  ally: MatchupPair[];
+  enemy: MatchupPair[];
+}
 export interface TalentTable {
   talents: Record<string, TalentInfo>;
 }

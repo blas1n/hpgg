@@ -3,6 +3,7 @@ from __future__ import annotations
 import httpx
 import pytest
 import respx
+import structlog.testing
 
 from collector.client import HPClient, HPError
 from tests.conftest import BASE, TOKEN
@@ -119,14 +120,67 @@ async def test_429_twice_raises(fake_sleep) -> None:
     respx.get(f"{BASE}/heroes/stats").mock(
         return_value=httpx.Response(
             429,
-            json={"error": {"code": "quota_exceeded", "message": "week"}},
+            json={"error": {"code": "rate_limited", "message": "slow"}},
             headers={"Retry-After": "1"},
         )
     )
     async with make_client(fake_sleep) as c:
         with pytest.raises(HPError) as ei:
             await c.get_json("/heroes/stats")
+    assert ei.value.code == "rate_limited"
+
+
+@respx.mock
+async def test_quota_exceeded_is_not_waited_out(fake_sleep) -> None:
+    # A weekly allowance does not come back within Retry-After seconds (X-HP-Quota-Reset read
+    # 578,105 s on 2026-09-29): sleeping on it would hang the Actions job until its timeout.
+    route = respx.get(f"{BASE}/heroes/matchups").mock(
+        return_value=httpx.Response(
+            429,
+            json={"error": {"code": "quota_exceeded", "message": "week"}},
+            headers={"Retry-After": "578105"},
+        )
+    )
+    async with make_client(fake_sleep) as c:
+        with pytest.raises(HPError) as ei:
+            await c.get_json("/heroes/matchups")
     assert ei.value.code == "quota_exceeded"
+    assert route.call_count == 1
+    assert fake_sleep.calls == []
+
+
+@respx.mock
+async def test_quota_remaining_header_is_logged(fake_sleep) -> None:
+    respx.get(f"{BASE}/heroes/matchups").mock(
+        return_value=httpx.Response(
+            200,
+            json={"ally": []},
+            headers={"X-HP-Quota-Remaining": "612", "X-HP-Quota-Limit": "700"},
+        )
+    )
+    with structlog.testing.capture_logs() as logs:
+        async with make_client(fake_sleep) as c:
+            await c.get_json("/heroes/matchups", params={"hero": "Abathur"})
+    quota = [x for x in logs if x["event"] == "hp.quota"]
+    assert quota == [
+        {
+            "event": "hp.quota",
+            "log_level": "info",
+            "path": "/v1/heroes/matchups",
+            "remaining": 612,
+            "limit": 700,
+        }
+    ]
+    assert TOKEN not in str(logs)
+
+
+@respx.mock
+async def test_no_quota_header_no_quota_log(fake_sleep) -> None:
+    respx.get(f"{BASE}/patches").mock(return_value=httpx.Response(200, json={}))
+    with structlog.testing.capture_logs() as logs:
+        async with make_client(fake_sleep) as c:
+            await c.get_json("/patches")
+    assert not [x for x in logs if x["event"] == "hp.quota"]
 
 
 @respx.mock

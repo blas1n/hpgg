@@ -346,3 +346,85 @@ async def test_run_is_quiet_when_every_hero_has_assets_and_says_so_when_the_tabl
     with capture_logs() as logs:
         assert await run(s, sleep=fake_sleep, now=lambda: "2026-09-29T00:00:00Z") == 0
     assert [e for e in logs if e["log_level"] == "warning"] == []
+
+
+def _seed_heroes(s: Settings, names: list[str]) -> None:
+    s.data_dir.mkdir(parents=True, exist_ok=True)
+    table = {"heroes": [{"name": n, "slug": n.lower()} for n in names]}
+    (s.data_dir / "heroes_ko.json").write_text(json.dumps(table))
+
+
+def _matchups_payload() -> dict[str, Any]:
+    def row(name: str, wins: int, losses: int) -> dict[str, Any]:
+        games = wins + losses
+        return {"hero": {"name": name}, "wins": wins, "losses": losses, "games_played": games}
+
+    return {"ally": [row("Nova", 60, 40)], "enemy": [row("Nova", 45, 55)], "combined": []}
+
+
+@respx.mock
+async def test_run_collects_matchups_for_every_due_hero_after_the_stats(
+    tmp_path: Path, raw_by_map, patches_payload, fake_sleep
+) -> None:
+    mock_api(raw_by_map, patches_payload)
+    route = respx.get(f"{BASE}/heroes/matchups").mock(
+        return_value=httpx.Response(200, json=_matchups_payload())
+    )
+    s = settings(tmp_path)
+    _seed_heroes(s, ["Illidan", "Brightwing"])
+    assert await run(s, sleep=fake_sleep, now=lambda: "2026-09-28T00:00:00Z") == 0
+    assert [dict(httpx.QueryParams(c.request.url.query))["hero"] for c in route.calls] == [
+        "Illidan",
+        "Brightwing",
+    ]
+    q = dict(httpx.QueryParams(route.calls[0].request.url.query))
+    # thin fixture sample but no previous patch to fall back to → the current one
+    assert (q["timeframe"], q["game_type"]) == ("2.55.17.97771", "sl")
+    m = json.loads((s.data_dir / "matchups" / "illidan.json").read_text())
+    assert (m["patch"], m["collected_at"]) == ("2.55.17.97771", "2026-09-28T00:00:00Z")
+    assert (s.snapshot_out_dir / "2026-09-28" / "matchups.json.gz").exists()
+    # 3 between stats + 1 before builds, then one gap between the two matchups calls
+    assert fake_sleep.calls == [60.0] * 4 + [s.matchups_call_spacing_seconds]
+    # next day: nothing is due (every other day) → no calls, files untouched
+    respx.reset()
+    mock_api(raw_by_map, patches_payload)
+    again = respx.get(f"{BASE}/heroes/matchups").mock(
+        return_value=httpx.Response(200, json=_matchups_payload())
+    )
+    assert await run(s, sleep=fake_sleep, now=lambda: "2026-09-29T00:00:00Z") == 0
+    assert again.call_count == 0
+    assert json.loads((s.data_dir / "matchups" / "illidan.json").read_text()) == m
+
+
+@respx.mock
+async def test_matchups_quota_exceeded_keeps_files_and_the_run_still_succeeds(
+    tmp_path: Path, raw_by_map, patches_payload, fake_sleep
+) -> None:
+    mock_api(raw_by_map, patches_payload)
+    respx.get(f"{BASE}/heroes/matchups").mock(
+        return_value=httpx.Response(
+            429, json={"error": {"code": "quota_exceeded", "message": "week"}}
+        )
+    )
+    s = settings(tmp_path)
+    _seed_heroes(s, ["Illidan"])
+    (s.data_dir / "matchups").mkdir(parents=True)
+    old = {"patch": "2.55.17.97771", "collected_at": "2026-09-20T00:00:00Z"}
+    (s.data_dir / "matchups" / "illidan.json").write_text(json.dumps(old))
+    assert await run(s, sleep=fake_sleep, now=lambda: "2026-09-28T00:00:00Z") == 0
+    assert json.loads((s.data_dir / "matchups" / "illidan.json").read_text()) == old
+    assert (s.data_dir / "latest" / "meta.json").exists()
+
+
+@respx.mock
+async def test_failed_stats_run_makes_no_matchups_calls(
+    tmp_path: Path, raw_by_map, patches_payload, fake_sleep
+) -> None:
+    mock_api(raw_by_map, patches_payload, fail_key="sl_high")
+    route = respx.get(f"{BASE}/heroes/matchups").mock(
+        return_value=httpx.Response(200, json=_matchups_payload())
+    )
+    s = settings(tmp_path)
+    _seed_heroes(s, ["Illidan"])
+    assert await run(s, sleep=fake_sleep, now=lambda: "2026-09-28T00:00:00Z") == 1
+    assert route.call_count == 0

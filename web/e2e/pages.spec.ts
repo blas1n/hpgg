@@ -113,6 +113,39 @@ test("hero detail: at the bottom of the page the last section's tab is active", 
   await expect(page.locator("#nav-brackets")).not.toHaveAttribute("aria-current", "location");
 });
 
+test("hero detail: counters and synergies from the matchups file, with numbers, links and the rule", async ({ page }) => {
+  // e2e-data/matchups/abathur.json = the live answer recorded 2026-09-29 (SL, 2.55.17.98025), normalised
+  await page.goto("./heroes/abathur/");
+  const counters = page.locator("#counters [data-matchup]");
+  const synergies = page.locator("#synergies [data-matchup]");
+  await expect(page.locator("#matchups-title")).toContainText("폭풍 리그");
+  await expect(page.locator("#counters-title")).toHaveText("상대하기 어려운 영웅");
+  await expect(page.locator("#synergies-title")).toHaveText("잘 맞는 영웅");
+  await expect(counters).toHaveCount(5);
+  await expect(synergies).toHaveCount(5);
+  await expect(counters.first()).toHaveAttribute("data-matchup", "qhira");
+  await expect(counters.first()).toContainText("키히라");
+  await expect(counters.first().locator("[data-delta]")).toHaveText("-7.5%p");
+  await expect(counters.first()).toContainText("330게임");
+  await expect(synergies.first()).toHaveAttribute("data-matchup", "samuro");
+  await expect(synergies.first().locator("[data-delta]")).toHaveText("+11.7%p");
+  await expect(page.locator("#matchups-sub")).toContainText("2.55.17.98025");
+  await expect(page.locator("#matchups-sub")).toContainText("50.8%"); // the hero's own win rate in that sample
+  await expect(page.locator("#matchups-rule")).toContainText("n/(n+100)");
+  await expect(page.locator("#matchups-rule")).toContainText("50게임 미만 제외");
+  await expect(page.locator("nav[data-subnav] a[href='#matchups-title']")).toBeVisible();
+  await counters.first().click();
+  await expect(page).toHaveURL(/\/heroes\/qhira\/$/);
+  await expect(page.locator("h1")).toHaveText("키히라");
+});
+
+test("hero detail: no matchups file yet says so instead of an empty list", async ({ page }) => {
+  await page.goto("./heroes/illidan/");
+  await expect(page.locator("#matchups")).toContainText("다음 정기 수집");
+  await expect(page.locator("#matchups [data-matchup]")).toHaveCount(0);
+  await expect(page.locator("nav[data-subnav] a[href='#matchups-title']")).toHaveCount(0);
+});
+
 test("hero detail: unknown slug is a 404 page with a way back", async ({ page }) => {
   await page.goto("./heroes/nobody/");
   await expect(page.locator("#meta-line")).toContainText("영웅이 없습니다");
