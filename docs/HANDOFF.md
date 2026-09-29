@@ -18,6 +18,7 @@ GitHub Actions (cron 03:20 KST, workflow_dispatch, push:main)
     uv run python -m collector
       GET /v1/patches                       → newest build with valid_globals
       4× GET /v1/heroes/stats?group_by_map  → qm, sl, sl_low(1-4), sl_high(5-6)   (60 s apart)
+      2× GET /v1/heroes/stats?region=…      → today's region: qm_<r>, sl_<r> (kr → na → eu by day index); other regions carried
       1× GET /v1/heroes/talents/builds/all  → popular builds, qm+sl combined                    (7/week cap!)
       atomic swap → data/latest/{qm,sl,sl_low,sl_high,builds,meta}.json (+ data/previous/ on patch change)
       ≤90× GET /v1/heroes/matchups?hero=…   → data/matchups/<slug>.json, SL, heroes due only   (2 s apart, ≤25 min)
@@ -45,11 +46,11 @@ Why multiplicative: an additive formula ((WRs−50)+0.15·pick+0.15·ban) reprod
 ## Quotas and costs (Heroes Profile Basic, $5/month, rolling 7-day windows per endpoint)
 | Endpoint | Weekly cap | Daily use |
 |---|---|---|
-| Heroes/Stats | 70 | 4 (28/week; the rest is room for backfills) |
+| Heroes/Stats | 70 | 4 global + 2 region = 6 (42/week; 28 left for a 4-call previous-patch backfill and a rerun) |
 | Heroes/Talents/Builds/All | **7** | 1 (quota_exceeded → collector keeps yesterday's builds.json, run still succeeds) |
 | Hero/Matchups | 700 | 90 every other day (315/week; a patch change adds one early round → ≤ 450) |
 | Patches, Heroes, Maps | 1,000,000 | 1 |
-Error responses and 202 job polling are not charged. `group_by_map=true` is rate-limited to 1 request/minute, hence the 60 s spacing (the stats part of a run takes ~5 minutes). `/heroes/matchups` without `group_by_map` answers `X-RateLimit-Limit: 60` (per minute, measured 2026-09-29) → 2 s spacing. Every charged answer carries `X-HP-Quota-Remaining`/`-Limit`, logged as `hp.quota`. `quota_exceeded` is never waited out (its Retry-After is the weekly reset, ~6 days). A manual `workflow_dispatch` costs a full day's calls — do not run it casually; the builds/all budget has no slack.
+Error responses and 202 job polling are not charged. `group_by_map=true` is rate-limited to 1 request/minute, hence the 60 s spacing (the stats part of a run takes ~7 minutes). `/heroes/matchups` without `group_by_map` answers `X-RateLimit-Limit: 60` (per minute, measured 2026-09-29) → 2 s spacing. Every charged answer carries `X-HP-Quota-Remaining`/`-Limit`, logged as `hp.quota`. `quota_exceeded` is never waited out (its Retry-After is the weekly reset, ~6 days). A manual `workflow_dispatch` costs a full day's calls — do not run it casually; the builds/all budget has no slack.
 
 ### Matchups (counters / synergies, #15)
 - `collector/matchups.py`. Storm League only (owner, Basic plan). One call per hero; recorded answer in `tests/fixtures/live_probe_matchups_abathur_sl_2.55.17.98025.json.gz`: `{ally, enemy, combined}`, one row per other hero with `wins`/`losses`/`games_played` from the asked hero's side — but on `enemy` rows `win_rate` is the asked hero's **loss** rate, so the collector recomputes every win rate from wins/games. `combined` is not stored.
@@ -57,6 +58,13 @@ Error responses and 202 job polling are not charged. `group_by_map=true` is rate
 - **Patch**: the one the pages show for Storm League — the previous patch while the current sample is thin (same rule as `web/src/data.ts` `thinSample`), so the section is not empty for the week after a patch.
 - **Ranking** (`web/src/lib/matchups.ts`, printed on the page): score = (pair win rate − the hero's own win rate in the same sample) × n/(n+100); pairs under 50 games are left out; top 5 enemies with the lowest score (상대하기 어려운 영웅) and allies with the highest (잘 맞는 영웅). The page shows the unshrunk gap (%p) and games.
 - Pages show the section in both modes, labelled 폭풍 리그; without a file the section says the data comes with the next collection.
+
+### Regions (아시아 / 아메리카 / 유럽, #14)
+- Owner decision (Basic plan): a rotation — each day ONE region for QM + SL with `group_by_map` (2 calls). Region = `REGIONS[(day − 2026-09-30) mod 3]` → KR, NA, EU, KR, … (`collector/snapshot.py` `region_for_day`, UTC date of the run). Each region is at most 3 days old; the page prints each region's own date (`meta.modes[<key>].collected_at`).
+- Files `data/latest/{qm,sl}_{kr,na,eu}.json` (carry `"region": "KR"` …; global files `"region": null`). The run carries the other regions' files forward while they are for the same patch; on a patch change they move into `previous/` with everything else and are not carried. A failed region call never fails the run (that region keeps its files and comes round in 3 days). `--previous <build>` stays 4 calls (global only) and keeps previous region files of that same build.
+- Region × bracket is not collected: on the tier table the region select disables the bracket select and vice versa, with the reason printed; `?region=kr|na|eu` (a region in the URL wins over `tier=`). Regions exist for both modes; map filtering works inside a region (group_by_map).
+- A region file is a different cohort (`lib/cohort.ts`): no ▲▼ against the global file; a region's thin sample is judged by its own `heroes_over_200` (`#region-note` warns). CN is not collected.
+- Hero detail: 지역별 section — the hero's tier/rank/win rate per collected region for the current mode.
 
 ## Operating notes
 - **Never** use `api.heroesprofile.com` or `?api_token=`: that is the old API (off 2027-01-01). v1 is `https://www.heroesprofile.com/api/external/v1` with `Authorization: Bearer <key>`. Key lives in `.env` locally and in the Actions secret `HP_API_TOKEN`. The key page shows "Last Used"; if it says Never, you are hitting the wrong host.

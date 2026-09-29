@@ -1,9 +1,9 @@
 "use client";
 
 import { Fragment, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
-import { assetUrl, BRACKET_LABEL, daysSince, hotsHref, loadSnapshot, MODE_LABEL, shortDate, snapshotKey, thinSample, type Bracket, type HeroTable, type MapTable, type Meta, type Mode } from "@/data";
+import { assetUrl, BRACKET_LABEL, daysSince, hotsHref, loadSnapshot, MODE_LABEL, REGION_LABEL, REGIONS, regionSample, shortDate, snapshotKey, thinSample, type Bracket, type HeroTable, type MapTable, type Meta, type Mode, type Region } from "@/data";
 import { formulaLine, PRESETS, type Snapshot } from "@/formula";
-import { bracketMatches } from "@/lib/shown";
+import { bracketMatches, regionMatches } from "@/lib/shown";
 import { DEFAULT_TIER_STATE, parseTierState, resolvePatch, tierSearch, tierTable, visibleRows, type SortKey, type TierRow, type TierState, type TierTable } from "@/lib/tier";
 import { Card, cx, Portrait, Segmented } from "../ui";
 
@@ -62,10 +62,10 @@ export function TierView({ meta, heroes, maps, initial }: { meta: Meta; heroes: 
     setError(null);
   };
 
-  const { mode, bracket, map, role, sort, dir } = state;
+  const { mode, bracket, region, map, role, sort, dir } = state;
   const sl = mode === "sl";
-  const file = snapshotKey(mode, bracket);
-  const resolved = resolvePatch(meta, mode, state.patch);
+  const file = snapshotKey(mode, bracket, region);
+  const resolved = resolvePatch(meta, mode, state.patch, file);
   // a previous-patch bracket file that is missing or of another bracket definition is never shown under this
   // label (lib/shown.ts): the current patch instead, thin as it is
   const { patch, auto } = resolved.patch === "previous" && loaded[`previous/${file}`] === null ? { patch: "current" as const, auto: false } : resolved;
@@ -83,9 +83,14 @@ export function TierView({ meta, heroes, maps, initial }: { meta: Meta; heroes: 
       want.map(async (k) => {
         const [d, f] = k.split("/") as ["latest" | "previous", string];
         try {
+          // a region is published only once it has been collected (meta lists it); don't ask for a file that isn't there
+          if (region !== "all" && d === "latest" && !meta.modes[f]) {
+            setError(`${REGION_LABEL[region]}은(는) 아직 수집되지 않았습니다 — 지역은 하루 한 곳씩 돌아가며 수집합니다`);
+            return [k, null] as const;
+          }
           const s = await loadSnapshot(f, d === "previous" ? "previous" : "current", heroes);
-          if (bracketMatches(s, bracket)) return [k, s] as const;
-          if (d === "latest") setError(`${f}.json 의 리그 구간(${s.league_tier?.join(",") ?? "전체"})이 이 구간 정의와 다릅니다`);
+          if (bracketMatches(s, bracket) && regionMatches(s, region)) return [k, s] as const;
+          if (d === "latest") setError(`${f}.json 의 리그 구간(${s.league_tier?.join(",") ?? "전체"}) 또는 지역(${s.region ?? "전체"})이 이 선택과 다릅니다`);
           return [k, null] as const;
         } catch (e) {
           if (d === "latest") setError(e instanceof Error ? e.message : String(e));
@@ -98,7 +103,7 @@ export function TierView({ meta, heroes, maps, initial }: { meta: Meta; heroes: 
     return () => {
       live = false;
     };
-  }, [isInitial, curKey, prevKey, loaded, heroes]);
+  }, [isInitial, curKey, prevKey, loaded, heroes, bracket, region, meta.modes]);
 
   const snap = loaded[curKey];
   const computed = useMemo(() => {
@@ -124,7 +129,7 @@ export function TierView({ meta, heroes, maps, initial }: { meta: Meta; heroes: 
     : busy
       ? "불러오는 중…"
       : [
-        MODE_LABEL[mode] + (sl && bracket !== "all" ? ` · ${BRACKET_LABEL[bracket]}` : ""),
+        MODE_LABEL[mode] + (region !== "all" ? ` · ${REGION_LABEL[region]}` : "") + (sl && bracket !== "all" ? ` · ${BRACKET_LABEL[bracket]}` : ""),
         mapInfo?.ko ?? "전체 전장",
         `패치 ${table.patch}`,
         `${int(table.matches)} 매치`,
@@ -186,11 +191,30 @@ export function TierView({ meta, heroes, maps, initial }: { meta: Meta; heroes: 
             </button>
           ))}
         </div>
-        {sl && (
-          <div className="flex w-full gap-1.5 sm:ml-auto sm:w-auto">
+        <div className="flex w-full flex-wrap gap-1.5 sm:ml-auto sm:w-auto sm:flex-nowrap">
+          <label id="region-wrap" className="w-full sm:w-auto sm:flex-none">
+            <span className="sr-only">지역</span>
+            <select
+              id="region"
+              value={region}
+              disabled={sl && bracket !== "all"}
+              title={sl && bracket !== "all" ? COMBO_NOTE : undefined}
+              onChange={(e) => update({ region: e.target.value as Region, bracket: "all", patch: "auto" })}
+              className={SELECT}
+            >
+              {REGIONS.map((r) => (
+                <option key={r} value={r} disabled={r !== "all" && !regionSample(meta, mode, r)}>
+                  {REGION_LABEL[r]}
+                  {r !== "all" && !regionSample(meta, mode, r) ? " · 수집 전" : ""}
+                </option>
+              ))}
+            </select>
+          </label>
+          {sl && (
+            <>
             <label id="bracket-wrap" className="flex-1 sm:flex-none">
               <span className="sr-only">리그 구간</span>
-              <select id="bracket" value={bracket} onChange={(e) => update({ bracket: e.target.value as Bracket })} className={SELECT}>
+              <select id="bracket" value={bracket} disabled={region !== "all"} title={region !== "all" ? COMBO_NOTE : undefined} onChange={(e) => update({ bracket: e.target.value as Bracket })} className={SELECT}>
                 {(Object.keys(BRACKET_LABEL) as Bracket[]).map((b) => (
                   <option key={b} value={b}>
                     {BRACKET_LABEL[b]}
@@ -209,9 +233,17 @@ export function TierView({ meta, heroes, maps, initial }: { meta: Meta; heroes: 
                 ))}
               </select>
             </label>
-          </div>
+            </>
+          )}
+        </div>
+        {sl && (region !== "all" || bracket !== "all") && (
+          <p id="combo-note" className="w-full text-2xs text-muted">
+            {COMBO_NOTE}
+          </p>
         )}
       </Card>
+
+      {region !== "all" && <RegionNote meta={meta} mode={mode} region={region} />}
 
       <Card as="div" className="overflow-hidden">
         <table id="table" aria-busy={busy} className={cx("num w-full table-fixed border-collapse text-[13px] transition-opacity sm:text-sm", busy && "opacity-50")}>
@@ -278,7 +310,24 @@ export function TierView({ meta, heroes, maps, initial }: { meta: Meta; heroes: 
   );
 }
 
-const SELECT = "w-full rounded-lg border border-line bg-surface-2 px-2.5 py-1.5 text-[13px] text-fg sm:w-auto";
+const SELECT = "w-full rounded-lg border border-line bg-surface-2 px-2.5 py-1.5 text-[13px] text-fg disabled:opacity-50 sm:w-auto";
+const COMBO_NOTE = "지역별 데이터는 전체 구간만 수집합니다 — 지역과 리그 구간은 함께 고를 수 없습니다";
+
+/** Which region, when it was collected (regions rotate one a day), and how thin its sample is. */
+function RegionNote({ meta, mode, region }: { meta: Meta; mode: Mode; region: Exclude<Region, "all"> }) {
+  const s = regionSample(meta, mode, region);
+  if (!s) return null;
+  return (
+    <p
+      id="region-note"
+      data-thin={s.thin}
+      className={cx("num rounded-lg border px-3 py-2 text-[13px]", s.thin ? "border-warn-line bg-warn-bg text-warn-fg" : "border-line bg-surface text-fg-2")}
+    >
+      {REGION_LABEL[region]} · {s.collectedAt ? `${shortDate(s.collectedAt)} 수집` : "수집일 미상"} · 지역은 하루 한 곳씩 사흘마다 갱신 · {meta.min_games_for_tier}게임 이상 영웅 {s.over}/{s.heroes}
+      {s.thin && " — 표본이 적어 티어 없는(회색) 영웅이 많습니다"}
+    </p>
+  );
+}
 
 function HeroRow({ r, cols, n, hasPrevious, sl, span, mode, open, onToggle }: { r: TierRow; cols: SortKey[]; n: number; hasPrevious: boolean; sl: boolean; span: number; mode: Mode; open: boolean; onToggle: () => void }) {
   const cell: Record<SortKey, string> = {

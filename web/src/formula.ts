@@ -19,6 +19,8 @@ export interface Snapshot {
   mode: string;
   game_type: string;
   league_tier: number[] | null;
+  /** HP region code (KR, NA, EU) of a region file; null or absent = every region. */
+  region?: string | null;
   collected_at: string;
   matches: number;
   rows: Row[];

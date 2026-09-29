@@ -168,6 +168,7 @@ def test_snapshot_to_json_matches_frontend_contract(raw_by_map) -> None:
         "mode",
         "game_type",
         "league_tier",
+        "region",
         "collected_at",
         "matches",
         "rows",

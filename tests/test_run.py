@@ -58,32 +58,38 @@ async def test_run_writes_five_files_meta_and_raw_gz(
         "builds.json",
         "meta.json",
         "qm.json",
+        "qm_na.json",  # 2026-09-28 is an NA day in the region rotation
         "sl.json",
         "sl_high.json",
         "sl_low.json",
+        "sl_na.json",
     ]
     meta = json.loads((latest / "meta.json").read_text())
     assert (
         meta["current_patch"] == "2.55.17.97771" and meta["collected_at"] == "2026-09-28T01:02:03Z"
     )
-    assert set(meta["modes"]) == {"qm", "sl", "sl_low", "sl_high"}
+    assert set(meta["modes"]) == {"qm", "sl", "sl_low", "sl_high", "qm_na", "sl_na"}
     # raw responses kept gzipped for the snapshots branch
     day = s.snapshot_out_dir / "2026-09-28"
     assert sorted(p.name for p in day.iterdir()) == [
         "builds.json.gz",
         "meta.json",
         "qm.json.gz",
+        "qm_na.json.gz",
         "raw_builds.json.gz",
         "raw_qm.json.gz",
+        "raw_qm_na.json.gz",
         "raw_sl.json.gz",
         "raw_sl_high.json.gz",
         "raw_sl_low.json.gz",
+        "raw_sl_na.json.gz",
         "sl.json.gz",
         "sl_high.json.gz",
         "sl_low.json.gz",
+        "sl_na.json.gz",
     ]
-    # 60 s spacing between the four group_by_map calls → 3 waits, + 1 before builds/all
-    assert fake_sleep.calls == [60.0] * 4
+    # 60 s spacing between the six group_by_map calls → 5 waits, + 1 before builds/all
+    assert fake_sleep.calls == [60.0] * 6
 
 
 @respx.mock
@@ -91,17 +97,19 @@ async def test_run_passes_league_tier_and_game_type_per_spec(
     tmp_path: Path, raw_by_map, patches_payload, fake_sleep
 ) -> None:
     mock_api(raw_by_map, patches_payload)
-    await run(settings(tmp_path), sleep=fake_sleep, now=lambda: "t")
+    assert await run(settings(tmp_path), sleep=fake_sleep, now=lambda: "2026-09-28T00:00:00Z") == 0
     calls = [
         dict(httpx.QueryParams(c.request.url.query))
         for c in respx.calls
         if c.request.url.path.endswith("/heroes/stats")
     ]
-    assert [(c["game_type"], c.get("league_tier")) for c in calls] == [
-        ("qm", None),
-        ("sl", None),
-        ("sl", "1,2,3,4"),
-        ("sl", "5,6"),
+    assert [(c["game_type"], c.get("league_tier"), c.get("region")) for c in calls] == [
+        ("qm", None, None),
+        ("sl", None, None),
+        ("sl", "1,2,3,4", None),
+        ("sl", "5,6", None),
+        ("qm", None, "NA"),
+        ("sl", None, "NA"),
     ]
 
 
@@ -279,7 +287,7 @@ async def test_run_collects_popular_builds_after_stats(
         "title": "Unending Hatred",
     }
     assert b["heroes"]["Nova"] == []
-    assert fake_sleep.calls == [60.0] * 4  # 3 between stats + 1 before builds (1 req/min)
+    assert fake_sleep.calls == [60.0] * 6  # 5 between 4 stats + 2 region calls, 1 before builds
     assert (s.snapshot_out_dir / "2026-09-28" / "raw_builds.json.gz").exists()
 
 
@@ -383,8 +391,8 @@ async def test_run_collects_matchups_for_every_due_hero_after_the_stats(
     m = json.loads((s.data_dir / "matchups" / "illidan.json").read_text())
     assert (m["patch"], m["collected_at"]) == ("2.55.17.97771", "2026-09-28T00:00:00Z")
     assert (s.snapshot_out_dir / "2026-09-28" / "matchups.json.gz").exists()
-    # 3 between stats + 1 before builds, then one gap between the two matchups calls
-    assert fake_sleep.calls == [60.0] * 4 + [s.matchups_call_spacing_seconds]
+    # 5 between 6 stats calls + 1 before builds, then one gap between the two matchups calls
+    assert fake_sleep.calls == [60.0] * 6 + [s.matchups_call_spacing_seconds]
     # next day: nothing is due (every other day) → no calls, files untouched
     respx.reset()
     mock_api(raw_by_map, patches_payload)

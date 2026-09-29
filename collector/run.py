@@ -7,7 +7,7 @@ import gzip
 import json
 import shutil
 from collections.abc import Callable
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 from pathlib import Path
 from typing import Any
 
@@ -16,7 +16,9 @@ import structlog
 from collector.client import HPClient, HPError, SleepFn
 from collector.config import Settings
 from collector.matchups import collect_matchups, load_hero_list, matchups_patch
+from collector.models import JobSpec
 from collector.snapshot import (
+    REGION_KEYS,
     SPECS,
     build_meta,
     choose_patch,
@@ -25,6 +27,8 @@ from collector.snapshot import (
     load_meta,
     normalize_builds,
     normalize_by_map,
+    region_for_day,
+    region_specs,
     snapshot_to_json,
 )
 
@@ -79,13 +83,21 @@ def _write_gz(path: Path, obj: Any) -> None:
 
 
 async def _collect_all(
-    c: HPClient, settings: Settings, *, patch: str, collected_at: str, sleep: SleepFn
+    c: HPClient,
+    settings: Settings,
+    *,
+    patch: str,
+    collected_at: str,
+    sleep: SleepFn,
+    specs: tuple[JobSpec, ...] = SPECS,
+    after_a_call: bool = False,
 ) -> tuple[dict[str, Any], dict[str, dict[str, Any]]]:
-    """The five group_by_map calls for one build, 60 s apart → (raw by key, snapshots by key)."""
+    """group_by_map calls for one build, 60 s apart → (raw by key, snapshots by key).
+    `after_a_call`: a group_by_map call was made just before, so wait before the first one too."""
     raw_by_key: dict[str, Any] = {}
     snapshots: dict[str, dict[str, Any]] = {}
-    for i, spec in enumerate(SPECS):
-        if i > 0:
+    for i, spec in enumerate(specs):
+        if i > 0 or after_a_call:
             # group_by_map=true drops the per-key limit to 1 request/minute
             await sleep(settings.map_call_spacing_seconds)
         params: dict[str, Any] = {
@@ -97,11 +109,14 @@ async def _collect_all(
         }
         if spec.league_tier:
             params["league_tier"] = ",".join(str(t) for t in spec.league_tier)
+        if spec.region:
+            params["region"] = spec.region
         log.info(
             "run.call",
             key=spec.key,
             game_type=spec.game_type,
             league_tier=params.get("league_tier"),
+            region=spec.region,
             patch=patch,
         )
         raw = await c.get_json("/heroes/stats", params=params)
@@ -114,9 +129,48 @@ async def _collect_all(
             patch=patch,
             collected_at=collected_at,
         )
+        snap.region = spec.region
         snapshots[spec.key] = snapshot_to_json(snap)
         log.info("run.normalized", key=spec.key, matches=snap.matches, rows=len(snap.rows))
     return raw_by_key, snapshots
+
+
+async def _collect_region(
+    c: HPClient, settings: Settings, *, patch: str, collected_at: str, sleep: SleepFn
+) -> tuple[dict[str, Any], dict[str, dict[str, Any]]]:
+    """Today's region (QM + SL). A failure here never fails the run: that region keeps its
+    previous files (carried by `_carried_regions`) and comes round again in three days."""
+    region = region_for_day(date.fromisoformat(collected_at[:10]))
+    try:
+        return await _collect_all(
+            c,
+            settings,
+            patch=patch,
+            collected_at=collected_at,
+            sleep=sleep,
+            specs=region_specs(region),
+            after_a_call=True,
+        )
+    except HPError as e:
+        log.warning("run.region_skipped", region=region, status=e.status, code=e.code)
+    except ValueError as e:
+        log.warning("run.region_skipped", region=region, error=str(e))
+    return {}, {}
+
+
+def _carried_regions(
+    data_dir: Path, *, patch: str, fresh: dict[str, dict[str, Any]]
+) -> dict[str, dict[str, Any]]:
+    """The other regions' files from data/latest, while they are for the same patch. On a patch
+    change they are not carried: commit_atomic moves them into previous/ with the rest."""
+    carried: dict[str, dict[str, Any]] = {}
+    for key in REGION_KEYS:
+        if key in fresh:
+            continue
+        old = _load_json(data_dir / "latest" / f"{key}.json")
+        if isinstance(old, dict) and old.get("patch") == patch:
+            carried[key] = old
+    return carried
 
 
 def _warn_heroes_without_assets(
@@ -191,6 +245,11 @@ async def run_backfill_previous(
             json.dumps(snap, ensure_ascii=False, separators=(",", ":")), encoding="utf-8"
         )
     previous = settings.data_dir / "previous"
+    # region files are not backfilled (4 calls stay 4); keep the ones that are for this build
+    for key in REGION_KEYS:
+        kept = _load_json(previous / f"{key}.json")
+        if isinstance(kept, dict) and kept.get("patch") == patch:
+            shutil.copy2(previous / f"{key}.json", stage / f"{key}.json")
     old = settings.tmp_dir / "old_previous"
     if old.exists():
         shutil.rmtree(old)
@@ -260,6 +319,12 @@ async def _run_stats(c: HPClient, settings: Settings, *, collected_at: str, slee
         raw_by_key, snapshots = await _collect_all(
             c, settings, patch=patch, collected_at=collected_at, sleep=sleep
         )
+        region_raw, region_snaps = await _collect_region(
+            c, settings, patch=patch, collected_at=collected_at, sleep=sleep
+        )
+        raw_by_key.update(region_raw)
+        snapshots.update(region_snaps)
+        snapshots.update(_carried_regions(settings.data_dir, patch=patch, fresh=snapshots))
         builds_result = await _collect_builds(
             c, settings, patch=patch, collected_at=collected_at, sleep=sleep
         )

@@ -22,7 +22,7 @@ describe("parseTierState / tierSearch", () => {
   });
 
   it("round-trips every non-default field", () => {
-    const s: TierState = { mode: "sl", bracket: "high", map: "Cursed Hollow", role: "Tank", patch: "previous", sort: "win_rate", dir: "asc" };
+    const s: TierState = { mode: "sl", bracket: "high", region: "all", map: "Cursed Hollow", role: "Tank", patch: "previous", sort: "win_rate", dir: "asc" };
     expect(parseTierState(tierSearch(s))).toEqual(s);
   });
 

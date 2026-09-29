@@ -1,6 +1,6 @@
 /** Hero detail view models. Pure: computed at build time for both modes and serialised into each hero page. */
 import { computeTiers, PRESETS, type Snapshot, type Tier } from "../formula";
-import { BRACKET_LABEL, type BuildsFile, type MapTable, type TalentTable } from "../data";
+import { BRACKET_LABEL, REGION_LABEL, type BuildsFile, type MapTable, type Region, type TalentTable } from "../data";
 
 export type HeroSummary =
   | {
@@ -85,6 +85,30 @@ export function bracketRows(brackets: { key: "low" | "high"; snap: Snapshot | nu
     const row = p.r?.row ?? p.grey;
     if (!row) return [];
     return [{ key, label: BRACKET_LABEL[key], tier: p.r?.tier ?? null, rank: p.r?.rank ?? null, n: p.n, win_rate: row.win_rate, pick: row.pick, ban_rate: row.ban_rate, games: row.games }];
+  });
+}
+
+export interface RegionRow {
+  key: Exclude<Region, "all">;
+  label: string;
+  tier: Tier | null; // null = below the sample floor in that region
+  rank: number | null;
+  n: number;
+  win_rate: number;
+  pick: number;
+  games: number;
+  /** Regions rotate one a day, so each has its own date. */
+  collectedAt: string;
+}
+
+/** This hero in each collected region (current mode, every bracket). A region not collected yet has no row. */
+export function regionRows(regions: { key: Exclude<Region, "all">; snap: Snapshot | null }[], hero: string, minGames: number): RegionRow[] {
+  return regions.flatMap(({ key, snap }) => {
+    if (!snap) return [];
+    const p = place(snap, "all", hero, minGames);
+    const row = p.r?.row ?? p.grey;
+    if (!row) return [];
+    return [{ key, label: REGION_LABEL[key], tier: p.r?.tier ?? null, rank: p.r?.rank ?? null, n: p.n, win_rate: row.win_rate, pick: row.pick, games: row.games, collectedAt: snap.collected_at }];
   });
 }
 

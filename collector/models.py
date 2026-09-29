@@ -26,6 +26,7 @@ class JobSpec:
     game_type: str
     league_tier: tuple[int, ...] | None
     filename: str
+    region: str | None = None  # HP region code (KR, NA, EU); None = every region
 
 
 @dataclass
@@ -37,3 +38,4 @@ class ModeSnapshot:
     collected_at: str
     matches: int
     rows: list[HeroStat] = field(default_factory=list)
+    region: str | None = None

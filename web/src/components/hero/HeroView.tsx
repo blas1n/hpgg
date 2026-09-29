@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { assetUrl, fallbackNote, hotsHref, MODE_LABEL, shortDate, type HeroInfo, type Mode } from "@/data";
-import { descParts, type BracketRow, type BuildTalentView, type BuildView, type HeroSummary, type MapRow } from "@/lib/hero";
+import { descParts, type BracketRow, type BuildTalentView, type BuildView, type HeroSummary, type MapRow, type RegionRow } from "@/lib/hero";
 import { MATCHUP_RULE, type MatchupRow, type MatchupsView } from "@/lib/matchups";
 import { Card, cx, Portrait, Segmented, TierBadge } from "../ui";
 
@@ -18,6 +18,8 @@ export interface HeroModeModel {
   summary: HeroSummary;
   maps: MapRow[];
   brackets: BracketRow[]; // Storm League only
+  /** Collected regions for this mode (each with its own date: regions rotate one a day). */
+  regions: RegionRow[];
 }
 
 // section titles land just below the header + sticky tabs
@@ -59,6 +61,7 @@ export function HeroView({
     { id: "top", label: "요약" },
     { id: "maps-title", label: "전장" },
     ...(sl && m.brackets.length ? [{ id: "brackets-title", label: "구간", nav: "nav-brackets" }] : []),
+    ...(m.regions.length ? [{ id: "regions-title", label: "지역", nav: "nav-regions" }] : []),
     ...(matchups ? [{ id: "matchups-title", label: "상성", nav: "nav-matchups" }] : []),
     ...(builds.length ? [{ id: "builds-title", label: "특성 빌드", nav: "nav-builds" }] : []),
   ];
@@ -125,6 +128,31 @@ export function HeroView({
                   <span className="block text-2xs text-muted">
                     픽 {pct(b.pick)} · 밴 {pct(b.ban_rate)}
                   </span>
+                </span>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+
+      {m.regions.length > 0 && (
+        <>
+          <h2 id="regions-title" className={SECTION}>
+            지역별 ({MODE_LABEL[mode]}) <span className="text-xs font-normal text-muted">하루 한 지역씩 사흘마다 갱신</span>
+          </h2>
+          <div id="regions" className="flex flex-col gap-1.5">
+            {m.regions.map((r) => (
+              <div key={r.key} data-region={r.key} className="grid grid-cols-[28px_1fr_auto] items-center gap-3 rounded-lg border border-line bg-surface px-3 py-2">
+                {r.tier ? <TierBadge tier={r.tier} size="lg" /> : <span className="text-center text-muted">–</span>}
+                <span className="min-w-0">
+                  <span className="block text-[13px] font-semibold text-fg">{r.label}</span>
+                  <span className="num block text-2xs text-muted">
+                    {r.rank ? `#${r.rank} / ${r.n}` : "표본 부족"} · {int(r.games)}게임 · {shortDate(r.collectedAt)} 수집
+                  </span>
+                </span>
+                <span className="num text-right">
+                  <span className={cx("block text-[13px] font-bold", r.win_rate >= 50 ? "text-pos" : "text-neg")}>{pct(r.win_rate)}</span>
+                  <span className="block text-2xs text-muted">픽 {pct(r.pick)}</span>
                 </span>
               </div>
             ))}
