@@ -7,10 +7,10 @@ const port = Number(process.env.E2E_PORT ?? 4173);
 export default defineConfig({
   testDir: "e2e",
   timeout: 30_000,
-  use: { baseURL: `http://localhost:${port}/hots/`, viewport: { width: 390, height: 844 } },
+  use: { baseURL: `http://localhost:${port}/ko/hots/`, viewport: { width: 390, height: 844 } },
   webServer: {
     command: `node scripts/serve.mjs dist-e2e ${port}`,
-    url: `http://localhost:${port}/hots/`,
+    url: `http://localhost:${port}/ko/hots/`,
     reuseExistingServer: false,
     timeout: 60_000,
   },

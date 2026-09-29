@@ -52,7 +52,7 @@ test("heroes: the mode toggle swaps the tiers and the hero links carry the mode"
   await page.locator("#mode-sl").click();
   await expect(page).toHaveURL(/mode=sl&role=Healer/);
   await expect(bw).toHaveAttribute("data-tier", "F");
-  await expect(bw).toHaveAttribute("href", "/hots/heroes/brightwing/?mode=sl");
+  await expect(bw).toHaveAttribute("href", "/ko/hots/heroes/brightwing/?mode=sl");
 });
 
 test("hero detail: three stat cards, per-map rows (not links) in SL, brackets, no vote", async ({ page }) => {
@@ -160,7 +160,7 @@ test("maps: cards with images, match counts and top heroes; card → map page �
   await expect(page.locator("#map-grid a[data-map]").first()).toHaveAttribute("data-map", "cursed-hollow"); // most matches first
   await expect(page.locator('#map-grid a[data-map="towers-of-doom"]')).toContainText("표본 없음"); // fixture: no SL rows there
   await card.click();
-  await expect(page).toHaveURL(/\/hots\/maps\/cursed-hollow\/$/);
+  await expect(page).toHaveURL(/\/ko\/hots\/maps\/cursed-hollow\/$/);
   await page.locator("#map-tier-link a").click();
   await expect(page).toHaveURL(/tier\/\?mode=sl&map=Cursed(\+|%20)Hollow/);
   await expect(page.locator("#map-hero")).toBeVisible();

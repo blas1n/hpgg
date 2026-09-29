@@ -48,8 +48,8 @@ describe("regions and links", () => {
   });
 
   it("builds the page URL with an encoded battletag, in the page language", () => {
-    expect(playersHref("ko")).toBe("/hots/players/");
-    expect(playersHref("ko", "Player12#1012", "NA")).toBe("/hots/players/?tag=Player12%231012&region=NA");
+    expect(playersHref("ko")).toBe("/ko/hots/players/");
+    expect(playersHref("ko", "Player12#1012", "NA")).toBe("/ko/hots/players/?tag=Player12%231012&region=NA");
     expect(playersHref("en", "Player12#1012", "NA")).toBe("/en/hots/players/?tag=Player12%231012&region=NA");
   });
 });
@@ -159,7 +159,7 @@ describe("playerView", () => {
   });
 
   it("uses Korean hero names, portraits and hero links", () => {
-    expect(v.heroes[0]).toMatchObject({ name: "루시우", slug: "lucio", portrait: "img/heroes/lucio.png", games: 300, winRate: 58.33, href: "/hots/heroes/lucio/" });
+    expect(v.heroes[0]).toMatchObject({ name: "루시우", slug: "lucio", portrait: "img/heroes/lucio.png", games: 300, winRate: 58.33, href: "/ko/hots/heroes/lucio/" });
     expect(v.bestHeroes[0]!.name).toBe("누더기");
   });
 

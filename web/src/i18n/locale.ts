@@ -1,33 +1,37 @@
 /**
- * Languages and their URLs (#10). Korean is the default and keeps the live URLs (/hots/…); English is pre-rendered
- * under /en (/en/hots/…). Each page is one language from its first byte, so there is never a flash of the other one;
- * a stored choice (localStorage, when the browser allows it) is only a hint to redirect to the chosen language's URL.
+ * Languages and their URLs (#10). Every language, Korean included, lives under /<locale>/ (/ko/hots/…, /en/hots/…),
+ * pre-rendered from one route tree (app/[locale]). Each page is one language from its first byte, so there is never a
+ * flash of another; a stored choice (localStorage, when the browser allows it) is only a hint to redirect to the chosen
+ * language's URL. The URLs before this (/hots/…) forward (scripts/forwarders.ts).
  */
-export type Locale = "ko" | "en";
-export const LOCALES: Locale[] = ["ko", "en"];
-export const DEFAULT_LOCALE: Locale = "ko";
-export const SITE_URL = "https://hpgg.win";
-export const LOCALE_KEY = "hpgg-locale";
-/** Open Graph locale per language. */
-export const OG_LOCALE: Record<Locale, string> = { ko: "ko_KR", en: "en_US" };
-/** Number formatting per language (grouping only; both print 1,234). */
-export const NUMBER_LOCALE: Record<Locale, string> = { ko: "ko-KR", en: "en-US" };
+import { DEFAULT_LOCALE, isLocale, LOCALE_KEY, LOCALES, SITE_URL, type Locale } from "./locales";
 
-const EN_PREFIX = /^\/en(?=\/|$)/;
+export { DEFAULT_LOCALE, isLocale, LOCALE_KEY, LOCALES, SITE_URL, type Locale };
 
-export const localeOfPath = (path: string): Locale => (EN_PREFIX.test(path) ? "en" : "ko");
-export const otherLocale = (l: Locale): Locale => (l === "ko" ? "en" : "ko");
+const PREFIX = new RegExp(`^/(${LOCALES.join("|")})(?=/|$)`);
 
-/** The same page in `to`: /hots/tier/ ⇄ /en/hots/tier/. */
-export function localizedPath(path: string, to: Locale): string {
-  const base = path.replace(EN_PREFIX, "") || "/";
-  return to === "ko" ? base : `/en${base}`;
-}
+/** The language of a path, or null for a path outside the language tree (an old /hots/… URL). */
+export const localeOfPath = (path: string): Locale | null => {
+  const m = PREFIX.exec(path)?.[1];
+  return isLocale(m) ? m : null;
+};
 
-/** Page metadata: this language's canonical URL and the hreflang alternates (x-default = Korean). `koPath` = the Korean URL path. */
-export function alternates(koPath: string, locale: Locale): { canonical: string; languages: Record<"ko" | "en" | "x-default", string> } {
-  const url = (l: Locale) => SITE_URL + localizedPath(koPath, l);
-  return { canonical: url(locale), languages: { ko: url("ko"), en: url("en"), "x-default": url("ko") } };
+/** A path without its language prefix: /en/hots/maps/ → /hots/maps/. */
+export const sectionPath = (path: string): string => path.replace(PREFIX, "") || "/";
+
+/** The same page in `to`: /hots/tier/, /ko/hots/tier/ or /en/hots/tier/ → /<to>/hots/tier/. */
+export const localizedPath = (path: string, to: Locale): string => `/${to}${sectionPath(path)}`;
+
+/** The next language in LOCALES — what the header switch offers. */
+export const nextLocale = (l: Locale): Locale => LOCALES[(LOCALES.indexOf(l) + 1) % LOCALES.length]!;
+
+/** Route params of app/[locale]: one pre-rendered tree per language. */
+export const localeParams = (): { locale: Locale }[] => LOCALES.map((locale) => ({ locale }));
+
+/** Page metadata: this language's canonical URL and one hreflang alternate per language (x-default = Korean). */
+export function alternates(path: string, locale: Locale): { canonical: string; languages: Record<string, string> } {
+  const url = (l: Locale) => SITE_URL + localizedPath(path, l);
+  return { canonical: url(locale), languages: { ...Object.fromEntries(LOCALES.map((l) => [l, url(l)])), "x-default": url(DEFAULT_LOCALE) } };
 }
 
 type Get = () => Pick<Storage, "getItem"> | null | undefined;
@@ -37,7 +41,7 @@ type Put = () => Pick<Storage, "setItem"> | null | undefined;
 export function readLocale(storage: Get): Locale | null {
   try {
     const v = storage()?.getItem(LOCALE_KEY);
-    return v === "ko" || v === "en" ? v : null;
+    return isLocale(v) ? v : null;
   } catch {
     return null;
   }
@@ -55,9 +59,21 @@ export function writeLocale(locale: Locale, storage: Put): boolean {
   }
 }
 
+/** The language switch: remember the choice, and if the browser refuses, drop any older choice rather than keep it
+ *  (a stale hint would redirect the visitor away from the language they just picked). */
+export function chooseLocale(locale: Locale, storage: () => Pick<Storage, "setItem" | "removeItem"> | null | undefined): boolean {
+  if (writeLocale(locale, storage)) return true;
+  try {
+    storage()?.removeItem(LOCALE_KEY);
+  } catch {
+    // storage is blocked altogether: there is no stored hint either
+  }
+  return false;
+}
+
 /**
- * Runs inline in <head> before the body is parsed: when the visitor chose the other language, go to this page in that
+ * Runs inline in <head> before the body is parsed: when the visitor chose another language, go to this page in that
  * language before anything is painted (same query and hash). No choice = stay; the URL decides the language.
  */
 export const LOCALE_REDIRECT_SCRIPT = (locale: Locale): string =>
-  `(function(){try{var s=localStorage.getItem(${JSON.stringify(LOCALE_KEY)});if((s==="ko"||s==="en")&&s!==${JSON.stringify(locale)}){var p=location.pathname.replace(/^\\/en(?=\\/|$)/,"")||"/";location.replace((s==="en"?"/en"+p:p)+location.search+location.hash)}}catch(e){}})()`;
+  `(function(){try{var L=${JSON.stringify(LOCALES)},s=localStorage.getItem(${JSON.stringify(LOCALE_KEY)});if(L.indexOf(s)>=0&&s!==${JSON.stringify(locale)}){var p=location.pathname.replace(/^\\/(${LOCALES.join("|")})(?=\\/|$)/,"")||"/";location.replace("/"+s+p+location.search+location.hash)}}catch(e){}})()`;

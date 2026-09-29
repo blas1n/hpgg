@@ -1,7 +1,8 @@
 /** Hero detail view models. Pure: computed at build time for both modes and serialised into each hero page. */
 import { computeTiers, PRESETS, type Snapshot, type Tier } from "../formula";
 import type { BuildsFile, MapTable, Region, TalentTable } from "../data";
-import type { Locale } from "../i18n/locale";
+import { DEFAULT_LOCALE, type Locale } from "../i18n/locale";
+import { localField } from "../i18n/names";
 import { messages } from "../i18n/messages";
 
 export type HeroSummary =
@@ -145,7 +146,7 @@ export function heroBuilds(builds: BuildsFile | null, talents: TalentTable | nul
     talents: b.talents.map((t) => {
       const info = talents?.talents[t.name];
       const icon = info?.icon || undefined;
-      if (locale === "en") return { level: t.level, ko: info?.en ?? t.title, icon, desc: info?.desc_en, cd: info?.cd_en };
+      if (locale !== DEFAULT_LOCALE) return { level: t.level, ko: localField(info, locale) ?? t.title, icon, desc: localField(info, `desc_${locale}`), cd: localField(info, `cd_${locale}`) };
       return { level: t.level, ko: info?.ko ?? t.title, icon, desc: info?.desc, cd: info?.cd };
     }),
   }));

@@ -95,7 +95,7 @@ test("detail row links to the hero page and asks for no vote (voting removed 202
   await row(page, "illidan").click();
   const d = detail(page, "illidan");
   await expect(d).toBeVisible(); // control: the row we inspect is really open
-  await expect(d.locator("a[data-link]")).toHaveAttribute("href", "/hots/heroes/illidan/");
+  await expect(d.locator("a[data-link]")).toHaveAttribute("href", "/ko/hots/heroes/illidan/");
   await expect(d.locator("button")).toHaveCount(0);
   await expect(d.locator("dt")).not.toContainText(["점수"]); // the score is internal: table column only
   await expect(d.locator("dt").first()).toHaveText("순위"); // control: the detail list is rendered

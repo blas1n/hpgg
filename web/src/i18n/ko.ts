@@ -9,6 +9,8 @@ export const ko = {
     /** This language's own name: the language switch on the other language's pages shows it (with lang="ko"). */
     name: "한국어",
     short: "KO",
+    /** Open Graph locale. */
+    og: "ko_KR",
     /** The switch's accessible label, in the language it leads to. */
     switchLabel: "이 페이지를 한국어로 보기",
   },

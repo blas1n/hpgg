@@ -2,6 +2,7 @@
 
 import { assetUrl, hotsHref, shortDate, type MapTable } from "@/data";
 import { useLocale, useT } from "@/i18n/client";
+import { DEFAULT_LOCALE } from "@/i18n/locale";
 import { mapObjective, type MapDetail, type MapInfo } from "@/lib/maps";
 import { Card, CardHeader, cx, MoreLink, Portrait, TierBadge, wrTone } from "../ui";
 
@@ -61,7 +62,7 @@ export function MapView({
                   {t.map.koreanFallback}
                 </p>
               )}
-              <ol id="objective" lang={objective.fallback ? "ko" : undefined} className="divide-y divide-line">
+              <ol id="objective" lang={objective.fallback ? DEFAULT_LOCALE : undefined} className="divide-y divide-line">
                 {objective.steps.map((s, i) => (
                   <li key={s.title} className="grid grid-cols-[28px_1fr] gap-3 px-4 py-3">
                     <span className="num grid size-7 place-items-center rounded-full bg-surface-3 text-[13px] font-bold text-fg">{i + 1}</span>

@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import { messages, type Messages } from "../src/i18n/messages";
-import { LOCALES, localeOfPath, localizedPath, readLocale, writeLocale, LOCALE_KEY, alternates, LOCALE_REDIRECT_SCRIPT } from "../src/i18n/locale";
+import { DEFAULT_LOCALE, LOCALES, localeOfPath, localeParams, localizedPath, readLocale, sectionPath, writeLocale, chooseLocale, LOCALE_KEY, alternates, LOCALE_REDIRECT_SCRIPT } from "../src/i18n/locale";
 import { localizeHeroes, localizeMaps } from "../src/i18n/names";
 import type { HeroTable, MapTable } from "../src/data";
 
@@ -53,29 +53,40 @@ describe("message tables", () => {
 });
 
 describe("locale paths", () => {
-  it("Korean keeps today's URLs; English lives under /en", () => {
-    expect(localizedPath("/hots/tier/", "ko")).toBe("/hots/tier/");
+  it("every language, Korean included, lives under /<locale>/", () => {
+    expect(localizedPath("/hots/tier/", "ko")).toBe("/ko/hots/tier/");
     expect(localizedPath("/hots/tier/", "en")).toBe("/en/hots/tier/");
-    expect(localizedPath("/en/hots/heroes/illidan/", "ko")).toBe("/hots/heroes/illidan/");
+    expect(localizedPath("/en/hots/heroes/illidan/", "ko")).toBe("/ko/hots/heroes/illidan/");
+    expect(localizedPath("/ko/hots/heroes/illidan/", "en")).toBe("/en/hots/heroes/illidan/");
     expect(localizedPath("/en/hots/heroes/illidan/", "en")).toBe("/en/hots/heroes/illidan/");
     expect(localizedPath("/", "en")).toBe("/en/");
-    expect(localizedPath("/en/", "ko")).toBe("/");
-    expect(localizedPath("/en", "ko")).toBe("/");
+    expect(localizedPath("/en/", "ko")).toBe("/ko/");
+    expect(localizedPath("/en", "ko")).toBe("/ko/");
   });
 
-  it("the locale of a path", () => {
-    expect(localeOfPath("/hots/")).toBe("ko");
+  it("the locale of a path; the section path without it", () => {
+    expect(localeOfPath("/ko/hots/")).toBe("ko");
     expect(localeOfPath("/en/hots/")).toBe("en");
     expect(localeOfPath("/en")).toBe("en");
-    expect(localeOfPath("/enx/")).toBe("ko");
+    expect(localeOfPath("/enx/")).toBeNull();
+    expect(localeOfPath("/hots/")).toBeNull(); // an old URL: forwarded (scripts/forwarders.ts)
+    expect(sectionPath("/en/hots/maps/")).toBe("/hots/maps/");
+    expect(sectionPath("/hots/maps/")).toBe("/hots/maps/");
   });
 
-  it("hreflang alternates: ko, en and x-default (= ko) as absolute URLs", () => {
+  it("hreflang alternates: one per locale, x-default = Korean, as absolute URLs", () => {
     expect(alternates("/hots/maps/", "en")).toEqual({
       canonical: "https://hpgg.win/en/hots/maps/",
-      languages: { ko: "https://hpgg.win/hots/maps/", en: "https://hpgg.win/en/hots/maps/", "x-default": "https://hpgg.win/hots/maps/" },
+      languages: { ko: "https://hpgg.win/ko/hots/maps/", en: "https://hpgg.win/en/hots/maps/", "x-default": "https://hpgg.win/ko/hots/maps/" },
     });
-    expect(alternates("/hots/maps/", "ko").canonical).toBe("https://hpgg.win/hots/maps/");
+    expect(alternates("/hots/maps/", "ko").canonical).toBe("https://hpgg.win/ko/hots/maps/");
+  });
+
+  it("one list of languages drives everything: each has a message table, and the route params come from it", () => {
+    expect(LOCALES).toEqual(["ko", "en"]);
+    expect(Object.keys(messages).sort()).toEqual([...LOCALES].sort());
+    expect(localeParams()).toEqual(LOCALES.map((locale) => ({ locale })));
+    expect(DEFAULT_LOCALE).toBe(LOCALES[0]);
   });
 });
 
@@ -103,6 +114,18 @@ describe("stored language choice (a redirect hint only)", () => {
     ).toBe(false);
   });
 
+  it("choosing a language never leaves an old choice behind: when the write fails the stored hint is removed", () => {
+    // otherwise a stored "en" + a refused write of "ko" would send the Korean page straight back to English
+    const store: Record<string, string> = { [LOCALE_KEY]: "en" };
+    const quotaFull = { setItem: () => { throw new Error("QuotaExceededError"); }, removeItem: (k: string) => void delete store[k] };
+    expect(chooseLocale("ko", () => quotaFull)).toBe(false);
+    expect(store[LOCALE_KEY]).toBeUndefined();
+    const ok = { setItem: (k: string, v: string) => void (store[k] = v), removeItem: () => {} };
+    expect(chooseLocale("en", () => ok)).toBe(true);
+    expect(store[LOCALE_KEY]).toBe("en");
+    expect(chooseLocale("ko", () => { throw new Error("SecurityError"); })).toBe(false); // blocked storage: nothing to clear, no throw
+  });
+
   it("the head script redirects only when a different language was chosen, keeping the query and hash", () => {
     const run = (locale: "ko" | "en", stored: string | null, href: string) => {
       const u = new URL(href);
@@ -115,11 +138,12 @@ describe("stored language choice (a redirect hint only)", () => {
       );
       return went;
     };
-    expect(run("ko", "en", "https://hpgg.win/hots/tier/?mode=sl#x")).toBe("/en/hots/tier/?mode=sl#x");
-    expect(run("en", "ko", "https://hpgg.win/en/hots/heroes/illidan/")).toBe("/hots/heroes/illidan/");
-    expect(run("ko", "ko", "https://hpgg.win/hots/")).toBeNull();
-    expect(run("ko", null, "https://hpgg.win/hots/")).toBeNull();
+    expect(run("ko", "en", "https://hpgg.win/ko/hots/tier/?mode=sl#x")).toBe("/en/hots/tier/?mode=sl#x");
+    expect(run("en", "ko", "https://hpgg.win/en/hots/heroes/illidan/")).toBe("/ko/hots/heroes/illidan/");
+    expect(run("ko", "ko", "https://hpgg.win/ko/hots/")).toBeNull();
+    expect(run("ko", null, "https://hpgg.win/ko/hots/")).toBeNull();
     expect(run("en", null, "https://hpgg.win/en/hots/")).toBeNull();
+    expect(run("ko", "fr", "https://hpgg.win/ko/hots/")).toBeNull(); // not a language of the site
   });
 });
 

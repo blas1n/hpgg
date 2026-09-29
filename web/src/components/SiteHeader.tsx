@@ -4,9 +4,10 @@ import { useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
 import { assetUrl, hotsHref } from "@/data";
 import { useLocale, useT } from "@/i18n/client";
-import { localizedPath } from "@/i18n/locale";
+import { sectionPath } from "@/i18n/locale";
 import type { SearchItem } from "@/lib/search";
 import { HeroSearch } from "./HeroSearch";
+import { LanguageToggle } from "./LanguageToggle";
 import { ThemeToggle } from "./ThemeToggle";
 import { cx } from "./ui";
 
@@ -14,7 +15,7 @@ const NAV_IDS = ["home", "tier", "heroes", "maps", "players"] as const;
 type NavId = (typeof NAV_IDS)[number];
 
 function activeId(path: string): NavId {
-  const p = localizedPath(path, "ko"); // the section is the same in every language
+  const p = sectionPath(path); // the section is the same in every language
   if (p.startsWith("/hots/tier")) return "tier";
   if (p.startsWith("/hots/heroes")) return "heroes";
   if (p.startsWith("/hots/maps")) return "maps";
@@ -61,7 +62,10 @@ export function SiteHeader({ searchIndex }: { searchIndex: SearchItem[] }) {
         <div className="ml-auto flex min-w-0 flex-1 justify-end">
           <HeroSearch items={searchIndex} id="site-search" />
         </div>
-        <ThemeToggle />
+        <div className="flex shrink-0 items-center gap-1.5">
+          <LanguageToggle />
+          <ThemeToggle />
+        </div>
       </div>
       <nav aria-label={t.nav.mobile} className="page-x scrollbar-none flex h-10 items-stretch overflow-x-auto border-t border-line md:hidden">
         {nav.map((n) => (

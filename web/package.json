@@ -4,12 +4,12 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "dev": "node scripts/sync-data.mjs && next dev -p 5173",
-    "build": "node scripts/sync-data.mjs && tsc --noEmit && next build",
+    "dev": "node --experimental-strip-types --disable-warning=ExperimentalWarning scripts/sync-data.mjs && next dev -p 5173",
+    "build": "node --experimental-strip-types --disable-warning=ExperimentalWarning scripts/sync-data.mjs && tsc --noEmit && next build",
     "preview": "vite preview --port 4173 --strictPort",
     "test": "vitest run",
     "test:cov": "vitest run --coverage",
-    "e2e": "DATA_DIR=tests/e2e-data NEXT_DIST_DIR=dist-e2e npm run build && playwright test; s=$?; node scripts/sync-data.mjs; exit $s"
+    "e2e": "DATA_DIR=tests/e2e-data NEXT_DIST_DIR=dist-e2e npm run build && playwright test; s=$?; node --experimental-strip-types --disable-warning=ExperimentalWarning scripts/sync-data.mjs; exit $s"
   },
   "devDependencies": {
     "@playwright/test": "^1.48.0",

@@ -8,6 +8,7 @@ export const en: Messages = {
   lang: {
     name: "English",
     short: "EN",
+    og: "en_US",
     switchLabel: "Read this page in English",
   },
   site: {

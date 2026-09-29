@@ -20,8 +20,8 @@ test("map detail: banner, the three official objective steps with their source, 
   const wr = await rows.locator('[data-col="win_rate"] [data-v]').allTextContents();
   const n = wr.map((t) => parseFloat(t));
   expect(n).toEqual([...n].sort((a, b) => b - a));
-  await expect(rows.first().locator("a")).toHaveAttribute("href", /\/hots\/heroes\/[a-z-]+\/\?mode=sl$/);
-  await expect(page.locator("#map-tier-link a")).toHaveAttribute("href", /\/hots\/tier\/\?mode=sl&map=Cursed(\+|%20)Hollow/);
+  await expect(rows.first().locator("a")).toHaveAttribute("href", /^\/ko\/hots\/heroes\/[a-z-]+\/\?mode=sl$/);
+  await expect(page.locator("#map-tier-link a")).toHaveAttribute("href", /^\/ko\/hots\/tier\/\?mode=sl&map=Cursed(\+|%20)Hollow/);
   await expect(page.locator('nav a[aria-current="page"]:visible')).toHaveText("전장");
 });
 
@@ -35,9 +35,9 @@ test("map detail: a map without Storm League games still explains the objective 
 
 test("maps: every card opens its map page", async ({ page }) => {
   await page.goto("./maps/");
-  await expect(page.locator('#map-grid a[data-map="cursed-hollow"]')).toHaveAttribute("href", "/hots/maps/cursed-hollow/");
+  await expect(page.locator('#map-grid a[data-map="cursed-hollow"]')).toHaveAttribute("href", "/ko/hots/maps/cursed-hollow/");
   await page.locator('#map-grid a[data-map="alterac-pass"]').click();
-  await expect(page).toHaveURL(/\/hots\/maps\/alterac-pass\/$/);
+  await expect(page).toHaveURL(/\/ko\/hots\/maps\/alterac-pass\/$/);
   await expect(page.locator("#objective li").first()).toContainText("포로수용소");
 });
 

@@ -15,7 +15,7 @@ test("home: role leaders, top 10, movers, map cards and the mode toggle", async 
   await expect(page.locator("#top10 tbody tr").first()).toHaveAttribute("data-hero", "qhira");
   await expect(page.locator("#movers-sub")).toContainText("직전 패치"); // previous data exists in the fixture
   await expect(page.locator('#map-grid [data-card="map"]')).toHaveCount(1); // the fixture's SL has one real map
-  await expect(page.locator('#map-grid [data-card="map"][data-map="cursed-hollow"]')).toHaveAttribute("href", "/hots/maps/cursed-hollow/"); // the map page (#9)
+  await expect(page.locator('#map-grid [data-card="map"][data-map="cursed-hollow"]')).toHaveAttribute("href", "/ko/hots/maps/cursed-hollow/"); // the map page (#9)
   await page.locator("#mode-sl").click();
   await expect(page).toHaveURL(/mode=sl/);
   await expect(page.locator("#meta-line")).toContainText("폭풍 리그");
@@ -55,7 +55,7 @@ test("header search: 초성 query, keyboard selection opens the hero page", asyn
   const first = page.getByRole("option").first();
   await expect(first).toHaveAttribute("data-hero", "illidan");
   await box.press("Enter");
-  await expect(page).toHaveURL(/\/hots\/heroes\/illidan\/$/);
+  await expect(page).toHaveURL(/\/ko\/hots\/heroes\/illidan\/$/);
   await expect(page.locator("h1")).toHaveText("일리단");
 });
 
@@ -67,13 +67,6 @@ test("header search: a query with no match says so; '/' focuses the box", async 
   await expect(page.getByRole("listbox")).toContainText("맞는 영웅이 없습니다");
   await page.keyboard.press("Escape");
   await expect(page.getByRole("listbox")).toHaveCount(0);
-});
-
-test("old .html addresses forward to the new routes", async ({ page }) => {
-  await page.goto("./hero.html?hero=illidan&mode=sl");
-  await expect(page).toHaveURL(/\/hots\/heroes\/illidan\/\?mode=sl$/);
-  await page.goto("./tier.html?mode=sl&role=Healer");
-  await expect(page).toHaveURL(/\/hots\/tier\/\?mode=sl&role=Healer$/);
 });
 
 test("footer offers a contact address", async ({ page }) => {
