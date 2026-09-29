@@ -121,25 +121,37 @@ describe("wilson", () => {
 
 describe("printed formula follows the preset", () => {
   it("아이치 text is exactly what the page printed before presets existed", () => {
-    expect(formulaLine(PRESETS.aichi, true)).toBe("티어 점수 = 픽률 × (승률 − 50) × 3 + 밴률 × 1");
-    expect(formulaLine(PRESETS.aichi, false)).toBe("티어 점수 = 픽률 × (승률 − 50) × 3");
-    expect(formulaDetail(PRESETS.aichi, true, 200)).toBe(`WRs   = 50 + (승률 − 50) × 게임수 / (게임수 + 500)
+    expect(formulaLine(PRESETS.aichi, true, "ko")).toBe("티어 점수 = 픽률 × (승률 − 50) × 3 + 밴률 × 1");
+    expect(formulaLine(PRESETS.aichi, false, "ko")).toBe("티어 점수 = 픽률 × (승률 − 50) × 3");
+    expect(formulaDetail(PRESETS.aichi, true, 200, "ko")).toBe(`WRs   = 50 + (승률 − 50) × 게임수 / (게임수 + 500)
 점수  = 픽률 × (WRs − 50) × 3 + 밴률 × 1
 티어  = 200게임 이상인 영웅을 점수순으로 세워 누적 비율로 자름 (S 6% · A 24% · B 54% · C 82% · D 94% · F 나머지)
         경계는 단조 증가, 티어마다 최소 1명
 승률 ± 는 Wilson 95% 구간. 전장을 고르면 그 전장의 표본으로만 계산합니다.
 같은 데이터라도 공식이 다르면 티어가 다릅니다. 이 사이트는 공식을 숨기지 않습니다.`);
-    expect(formulaDetail(PRESETS.aichi, false, 200)).toContain("점수  = 픽률 × (WRs − 50) × 3   (빠른 대전은 밴이 없음)");
+    expect(formulaDetail(PRESETS.aichi, false, 200, "ko")).toContain("점수  = 픽률 × (WRs − 50) × 3   (빠른 대전은 밴이 없음)");
   });
 
   it("the additive and win-rate presets print their own score line, with their weights", () => {
-    expect(formulaLine(PRESETS.additive, true)).toBe("티어 점수 = (승률 − 50) + 픽률 × 0.15 + 밴률 × 0.15");
-    expect(formulaLine(PRESETS.additive, false)).toBe("티어 점수 = (승률 − 50) + 픽률 × 0.15");
-    expect(formulaDetail(PRESETS.additive, true, 200)).toContain("점수  = (WRs − 50) + 픽률 × 0.15 + 밴률 × 0.15");
-    expect(formulaDetail(PRESETS.additive, false, 200)).toContain("점수  = (WRs − 50) + 픽률 × 0.15   (빠른 대전은 밴이 없음)");
-    expect(formulaLine(PRESETS.winrate, true)).toBe("티어 점수 = 승률");
-    const wr = formulaDetail(PRESETS.winrate, true, 200);
+    expect(formulaLine(PRESETS.additive, true, "ko")).toBe("티어 점수 = (승률 − 50) + 픽률 × 0.15 + 밴률 × 0.15");
+    expect(formulaLine(PRESETS.additive, false, "ko")).toBe("티어 점수 = (승률 − 50) + 픽률 × 0.15");
+    expect(formulaDetail(PRESETS.additive, true, 200, "ko")).toContain("점수  = (WRs − 50) + 픽률 × 0.15 + 밴률 × 0.15");
+    expect(formulaDetail(PRESETS.additive, false, 200, "ko")).toContain("점수  = (WRs − 50) + 픽률 × 0.15   (빠른 대전은 밴이 없음)");
+    expect(formulaLine(PRESETS.winrate, true, "ko")).toBe("티어 점수 = 승률");
+    const wr = formulaDetail(PRESETS.winrate, true, 200, "ko");
     expect(wr).toContain("점수  = WRs   (픽률·밴률은 쓰지 않음)");
     expect(wr).not.toContain("× 3");
+  });
+
+  it("prints the same formula in English, with the same numbers", () => {
+    expect(formulaLine(PRESETS.aichi, true, "en")).toBe("tier score = pick rate × (win rate − 50) × 3 + ban rate × 1");
+    expect(formulaLine(PRESETS.aichi, false, "en")).toBe("tier score = pick rate × (win rate − 50) × 3");
+    expect(formulaLine(PRESETS.additive, true, "en")).toBe("tier score = (win rate − 50) + pick rate × 0.15 + ban rate × 0.15");
+    expect(formulaLine(PRESETS.winrate, true, "en")).toBe("tier score = win rate");
+    const d = formulaDetail(PRESETS.aichi, false, 200, "en");
+    expect(d).toContain("WRs   = 50 + (win rate − 50) × games / (games + 500)");
+    expect(d).toContain("score = pick rate × (WRs − 50) × 3   (Quick Match has no bans)");
+    expect(d).toContain("heroes with 200+ games");
+    expect(d).toContain("S 6% · A 24% · B 54% · C 82% · D 94%");
   });
 });

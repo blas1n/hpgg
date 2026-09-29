@@ -1,7 +1,9 @@
 "use client";
 
 import { Fragment, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
-import { assetUrl, BRACKET_LABEL, daysSince, hotsHref, loadSnapshot, MODE_LABEL, REGION_LABEL, REGIONS, regionSample, shortDate, snapshotKey, thinSample, type Bracket, type HeroTable, type MapTable, type Meta, type Mode, type Region } from "@/data";
+import { assetUrl, daysSince, hotsHref, loadSnapshot, REGIONS, regionSample, shortDate, snapshotKey, thinSample, type Bracket, type HeroTable, type MapTable, type Meta, type Mode, type Region } from "@/data";
+import { useLocale, useT } from "@/i18n/client";
+import type { Messages } from "@/i18n/messages";
 import { formulaDetail, formulaLine, PRESETS, type Preset, type Snapshot, type Tier } from "@/formula";
 import { bracketMatches, regionMatches } from "@/lib/shown";
 import { DEFAULT_TIER_STATE, formatScore, parseTierState, resolvePatch, tierSearch, tierTable, visibleRows, type PresetId, type SortKey, type TierRow, type TierState, type TierTable } from "@/lib/tier";
@@ -10,13 +12,10 @@ import { Card, cx, Portrait, Segmented, TierBadge, wrTone } from "../ui";
 const pct = (n: number) => `${n.toFixed(1)}%`;
 const int = (n: number) => n.toLocaleString("ko-KR");
 
-const COLUMNS: { key: SortKey; label: string; sl?: true; wide?: true }[] = [
-  { key: "score", label: "점수" },
-  { key: "win_rate", label: "승률" },
-  { key: "pick", label: "픽률" },
-  { key: "ban_rate", label: "밴률", sl: true },
-  { key: "games", label: "표본수", wide: true },
-];
+/** Labels: messages tier.columns. */
+const COLUMNS: { key: SortKey; sl?: true; wide?: true }[] = [{ key: "score" }, { key: "win_rate" }, { key: "pick" }, { key: "ban_rate", sl: true }, { key: "games", wide: true }];
+const BRACKETS: Bracket[] = ["all", "low", "high"];
+const PRESET_IDS = Object.keys(PRESETS) as PresetId[];
 
 // the tier and sample columns appear from 640px, the role column from 1024px; an opened row must span exactly the
 // visible columns
@@ -32,8 +31,6 @@ function useMedia(query: string): boolean {
   );
 }
 
-const PRESET_LABEL: Record<PresetId, string> = { aichi: "아이치 공식 (기본)", additive: "가산식", winrate: "승률만" };
-
 type Loaded = Record<string, Snapshot | null>; // "latest/qm", "previous/sl_low", … ; null = not published
 
 export interface TierInitial {
@@ -43,6 +40,8 @@ export interface TierInitial {
 }
 
 export function TierView({ meta, heroes, maps, initial }: { meta: Meta; heroes: HeroTable; maps: MapTable; initial: TierInitial }) {
+  const t = useT();
+  const locale = useLocale();
   const [state, setState] = useState<TierState>(DEFAULT_TIER_STATE);
   const [loaded, setLoaded] = useState<Loaded>({});
   const [error, setError] = useState<string | null>(null);
@@ -89,12 +88,12 @@ export function TierView({ meta, heroes, maps, initial }: { meta: Meta; heroes: 
         try {
           // a region is published only once it has been collected (meta lists it); don't ask for a file that isn't there
           if (region !== "all" && d === "latest" && !meta.modes[f]) {
-            setError(`${REGION_LABEL[region]}은(는) 아직 수집되지 않았습니다 — 지역은 하루 한 곳씩 돌아가며 수집합니다`);
+            setError(t.tier.regionNotCollected(t.common.regions[region]));
             return [k, null] as const;
           }
           const s = await loadSnapshot(f, d === "previous" ? "previous" : "current", heroes);
           if (bracketMatches(s, bracket) && regionMatches(s, region)) return [k, s] as const;
-          if (d === "latest") setError(`${f}.json 의 리그 구간(${s.league_tier?.join(",") ?? "전체"}) 또는 지역(${s.region ?? "전체"})이 이 선택과 다릅니다`);
+          if (d === "latest") setError(t.tier.cohortMismatch(f, s.league_tier?.join(",") ?? t.tier.all, s.region ?? t.tier.all));
           return [k, null] as const;
         } catch (e) {
           if (d === "latest") setError(e instanceof Error ? e.message : String(e));
@@ -107,7 +106,7 @@ export function TierView({ meta, heroes, maps, initial }: { meta: Meta; heroes: 
     return () => {
       live = false;
     };
-  }, [isInitial, curKey, prevKey, loaded, heroes, bracket, region, meta.modes]);
+  }, [isInitial, curKey, prevKey, loaded, heroes, bracket, region, meta.modes, t]);
 
   const snap = loaded[curKey];
   const computed = useMemo(() => {
@@ -132,15 +131,15 @@ export function TierView({ meta, heroes, maps, initial }: { meta: Meta; heroes: 
 
   // the loading table is the previous view: its patch and match count would be attributed to the new one
   const metaLine = error
-    ? `데이터를 불러오지 못했습니다: ${error}`
+    ? t.tier.loadError(error)
     : busy
-      ? "불러오는 중…"
+      ? t.tier.loading
       : [
-        MODE_LABEL[mode] + (region !== "all" ? ` · ${REGION_LABEL[region]}` : "") + (sl && bracket !== "all" ? ` · ${BRACKET_LABEL[bracket]}` : ""),
-        mapInfo?.ko ?? "전체 전장",
-        `패치 ${table.patch}`,
-        `${int(table.matches)} 매치`,
-        `${shortDate(table.collectedAt)} 갱신`,
+        t.common.modes[mode] + (region !== "all" ? ` · ${t.common.regions[region]}` : "") + (sl && bracket !== "all" ? ` · ${t.common.brackets[bracket]}` : ""),
+        mapInfo?.ko ?? t.common.allMaps,
+        t.common.patch(table.patch),
+        t.common.matches(int(table.matches)),
+        t.common.updated(shortDate(table.collectedAt)),
       ].join(" · ");
 
   const sortBy = (key: SortKey) => update(sort === key ? { dir: dir === "desc" ? "asc" : "desc" } : { sort: key, dir: "desc" }, false);
@@ -148,7 +147,7 @@ export function TierView({ meta, heroes, maps, initial }: { meta: Meta; heroes: 
   return (
     <main className="page-x mt-6 space-y-4 pb-10">
       <div>
-        <h1 className="text-2xl font-extrabold tracking-tight text-fg">영웅 티어</h1>
+        <h1 className="text-2xl font-extrabold tracking-tight text-fg">{t.tier.title}</h1>
         <p id="meta-line" className="num mt-0.5 text-xs text-muted">
           {metaLine}
         </p>
@@ -163,7 +162,7 @@ export function TierView({ meta, heroes, maps, initial }: { meta: Meta; heroes: 
           <span className="absolute inset-0 bg-gradient-to-t from-surface via-surface/40 to-transparent" />
           <div className="absolute bottom-3 left-4">
             <h2 className="text-xl font-extrabold text-fg drop-shadow">{mapInfo.ko}</h2>
-            <span className="text-xs text-fg-2">{mapInfo.name} · 폭풍 리그 · 이 전장 표본으로만 계산</span>
+            <span className="text-xs text-fg-2">{t.tier.mapBanner(mapInfo.name)}</span>
           </div>
         </div>
       )}
@@ -172,17 +171,17 @@ export function TierView({ meta, heroes, maps, initial }: { meta: Meta; heroes: 
 
       <Card as="div" className="flex flex-wrap items-center gap-2 p-2.5">
         <Segmented
-          label="게임 모드"
+          label={t.common.gameMode}
           idPrefix="mode"
           value={mode}
           onChange={(m: Mode) => m !== mode && update({ mode: m, map: "all", bracket: "all", patch: "auto" })}
           options={[
-            { value: "qm", label: MODE_LABEL.qm },
-            { value: "sl", label: MODE_LABEL.sl },
+            { value: "qm", label: t.common.modes.qm },
+            { value: "sl", label: t.common.modes.sl },
           ]}
         />
-        <div id="roles" role="group" aria-label="역할" className="scrollbar-none flex max-w-full gap-0.5 overflow-x-auto">
-          {[{ name: "all", ko: "전체" }, ...heroes.roles].map((r) => (
+        <div id="roles" role="group" aria-label={t.common.role} className="scrollbar-none flex max-w-full gap-0.5 overflow-x-auto">
+          {[{ name: "all", ko: t.common.allRoles }, ...heroes.roles].map((r) => (
             <button
               key={r.name}
               type="button"
@@ -200,19 +199,19 @@ export function TierView({ meta, heroes, maps, initial }: { meta: Meta; heroes: 
         </div>
         <div className="flex w-full flex-wrap gap-1.5 sm:ml-auto sm:w-auto sm:flex-nowrap">
           <label id="region-wrap" className="w-full sm:w-auto sm:flex-none">
-            <span className="sr-only">지역</span>
+            <span className="sr-only">{t.common.region}</span>
             <select
               id="region"
               value={region}
               disabled={sl && bracket !== "all"}
-              title={sl && bracket !== "all" ? COMBO_NOTE : undefined}
+              title={sl && bracket !== "all" ? t.tier.comboNote : undefined}
               onChange={(e) => update({ region: e.target.value as Region, bracket: "all", patch: "auto" })}
               className={SELECT}
             >
               {REGIONS.map((r) => (
                 <option key={r} value={r} disabled={r !== "all" && !regionSample(meta, mode, r)}>
-                  {REGION_LABEL[r]}
-                  {r !== "all" && !regionSample(meta, mode, r) ? " · 수집 전" : ""}
+                  {t.common.regions[r]}
+                  {r !== "all" && !regionSample(meta, mode, r) ? t.tier.notCollected : ""}
                 </option>
               ))}
             </select>
@@ -220,19 +219,19 @@ export function TierView({ meta, heroes, maps, initial }: { meta: Meta; heroes: 
           {sl && (
             <>
             <label id="bracket-wrap" className="flex-1 sm:flex-none">
-              <span className="sr-only">리그 구간</span>
-              <select id="bracket" value={bracket} disabled={region !== "all"} title={region !== "all" ? COMBO_NOTE : undefined} onChange={(e) => update({ bracket: e.target.value as Bracket })} className={SELECT}>
-                {(Object.keys(BRACKET_LABEL) as Bracket[]).map((b) => (
+              <span className="sr-only">{t.tier.bracket}</span>
+              <select id="bracket" value={bracket} disabled={region !== "all"} title={region !== "all" ? t.tier.comboNote : undefined} onChange={(e) => update({ bracket: e.target.value as Bracket })} className={SELECT}>
+                {BRACKETS.map((b) => (
                   <option key={b} value={b}>
-                    {BRACKET_LABEL[b]}
+                    {t.common.brackets[b]}
                   </option>
                 ))}
               </select>
             </label>
             <label id="map-wrap" className="flex-1 sm:flex-none">
-              <span className="sr-only">전장</span>
+              <span className="sr-only">{t.common.map}</span>
               <select id="map" value={map} onChange={(e) => update({ map: e.target.value })} className={SELECT}>
-                <option value="all">전체 전장</option>
+                <option value="all">{t.common.allMaps}</option>
                 {maps.maps.map((m) => (
                   <option key={m.name} value={m.name}>
                     {m.ko}
@@ -243,11 +242,11 @@ export function TierView({ meta, heroes, maps, initial }: { meta: Meta; heroes: 
             </>
           )}
           <label id="preset-wrap" className="flex-1 sm:flex-none">
-            <span className="sr-only">티어 공식</span>
+            <span className="sr-only">{t.tier.formula}</span>
             <select id="preset" value={state.preset} onChange={(e) => update({ preset: e.target.value as PresetId }, false)} className={SELECT}>
-              {(Object.keys(PRESET_LABEL) as PresetId[]).map((p) => (
+              {PRESET_IDS.map((p) => (
                 <option key={p} value={p}>
-                  {PRESET_LABEL[p]}
+                  {t.tier.presets[p]}
                 </option>
               ))}
             </select>
@@ -255,7 +254,7 @@ export function TierView({ meta, heroes, maps, initial }: { meta: Meta; heroes: 
         </div>
         {sl && (region !== "all" || bracket !== "all") && (
           <p id="combo-note" className="w-full text-2xs text-muted">
-            {COMBO_NOTE}
+            {t.tier.comboNote}
           </p>
         )}
       </Card>
@@ -265,11 +264,15 @@ export function TierView({ meta, heroes, maps, initial }: { meta: Meta; heroes: 
       {state.preset !== "aichi" && !busy && (
         <p id="preset-diff" className="flex flex-wrap items-center gap-x-2 gap-y-1 rounded-lg border border-line bg-surface px-3 py-2 text-[13px] text-fg-2">
           <span>
-            <b className="text-fg">{PRESET_LABEL[state.preset]}</b>으로 계산한 티어입니다. 아이치 공식과 티어가 다른 영웅 <b className="num text-fg">{changed}</b>명은{" "}
-            <BaseTierChip tier="S" example /> 처럼 원래 티어를 함께 표시합니다.
+            <b className="text-fg">{t.tier.presets[state.preset]}</b>
+            {t.tier.presetDiffBefore}
+            <b className="num text-fg">{changed}</b>
+            {t.tier.presetDiffAfter}
+            <BaseTierChip tier="S" example />
+            {t.tier.presetDiffEnd}
           </span>
           <button type="button" onClick={() => update({ preset: "aichi" }, false)} className="font-semibold text-secondary hover:text-primary">
-            기본 공식으로
+            {t.tier.backToDefault}
           </button>
         </p>
       )}
@@ -280,19 +283,19 @@ export function TierView({ meta, heroes, maps, initial }: { meta: Meta; heroes: 
           <thead>
             <tr className="text-xs text-muted [&>th]:sticky [&>th]:top-[var(--header-h)] [&>th]:z-10 [&>th]:bg-surface [&>th]:shadow-[0_1px_0_var(--color-line)]">
               <th data-col="rank" className="w-11 py-2.5 pl-3 text-left font-semibold sm:w-24 sm:pl-4">
-                순위
+                {t.common.rank}
               </th>
               {wide && (
                 <th data-col="tier" className="w-12 py-2.5 text-center font-semibold">
-                  티어
+                  {t.common.tier}
                 </th>
               )}
               <th data-col="hero" className="py-2.5 pl-1 text-left font-semibold lg:w-64">
-                영웅
+                {t.common.hero}
               </th>
               {lg && (
                 <th data-col="role" className="w-28 py-2.5 text-left font-semibold">
-                  역할
+                  {t.common.role}
                 </th>
               )}
               {cols.map((c) => (
@@ -304,7 +307,7 @@ export function TierView({ meta, heroes, maps, initial }: { meta: Meta; heroes: 
                   className={cx("py-2.5 pr-2 text-right font-semibold sm:pr-4", c.key === "games" ? "w-24" : c.key === "win_rate" ? "w-14 sm:w-24 lg:w-32" : "w-14 sm:w-24")}
                 >
                   <button type="button" onClick={() => sortBy(c.key)} className={cx("whitespace-nowrap transition-colors hover:text-fg", sort === c.key && "text-fg")}>
-                    {c.label}
+                    {t.tier.columns[c.key]}
                     {sort === c.key && <span className="text-primary">{dir === "desc" ? " ▾" : " ▴"}</span>}
                   </button>
                 </th>
@@ -318,7 +321,7 @@ export function TierView({ meta, heroes, maps, initial }: { meta: Meta; heroes: 
                 <tr data-tier-group={r.tier} className="bg-surface-2">
                   <td colSpan={span} className="px-3 py-1 text-2xs font-semibold text-muted sm:px-4">
                     <span className="inline-flex items-center gap-1.5">
-                      <TierBadge tier={r.tier} size="sm" /> {r.tier} 티어 · {rows.filter((x) => x.tier === r.tier).length}명
+                      <TierBadge tier={r.tier} size="sm" /> {t.tier.tierGroup(r.tier, String(rows.filter((x) => x.tier === r.tier).length))}
                     </span>
                   </td>
                 </tr>
@@ -346,28 +349,28 @@ export function TierView({ meta, heroes, maps, initial }: { meta: Meta; heroes: 
       {grey.length > 0 && (
         <section id="grey-wrap">
           <h2 className="mb-2 text-sm font-bold text-muted">
-            표본 부족 <span className="text-xs font-normal">{meta.min_games_for_tier}게임 미만 · 티어 없음</span>
+            {t.tier.grey} <span className="text-xs font-normal">{t.tier.greySub(String(meta.min_games_for_tier))}</span>
           </h2>
           <div id="grey" className="flex flex-wrap gap-1.5">
             {grey.map((g) => (
               <span key={g.hero.slug} data-hero={g.hero.slug} className="rounded-md border border-line px-2 py-1 text-xs text-muted">
-                {g.hero.ko} · {g.games}게임
+                {t.tier.greyItem(g.hero.ko, String(g.games))}
               </span>
             ))}
           </div>
         </section>
       )}
 
-      <Formula sl={sl} min={meta.min_games_for_tier} preset={preset} />
+      <Formula sl={sl} min={meta.min_games_for_tier} preset={preset} t={t} locale={locale} />
     </main>
   );
 }
 
 const SELECT = "w-full rounded-lg border border-line bg-surface-2 px-2.5 py-1.5 text-[13px] text-fg disabled:opacity-50 sm:w-auto";
-const COMBO_NOTE = "지역별 데이터는 전체 구간만 수집합니다 — 지역과 리그 구간은 함께 고를 수 없습니다";
 
 /** Which region, when it was collected (regions rotate one a day), and how thin its sample is. */
 function RegionNote({ meta, mode, region }: { meta: Meta; mode: Mode; region: Exclude<Region, "all"> }) {
+  const t = useT();
   const s = regionSample(meta, mode, region);
   if (!s) return null;
   return (
@@ -376,13 +379,21 @@ function RegionNote({ meta, mode, region }: { meta: Meta; mode: Mode; region: Ex
       data-thin={s.thin}
       className={cx("num rounded-lg border px-3 py-2 text-[13px]", s.thin ? "border-warn-line bg-warn-bg text-warn-fg" : "border-line bg-surface text-fg-2")}
     >
-      {REGION_LABEL[region]} · {s.collectedAt ? `${shortDate(s.collectedAt)} 수집` : "수집일 미상"} · 지역은 하루 한 곳씩 사흘마다 갱신 · {meta.min_games_for_tier}게임 이상 영웅 {s.over}/{s.heroes}
-      {s.thin && " — 표본이 적어 티어 없는(회색) 영웅이 많습니다"}
+      {t.tier.regionNote(
+        t.common.regions[region],
+        s.collectedAt ? t.tier.collectedOn(shortDate(s.collectedAt)) : t.tier.collectedUnknown,
+        String(meta.min_games_for_tier),
+        String(s.over),
+        String(s.heroes),
+      )}
+      {s.thin && t.tier.regionThin}
     </p>
   );
 }
 
 function HeroRow({ r, wide, lg, cols, n, hasPrevious, sl, preset, span, mode, open, onToggle }: { r: TierRow; wide: boolean; lg: boolean; cols: SortKey[]; n: number; hasPrevious: boolean; sl: boolean; preset: Preset; span: number; mode: Mode; open: boolean; onToggle: () => void }) {
+  const t = useT();
+  const href = hotsHref(useLocale());
   const cell: Record<SortKey, string> = {
     score: formatScore(r.score, preset),
     win_rate: pct(r.win_rate),
@@ -439,8 +450,8 @@ function HeroRow({ r, wide, lg, cols, n, hasPrevious, sl, preset, span, mode, op
                 </span>
               )}
               <span className="hidden truncate text-2xs text-muted sm:block">
-                {r.hero.name}
-                {!lg && r.hero.role_ko && ` · ${r.hero.role_ko}`}
+                {/* the API name, where it differs from the name shown (on English pages it is the same) */}
+                {[r.hero.name !== r.hero.ko && r.hero.name, !lg && r.hero.role_ko].filter(Boolean).join(" · ")}
               </span>
             </span>
           </span>
@@ -461,14 +472,14 @@ function HeroRow({ r, wide, lg, cols, n, hasPrevious, sl, preset, span, mode, op
         <tr data-detail={r.hero.slug} className="border-b border-line/70 bg-surface-2">
           <td colSpan={span} className="px-3 pb-3 sm:px-4">
             <dl className="grid grid-cols-3 gap-1.5 pt-1 sm:grid-cols-5">
-              <Stat k="순위" v={`${r.rank} / ${n}`} />
-              <Stat k="승률 (95%)" v={`${pct(r.win_rate)} ±${r.wrHalf.toFixed(1)}`} />
-              <Stat k="표본" v={`${int(r.games)}게임`} />
-              <Stat k="픽률" v={pct(r.pick)} />
-              {sl && <Stat k="밴률" v={pct(r.ban_rate)} id="d-ban" />}
+              <Stat k={t.tier.detailRank} v={`${r.rank} / ${n}`} />
+              <Stat k={t.tier.detailWinRate} v={`${pct(r.win_rate)} ±${r.wrHalf.toFixed(1)}`} />
+              <Stat k={t.tier.detailSample} v={t.tier.detailGames(int(r.games))} />
+              <Stat k={t.common.pickRate} v={pct(r.pick)} />
+              {sl && <Stat k={t.common.banRate} v={pct(r.ban_rate)} id="d-ban" />}
             </dl>
-            <a data-link href={hotsHref.hero(r.hero.slug, mode)} className="mt-2 inline-flex items-center rounded-md border border-line px-2.5 py-1.5 text-xs font-semibold text-fg-2 transition-colors hover:border-primary hover:text-primary">
-              영웅 상세 →
+            <a data-link href={href.hero(r.hero.slug, mode)} className="mt-2 inline-flex items-center rounded-md border border-line px-2.5 py-1.5 text-xs font-semibold text-fg-2 transition-colors hover:border-primary hover:text-primary">
+              {t.tier.heroDetail}
             </a>
           </td>
         </tr>
@@ -479,13 +490,14 @@ function HeroRow({ r, wide, lg, cols, n, hasPrevious, sl, preset, span, mode, op
 
 /** The hero's tier under 아이치, next to its name when another preset puts it elsewhere. */
 function BaseTierChip({ tier, example }: { tier: Tier; example?: boolean }) {
+  const t = useT();
   return (
     <span
       data-base-tier={example ? undefined : tier}
-      title={example ? undefined : `아이치 공식으로는 ${tier} 티어`}
+      title={example ? undefined : t.tier.baseTierTitle(tier)}
       className="inline-block shrink-0 whitespace-nowrap rounded px-1 text-2xs ring-1 ring-inset ring-secondary/50 font-bold leading-4 text-secondary sm:ml-1.5"
     >
-      기본 {tier}
+      {t.tier.baseTier(tier)}
     </span>
   );
 }
@@ -501,16 +513,18 @@ function Stat({ k, v, id }: { k: string; v: string; id?: string }) {
 
 /** ▲3 / ▼2 / — 0 / NEW against the previous patch (NEW = unranked there). */
 function Delta({ rank, prev }: { rank: number; prev: number | null }) {
+  const t = useT();
   const d = prev === null ? null : prev - rank;
   const [text, tone] = d === null ? ["NEW", "bg-primary/15 text-primary"] : d === 0 ? ["— 0", "bg-surface-3 text-muted"] : d > 0 ? [`▲ ${d}`, "bg-pos/15 text-pos"] : [`▼ ${-d}`, "bg-neg/15 text-neg"];
   return (
-    <span data-delta={d ?? "new"} title={prev === null ? "직전 패치엔 표본 부족" : `직전 패치 #${prev}`} className={cx("mt-0.5 inline-block whitespace-nowrap rounded-full px-1.5 text-2xs font-bold sm:mt-0", tone)}>
+    <span data-delta={d ?? "new"} title={prev === null ? t.tier.deltaNewTitle : t.tier.deltaTitle(String(prev))} className={cx("mt-0.5 inline-block whitespace-nowrap rounded-full px-1.5 text-2xs font-bold sm:mt-0", tone)}>
       {text}
     </span>
   );
 }
 
 function PatchBanner({ meta, mode, patch, auto, onCurrent }: { meta: Meta; mode: Mode; patch: "current" | "previous"; auto: boolean; onCurrent: () => void }) {
+  const t = useT();
   const days = daysSince(meta.patch_started_at);
   const note = patch === "previous" || (!auto && meta.previous_patch && thinSample(meta, mode));
   if (!note) return null;
@@ -518,33 +532,32 @@ function PatchBanner({ meta, mode, patch, auto, onCurrent }: { meta: Meta; mode:
     <div id="patch-banner" className="rounded-lg border border-warn-line bg-warn-bg px-3 py-2 text-[13px] text-warn-fg">
       {patch === "previous" ? (
         <>
-          패치 {meta.current_patch} 후 {days}일, 표본이 적어 <b>이전 패치({meta.previous_patch})</b> 기준으로 보여줍니다.{" "}
+          {t.tier.bannerPrevious(meta.current_patch, String(days))}
+          <b>{t.tier.bannerPreviousPatch(meta.previous_patch ?? "")}</b>
+          {t.tier.bannerPreviousEnd}{" "}
           <button type="button" onClick={onCurrent} className="ml-1 rounded-md bg-warn-strong px-2 py-0.5 font-semibold text-warn-ink">
-            현재 패치 보기
+            {t.tier.bannerShowCurrent}
           </button>
         </>
       ) : (
-        <>
-          패치 {meta.current_patch} 후 {days}일, 표본이 아직 적습니다.
-        </>
+        <>{t.tier.bannerThin(meta.current_patch, String(days))}</>
       )}
     </div>
   );
 }
 
-function Formula({ sl, min, preset }: { sl: boolean; min: number; preset: Preset }) {
+function Formula({ sl, min, preset, t, locale }: { sl: boolean; min: number; preset: Preset; t: Messages; locale: "ko" | "en" }) {
   return (
     <div className="space-y-2">
       <p id="formula" className="rounded-lg border border-line bg-surface px-3 py-2 font-mono text-xs [overflow-wrap:anywhere] text-fg-2">
-        {formulaLine(preset, sl)}
-        {/* one text node, as before presets: the default page's markup stays byte for byte */}
-        {` · 승률은 표본 수축(k=${preset.k}) · `}
-        {min}게임 미만 제외 · 상위 6% S / 24% A / 54% B / 82% C / 94% D
+        {formulaLine(preset, sl, locale)}
+        {t.tier.formulaTail(String(preset.k))}
+        {t.tier.formulaCuts(String(min))}
       </p>
       <details className="text-[13px]">
-        <summary className="cursor-pointer text-secondary">자세히</summary>
+        <summary className="cursor-pointer text-secondary">{t.tier.details}</summary>
         <pre className="mt-2 whitespace-pre-wrap rounded-lg bg-surface p-3 text-xs [overflow-wrap:anywhere] text-fg-2">
-          {formulaDetail(preset, sl, min)}
+          {formulaDetail(preset, sl, min, locale)}
         </pre>
       </details>
     </div>

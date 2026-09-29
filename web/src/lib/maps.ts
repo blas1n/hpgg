@@ -2,15 +2,34 @@
 import { computeTiers, PRESETS, type Snapshot, type Tier } from "../formula";
 import { wilson } from "../wilson";
 import type { HeroTable } from "../data";
+import type { Locale } from "../i18n/locale";
 import type { HeroRef } from "./home";
+
+type Steps = { title: string; text: string }[];
+type Source = { title: string; url: string; original: string };
+/** One map in data/maps_meta.json: Korean (the ko-kr page) and, under `en`, the same page's en-us version. */
+export interface MapInfo {
+  name: string;
+  objective: Steps;
+  source: Source;
+  /** Absent, or `fallback: "ko"`, when no archived English page exists: the English page then shows the Korean text. */
+  en?: { objective: Steps; source: Source } | { fallback: "ko" };
+}
 
 /**
  * data/maps_meta.json: each map's objective as the official site printed it (three steps), with the page it came
- * from. Heroes Profile has no map metadata; nothing here is invented, and no timings are given (no official source).
+ * from, in Korean and English. Heroes Profile has no map metadata; nothing here is invented, and no timings are
+ * given (no official source).
  */
 export interface MapsMeta {
-  _source: { objectives: string; note: string };
-  maps: Record<string, { name: string; objective: { title: string; text: string }[]; source: { title: string; url: string; original: string } }>;
+  _source: { objectives: string; objectives_en?: string; note: string };
+  maps: Record<string, MapInfo>;
+}
+
+/** The objective text for a page language; `fallback` = the English page shows the Korean original (said on the page). */
+export function mapObjective(info: MapInfo, locale: Locale): { steps: Steps; source: Source; fallback: boolean } {
+  if (locale === "en" && info.en && "objective" in info.en) return { steps: info.en.objective, source: info.en.source, fallback: false };
+  return { steps: info.objective, source: info.source, fallback: locale === "en" };
 }
 
 export const MAP_TOP_N = 10;

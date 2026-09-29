@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import type { HeroTable, MapTable } from "../src/data";
+import { localizeHeroes, localizeMaps } from "../src/i18n/names";
 import {
   API_BASE_DEFAULT,
   fetchPlayer,
@@ -12,7 +13,7 @@ import {
   playersHref,
   REGIONS,
   relativeDay,
-  tierKo,
+  tierLabel,
   type PlayerResponse,
 } from "../src/lib/players";
 
@@ -43,16 +44,13 @@ describe("parseBattletag", () => {
 
 describe("regions and links", () => {
   it("offers 아시아 (KR) first, then 아메리카 and 유럽", () => {
-    expect(REGIONS.map((r) => [r.value, r.label])).toEqual([
-      ["KR", "아시아"],
-      ["NA", "아메리카"],
-      ["EU", "유럽"],
-    ]);
+    expect(REGIONS).toEqual(["KR", "NA", "EU"]);
   });
 
-  it("builds the page URL with an encoded battletag", () => {
-    expect(playersHref()).toBe("/hots/players/");
-    expect(playersHref("Player12#1012", "NA")).toBe("/hots/players/?tag=Player12%231012&region=NA");
+  it("builds the page URL with an encoded battletag, in the page language", () => {
+    expect(playersHref("ko")).toBe("/hots/players/");
+    expect(playersHref("ko", "Player12#1012", "NA")).toBe("/hots/players/?tag=Player12%231012&region=NA");
+    expect(playersHref("en", "Player12#1012", "NA")).toBe("/en/hots/players/?tag=Player12%231012&region=NA");
   });
 });
 
@@ -101,39 +99,49 @@ describe("fetchPlayer", () => {
 
 describe("labels", () => {
   it("translates league names", () => {
-    expect(tierKo("Diamond 2")).toBe("다이아몬드 2");
-    expect(tierKo("Master")).toBe("마스터");
-    expect(tierKo("Grand Master")).toBe("그랜드마스터");
-    expect(tierKo("Bronze 5")).toBe("브론즈 5");
-    expect(tierKo("Silver 1")).toBe("실버 1");
-    expect(tierKo("Gold 3")).toBe("골드 3");
-    expect(tierKo("Platinum 4")).toBe("플래티넘 4");
-    expect(tierKo("Wood")).toBe("Wood");
-    expect(tierKo(null)).toBeNull();
+    expect(tierLabel("Diamond 2", "ko")).toBe("다이아몬드 2");
+    expect(tierLabel("Master", "ko")).toBe("마스터");
+    expect(tierLabel("Grand Master", "ko")).toBe("그랜드마스터");
+    expect(tierLabel("Bronze 5", "ko")).toBe("브론즈 5");
+    expect(tierLabel("Silver 1", "ko")).toBe("실버 1");
+    expect(tierLabel("Gold 3", "ko")).toBe("골드 3");
+    expect(tierLabel("Platinum 4", "ko")).toBe("플래티넘 4");
+    expect(tierLabel("Wood", "ko")).toBe("Wood");
+    expect(tierLabel(null, "ko")).toBeNull();
+    expect(tierLabel("Diamond 2", "en")).toBe("Diamond 2");
+    expect(tierLabel("grand master 1", "en")).toBe("Grand Master 1");
   });
 
-  it("names modes", () => {
-    expect(modeLabel("sl")).toBe("폭풍 리그");
-    expect(modeLabel("qm")).toBe("빠른 대전");
-    expect(modeLabel("ar")).toBe("ARAM");
-    expect(modeLabel("xx")).toBe("xx");
-    expect(modeLabel(null)).toBe("–");
+  // #10: "일반 대전" and "ARAM" were guesses. The game's Korean names: Unranked Draft = 일반 선발전 (Blizzard news
+  // 2016-06-01 "일반 선발전과 등급전 개편 관련 정보"), ARAM = 무작위 영웅 대전 (patch notes 2020-09-10).
+  it("names modes as the game does", () => {
+    expect(modeLabel("sl", "ko")).toBe("폭풍 리그");
+    expect(modeLabel("qm", "ko")).toBe("빠른 대전");
+    expect(modeLabel("ud", "ko")).toBe("일반 선발전");
+    expect(modeLabel("ar", "ko")).toBe("무작위 영웅 대전");
+    expect(modeLabel("ud", "en")).toBe("Unranked Draft");
+    expect(modeLabel("ar", "en")).toBe("ARAM");
+    expect(modeLabel("xx", "ko")).toBe("xx");
+    expect(modeLabel(null, "ko")).toBe("–");
   });
 
   it("says how long ago a match was (HP dates are UTC)", () => {
     const now = new Date("2026-09-29T03:00:00Z");
-    expect(relativeDay("2026-09-29 02:30:00", now)).toBe("30분 전");
-    expect(relativeDay("2026-09-28 20:00:00", now)).toBe("7시간 전");
-    expect(relativeDay("2026-09-26 03:00:00", now)).toBe("3일 전");
-    expect(relativeDay("2026-08-01 03:00:00", now)).toBe("2026-08-01");
-    expect(relativeDay(null, now)).toBe("");
-    expect(relativeDay("garbage", now)).toBe("");
+    expect(relativeDay("2026-09-29 02:30:00", "ko", now)).toBe("30분 전");
+    expect(relativeDay("2026-09-28 20:00:00", "ko", now)).toBe("7시간 전");
+    expect(relativeDay("2026-09-26 03:00:00", "ko", now)).toBe("3일 전");
+    expect(relativeDay("2026-08-01 03:00:00", "ko", now)).toBe("2026-08-01");
+    expect(relativeDay(null, "ko", now)).toBe("");
+    expect(relativeDay("garbage", "ko", now)).toBe("");
+    expect(relativeDay("2026-09-29 02:30:00", "en", now)).toBe("30 min ago");
+    expect(relativeDay("2026-09-29 02:00:00", "en", now)).toBe("1 hour ago");
+    expect(relativeDay("2026-09-26 03:00:00", "en", now)).toBe("3 days ago");
   });
 });
 
 describe("playerView", () => {
   const now = new Date("2026-09-29T03:00:00Z");
-  const v = playerView(zemill, heroes, maps, now);
+  const v = playerView(zemill, heroes, maps, "ko", now);
 
   it("summarises the account", () => {
     expect(v.name).toBe("Zemill");
@@ -166,9 +174,22 @@ describe("playerView", () => {
     expect(v.roles[0]!.winRate).toBe(48.52);
   });
 
-  it("maps: Korean names where the game data has them (ARAM maps are not in maps_ko yet)", () => {
-    expect(v.maps[0]).toMatchObject({ name: "Braxis Outpost", games: 499 });
-    expect(v.maps.map((m) => m.name)).toEqual(["Braxis Outpost", "Silver City", "Lost Cavern"]);
+  it("maps: Korean names, ARAM maps included (#10)", () => {
+    expect(v.maps[0]).toMatchObject({ name: "브락시스 전초기지", games: 499 });
+    expect(v.maps.map((m) => m.name)).toEqual(["브락시스 전초기지", "은빛 도시", "잃어버린 동굴"]);
+    expect(v.modes.find((m) => m.mode === "ud")?.label).toBe("일반 선발전");
+    expect(v.modes.find((m) => m.mode === "ar")?.label).toBe("무작위 영웅 대전");
+  });
+
+  it("in English: English names, labels and links under /en", () => {
+    const e = playerView(zemill, localizeHeroes(heroes, "en"), localizeMaps(maps, "en"), "en", now);
+    expect(e.regionLabel).toBe("Americas");
+    expect(e.modes[0]).toMatchObject({ label: "Storm League", tier: "Diamond 2" });
+    expect(e.heroes[0]).toMatchObject({ name: "Lúcio", href: "/en/hots/heroes/lucio/" });
+    expect(e.matches[0]).toMatchObject({ hero: "Deckard", mode: "Storm League", map: "Volskaya Foundry", when: "1 day ago" });
+    expect(e.maps.map((m) => m.name)).toEqual(["Braxis Outpost", "Silver City", "Lost Cavern"]);
+    expect(e.roles[0]!.label).toBe("Tank");
+    expect(e.fetchedLabel).toMatch(/^as of 09\/29 \d\d:\d\d KST$/);
   });
 
   it("falls back to English names for heroes and maps it does not know, and flags stale data", () => {
@@ -185,7 +206,7 @@ describe("playerView", () => {
         modes: [{ mode: "sl", mmr: null, tier: null, wins: 1, losses: 0, win_rate: null }],
       },
     };
-    const w = playerView(odd, heroes, maps, now);
+    const w = playerView(odd, heroes, maps, "ko", now);
     expect(w.heroes[0]).toMatchObject({ name: "Xal'atath", portrait: undefined, href: null });
     expect(w.maps[0]!.name).toBe("New Map");
     expect(w.matches[0]).toMatchObject({ hero: "–", map: "–", mode: "–", when: "" });

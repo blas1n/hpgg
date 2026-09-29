@@ -2,9 +2,10 @@
 
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { assetUrl, fallbackNote, hotsHref, MODE_LABEL, shortDate, type HeroInfo, type Mode } from "@/data";
+import { assetUrl, hotsHref, shortDate, type HeroInfo, type Mode } from "@/data";
+import { useLocale, useT } from "@/i18n/client";
 import { descParts, type BracketRow, type BuildTalentView, type BuildView, type HeroSummary, type MapRow, type RegionRow } from "@/lib/hero";
-import { MATCHUP_RULE, type MatchupRow, type MatchupsView } from "@/lib/matchups";
+import { matchupRule, type MatchupRow, type MatchupsView } from "@/lib/matchups";
 import { Card, cx, Portrait, Segmented, TierBadge, wrTone } from "../ui";
 
 const pct = (n: number) => `${n.toFixed(1)}%`;
@@ -41,6 +42,7 @@ export function HeroView({
   matchups: MatchupsView | null;
   minGames: number;
 }) {
+  const t = useT();
   const [mode, setMode] = useState<Mode>("qm");
   useEffect(() => {
     if (new URLSearchParams(location.search).get("mode") !== "sl") return;
@@ -57,13 +59,14 @@ export function HeroView({
   const s = m.summary;
   const sl = mode === "sl";
 
+  const tab = t.hero.sections;
   const sections = [
-    { id: "top", label: "요약" },
-    { id: "maps-title", label: "전장" },
-    ...(sl && m.brackets.length ? [{ id: "brackets-title", label: "구간", nav: "nav-brackets" }] : []),
-    ...(m.regions.length ? [{ id: "regions-title", label: "지역", nav: "nav-regions" }] : []),
-    ...(matchups ? [{ id: "matchups-title", label: "상성", nav: "nav-matchups" }] : []),
-    ...(builds.length ? [{ id: "builds-title", label: "특성 빌드", nav: "nav-builds" }] : []),
+    { id: "top", label: tab.top },
+    { id: "maps-title", label: tab.maps },
+    ...(sl && m.brackets.length ? [{ id: "brackets-title", label: tab.brackets, nav: "nav-brackets" }] : []),
+    ...(m.regions.length ? [{ id: "regions-title", label: tab.regions, nav: "nav-regions" }] : []),
+    ...(matchups ? [{ id: "matchups-title", label: tab.matchups, nav: "nav-matchups" }] : []),
+    ...(builds.length ? [{ id: "builds-title", label: tab.builds, nav: "nav-builds" }] : []),
   ];
 
   return (
@@ -74,24 +77,25 @@ export function HeroView({
         <div className="min-w-0">
           <h1 className="text-2xl font-extrabold tracking-tight text-fg">{hero.ko}</h1>
           <p className="text-xs text-fg-2">
-            {hero.name} · {hero.role_ko}
+            {/* the API name, where it differs from the name shown (on English pages it is the same) */}
+            {[hero.name !== hero.ko && hero.name, hero.role_ko].filter(Boolean).join(" · ")}
           </p>
           <p id="meta-line" className="num mt-0.5 text-xs text-muted">
-            {MODE_LABEL[mode]} · 패치 {m.patch} · {shortDate(m.collectedAt)} 갱신
-            {m.fallbackFrom && <span data-fallback> · {fallbackNote(m.fallbackFrom)}</span>}
+            {t.common.modes[mode]} · {t.common.patch(m.patch)} · {t.common.updated(shortDate(m.collectedAt))}
+            {m.fallbackFrom && <span data-fallback> · {t.common.fallbackNote(m.fallbackFrom)}</span>}
           </p>
         </div>
       </div>
 
       <div className="mt-4">
         <Segmented
-          label="게임 모드"
+          label={t.common.gameMode}
           idPrefix="mode"
           value={mode}
           onChange={change}
           options={[
-            { value: "qm", label: MODE_LABEL.qm },
-            { value: "sl", label: MODE_LABEL.sl },
+            { value: "qm", label: t.common.modes.qm },
+            { value: "sl", label: t.common.modes.sl },
           ]}
         />
       </div>
@@ -107,7 +111,7 @@ export function HeroView({
       <div className="lg:grid lg:grid-cols-2 lg:items-start lg:gap-x-6">
       <section>
       <h2 id="maps-title" className={SECTION}>
-        전장별 승률 ({MODE_LABEL[mode]})
+        {t.hero.mapsTitle(t.common.modes[mode])}
       </h2>
       <div id="maps">
         <MapRows rows={m.maps} />
@@ -118,23 +122,21 @@ export function HeroView({
       {sl && m.brackets.length > 0 && (
         <>
           <h2 id="brackets-title" className={SECTION}>
-            리그 구간별
+            {t.hero.bracketsTitle}
           </h2>
           <div id="brackets" className="flex flex-col gap-1.5">
             {m.brackets.map((b) => (
               <div key={b.key} data-bracket={b.key} className="grid grid-cols-[28px_1fr_auto] items-center gap-3 rounded-lg border border-line bg-surface px-3 py-2">
                 {b.tier ? <TierBadge tier={b.tier} size="lg" /> : <span className="text-center text-muted">–</span>}
                 <span className="min-w-0">
-                  <span className="block text-[13px] font-semibold text-fg">{b.label}</span>
+                  <span className="block text-[13px] font-semibold text-fg">{t.common.brackets[b.key]}</span>
                   <span className="num block text-2xs text-muted">
-                    {b.rank ? `#${b.rank} / ${b.n}` : "표본 부족"} · {int(b.games)}게임
+                    {b.rank ? `#${b.rank} / ${b.n}` : t.common.thin} · {t.common.games(int(b.games))}
                   </span>
                 </span>
                 <span className="num text-right">
                   <span className={cx("block text-[13px] font-bold", wrTone(b.win_rate))}>{pct(b.win_rate)}</span>
-                  <span className="block text-2xs text-muted">
-                    픽 {pct(b.pick)} · 밴 {pct(b.ban_rate)}
-                  </span>
+                  <span className="block text-2xs text-muted">{t.hero.pickBan(pct(b.pick), pct(b.ban_rate))}</span>
                 </span>
               </div>
             ))}
@@ -145,21 +147,21 @@ export function HeroView({
       {m.regions.length > 0 && (
         <>
           <h2 id="regions-title" className={SECTION}>
-            지역별 ({MODE_LABEL[mode]}) <span className="text-xs font-normal text-muted">하루 한 지역씩 사흘마다 갱신</span>
+            {t.hero.regionsTitle(t.common.modes[mode])} <span className="text-xs font-normal text-muted">{t.hero.regionsSub}</span>
           </h2>
           <div id="regions" className="flex flex-col gap-1.5">
             {m.regions.map((r) => (
               <div key={r.key} data-region={r.key} className="grid grid-cols-[28px_1fr_auto] items-center gap-3 rounded-lg border border-line bg-surface px-3 py-2">
                 {r.tier ? <TierBadge tier={r.tier} size="lg" /> : <span className="text-center text-muted">–</span>}
                 <span className="min-w-0">
-                  <span className="block text-[13px] font-semibold text-fg">{r.label}</span>
+                  <span className="block text-[13px] font-semibold text-fg">{t.common.regions[r.key]}</span>
                   <span className="num block text-2xs text-muted">
-                    {r.rank ? `#${r.rank} / ${r.n}` : "표본 부족"} · {int(r.games)}게임 · {shortDate(r.collectedAt)} 수집
+                    {r.rank ? `#${r.rank} / ${r.n}` : t.common.thin} · {t.common.games(int(r.games))} · {t.common.collected(shortDate(r.collectedAt))}
                   </span>
                 </span>
                 <span className="num text-right">
                   <span className={cx("block text-[13px] font-bold", wrTone(r.win_rate))}>{pct(r.win_rate)}</span>
-                  <span className="block text-2xs text-muted">픽 {pct(r.pick)}</span>
+                  <span className="block text-2xs text-muted">{t.hero.pickShort(pct(r.pick))}</span>
                 </span>
               </div>
             ))}
@@ -172,9 +174,9 @@ export function HeroView({
       {builds.length > 0 && (
         <>
           <h2 id="builds-title" className={SECTION}>
-            인기 특성 빌드{" "}
+            {t.hero.buildsTitle}{" "}
             <span id="builds-sub" className="text-xs font-normal text-muted">
-              빠른 대전 + 폭풍 리그 합산 · 패치 {buildsPatch} · 많이 쓴 순
+              {t.hero.buildsSub(buildsPatch ?? "")}
             </span>
           </h2>
           <Builds builds={builds} />
@@ -187,6 +189,7 @@ export function HeroView({
 }
 
 function SectionTabs({ sections }: { sections: { id: string; label: string; nav?: string }[] }) {
+  const t = useT();
   const nav = useRef<HTMLElement>(null);
   const [active, setActive] = useState("top");
   const ids = sections.map((x) => x.id).join(",");
@@ -209,7 +212,7 @@ function SectionTabs({ sections }: { sections: { id: string; label: string; nav?
     return () => window.removeEventListener("scroll", update);
   }, [ids]);
   return (
-    <nav ref={nav} aria-label="섹션" data-subnav className="scrollbar-none sticky top-[var(--header-h)] z-30 -mx-4 mb-3 mt-2 flex gap-0.5 overflow-x-auto border-b border-line bg-bg/95 px-4 backdrop-blur sm:mx-0 sm:px-0">
+    <nav ref={nav} aria-label={t.hero.sectionNav} data-subnav className="scrollbar-none sticky top-[var(--header-h)] z-30 -mx-4 mb-3 mt-2 flex gap-0.5 overflow-x-auto border-b border-line bg-bg/95 px-4 backdrop-blur sm:mx-0 sm:px-0">
       {sections.map((x) => (
         <a
           key={x.id}
@@ -226,23 +229,24 @@ function SectionTabs({ sections }: { sections: { id: string; label: string; nav?
 }
 
 function StatCards({ s, sl, minGames }: { s: HeroSummary; sl: boolean; minGames: number }) {
-  if (s.kind === "none") return <Stat k="데이터 없음" v="–" sub="이 모드에 표본이 없습니다" />;
+  const t = useT();
+  if (s.kind === "none") return <Stat k={t.hero.noData} v="–" sub={t.hero.noDataSub} />;
   if (s.kind === "grey")
     return (
       <>
-        <Stat id="tier" k="티어" v="–" sub={`표본 부족 (${int(s.games)}게임 < ${minGames})`} />
-        <Stat id="wr" k="승률" v={pct(s.win_rate)} sub={`${int(s.games)}게임`} />
-        <Stat id="pick" k="픽률" v={pct(s.pick)} sub="" />
+        <Stat id="tier" k={t.common.tier} v="–" sub={t.hero.thinTier(int(s.games), String(minGames))} />
+        <Stat id="wr" k={t.common.winRate} v={pct(s.win_rate)} sub={t.common.games(int(s.games))} />
+        <Stat id="pick" k={t.common.pickRate} v={pct(s.pick)} sub="" />
       </>
     );
   // same wording as the tier table: ▲ 3 / ▼ 2 / — 0
   const d = s.delta;
-  const [text, tone] = d === null ? [s.hasPrevious ? "직전 표본 부족" : "", "text-muted"] : d === 0 ? ["— 0", "text-muted"] : d > 0 ? [`▲ ${d}`, "text-pos"] : [`▼ ${-d}`, "text-neg"];
+  const [text, tone] = d === null ? [s.hasPrevious ? t.hero.prevThin : "", "text-muted"] : d === 0 ? ["— 0", "text-muted"] : d > 0 ? [`▲ ${d}`, "text-pos"] : [`▼ ${-d}`, "text-neg"];
   return (
     <>
       <Stat
         id="tier"
-        k="티어"
+        k={t.common.tier}
         v={
           <span className="inline-flex items-center gap-1.5">
             <TierBadge tier={s.tier} size="lg" /> #{s.rank}
@@ -251,10 +255,10 @@ function StatCards({ s, sl, minGames }: { s: HeroSummary; sl: boolean; minGames:
         sub={text}
         subTone={tone}
         delta={d === null ? "none" : String(d)}
-        title={s.prevRank ? `직전 패치 #${s.prevRank}` : undefined}
+        title={s.prevRank ? t.hero.prevRank(String(s.prevRank)) : undefined}
       />
-      <Stat id="wr" k="승률" v={pct(s.win_rate)} sub={`${int(s.games)}게임`} />
-      <Stat id="pick" k="픽률" v={pct(s.pick)} sub={sl ? `밴률 ${pct(s.ban_rate)}` : ""} />
+      <Stat id="wr" k={t.common.winRate} v={pct(s.win_rate)} sub={t.common.games(int(s.games))} />
+      <Stat id="pick" k={t.common.pickRate} v={pct(s.pick)} sub={sl ? t.hero.banSub(pct(s.ban_rate)) : ""} />
     </>
   );
 }
@@ -272,7 +276,8 @@ function Stat({ id, k, v, sub, subTone = "text-muted", delta, title }: { id?: st
 }
 
 function MapRows({ rows }: { rows: MapRow[] }) {
-  if (!rows.length) return <p className="rounded-lg border border-line bg-surface px-3 py-4 text-center text-[13px] text-muted">이 모드엔 전장별 표본이 없습니다</p>;
+  const t = useT();
+  if (!rows.length) return <p className="rounded-lg border border-line bg-surface px-3 py-4 text-center text-[13px] text-muted">{t.hero.noMaps}</p>;
   // bar length = distance from 50%, scaled to this hero's widest gap (at least 5%p)
   const span = Math.max(5, ...rows.map((r) => Math.abs(r.win_rate - 50)));
   return (
@@ -291,7 +296,8 @@ function MapRows({ rows }: { rows: MapRow[] }) {
         <span className="min-w-0">
           <span className="text-[13px] font-semibold text-fg">{r.ko}</span>{" "}
           <span className="num text-2xs text-muted">
-            {int(r.games)}게임{r.thin && " · 표본 부족"}
+            {t.common.games(int(r.games))}
+            {r.thin && ` · ${t.common.thin}`}
           </span>
           <span className="mt-1 block h-[3px] overflow-hidden rounded-full bg-surface-3">
             <i className={cx("block h-full rounded-full", up ? "bg-pos" : "bg-neg")} style={{ width: `${Math.min(100, (Math.abs(r.win_rate - 50) / span) * 100)}%` }} />
@@ -299,7 +305,7 @@ function MapRows({ rows }: { rows: MapRow[] }) {
         </span>
         <span className="num text-right">
           <span className={cx("block text-[13px] font-semibold leading-4", wrTone(r.win_rate))}>{pct(r.win_rate)}</span>
-          <span className="block text-2xs leading-4 text-muted">픽 {pct(r.pick)}</span>
+          <span className="block text-2xs leading-4 text-muted">{t.hero.pickShort(pct(r.pick))}</span>
         </span>
       </div>
     );
@@ -310,27 +316,29 @@ function MapRows({ rows }: { rows: MapRow[] }) {
 
 /** 상성 — Storm League only (the draft mode), whatever the mode toggle says; numbers only, no per-pair prose. */
 function Matchups({ hero, v }: { hero: HeroInfo; v: MatchupsView | null }) {
+  const t = useT();
+  const locale = useLocale();
   return (
     <>
       <h2 id="matchups-title" className={SECTION}>
-        상성 ({MODE_LABEL.sl}){" "}
+        {t.hero.matchupsTitle(t.common.modes.sl)}{" "}
         {v && (
           <span id="matchups-sub" className="num text-xs font-normal text-muted">
-            패치 {v.patch} · {shortDate(v.collectedAt)} 수집 · {hero.ko} 승률 {pct(v.win_rate)} ({int(v.games)}게임) 대비
+            {t.hero.matchupsSub(v.patch, shortDate(v.collectedAt), hero.ko, pct(v.win_rate), int(v.games))}
           </span>
         )}
       </h2>
       <div id="matchups">
         {!v ? (
-          <p className="rounded-lg border border-line bg-surface px-3 py-4 text-center text-[13px] text-muted">상성 데이터는 다음 정기 수집 후 표시됩니다 (폭풍 리그, 이틀마다 갱신)</p>
+          <p className="rounded-lg border border-line bg-surface px-3 py-4 text-center text-[13px] text-muted">{t.hero.matchupsLater}</p>
         ) : (
           <>
             <div className="grid gap-3 sm:grid-cols-2">
-              <MatchupList id="counters" title="상대하기 어려운 영웅" note="상대 팀에 있을 때의 승률 차" rows={v.counters} />
-              <MatchupList id="synergies" title="잘 맞는 영웅" note="같은 팀일 때의 승률 차" rows={v.synergies} />
+              <MatchupList id="counters" title={t.hero.counters} note={t.hero.countersNote} rows={v.counters} />
+              <MatchupList id="synergies" title={t.hero.synergies} note={t.hero.synergiesNote} rows={v.synergies} />
             </div>
             <p id="matchups-rule" className="num mt-2 text-2xs leading-relaxed text-muted">
-              승률 차 = 그 영웅과 만났을 때 {hero.ko}의 승률 − {hero.ko}의 승률. {MATCHUP_RULE}
+              {t.hero.matchupsRule(hero.ko, matchupRule(locale))}
             </p>
           </>
         )}
@@ -340,6 +348,8 @@ function Matchups({ hero, v }: { hero: HeroInfo; v: MatchupsView | null }) {
 }
 
 function MatchupList({ id, title, note, rows }: { id: string; title: string; note: string; rows: MatchupRow[] }) {
+  const t = useT();
+  const href = hotsHref(useLocale());
   return (
     <section aria-labelledby={`${id}-title`}>
       <h3 className="mb-1.5 flex items-baseline justify-between gap-2">
@@ -349,7 +359,7 @@ function MatchupList({ id, title, note, rows }: { id: string; title: string; not
         <span className="text-2xs text-muted">{note}</span>
       </h3>
       <div id={id} className="flex flex-col gap-1.5">
-        {rows.length === 0 && <p className="rounded-lg border border-line bg-surface px-3 py-3 text-center text-[13px] text-muted">기준을 넘는 영웅이 아직 없습니다</p>}
+        {rows.length === 0 && <p className="rounded-lg border border-line bg-surface px-3 py-3 text-center text-[13px] text-muted">{t.hero.noMatchups}</p>}
         {rows.map((r) => {
           const up = r.delta >= 0;
           const body = (
@@ -358,7 +368,7 @@ function MatchupList({ id, title, note, rows }: { id: string; title: string; not
               <span className="min-w-0">
                 <span className="block truncate text-[13px] font-semibold text-fg">{r.ko}</span>
                 <span className="num block text-2xs text-muted">
-                  {int(r.games)}게임 · 승률 {pct(r.win_rate)}
+                  {t.hero.matchupLine(int(r.games), pct(r.win_rate))}
                 </span>
               </span>
               <span data-delta className={cx("num text-right text-[13px] font-bold", up ? "text-pos" : "text-neg")}>
@@ -369,7 +379,7 @@ function MatchupList({ id, title, note, rows }: { id: string; title: string; not
           );
           const cls = "grid grid-cols-[32px_1fr_auto] items-center gap-3 rounded-lg border border-line bg-surface px-2.5 py-1.5";
           return r.slug ? (
-            <a key={r.hero} data-matchup={r.slug} href={hotsHref.hero(r.slug)} className={cx(cls, "hover:border-line-strong")}>
+            <a key={r.hero} data-matchup={r.slug} href={href.hero(r.slug)} className={cx(cls, "hover:border-line-strong")}>
               {body}
             </a>
           ) : (
@@ -386,6 +396,8 @@ function MatchupList({ id, title, note, rows }: { id: string; title: string; not
 type Pop = { t: BuildTalentView; left: number; top: number; width: number; anchor: DOMRect };
 
 function Builds({ builds }: { builds: BuildView[] }) {
+  const t = useT();
+  const locale = useLocale();
   const [pop, setPop] = useState<Pop | null>(null);
   const box = useRef<HTMLDivElement>(null);
 
@@ -428,38 +440,38 @@ function Builds({ builds }: { builds: BuildView[] }) {
       {builds.map((b, i) => (
         <Card as="div" key={i} data-build={i + 1} data-thin={b.thin || undefined} className="grid grid-cols-[1fr_76px] gap-2 p-2">
           <div className="grid grid-cols-7 gap-1">
-            {b.talents.map((t) => (
+            {b.talents.map((tl) => (
               <button
-                key={t.level}
+                key={tl.level}
                 type="button"
                 data-talent
-                aria-label={`${t.level}레벨 · ${t.ko}, 설명 보기`}
-                onClick={(e) => open(e, t)}
+                aria-label={t.hero.talentAria(String(tl.level), tl.ko)}
+                onClick={(e) => open(e, tl)}
                 className="group flex min-w-0 flex-col items-center gap-0.5"
               >
-                {t.icon ? (
+                {tl.icon ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={assetUrl(`img/talents/${t.icon}`)} alt="" loading="lazy" className="size-9 rounded-md border border-line bg-surface-3 group-hover:border-primary sm:size-11" />
+                  <img src={assetUrl(`img/talents/${tl.icon}`)} alt="" loading="lazy" className="size-9 rounded-md border border-line bg-surface-3 group-hover:border-primary sm:size-11" />
                 ) : (
                   <span className="size-9 rounded-md border border-line bg-surface-3 sm:size-11" />
                 )}
                 <span data-level className="text-2xs text-muted">
-                  {t.level}
+                  {tl.level}
                 </span>
                 <span data-tname className="line-clamp-2 text-center text-2xs leading-tight text-fg-2">
-                  {t.ko}
+                  {tl.ko}
                 </span>
               </button>
             ))}
           </div>
           <div className="num flex flex-col justify-center text-right">
             {/* a thin build's win rate is shown, but not as a finding */}
-            <span data-wr title={b.thin ? "표본이 적어 승률을 판단하기 어렵습니다" : undefined} className={cx("text-lg", b.thin ? "font-semibold text-muted" : cx("font-extrabold", wrTone(b.win_rate)))}>
+            <span data-wr title={b.thin ? t.hero.thinBuild : undefined} className={cx("text-lg", b.thin ? "font-semibold text-muted" : cx("font-extrabold", wrTone(b.win_rate)))}>
               {pct(b.win_rate)}
             </span>
-            <span className="text-2xs text-muted">{b.thin ? "승률 · 표본 적음" : "승률"}</span>
+            <span className="text-2xs text-muted">{b.thin ? t.hero.buildWinRateThin : t.hero.buildWinRate}</span>
             <span className="text-[13px] text-fg">{int(b.games)}</span>
-            <span className="text-2xs text-muted">게임</span>
+            <span className="text-2xs text-muted">{t.hero.buildGames}</span>
             <span className="mt-1 block h-[3px] rounded-full bg-surface-3">
               <i className="block h-full rounded-full bg-accent" style={{ width: `${b.share * 100}%` }} />
             </span>
@@ -472,7 +484,7 @@ function Builds({ builds }: { builds: BuildView[] }) {
           ref={box}
           id="talent-pop"
           role="dialog"
-          aria-label={`${pop.t.ko} 설명`}
+          aria-label={t.hero.talentDialog(pop.t.ko)}
           onClick={(e) => e.stopPropagation()}
           style={{ left: pop.left, top: pop.top, width: pop.width }}
           className="absolute z-60 rounded-xl border border-line-strong bg-pop px-3.5 py-3 shadow-[0_16px_40px_rgba(0,0,0,0.55)]"
@@ -487,12 +499,13 @@ function Builds({ builds }: { builds: BuildView[] }) {
                 {pop.t.ko}
               </div>
               <div data-pop-level className="text-2xs text-muted">
-                {pop.t.level}레벨{pop.t.cd ? ` · ${pop.t.cd.replace(/\{\{|\}\}/g, "")}` : ""}
+                {t.hero.level(String(pop.t.level))}
+                {pop.t.cd ? ` · ${pop.t.cd.replace(/\{\{|\}\}/g, "")}` : ""}
               </div>
             </div>
           </div>
           <p data-pop-desc className="mt-2 whitespace-pre-line text-[13px] leading-relaxed text-pop-fg">
-            {descParts(pop.t.desc).map((p, i) =>
+            {descParts(pop.t.desc, locale).map((p, i) =>
               p.hl ? (
                 <span key={i} data-hl className="font-bold text-accent">
                   {p.text}

@@ -1,5 +1,8 @@
 import type { ReactNode } from "react";
 import { assetUrl } from "@/data";
+import { useT } from "@/i18n/client";
+
+// Client-side primitives (TierBadge and RankDelta read the page language): render them from client components.
 
 export const cx = (...c: (string | false | null | undefined)[]): string => c.filter(Boolean).join(" ");
 
@@ -13,11 +16,12 @@ const TIER_BG: Record<string, string> = {
 };
 
 export function TierBadge({ tier, size = "md", className }: { tier: string; size?: "sm" | "md" | "lg"; className?: string }) {
+  const t = useT();
   const dim = size === "sm" ? "size-4 text-[10px]" : size === "lg" ? "size-7 text-sm" : "size-5 text-[11px]";
   return (
     <span
       className={cx("tier-badge inline-grid shrink-0 place-items-center rounded-full font-extrabold leading-none text-tier-ink", dim, TIER_BG[tier] ?? "bg-tier-f", className)}
-      aria-label={`${tier} 티어`}
+      aria-label={t.common.tierBadge(tier)}
     >
       {tier}
     </span>
@@ -60,13 +64,14 @@ export const wrTone = (wr: number): string => (Math.abs(wr - 50) < 0.05 ? "text-
 
 /** ▲3 / ▼2 / —. `value` = previous rank − current rank. */
 export function RankDelta({ value, className }: { value: number | null; className?: string }) {
+  const t = useT();
   if (value === null) return <span className={cx("text-2xs text-muted", className)}>–</span>;
   if (value === 0) return <span className={cx("num text-2xs text-muted", className)}>—</span>;
   const up = value > 0;
   return (
     <span className={cx("num inline-flex items-center gap-0.5 text-2xs font-bold", up ? "text-pos" : "text-neg", className)}>
       <span aria-hidden>{up ? "▲" : "▼"}</span>
-      <span className="sr-only">{up ? "상승" : "하락"}</span>
+      <span className="sr-only">{up ? t.common.up : t.common.down}</span>
       {Math.abs(value)}
     </span>
   );

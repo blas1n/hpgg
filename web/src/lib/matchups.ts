@@ -1,13 +1,16 @@
 /** Counters and synergies on the hero page. Pure: computed at build time from data/matchups/<slug>.json.
  *
  *  score = (pair win rate − the hero's own win rate) × n / (n + k)   — the tier formula's shrinkage, applied to the gap
- *  pairs with fewer than MATCHUP_MIN_GAMES games are left out; the rule is printed on the page (MATCHUP_RULE). */
+ *  pairs with fewer than MATCHUP_MIN_GAMES games are left out; the rule is printed on the page (matchupRule). */
 import type { HeroTable, MatchupPair, MatchupsFile } from "../data";
+import type { Locale } from "../i18n/locale";
+import { messages } from "../i18n/messages";
 
 export const MATCHUP_K = 100;
 export const MATCHUP_MIN_GAMES = 50;
 export const MATCHUP_TOP = 5;
-export const MATCHUP_RULE = `순서: (승률 차) × n/(n+${MATCHUP_K}) · n = 함께 또는 상대로 한 게임 수 · ${MATCHUP_MIN_GAMES}게임 미만 제외`;
+/** The ordering rule as printed on the page. */
+export const matchupRule = (locale: Locale): string => messages[locale].hero.matchupRule(String(MATCHUP_K), String(MATCHUP_MIN_GAMES));
 
 export const matchupScore = (pairWinRate: number, ownWinRate: number, games: number): number =>
   (pairWinRate - ownWinRate) * (games / (games + MATCHUP_K));

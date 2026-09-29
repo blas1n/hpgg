@@ -3,29 +3,30 @@
 import { useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
 import { assetUrl, hotsHref } from "@/data";
+import { useLocale, useT } from "@/i18n/client";
+import { localizedPath } from "@/i18n/locale";
 import type { SearchItem } from "@/lib/search";
 import { HeroSearch } from "./HeroSearch";
 import { ThemeToggle } from "./ThemeToggle";
 import { cx } from "./ui";
 
-const NAV = [
-  { id: "home", href: hotsHref.home, label: "홈" },
-  { id: "tier", href: hotsHref.tier(), label: "영웅 티어" },
-  { id: "heroes", href: hotsHref.heroes, label: "영웅" },
-  { id: "maps", href: hotsHref.maps, label: "전장" },
-  { id: "players", href: hotsHref.players, label: "전적 검색" },
-] as const;
+const NAV_IDS = ["home", "tier", "heroes", "maps", "players"] as const;
+type NavId = (typeof NAV_IDS)[number];
 
-function activeId(path: string): string {
-  if (path.startsWith("/hots/tier")) return "tier";
-  if (path.startsWith("/hots/heroes")) return "heroes";
-  if (path.startsWith("/hots/maps")) return "maps";
-  if (path.startsWith("/hots/players")) return "players";
+function activeId(path: string): NavId {
+  const p = localizedPath(path, "ko"); // the section is the same in every language
+  if (p.startsWith("/hots/tier")) return "tier";
+  if (p.startsWith("/hots/heroes")) return "heroes";
+  if (p.startsWith("/hots/maps")) return "maps";
+  if (p.startsWith("/hots/players")) return "players";
   return "home";
 }
 
 /** Global header: brand + game, primary nav, hero search. Sticky; two rows on phones, one on desktop. */
 export function SiteHeader({ searchIndex }: { searchIndex: SearchItem[] }) {
+  const t = useT();
+  const href = hotsHref(useLocale());
+  const nav = NAV_IDS.map((id) => ({ id, href: id === "tier" ? href.tier() : href[id], label: t.nav[id] }));
   const active = activeId(usePathname() ?? "/hots/");
   const ref = useRef<HTMLElement>(null);
   // --header-h lets sticky sub-navigation and anchor targets sit exactly under the header (it is two rows on phones)
@@ -41,7 +42,7 @@ export function SiteHeader({ searchIndex }: { searchIndex: SearchItem[] }) {
   return (
     <header ref={ref} className="sticky top-0 z-40 border-b border-line bg-surface-2/95 backdrop-blur supports-[backdrop-filter]:bg-surface-2/80">
       <div className="page-x flex h-14 items-center gap-3 md:gap-6">
-        <a href={hotsHref.home} className="flex shrink-0 items-center gap-2" aria-label="hpgg.win 홈">
+        <a href={href.home} className="flex shrink-0 items-center gap-2" aria-label={t.nav.homeLink}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={assetUrl("img/brand/icon-sm.png")} alt="" width={28} height={28} className="size-7 rounded-md" />
           <span className="text-xl font-extrabold tracking-tight text-fg">
@@ -52,8 +53,8 @@ export function SiteHeader({ searchIndex }: { searchIndex: SearchItem[] }) {
           <span className="size-1.5 rounded-full bg-primary" aria-hidden />
           Heroes of the Storm
         </span>
-        <nav aria-label="주 메뉴" className="hidden h-14 items-stretch md:flex">
-          {NAV.map((n) => (
+        <nav aria-label={t.nav.main} className="hidden h-14 items-stretch md:flex">
+          {nav.map((n) => (
             <NavLink key={n.id} {...n} active={active === n.id} />
           ))}
         </nav>
@@ -62,8 +63,8 @@ export function SiteHeader({ searchIndex }: { searchIndex: SearchItem[] }) {
         </div>
         <ThemeToggle />
       </div>
-      <nav aria-label="주 메뉴 (모바일)" className="page-x scrollbar-none flex h-10 items-stretch overflow-x-auto border-t border-line md:hidden">
-        {NAV.map((n) => (
+      <nav aria-label={t.nav.mobile} className="page-x scrollbar-none flex h-10 items-stretch overflow-x-auto border-t border-line md:hidden">
+        {nav.map((n) => (
           <NavLink key={n.id} {...n} active={active === n.id} />
         ))}
       </nav>

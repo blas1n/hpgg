@@ -1,4 +1,5 @@
 import type { Snapshot } from "./formula";
+import { localizedPath, type Locale } from "./i18n/locale";
 import { knownOnly } from "./lib/known";
 
 export interface Meta {
@@ -11,51 +12,59 @@ export interface Meta {
   modes: Record<string, { matches: number; heroes: number; heroes_over_200: number; collected_at?: string }>;
 }
 
+/** `ko` / `role_ko` are the display names: Korean in heroes_ko.json, English on English pages (i18n/names.ts). */
 export interface HeroInfo {
   name: string;
   slug: string;
   ko: string;
+  /** English game name (gamestrings enus). */
+  en?: string;
+  /** The name in the other language, searchable too (set on English pages). */
+  alt?: string;
   role: string;
   role_ko: string;
   portrait?: string; // e.g. img/heroes/qhira.png (relative to the site root)
   short_name?: string; // Heroes Profile short_name (player search matches heroes by it)
 }
 export interface HeroTable {
-  roles: { name: string; ko: string }[];
+  roles: { name: string; ko: string; en?: string }[];
   heroes: HeroInfo[];
 }
 export interface MapTable {
   maps: { name: string; ko: string; slug: string; image?: string }[];
+  /** ARAM maps: names only, for player search (no stats are collected for them). */
+  aram?: { name: string; ko: string }[];
 }
 
 /** data/ is published at the site root (https://hpgg.win/latest/…, /img/…). */
 const base = "/";
 export const assetUrl = (rel: string): string => base + rel;
 
-/** Site routes for the Heroes of the Storm section. */
-export const hotsHref = {
-  home: "/hots/",
-  tier: (qs?: URLSearchParams | string) => `/hots/tier/${qs && String(qs) ? `?${String(qs)}` : ""}`,
-  heroes: "/hots/heroes/",
-  hero: (slug: string, mode?: Mode) => `/hots/heroes/${encodeURIComponent(slug)}/${mode === "sl" ? "?mode=sl" : ""}`,
-  maps: "/hots/maps/",
-  players: "/hots/players/",
-  map: (slug: string) => `/hots/maps/${encodeURIComponent(slug)}/`,
-};
+/** Site routes for the Heroes of the Storm section, in a language: Korean /hots/…, English /en/hots/…. */
+export function hotsHref(locale: Locale) {
+  const p = (path: string) => localizedPath(path, locale);
+  return {
+    home: p("/hots/"),
+    tier: (qs?: URLSearchParams | string) => p("/hots/tier/") + (qs && String(qs) ? `?${String(qs)}` : ""),
+    heroes: p("/hots/heroes/"),
+    hero: (slug: string, mode?: Mode) => p(`/hots/heroes/${encodeURIComponent(slug)}/`) + (mode === "sl" ? "?mode=sl" : ""),
+    maps: p("/hots/maps/"),
+    players: p("/hots/players/"),
+    map: (slug: string) => p(`/hots/maps/${encodeURIComponent(slug)}/`),
+  };
+}
 
 export type Mode = "qm" | "sl";
-export const MODE_LABEL: Record<Mode, string> = { qm: "빠른 대전", sl: "폭풍 리그" };
 export type Bracket = "all" | "low" | "high";
-/** Two brackets while the player base is small (owner, 2026-09-29): league_tier 1-4 / 5-6; grandmasters are inside master. */
-export const BRACKET_LABEL: Record<Bracket, string> = { all: "전체 구간", low: "브론즈 – 플래티넘", high: "다이아 – 그랜드마스터" };
-/** What each label means in league tiers (1 bronze … 6 master). A file whose league_tier differs is another cohort. */
+/** Labels: messages common.modes / common.brackets / common.regions. Two brackets while the player base is small
+ *  (owner, 2026-09-29): league_tier 1-4 / 5-6; grandmasters are inside master.
+ *  What each bracket means in league tiers (1 bronze … 6 master). A file whose league_tier differs is another cohort. */
 export const BRACKET_TIERS: Record<Bracket, number[] | null> = { all: null, low: [1, 2, 3, 4], high: [5, 6] };
 /** Snapshot file key for a mode + bracket (brackets exist for Storm League only). */
 /** Regions (#14): one region is collected a day for QM + SL (KR → NA → EU), so each region is up to three days old.
  *  The in-game Asia server is HP's `KR`; CN is a separate server and not collected. */
 export type Region = "all" | "kr" | "na" | "eu";
 export const REGIONS: Region[] = ["all", "kr", "na", "eu"];
-export const REGION_LABEL: Record<Region, string> = { all: "전체 지역", kr: "아시아 (KR)", na: "아메리카 (NA)", eu: "유럽 (EU)" };
 /** The `region` a file carries (HP's code); null = every region. */
 export const REGION_CODE: Record<Region, string | null> = { all: null, kr: "KR", na: "NA", eu: "EU" };
 /** Snapshot file key for a mode + bracket (brackets exist for Storm League only) or a region. Region × bracket is not collected. */
@@ -99,9 +108,6 @@ export function daysSince(isoDate: string, now = new Date()): number {
   return Math.max(0, Math.floor((now.getTime() - start) / 86_400_000));
 }
 
-/** Appended to a page's meta line while it shows the previous patch (see lib/shown.ts). */
-export const fallbackNote = (currentPatch: string): string => `새 패치 ${currentPatch} 표본이 아직 적어 이전 패치 기준`;
-
 /** "2026-09-28T04:07:19Z" → "09/28" */
 export const shortDate = (iso: string): string => iso.slice(5, 10).replace("-", "/");
 
@@ -127,6 +133,10 @@ export interface TalentInfo {
   /** Game tooltip as text; {{…}} marks a highlighted value, \n a line break. */
   desc?: string;
   cd?: string;
+  /** English name, tooltip and cooldown (gamestrings enus). */
+  en?: string;
+  desc_en?: string;
+  cd_en?: string;
 }
 /** One other hero in data/matchups/<slug>.json: the page hero's record with (ally) or against (enemy) it. */
 export interface MatchupPair {

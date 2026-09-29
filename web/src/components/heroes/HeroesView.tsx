@@ -1,12 +1,15 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { hotsHref, MODE_LABEL, type Mode } from "@/data";
+import { hotsHref, type Mode } from "@/data";
+import { useLocale, useT } from "@/i18n/client";
 import { filterHeroes } from "@/lib/heroes";
 import type { SearchItem } from "@/lib/search";
 import { Card, cx, Portrait, Segmented } from "../ui";
 
 export function HeroesView({ heroes, roles, tiers, patches }: { heroes: SearchItem[]; roles: { name: string; ko: string }[]; tiers: Record<Mode, Record<string, string>>; patches: Record<Mode, string> }) {
+  const t = useT();
+  const href = hotsHref(useLocale());
   const [mode, setMode] = useState<Mode>("qm");
   const [role, setRole] = useState("all");
   const [query, setQuery] = useState("");
@@ -27,15 +30,15 @@ export function HeroesView({ heroes, roles, tiers, patches }: { heroes: SearchIt
   return (
     <main className="page-x mt-6 space-y-4 pb-10">
       <div>
-        <h1 className="text-2xl font-extrabold tracking-tight text-fg">영웅</h1>
+        <h1 className="text-2xl font-extrabold tracking-tight text-fg">{t.heroes.title}</h1>
         <p id="meta-line" className="num mt-0.5 text-xs text-muted">
-          {MODE_LABEL[mode]} 티어 · 패치 {patches[mode]} · 누르면 상세로
+          {t.heroes.metaLine(t.common.modes[mode], patches[mode])}
         </p>
       </div>
 
       <Card as="div" className="flex flex-wrap items-center gap-2 p-2.5">
         <Segmented
-          label="게임 모드"
+          label={t.common.gameMode}
           idPrefix="mode"
           value={mode}
           onChange={(m: Mode) => {
@@ -43,12 +46,12 @@ export function HeroesView({ heroes, roles, tiers, patches }: { heroes: SearchIt
             sync(m, role);
           }}
           options={[
-            { value: "qm", label: MODE_LABEL.qm },
-            { value: "sl", label: MODE_LABEL.sl },
+            { value: "qm", label: t.common.modes.qm },
+            { value: "sl", label: t.common.modes.sl },
           ]}
         />
-        <div id="roles" role="group" aria-label="역할" className="scrollbar-none flex max-w-full gap-0.5 overflow-x-auto">
-          {[{ name: "all", ko: "전체" }, ...roles].map((r) => (
+        <div id="roles" role="group" aria-label={t.common.role} className="scrollbar-none flex max-w-full gap-0.5 overflow-x-auto">
+          {[{ name: "all", ko: t.common.allRoles }, ...roles].map((r) => (
             <button
               key={r.name}
               type="button"
@@ -65,13 +68,13 @@ export function HeroesView({ heroes, roles, tiers, patches }: { heroes: SearchIt
           ))}
         </div>
         <label className="w-full lg:ml-auto lg:w-60">
-          <span className="sr-only">영웅 검색</span>
+          <span className="sr-only">{t.common.heroSearch}</span>
           <input
             id="search"
             type="search"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="이름 · 영문 · 초성 (ㅇㄹㄷ)"
+            placeholder={t.heroes.searchPlaceholder}
             autoComplete="off"
             className="w-full rounded-lg border border-line bg-surface-2 px-3 py-1.5 text-[13px] text-fg placeholder:text-muted"
           />
@@ -82,7 +85,7 @@ export function HeroesView({ heroes, roles, tiers, patches }: { heroes: SearchIt
         {list.map((h) => (
           <a
             key={h.slug}
-            href={hotsHref.hero(h.slug, mode)}
+            href={href.hero(h.slug, mode)}
             data-hero={h.slug}
             data-tier={tiers[mode][h.slug] ?? ""}
             className="group flex flex-col items-center gap-1.5 rounded-card border border-line bg-surface px-1 pb-2 pt-3 transition-colors hover:border-primary"
@@ -93,7 +96,7 @@ export function HeroesView({ heroes, roles, tiers, patches }: { heroes: SearchIt
           </a>
         ))}
       </div>
-      {list.length === 0 && <p className="py-10 text-center text-[13px] text-muted">맞는 영웅이 없습니다</p>}
+      {list.length === 0 && <p className="py-10 text-center text-[13px] text-muted">{t.heroes.none}</p>}
     </main>
   );
 }
