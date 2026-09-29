@@ -52,6 +52,7 @@ export function hotsHref(locale: Locale) {
     hero: (slug: string, mode?: Mode) => p(`/hots/heroes/${encodeURIComponent(slug)}/`) + (mode === "sl" ? "?mode=sl" : ""),
     maps: p("/hots/maps/"),
     players: p("/hots/players/"),
+    draft: (qs?: string) => p("/hots/draft/") + (qs ? `?${qs}` : ""),
     map: (slug: string) => p(`/hots/maps/${encodeURIComponent(slug)}/`),
   };
 }
@@ -88,6 +89,14 @@ async function getJson<T>(path: string): Promise<T> {
 /** A snapshot file as the pages see it: rows of heroes without assets dropped (lib/known.ts). */
 export const loadSnapshot = async (key: string, patch: PatchChoice, heroes: HeroTable): Promise<Snapshot> =>
   knownOnly(await getJson<Snapshot>(`${patch === "previous" ? "previous" : "latest"}/${key}.json`), heroes);
+
+/** A hero's matchups file (Storm League), or null when it has not been collected (404). */
+export async function loadMatchups(slug: string): Promise<MatchupsFile | null> {
+  const res = await fetch(`${base}matchups/${slug}.json`, { cache: "no-cache" });
+  if (res.status === 404) return null;
+  if (!res.ok) throw new Error(`matchups/${slug}.json: HTTP ${res.status}`);
+  return (await res.json()) as MatchupsFile;
+}
 
 /** Right after a patch the current build is thin; fall back to the previous patch for that mode. */
 /** `key`: a mode, or any snapshot file key (a region's file has its own sample size). */

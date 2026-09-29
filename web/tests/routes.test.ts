@@ -39,6 +39,7 @@ describe("one route tree for every language", () => {
   it("every page of the section exists once, under [locale]/hots", () => {
     const pages = entries.filter((e) => e.endsWith("/page.tsx")).sort();
     expect(pages).toEqual([
+      "[locale]/hots/draft/page.tsx",
       "[locale]/hots/heroes/[slug]/page.tsx",
       "[locale]/hots/heroes/page.tsx",
       "[locale]/hots/maps/[slug]/page.tsx",

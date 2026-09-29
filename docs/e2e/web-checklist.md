@@ -71,3 +71,12 @@ Automated as Playwright specs in `web/e2e/tierlist.spec.ts`, run with `npm run e
 - [x] `#universe` select with the official five (시공의 폭풍 = Orphea, Qhira, The Lost Vikings); Overwatch → 9 heroes, `universe=Overwatch` in the URL; "all" clears it
 - [x] `?role=Healer&universe=Overwatch` opens with both (Ana, Lúcio); English labels (StarCraft)
 - [x] No horizontal scroll at 390 px (screenshot checked 2026-09-29)
+
+## Automated — 밴픽 simulator (`e2e/draft.spec.ts`, #25)
+- [x] The real order: 4 bans (us, them, us, them), then picks; the turn prompt and the suggestion title follow it
+- [x] A banned or picked hero is no longer offered; Samuro's ally term with Abathur equals the fixture's shrunk gap
+- [x] Picked heroes without a matchups file are named under the suggestions
+- [x] The link replays the draft after a reload; undo; start over clears the URL
+- [x] Cho'gall fills both slots where the team picks twice; undo takes both back
+- [x] The map sets a map term and lands in the URL; the first-pick toggle is disabled once the draft started
+- [x] In the header nav; no horizontal scroll at 390 px; contrast AA in both themes and languages; no Korean on the English page
