@@ -15,7 +15,7 @@ import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 import { TierView } from "@/components/tier/TierView";
 import type { Mode } from "@/data";
-import { alternates, type Locale } from "@/i18n/locale";
+import { alternates, DEFAULT_LOCALE, type Locale } from "@/i18n/locale";
 import { messages } from "@/i18n/messages";
 import { bracketRows, heroBuilds, heroSummary, mapRows, regionRows } from "@/lib/hero";
 import { homeModel, mapCards } from "@/lib/home";
@@ -98,7 +98,7 @@ export function HeroesPage({ locale }: { locale: Locale }) {
 }
 
 // --- 영웅 상세: one static page per hero; both modes computed at build time; the page fetches nothing ---
-export const heroParams = (): { slug: string }[] => readHeroes("ko").heroes.map((h) => ({ slug: h.slug }));
+export const heroParams = (): { slug: string }[] => readHeroes(DEFAULT_LOCALE).heroes.map((h) => ({ slug: h.slug }));
 
 export async function heroMetadata(locale: Locale, { params }: Params): Promise<Metadata> {
   const { slug } = await params;
@@ -160,7 +160,7 @@ export function MapsPage({ locale }: { locale: Locale }) {
 }
 
 // --- 전장 상세: one static page per map ---
-export const mapParams = (): { slug: string }[] => readMaps("ko").maps.map((m) => ({ slug: m.slug }));
+export const mapParams = (): { slug: string }[] => readMaps(DEFAULT_LOCALE).maps.map((m) => ({ slug: m.slug }));
 
 export async function mapMetadata(locale: Locale, { params }: Params): Promise<Metadata> {
   const { slug } = await params;

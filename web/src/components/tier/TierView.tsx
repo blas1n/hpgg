@@ -3,6 +3,7 @@
 import { Fragment, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { assetUrl, daysSince, hotsHref, loadSnapshot, REGIONS, regionSample, shortDate, snapshotKey, thinSample, type Bracket, type HeroTable, type MapTable, type Meta, type Mode, type Region } from "@/data";
 import { useLocale, useT } from "@/i18n/client";
+import type { Locale } from "@/i18n/locale";
 import type { Messages } from "@/i18n/messages";
 import { formulaDetail, formulaLine, PRESETS, type Preset, type Snapshot, type Tier } from "@/formula";
 import { bracketMatches, regionMatches } from "@/lib/shown";
@@ -546,7 +547,7 @@ function PatchBanner({ meta, mode, patch, auto, onCurrent }: { meta: Meta; mode:
   );
 }
 
-function Formula({ sl, min, preset, t, locale }: { sl: boolean; min: number; preset: Preset; t: Messages; locale: "ko" | "en" }) {
+function Formula({ sl, min, preset, t, locale }: { sl: boolean; min: number; preset: Preset; t: Messages; locale: Locale }) {
   return (
     <div className="space-y-2">
       <p id="formula" className="rounded-lg border border-line bg-surface px-3 py-2 font-mono text-xs [overflow-wrap:anywhere] text-fg-2">

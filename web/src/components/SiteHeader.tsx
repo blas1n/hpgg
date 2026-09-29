@@ -4,7 +4,7 @@ import { useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
 import { assetUrl, hotsHref } from "@/data";
 import { useLocale, useT } from "@/i18n/client";
-import { localizedPath } from "@/i18n/locale";
+import { sectionPath } from "@/i18n/locale";
 import type { SearchItem } from "@/lib/search";
 import { HeroSearch } from "./HeroSearch";
 import { LanguageToggle } from "./LanguageToggle";
@@ -15,7 +15,7 @@ const NAV_IDS = ["home", "tier", "heroes", "maps", "players"] as const;
 type NavId = (typeof NAV_IDS)[number];
 
 function activeId(path: string): NavId {
-  const p = localizedPath(path, "ko"); // the section is the same in every language
+  const p = sectionPath(path); // the section is the same in every language
   if (p.startsWith("/hots/tier")) return "tier";
   if (p.startsWith("/hots/heroes")) return "heroes";
   if (p.startsWith("/hots/maps")) return "maps";

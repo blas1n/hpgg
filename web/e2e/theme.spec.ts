@@ -151,7 +151,7 @@ for (const theme of ["dark", "light"] as const) {
       if (theme === "light") await page.addInitScript(() => localStorage.setItem("hpgg-theme", "light"));
       const ko = ["./", "./tier/", "./tier/?mode=sl", "./tier/?mode=sl&preset=additive", "./heroes/", "./heroes/illidan/", "./heroes/illidan/?mode=sl", "./maps/", "./maps/cursed-hollow/", "./maps/towers-of-doom/", "./players/", "./players/?tag=Player12%231012&region=NA"];
       // English pages (#10): the same pages under /en/hots/ — longer words, other line breaks
-      for (const path of [...ko, ...ko.map((p) => `../en/hots/${p.slice(2)}`)]) {
+      for (const path of [...ko, ...ko.map((p) => `/en/hots/${p.slice(2)}`)]) {
         await page.goto(path);
         await expect(page.locator("main")).toBeVisible();
         if (theme === "light") await expect(page.locator("html")).toHaveAttribute("data-theme", "light");

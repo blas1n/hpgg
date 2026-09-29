@@ -2,16 +2,17 @@
 
 import { usePathname } from "next/navigation";
 import { useLocale } from "@/i18n/client";
-import { chooseLocale, localizedPath, otherLocale } from "@/i18n/locale";
+import { chooseLocale, localizedPath, nextLocale } from "@/i18n/locale";
 import { messages } from "@/i18n/messages";
 
 /**
- * Header switch to the same page in the other language (#10): a plain link (works without JS, crawlable), labelled in
- * the language it leads to. A click also remembers the choice (a redirect hint for later visits, i18n/locale.ts) and
- * carries the page's query and hash, so the view on screen (mode, map, section) stays the same.
+ * Header switch to the same page in the next language of LOCALES (#10; with two languages, the other one): a plain
+ * link (works without JS, crawlable), labelled in the language it leads to. A click also remembers the choice (a
+ * redirect hint for later visits, i18n/locale.ts) and carries the page's query and hash, so the view on screen (mode,
+ * map, section) stays the same. With more than two languages this becomes a menu.
  */
 export function LanguageToggle() {
-  const to = otherLocale(useLocale());
+  const to = nextLocale(useLocale());
   const target = messages[to].lang;
   const href = localizedPath(usePathname() ?? "/hots/", to);
   return (

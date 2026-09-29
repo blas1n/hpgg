@@ -2,7 +2,7 @@
  * calls Heroes Profile /players with the key and caches the answer; see docs/HANDOFF.md "Server". */
 import type { HeroInfo, HeroTable, MapTable } from "../data";
 import { localizedPath, type Locale } from "../i18n/locale";
-import { messages } from "../i18n/messages";
+import { messages, type Messages } from "../i18n/messages";
 
 export const API_BASE_DEFAULT = "https://api.hpgg.win";
 const apiBase = (): string => process.env.NEXT_PUBLIC_API_BASE || API_BASE_DEFAULT;
@@ -125,7 +125,7 @@ const isResponse = (b: unknown): b is PlayerResponse =>
   typeof b === "object" && b !== null && typeof (b as PlayerResponse).player === "object" && (b as PlayerResponse).player !== null;
 
 // --- labels ---
-type ModeKey = keyof (typeof messages)["ko"]["players"]["modes"];
+type ModeKey = keyof Messages["players"]["modes"];
 /** HP mode codes (ud = Unranked Draft, ar = ARAM) as the game names them; unknown codes pass through. */
 export const modeLabel = (mode: string | null, locale: Locale): string => {
   if (!mode) return "–";
@@ -133,7 +133,7 @@ export const modeLabel = (mode: string | null, locale: Locale): string => {
   return mode in modes ? modes[mode as ModeKey] : mode;
 };
 
-type LeagueKey = keyof (typeof messages)["ko"]["players"]["leagues"];
+type LeagueKey = keyof Messages["players"]["leagues"];
 /** HP league name (lower case prefix) → our key, which is also the colour key. Grand Master before Master. */
 const LEAGUE: [string, LeagueKey][] = [
   ["grand master", "grandmaster"],

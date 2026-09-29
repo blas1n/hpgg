@@ -2,7 +2,7 @@
 import { computeTiers, PRESETS, type Snapshot, type Tier } from "../formula";
 import { wilson } from "../wilson";
 import type { HeroTable } from "../data";
-import type { Locale } from "../i18n/locale";
+import { DEFAULT_LOCALE, type Locale } from "../i18n/locale";
 import type { HeroRef } from "./home";
 
 type Steps = { title: string; text: string }[];
@@ -12,9 +12,11 @@ export interface MapInfo {
   name: string;
   objective: Steps;
   source: Source;
-  /** Absent, or `fallback: "ko"`, when no archived English page exists: the English page then shows the Korean text. */
-  en?: { objective: Steps; source: Source } | { fallback: "ko" };
+  /** Another language's version of the same official page, under the locale's key (`en`). Absent, or
+   *  `fallback: "ko"`, when no archived page exists in that language: its page then shows the Korean text. */
+  en?: LocalizedObjective;
 }
+type LocalizedObjective = { objective: Steps; source: Source } | { fallback: "ko" };
 
 /**
  * data/maps_meta.json: each map's objective as the official site printed it (three steps), with the page it came
@@ -28,8 +30,10 @@ export interface MapsMeta {
 
 /** The objective text for a page language; `fallback` = the English page shows the Korean original (said on the page). */
 export function mapObjective(info: MapInfo, locale: Locale): { steps: Steps; source: Source; fallback: boolean } {
-  if (locale === "en" && info.en && "objective" in info.en) return { steps: info.en.objective, source: info.en.source, fallback: false };
-  return { steps: info.objective, source: info.source, fallback: locale === "en" };
+  if (locale === DEFAULT_LOCALE) return { steps: info.objective, source: info.source, fallback: false };
+  const local = (info as unknown as Record<string, LocalizedObjective | undefined>)[locale];
+  if (local && "objective" in local) return { steps: local.objective, source: local.source, fallback: false };
+  return { steps: info.objective, source: info.source, fallback: true };
 }
 
 export const MAP_TOP_N = 10;

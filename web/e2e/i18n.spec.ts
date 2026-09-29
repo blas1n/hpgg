@@ -1,7 +1,11 @@
 import { fileURLToPath } from "node:url";
+import { readFileSync } from "node:fs";
 import { expect, test, type Page } from "@playwright/test";
+import { LOCALES } from "../src/i18n/locales";
+import { messages } from "../src/i18n/messages";
 
-// #10: Korean stays at /hots/…, English is pre-rendered at /en/hots/…; the header switch moves between the two.
+// #10: every language under /<locale>/ from one route tree (/ko/hots/…, /en/hots/…); the header switch moves between
+// them; the URLs from before (/hots/…) forward.
 
 const playerFixture = fileURLToPath(new URL("../tests/fixtures/api_player_zemill.json", import.meta.url));
 const HANGUL = /[가-힣ㄱ-ㆎ]/;
@@ -41,7 +45,7 @@ const visibleHangul = (page: Page) =>
 
 for (const p of PAGES) {
   test(`language switch on ${p.path}: ko → en → ko, same page, lang and heading follow`, async ({ page }) => {
-    await page.goto(p.path);
+    await page.goto(`/ko${p.path}`);
     await expect(page.locator("html")).toHaveAttribute("lang", "ko");
     await expect(page.locator("h1")).toHaveText(p.ko);
     const toggle = page.locator("header #lang-toggle");
@@ -53,7 +57,7 @@ for (const p of PAGES) {
     await expect(page.locator("h1")).toHaveText(p.h1);
     await expect(page.locator("header #lang-toggle")).toHaveText("KO");
     await page.locator("header #lang-toggle").click();
-    await expect(page).toHaveURL(new RegExp(`[^n]${p.path.replace(/\//g, "\\/")}$`));
+    await expect(page).toHaveURL(new RegExp(`/ko${p.path}$`));
     await expect(page.locator("html")).toHaveAttribute("lang", "ko");
     await expect(page.locator("h1")).toHaveText(p.ko);
   });
@@ -65,11 +69,11 @@ test("English pages: lang=en, canonical and hreflang alternates (ko, en, x-defau
     await expect(page.locator("html"), p.path).toHaveAttribute("lang", "en");
     const href = (sel: string) => page.locator(`head ${sel}`).getAttribute("href");
     expect(await href('link[rel="canonical"]'), p.path).toBe(`https://hpgg.win/en${p.path}`);
-    expect(await href('link[rel="alternate"][hreflang="ko"]'), p.path).toBe(`https://hpgg.win${p.path}`);
+    expect(await href('link[rel="alternate"][hreflang="ko"]'), p.path).toBe(`https://hpgg.win/ko${p.path}`);
     expect(await href('link[rel="alternate"][hreflang="en"]'), p.path).toBe(`https://hpgg.win/en${p.path}`);
-    expect(await href('link[rel="alternate"][hreflang="x-default"]'), p.path).toBe(`https://hpgg.win${p.path}`);
-    await page.goto(p.path);
-    expect(await href('link[rel="canonical"]'), p.path).toBe(`https://hpgg.win${p.path}`);
+    expect(await href('link[rel="alternate"][hreflang="x-default"]'), p.path).toBe(`https://hpgg.win/ko${p.path}`);
+    await page.goto(`/ko${p.path}`);
+    expect(await href('link[rel="canonical"]'), p.path).toBe(`https://hpgg.win/ko${p.path}`);
     expect(await href('link[rel="alternate"][hreflang="en"]'), p.path).toBe(`https://hpgg.win/en${p.path}`);
   }
 });
@@ -85,7 +89,7 @@ test("English pages show no Korean text, including views built in the browser", 
     "/en/hots/players/?tag=Player12%231012&region=NA",
   ];
   // control: the same check finds Korean on a Korean page
-  await page.goto("/hots/");
+  await page.goto("/ko/hots/");
   expect((await visibleHangul(page)).length).toBeGreaterThan(20);
   for (const v of views) {
     await page.goto(v);
@@ -147,7 +151,7 @@ test("the switch keeps the view: query and hash carry over", async ({ page }) =>
   await expect(page.locator("#map-hero h2")).toHaveText("Cursed Hollow");
   await page.goto("/en/hots/heroes/illidan/?mode=sl#builds-title");
   await page.locator("#lang-toggle").click();
-  await expect(page).toHaveURL(/\/hots\/heroes\/illidan\/\?mode=sl#builds-title$/);
+  await expect(page).toHaveURL(/\/ko\/hots\/heroes\/illidan\/\?mode=sl#builds-title$/);
   await expect(page.locator("#mode-sl")).toHaveAttribute("aria-pressed", "true");
 });
 
@@ -165,9 +169,9 @@ test("the choice is a redirect hint: a Korean link opens in English once English
   await expect(page).toHaveURL(/\/en\/hots\/maps\/\?x=1#top$/);
   expect(await page.evaluate(() => (window as unknown as { __langAtDCL: string }).__langAtDCL)).toBe("en");
   await page.locator("#lang-toggle").click();
-  await expect(page).toHaveURL(/[^n]\/hots\/maps\/\?x=1#top$/);
+  await expect(page).toHaveURL(/\/ko\/hots\/maps\/\?x=1#top$/);
   await page.goto("./tier/");
-  await expect(page).toHaveURL(/[^n]\/hots\/tier\/$/); // Korean chosen: stays Korean
+  await expect(page).toHaveURL(/\/ko\/hots\/tier\/$/); // Korean chosen: stays Korean
   await expect(page.locator("html")).toHaveAttribute("lang", "ko");
 });
 
@@ -176,7 +180,7 @@ test("without a choice nothing redirects, whatever the browser language", async 
   const page = await ctx.newPage();
   await page.route("**/gc.zgo.at/**", (r) => r.abort());
   await page.goto(new URL("./tier/", test.info().project.use.baseURL).href);
-  await expect(page).toHaveURL(/[^n]\/hots\/tier\/$/);
+  await expect(page).toHaveURL(/\/ko\/hots\/tier\/$/);
   await expect(page.locator("html")).toHaveAttribute("lang", "ko");
   await ctx.close();
 });
@@ -198,7 +202,9 @@ test("blocked storage: the switch still changes the language, no page error", as
   expect(errors).toEqual([]);
 });
 
-test("/en/ forwards to /en/hots/; the 404 page speaks both languages", async ({ page }) => {
+test("/en/ and /ko/ forward to their section; the 404 page speaks both languages", async ({ page }) => {
+  await page.goto("/ko/");
+  await expect(page).toHaveURL(/\/ko\/hots\/$/);
   await page.goto("/en/");
   await expect(page).toHaveURL(/\/en\/hots\/$/);
   await expect(page.locator("html")).toHaveAttribute("lang", "en");
@@ -207,7 +213,7 @@ test("/en/ forwards to /en/hots/; the 404 page speaks both languages", async ({ 
   await expect(page.locator("main")).toContainText("그런 페이지나 영웅이 없습니다");
   await expect(page.locator("main")).toContainText("No such page or hero");
   await expect(page.locator('main a[href="/en/hots/"]')).toHaveCount(1);
-  await expect(page.locator('main a[href="/hots/"]')).toHaveCount(1);
+  await expect(page.locator('main a[href="/ko/hots/"]')).toHaveCount(1);
 });
 
 test("the switch sits next to the theme toggle, on phones and desktop", async ({ page }) => {
@@ -223,4 +229,69 @@ test("the switch sits next to the theme toggle, on phones and desktop", async ({
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
     expect(overflow, `${width}`).toBeLessThanOrEqual(0);
   }
+});
+
+test("every page renders for every language in LOCALES, from the one route tree", async ({ page }) => {
+  for (const locale of LOCALES) {
+    for (const p of PAGES) {
+      const res = await page.goto(`/${locale}${p.path}`);
+      expect(res?.status(), `${locale}${p.path}`).toBe(200);
+      await expect(page.locator("html"), `${locale}${p.path}`).toHaveAttribute("lang", locale);
+      await expect(page.locator("header nav a[data-page=home]").first(), `${locale}${p.path}`).toHaveText(messages[locale].nav.home);
+    }
+  }
+  // a language outside LOCALES has no pages
+  expect((await page.goto("/fr/hots/"))?.status()).toBe(404);
+});
+
+// The URLs that were live before #10 (Korean at /hots/…): shared links keep working.
+const e2eData = (f: string) => JSON.parse(readFileSync(new URL(`../tests/e2e-data/${f}`, import.meta.url), "utf-8"));
+
+test("every old hero and map URL has a forwarder pointing at its new page", async ({ request }) => {
+  const heroes: { slug: string }[] = e2eData("heroes_ko.json").heroes;
+  const maps: { slug: string }[] = e2eData("maps_ko.json").maps;
+  const old = [
+    "/hots/", "/hots/tier/", "/hots/heroes/", "/hots/maps/", "/hots/players/",
+    ...heroes.map((h) => `/hots/heroes/${h.slug}/`),
+    ...maps.map((m) => `/hots/maps/${m.slug}/`),
+  ];
+  expect(old.length).toBe(5 + 90 + 15);
+  for (const path of old) {
+    const res = await request.get(path, { maxRedirects: 0 });
+    expect(res.status(), path).toBe(200);
+    const html = await res.text();
+    expect(html, path).toContain(`<link rel="canonical" href="https://hpgg.win/ko${path}">`);
+    expect(html, path).toContain(`content="0; url=/ko${path}"`);
+    expect(html, path).toContain('<meta name="robots" content="noindex">');
+    // and the page it points at exists
+    expect((await request.get(`/ko${path}`)).status(), `/ko${path}`).toBe(200);
+  }
+});
+
+test("forwarders land on the new URL with query and hash; legacy .html go straight there; / follows the stored choice", async ({ page }) => {
+  await page.goto("/hots/heroes/illidan/?mode=sl#builds-title");
+  await expect(page).toHaveURL(/\/ko\/hots\/heroes\/illidan\/\?mode=sl#builds-title$/);
+  await expect(page.locator("html")).toHaveAttribute("lang", "ko");
+  await page.goto("/hots/tier/?mode=sl&map=Cursed%20Hollow");
+  await expect(page).toHaveURL(/\/ko\/hots\/tier\/\?mode=sl&map=Cursed%20Hollow$/);
+  await page.goto("/hots/hero.html?hero=illidan&mode=sl");
+  await expect(page).toHaveURL(/\/ko\/hots\/heroes\/illidan\/\?mode=sl$/);
+  await page.goto("/hots/tier.html?mode=sl&role=Healer");
+  await expect(page).toHaveURL(/\/ko\/hots\/tier\/\?mode=sl&role=Healer$/);
+  await page.goto("/");
+  await expect(page).toHaveURL(/\/ko\/hots\/$/);
+  await page.locator("#lang-toggle").click(); // choose English
+  await expect(page).toHaveURL(/\/en\/hots\/$/);
+  await page.goto("/");
+  await expect(page).toHaveURL(/\/en\/hots\/$/);
+  await page.goto("/hots/maps/cursed-hollow/");
+  await expect(page).toHaveURL(/\/en\/hots\/maps\/cursed-hollow\/$/); // one hop, not /ko then /en
+});
+
+test("without JavaScript the forwarders still move on (meta refresh)", async ({ browser }) => {
+  const ctx = await browser.newContext({ javaScriptEnabled: false });
+  const page = await ctx.newPage();
+  await page.goto(new URL("/hots/maps/", test.info().project.use.baseURL).href);
+  await expect(page).toHaveURL(/\/ko\/hots\/maps\/$/);
+  await ctx.close();
 });

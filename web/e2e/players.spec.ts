@@ -40,7 +40,7 @@ test("players: search shows league per mode, recent matches and heroes; the URL 
   await expect(page.locator("#player-result")).toHaveAttribute("data-state", "ok");
   expect(seen[0]!.searchParams.get("battletag")).toBe("Player12#1012");
   expect(seen[0]!.searchParams.get("region")).toBe("NA");
-  await expect(page).toHaveURL(/\/hots\/players\/\?tag=Player12%231012&region=NA$/);
+  await expect(page).toHaveURL(/\/ko\/hots\/players\/\?tag=Player12%231012&region=NA$/);
   await expect(page.locator("#player-name")).toContainText("Player12#1012");
   await expect(page.locator("#player-modes [data-mode]").first()).toHaveAttribute("data-mode", "sl");
   await expect(page.locator('#player-modes [data-mode="sl"]')).toContainText("다이아몬드 2");
@@ -49,7 +49,7 @@ test("players: search shows league per mode, recent matches and heroes; the URL 
   await expect(page.locator("#player-matches li").first()).toHaveAttribute("data-result", "win");
   await expect(page.locator("#player-matches li").first()).toContainText("데커드");
   await expect(page.locator("#player-heroes li").first()).toHaveAttribute("data-hero", "lucio");
-  await expect(page.locator("#player-heroes li a").first()).toHaveAttribute("href", "/hots/heroes/lucio/");
+  await expect(page.locator("#player-heroes li a").first()).toHaveAttribute("href", "/ko/hots/heroes/lucio/");
   await expect(page.locator("#player-stale")).toHaveCount(0);
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
   expect(overflow).toBeLessThanOrEqual(0);
@@ -119,6 +119,6 @@ test("home: the search box at the top opens 전적 검색 with the query", async
   await page.locator("#home-player-search-region").selectOption("NA");
   await page.locator("#home-player-search-tag").fill("Player12#1012");
   await page.locator("#home-player-search button[type=submit]").click();
-  await expect(page).toHaveURL(/\/hots\/players\/\?tag=Player12%231012&region=NA$/);
+  await expect(page).toHaveURL(/\/ko\/hots\/players\/\?tag=Player12%231012&region=NA$/);
   await expect(page.locator("#player-result")).toHaveAttribute("data-state", "ok");
 });

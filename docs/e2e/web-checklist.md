@@ -22,9 +22,11 @@ Automated as Playwright specs in `web/e2e/tierlist.spec.ts`, run with `npm run e
 - [x] Storm League bracket selector loads sl_<bracket>.json, lands in the URL (`tier=`), hidden in Quick Match
 - [x] Hero page: 5 popular builds, 7 talents each with Korean names and icons, games and win rate; unknown hero shows a message
 
-## Automated — languages (`e2e/i18n.spec.ts`, #10)
-- [x] Every page type (홈, 티어, 영웅, 영웅 상세, 전장, 전장 상세, 전적 검색): `#lang-toggle` links to `/en` + the same path; ko → en → ko, `html[lang]` and the heading follow
-- [x] English pages: `lang="en"`, canonical = the English URL, `hreflang` ko / en / x-default (= ko); Korean pages keep their URLs and point back
+## Automated — languages (`e2e/i18n.spec.ts`, #10; every language under `/<locale>/` from one route tree)
+- [x] Every page type renders for every entry of `LOCALES` with its `lang`; `/fr/hots/` is a 404
+- [x] Every old URL (`/hots/`, section pages, all 90 heroes, all 15 maps) serves a forwarder with canonical, meta refresh and noindex, and its target exists; with JS it keeps query and hash, `hots/*.html` go straight to the final URL, `/` and old links follow the stored language in one hop; without JS the meta refresh moves on
+- [x] Every page type (홈, 티어, 영웅, 영웅 상세, 전장, 전장 상세, 전적 검색): `#lang-toggle` on `/ko/…` links to `/en/…` + the same path; ko → en → ko, `html[lang]` and the heading follow
+- [x] English pages: `lang="en"`, canonical = the English URL, `hreflang` ko / en / x-default (= `/ko/…`); Korean pages point back
 - [x] No visible Korean on English pages, including browser-built views (SL, map + preset, bracket, region, player result, talent popover, tier row detail); control: the same check finds Korean on 홈
 - [x] English player page: Storm League / Diamond 2 / Unranked Draft / ARAM, ARAM map names, hero links under `/en/`; Korean: 일반 선발전, 무작위 영웅 대전, 브락시스 전초기지
 - [x] Links stay in the language (nav, hero search incl. Korean query on English pages, map objective with its en-us source)
