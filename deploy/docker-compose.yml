@@ -1,0 +1,27 @@
+# HPGG API on the Mac mini. autodeploy runs:
+#   docker-compose -p hpgg -f <WORK>/deploy/docker-compose.yml up -d --build --force-recreate
+# Public: cloudflared ingress api.hpgg.win → http://127.0.0.1:8800 (loopback only here).
+services:
+  api:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    image: hpgg-api:latest
+    container_name: hpgg-api
+    restart: unless-stopped
+    env_file: .env # deploy/.env on the host (gitignored); keys in deploy/.env.example
+    environment:
+      DB_PATH: /data/hpgg.sqlite
+    ports:
+      - "127.0.0.1:8800:8000"
+    volumes:
+      - hpgg-api-data:/data
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+
+volumes:
+  hpgg-api-data:
+    name: hpgg-api-data
