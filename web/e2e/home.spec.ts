@@ -61,8 +61,12 @@ test("header search: 초성 query, keyboard selection opens the hero page", asyn
 
 test("header search: a query with no match says so; '/' focuses the box", async ({ page }) => {
   await page.goto("./tier/");
-  await page.locator("body").press("/");
-  await expect(page.locator("#site-search")).toBeFocused();
+  // the "/" listener is attached after hydration; a key pressed before that does nothing, so press until it lands
+  await expect(async () => {
+    await page.locator("body").press("/");
+    await expect(page.locator("#site-search")).toBeFocused({ timeout: 500 });
+  }).toPass({ timeout: 10_000 });
+  await expect(page.locator("#site-search")).toHaveValue(""); // the key focuses the box, it is not typed into it
   await page.keyboard.type("zzzz");
   await expect(page.getByRole("listbox")).toContainText("맞는 영웅이 없습니다");
   await page.keyboard.press("Escape");
