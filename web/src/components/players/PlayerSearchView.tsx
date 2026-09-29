@@ -69,6 +69,8 @@ export function PlayerSearchView({ heroes, maps }: { heroes: HeroTable; maps: Ma
       <section id="player-result" data-state={state.kind} aria-live="polite" aria-busy={state.kind === "loading"}>
         <Result state={state} heroes={heroes} maps={maps} retry={query ? () => void run(query.tag, query.region) : undefined} />
       </section>
+      {/* remounted when a search finds nobody, so it opens then and stays under the visitor's control otherwise */}
+      <UploadGuide key={state.kind === "not_found" ? "not-found" : "default"} open={state.kind === "not_found"} />
     </main>
   );
 }
@@ -100,6 +102,53 @@ function Result({ state, heroes, maps, retry }: { state: State; heroes: HeroTabl
     case "ok":
       return <Profile v={playerView(state.data, heroes, maps, locale)} />;
   }
+}
+
+const HP_UPLOAD = "https://www.heroesprofile.com/Upload";
+
+/** Why a player may be missing (no official API: records come from replays uploaded to Heroes Profile) and how to fix
+ *  it. Always on the page, folded; opened when a search finds nobody. Paths from the Heroes Profile uploaders' sources. */
+function UploadGuide({ open }: { open: boolean }) {
+  const g = useT().players.guide;
+  const link = (
+    <a href={HP_UPLOAD} target="_blank" rel="noopener" className="font-semibold text-primary underline-offset-2 hover:underline">
+      {g.link}
+    </a>
+  );
+  return (
+    <details id="upload-guide" open={open} className="group rounded-card border border-line bg-surface p-4 text-sm text-fg-2">
+      <summary className="cursor-pointer list-none">
+        <span className="text-fg">{g.summary}</span> <span className="whitespace-nowrap font-semibold text-primary">{g.more} <span className="inline-block transition-transform group-open:rotate-90">›</span></span>
+      </summary>
+      <div className="mt-3 space-y-3">
+        <p>{g.why}</p>
+        <div>
+          <h3 className="font-bold text-fg">{g.autoTitle}</h3>
+          <p className="mt-0.5">
+            {g.autoBody} {link}
+          </p>
+        </div>
+        <div>
+          <h3 className="font-bold text-fg">{g.pastTitle}</h3>
+          <p className="mt-0.5">
+            {g.pastBody} {link}
+          </p>
+          <dl className="mt-1.5 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-xs">
+            <dt className="font-semibold text-fg">{g.windows}</dt>
+            <dd>
+              <code className="break-all rounded bg-surface-3 px-1.5 py-0.5 text-fg">{g.windowsPath}</code>
+            </dd>
+            <dt className="font-semibold text-fg">{g.mac}</dt>
+            <dd>
+              <code className="break-all rounded bg-surface-3 px-1.5 py-0.5 text-fg">{g.macPath}</code>
+            </dd>
+          </dl>
+        </div>
+        <p className="text-xs text-muted">{g.leaderboard}</p>
+        <p className="text-xs text-muted">{g.after}</p>
+      </div>
+    </details>
+  );
 }
 
 function Notice({ title, body, tone, retry }: { title: string; body: string; tone?: "info" | "warn"; retry?: () => void }) {
