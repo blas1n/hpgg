@@ -4,7 +4,8 @@ import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import { knownOnly } from "../src/lib/known";
 import { computeTiers, PRESETS, type Row, type Snapshot } from "../src/formula";
-import { fallbackNote, type HeroTable, type MapTable } from "../src/data";
+import type { HeroTable, MapTable } from "../src/data";
+import { messages } from "../src/i18n/messages";
 import { homeModel, mapCards, movers, roleLeaders, topHeroes } from "../src/lib/home";
 
 const dataDir = join(dirname(fileURLToPath(import.meta.url)), "e2e-data");
@@ -119,7 +120,8 @@ describe("homeModel", () => {
 
   it("carries the thin current patch it fell back from, and the page says so in one shared sentence", () => {
     expect(homeModel("qm", qm, null, null, heroes, 200, "2.57.0.98285").fallbackFrom).toBe("2.57.0.98285");
-    expect(fallbackNote("2.57.0.98285")).toBe("새 패치 2.57.0.98285 표본이 아직 적어 이전 패치 기준");
+    expect(messages.ko.common.fallbackNote("2.57.0.98285")).toBe("새 패치 2.57.0.98285 표본이 아직 적어 이전 패치 기준");
+    expect(messages.en.common.fallbackNote("2.57.0.98285")).toBe("new patch 2.57.0.98285 has too few games yet, showing the previous patch");
   });
 
   it("carries the previous patch and movers when the previous snapshot exists", () => {

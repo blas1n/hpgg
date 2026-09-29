@@ -3,7 +3,8 @@ import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import type { Snapshot } from "../src/formula";
-import { REGION_LABEL, regionSample, snapshotKey, thinSample, type HeroTable, type Meta } from "../src/data";
+import { regionSample, snapshotKey, thinSample, type HeroTable, type Meta } from "../src/data";
+import { messages } from "../src/i18n/messages";
 import { sameCohort } from "../src/lib/cohort";
 import { regionRows } from "../src/lib/hero";
 import { pickShown, regionMatches } from "../src/lib/shown";
@@ -26,7 +27,8 @@ const noHeroes: HeroTable = { roles: [], heroes: [] };
 
 describe("region labels and keys", () => {
   it("아시아 (KR) / 아메리카 (NA) / 유럽 (EU); no CN", () => {
-    expect(REGION_LABEL).toEqual({ all: "전체 지역", kr: "아시아 (KR)", na: "아메리카 (NA)", eu: "유럽 (EU)" });
+    expect(messages.ko.common.regions).toEqual({ all: "전체 지역", kr: "아시아 (KR)", na: "아메리카 (NA)", eu: "유럽 (EU)" });
+    expect(messages.en.common.regions).toEqual({ all: "All regions", kr: "Asia (KR)", na: "Americas (NA)", eu: "Europe (EU)" });
   });
   it("region files are {mode}_{region}; a region never combines with a bracket", () => {
     expect(snapshotKey("qm", "all", "kr")).toBe("qm_kr");
@@ -90,7 +92,7 @@ describe("regionRows (hero detail)", () => {
   it("one row per collected region with its tier, win rate, games and date", () => {
     const rows = regionRows([{ key: "kr", snap: qmKr }, { key: "na", snap: null }], "Illidan", 200);
     expect(rows).toHaveLength(1);
-    expect(rows[0]).toMatchObject({ key: "kr", label: "아시아 (KR)", collectedAt: qmKr.collected_at });
+    expect(rows[0]).toMatchObject({ key: "kr", collectedAt: qmKr.collected_at });
     expect(rows[0]!.games).toBeGreaterThan(0);
   });
 });

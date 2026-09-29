@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { fallbackNote, hotsHref, MODE_LABEL, shortDate, type Mode } from "@/data";
+import { hotsHref, shortDate, type Mode } from "@/data";
+import { useLocale, useT } from "@/i18n/client";
 import type { HomeModel, MapCard, Mover, TopRow } from "@/lib/home";
 import { MapCardLink } from "../MapCardLink";
 import { PlayerSearchForm } from "../players/PlayerSearchForm";
@@ -12,6 +13,8 @@ const int = (n: number) => n.toLocaleString("ko-KR");
 const wrClass = (wr: number) => (wr >= 50 ? "text-pos" : "text-neg");
 
 export function HomeView({ models, maps }: { models: Record<Mode, HomeModel>; maps: MapCard[] }) {
+  const t = useT();
+  const href = hotsHref(useLocale());
   const [mode, setMode] = useState<Mode>("qm");
   useEffect(() => {
     if (new URLSearchParams(location.search).get("mode") === "sl") setMode("sl");
@@ -28,31 +31,31 @@ export function HomeView({ models, maps }: { models: Record<Mode, HomeModel>; ma
         <PlayerSearchForm id="home-player-search" className="mx-auto max-w-xl" />
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-extrabold tracking-tight text-fg">오늘의 메타</h1>
+            <h1 className="text-2xl font-extrabold tracking-tight text-fg">{t.home.title}</h1>
             <p id="meta-line" className="num mt-0.5 text-xs text-muted">
-              {MODE_LABEL[mode]} · 패치 {m.patch} · {int(m.matches)} 매치 · {shortDate(m.collectedAt)} 갱신
-              {m.fallbackFrom && <span data-fallback> · {fallbackNote(m.fallbackFrom)}</span>}
+              {t.common.modes[mode]} · {t.common.patch(m.patch)} · {t.common.matches(int(m.matches))} · {t.common.updated(shortDate(m.collectedAt))}
+              {m.fallbackFrom && <span data-fallback> · {t.common.fallbackNote(m.fallbackFrom)}</span>}
             </p>
           </div>
           <Segmented
-            label="게임 모드"
+            label={t.common.gameMode}
             idPrefix="mode"
             value={mode}
             onChange={change}
             options={[
-              { value: "qm", label: MODE_LABEL.qm },
-              { value: "sl", label: MODE_LABEL.sl },
+              { value: "qm", label: t.common.modes.qm },
+              { value: "sl", label: t.common.modes.sl },
             ]}
           />
         </div>
 
         <Card aria-labelledby="h-leaders">
-          <CardHeader id="h-leaders" title="역할별 1위" sub="역할마다 티어 점수가 가장 높은 영웅" action={<MoreLink href={hotsHref.tier(mode === "sl" ? "mode=sl" : "")}>전체 티어표</MoreLink>} />
+          <CardHeader id="h-leaders" title={t.home.leaders} sub={t.home.leadersSub} action={<MoreLink href={href.tier(mode === "sl" ? "mode=sl" : "")}>{t.home.fullTier}</MoreLink>} />
           <div id="role-top" className="grid grid-cols-2 gap-2 p-3 lg:grid-cols-3 xl:grid-cols-6">
             {m.leaders.map((l) => (
               <a
                 key={l.role}
-                href={hotsHref.hero(l.hero.slug, mode)}
+                href={href.hero(l.hero.slug, mode)}
                 data-role={l.role}
                 data-card="role" className="group flex flex-col items-start gap-2 rounded-lg border border-transparent bg-surface-2 p-3 transition-colors hover:border-line-strong hover:bg-surface-3 sm:flex-row sm:items-center sm:gap-3 xl:flex-col xl:items-start"
               >
@@ -61,7 +64,7 @@ export function HomeView({ models, maps }: { models: Record<Mode, HomeModel>; ma
                   <span className="block text-2xs font-semibold text-muted">{l.role_ko}</span>
                   <span className="block truncate text-[15px] font-bold text-fg group-hover:text-primary">{l.hero.ko}</span>
                   <span className="num mt-0.5 block text-xs text-fg-2">
-                    <span className={wrClass(l.win_rate)}>{pct(l.win_rate)}</span> 승률 · {pct(l.pick)} 픽
+                    <span className={wrClass(l.win_rate)}>{pct(l.win_rate)}</span> {t.home.winRateShort} · {pct(l.pick)} {t.home.pickShort}
                   </span>
                 </span>
               </a>
@@ -75,7 +78,7 @@ export function HomeView({ models, maps }: { models: Record<Mode, HomeModel>; ma
         </div>
 
         <Card aria-labelledby="h-maps">
-          <CardHeader id="h-maps" title="전장" sub="폭풍 리그 매치가 많은 전장 · 누르면 그 전장의 티어표" action={<MoreLink href={hotsHref.maps}>전체 전장</MoreLink>} />
+          <CardHeader id="h-maps" title={t.home.maps} sub={t.home.mapsSub} action={<MoreLink href={href.maps}>{t.home.allMaps}</MoreLink>} />
           <div id="map-grid" className="grid grid-cols-2 gap-2 p-3 sm:gap-3 lg:grid-cols-3">
             {maps.map((c) => (
               <MapCardLink key={c.slug} c={c} />
@@ -88,18 +91,20 @@ export function HomeView({ models, maps }: { models: Record<Mode, HomeModel>; ma
 }
 
 function TopTable({ model, mode }: { model: HomeModel; mode: Mode }) {
+  const t = useT();
+  const href = hotsHref(useLocale());
   const sl = mode === "sl";
   return (
     <Card className="lg:col-span-7" aria-labelledby="h-top">
-      <CardHeader id="h-top" title="티어 TOP 10" sub={`${MODE_LABEL[mode]} · 티어 점수 순`} action={<MoreLink href={hotsHref.tier(sl ? "mode=sl" : "")}>전체 보기</MoreLink>} />
+      <CardHeader id="h-top" title={t.home.top10} sub={t.home.top10Sub(t.common.modes[mode])} action={<MoreLink href={href.tier(sl ? "mode=sl" : "")}>{t.home.seeAll}</MoreLink>} />
       <table id="top10" className="w-full text-[13px]">
         <thead>
           <tr className="text-2xs text-muted">
-            <th className="w-14 py-2 pl-4 text-left font-semibold">순위</th>
-            <th className="py-2 text-left font-semibold">영웅</th>
-            <th className="py-2 pr-3 text-right font-semibold">승률</th>
-            <th className="py-2 pr-3 text-right font-semibold">픽률</th>
-            {sl && <th className="hidden py-2 pr-4 text-right font-semibold sm:table-cell">밴률</th>}
+            <th className="w-14 py-2 pl-4 text-left font-semibold">{t.common.rank}</th>
+            <th className="py-2 text-left font-semibold">{t.common.hero}</th>
+            <th className="py-2 pr-3 text-right font-semibold">{t.common.winRate}</th>
+            <th className="py-2 pr-3 text-right font-semibold">{t.common.pickRate}</th>
+            {sl && <th className="hidden py-2 pr-4 text-right font-semibold sm:table-cell">{t.common.banRate}</th>}
           </tr>
         </thead>
         <tbody>
@@ -110,7 +115,7 @@ function TopTable({ model, mode }: { model: HomeModel; mode: Mode }) {
                 <RankDelta value={r.delta} />
               </td>
               <td className="py-2">
-                <a href={hotsHref.hero(r.hero.slug, mode)} className="group flex items-center gap-2.5">
+                <a href={href.hero(r.hero.slug, mode)} className="group flex items-center gap-2.5">
                   <Portrait src={r.hero.portrait} size={34} tier={r.tier} />
                   <span className="min-w-0">
                     <span className="block truncate font-semibold text-fg group-hover:text-primary">{r.hero.ko}</span>
@@ -130,28 +135,30 @@ function TopTable({ model, mode }: { model: HomeModel; mode: Mode }) {
 }
 
 function Movers({ model, mode }: { model: HomeModel; mode: Mode }) {
+  const t = useT();
+  const href = hotsHref(useLocale());
   const [dir, setDir] = useState<"up" | "down">("up");
   const list: Mover[] = model.movers ? model.movers[dir] : [];
   const sub = model.movers
     ? model.movers.up.length + model.movers.down.length
-      ? `직전 패치 ${model.previousPatch} 대비 순위 변동`
-      : "직전 패치와 순위 변동 없음"
-    : "직전 패치 데이터가 쌓이면 표시됩니다";
+      ? t.home.moversVs(model.previousPatch ?? "")
+      : t.home.moversNone
+    : t.home.moversLater;
   return (
     <Card className="lg:col-span-5 lg:self-start" aria-labelledby="h-movers">
       <CardHeader
         id="h-movers"
-        title="메타 변동"
+        title={t.home.movers}
         sub={<span id="movers-sub">{sub}</span>}
         action={
           model.movers && (
             <Segmented
-              label="변동 방향"
+              label={t.home.moversDir}
               value={dir}
               onChange={setDir}
               options={[
-                { value: "up", label: "상승" },
-                { value: "down", label: "하락" },
+                { value: "up", label: t.common.up },
+                { value: "down", label: t.common.down },
               ]}
             />
           )
@@ -160,12 +167,12 @@ function Movers({ model, mode }: { model: HomeModel; mode: Mode }) {
       <ol id="movers" className="divide-y divide-line/70">
         {list.map((d) => (
           <li key={d.hero.slug}>
-            <a href={hotsHref.hero(d.hero.slug, mode)} data-hero={d.hero.slug} data-card="mover" className="group flex items-center gap-3 px-4 py-2.5 transition-colors hover:bg-surface-2">
+            <a href={href.hero(d.hero.slug, mode)} data-hero={d.hero.slug} data-card="mover" className="group flex items-center gap-3 px-4 py-2.5 transition-colors hover:bg-surface-2">
               <Portrait src={d.hero.portrait} size={36} tier={d.tier} />
               <span className="min-w-0 flex-1">
                 <span className="block truncate text-[13px] font-semibold text-fg group-hover:text-primary">{d.hero.ko}</span>
                 <span className="num block text-2xs text-muted">
-                  #{d.prevRank} → #{d.rank} · 승률 {pct(d.prevWinRate)} → {pct(d.win_rate)}
+                  {t.home.moverLine(String(d.prevRank), String(d.rank), pct(d.prevWinRate), pct(d.win_rate))}
                 </span>
               </span>
               <span className={cx("num rounded-md px-2 py-1 text-sm font-extrabold", d.delta > 0 ? "bg-pos/10 text-pos" : "bg-neg/10 text-neg")}>
@@ -175,8 +182,8 @@ function Movers({ model, mode }: { model: HomeModel; mode: Mode }) {
             </a>
           </li>
         ))}
-        {model.movers && list.length === 0 && <li className="px-4 py-8 text-center text-[13px] text-muted">{dir === "up" ? "오른 영웅이 없습니다" : "내려간 영웅이 없습니다"}</li>}
-        {!model.movers && <li className="px-4 py-8 text-center text-[13px] text-muted">첫 패치 변경 이후부터 보여 드립니다</li>}
+        {model.movers && list.length === 0 && <li className="px-4 py-8 text-center text-[13px] text-muted">{dir === "up" ? t.home.noRisers : t.home.noFallers}</li>}
+        {!model.movers && <li className="px-4 py-8 text-center text-[13px] text-muted">{t.home.firstPatch}</li>}
       </ol>
     </Card>
   );

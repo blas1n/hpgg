@@ -50,3 +50,13 @@ describe("searchHeroes", () => {
     expect(searchHeroes(ITEMS, "l", 2)).toHaveLength(2);
   });
 });
+
+describe("searchHeroes on English pages", () => {
+  // the display name is English there; the Korean name rides along as `alt` so Korean players still find heroes
+  const EN = ITEMS.map((h) => ({ ...h, ko: h.name, role_ko: "Tank", alt: h.ko }));
+  it("matches the English name, the Korean name and its 초성", () => {
+    expect(searchHeroes(EN, "illi").map((x) => x.slug)).toEqual(["illidan"]);
+    expect(searchHeroes(EN, "일리").map((x) => x.slug)).toEqual(["illidan"]);
+    expect(searchHeroes(EN, "ㅇㄹㄷ").map((x) => x.slug)).toEqual(["illidan"]);
+  });
+});

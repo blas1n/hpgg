@@ -7,20 +7,24 @@ import type { Bracket, BuildsFile, HeroTable, MapTable, MatchupsFile, Meta, Mode
 import { pickShown, type Shown } from "../lib/shown";
 import type { SearchItem } from "../lib/search";
 import type { MapsMeta } from "../lib/maps";
+import type { Locale } from "../i18n/locale";
+import { localizeHeroes, localizeMaps } from "../i18n/names";
 
 const dir = resolve(process.cwd(), process.env.DATA_DIR ?? "../data");
 const read = <T>(rel: string): T => JSON.parse(readFileSync(join(dir, rel), "utf-8")) as T;
 
 export const readMeta = (): Meta => read<Meta>("latest/meta.json");
-export const readHeroes = (): HeroTable => read<HeroTable>("heroes_ko.json");
-export const readMaps = (): MapTable => read<MapTable>("maps_ko.json");
+const heroTable = (): HeroTable => read<HeroTable>("heroes_ko.json");
+/** Heroes and maps with their display names in the page language (i18n/names.ts). */
+export const readHeroes = (locale: Locale): HeroTable => localizeHeroes(heroTable(), locale);
+export const readMaps = (locale: Locale): MapTable => localizeMaps(read<MapTable>("maps_ko.json"), locale);
 export const readSnapshot = (key: string, patch: "current" | "previous" = "current"): Snapshot | null => {
   const rel = `${patch === "previous" ? "previous" : "latest"}/${key}.json`;
   return existsSync(join(dir, rel)) ? read<Snapshot>(rel) : null;
 };
 
 /** What a page shows for a mode (+ bracket): the same patch rule as the tier table. */
-export const readShown = (mode: Mode, bracket: Bracket = "all", region: Region = "all"): Shown | null => pickShown(readMeta(), mode, bracket, readSnapshot, readHeroes(), region);
+export const readShown = (mode: Mode, bracket: Bracket = "all", region: Region = "all"): Shown | null => pickShown(readMeta(), mode, bracket, readSnapshot, heroTable(), region);
 
 const opt = <T>(rel: string): T | null => (existsSync(join(dir, rel)) ? read<T>(rel) : null);
 let builds: BuildsFile | null | undefined; // 270 KB, read once per build rather than once per hero page
@@ -31,14 +35,14 @@ export const readTalents = (slug: string): TalentTable | null => opt<TalentTable
 /** Storm League counters/synergies for one hero (collector/matchups.py); null until the first collection. */
 export const readMatchups = (slug: string): MatchupsFile | null => opt<MatchupsFile>(`matchups/${slug}.json`);
 
-/** Header search index: every hero, sorted by Korean name, with the current Quick Match tier. */
-export function readSearchIndex(mode: Mode = "qm"): SearchItem[] {
-  const heroes = readHeroes();
+/** Header search index: every hero, sorted by name in the page language, with the current tier in `mode`. */
+export function readSearchIndex(locale: Locale, mode: Mode = "qm"): SearchItem[] {
+  const heroes = readHeroes(locale);
   const meta = readMeta();
   const snap = readShown(mode)?.snap;
   const tiers = snap ? computeTiers(snap.rows.filter((r) => r.map === "all"), PRESETS.aichi, meta.min_games_for_tier) : null;
   const tierOf = new Map(tiers?.ranked.map((x) => [x.row.hero, x.tier]) ?? []);
   return [...heroes.heroes]
-    .sort((a, b) => a.ko.localeCompare(b.ko, "ko"))
-    .map((h) => ({ slug: h.slug, ko: h.ko, name: h.name, role: h.role, role_ko: h.role_ko, portrait: h.portrait, tier: tierOf.get(h.name) }));
+    .sort((a, b) => a.ko.localeCompare(b.ko, locale))
+    .map((h) => ({ slug: h.slug, ko: h.ko, name: h.name, role: h.role, role_ko: h.role_ko, portrait: h.portrait, tier: tierOf.get(h.name), ...(h.alt ? { alt: h.alt } : {}) }));
 }

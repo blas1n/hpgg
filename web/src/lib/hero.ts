@@ -1,6 +1,8 @@
 /** Hero detail view models. Pure: computed at build time for both modes and serialised into each hero page. */
 import { computeTiers, PRESETS, type Snapshot, type Tier } from "../formula";
-import { BRACKET_LABEL, REGION_LABEL, type BuildsFile, type MapTable, type Region, type TalentTable } from "../data";
+import type { BuildsFile, MapTable, Region, TalentTable } from "../data";
+import type { Locale } from "../i18n/locale";
+import { messages } from "../i18n/messages";
 
 export type HeroSummary =
   | {
@@ -67,8 +69,7 @@ export function mapRows(snap: Snapshot, hero: string, maps: MapTable, minGames: 
 }
 
 export interface BracketRow {
-  key: "low" | "high";
-  label: string;
+  key: "low" | "high"; // label: messages common.brackets
   tier: Tier | null; // null = below the sample floor in that bracket
   rank: number | null;
   n: number;
@@ -84,13 +85,12 @@ export function bracketRows(brackets: { key: "low" | "high"; snap: Snapshot | nu
     const p = place(snap, "all", hero, minGames);
     const row = p.r?.row ?? p.grey;
     if (!row) return [];
-    return [{ key, label: BRACKET_LABEL[key], tier: p.r?.tier ?? null, rank: p.r?.rank ?? null, n: p.n, win_rate: row.win_rate, pick: row.pick, ban_rate: row.ban_rate, games: row.games }];
+    return [{ key, tier: p.r?.tier ?? null, rank: p.r?.rank ?? null, n: p.n, win_rate: row.win_rate, pick: row.pick, ban_rate: row.ban_rate, games: row.games }];
   });
 }
 
 export interface RegionRow {
-  key: Exclude<Region, "all">;
-  label: string;
+  key: Exclude<Region, "all">; // label: messages common.regions
   tier: Tier | null; // null = below the sample floor in that region
   rank: number | null;
   n: number;
@@ -108,7 +108,7 @@ export function regionRows(regions: { key: Exclude<Region, "all">; snap: Snapsho
     const p = place(snap, "all", hero, minGames);
     const row = p.r?.row ?? p.grey;
     if (!row) return [];
-    return [{ key, label: REGION_LABEL[key], tier: p.r?.tier ?? null, rank: p.r?.rank ?? null, n: p.n, win_rate: row.win_rate, pick: row.pick, games: row.games, collectedAt: snap.collected_at }];
+    return [{ key, tier: p.r?.tier ?? null, rank: p.r?.rank ?? null, n: p.n, win_rate: row.win_rate, pick: row.pick, games: row.games, collectedAt: snap.collected_at }];
   });
 }
 
@@ -132,7 +132,9 @@ export interface BuildView {
   talents: BuildTalentView[];
 }
 
-export function heroBuilds(builds: BuildsFile | null, talents: TalentTable | null, hero: string): BuildView[] {
+/** Each talent's name, tooltip and cooldown in the page language (English from gamestrings enus; HP's English
+ *  title when the game data has no entry). */
+export function heroBuilds(builds: BuildsFile | null, talents: TalentTable | null, hero: string, locale: Locale): BuildView[] {
   const list = builds?.heroes[hero] ?? [];
   const max = Math.max(1, ...list.map((b) => b.games));
   return list.map((b) => ({
@@ -142,14 +144,16 @@ export function heroBuilds(builds: BuildsFile | null, talents: TalentTable | nul
     share: b.games / max,
     talents: b.talents.map((t) => {
       const info = talents?.talents[t.name];
-      return { level: t.level, ko: info?.ko ?? t.title, icon: info?.icon || undefined, desc: info?.desc, cd: info?.cd };
+      const icon = info?.icon || undefined;
+      if (locale === "en") return { level: t.level, ko: info?.en ?? t.title, icon, desc: info?.desc_en, cd: info?.cd_en };
+      return { level: t.level, ko: info?.ko ?? t.title, icon, desc: info?.desc, cd: info?.cd };
     }),
   }));
 }
 
 /** Game tooltip text: {{…}} marks a highlighted value. Text parts only — nothing is parsed as HTML. */
-export function descParts(desc: string | undefined): { text: string; hl: boolean }[] {
-  if (!desc) return [{ text: "설명이 아직 없습니다.", hl: false }];
+export function descParts(desc: string | undefined, locale: Locale): { text: string; hl: boolean }[] {
+  if (!desc) return [{ text: messages[locale].hero.noDesc, hl: false }];
   return desc
     .split(/\{\{(.*?)\}\}/)
     .map((text, i) => ({ text, hl: i % 2 === 1 }))

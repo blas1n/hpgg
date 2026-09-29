@@ -66,45 +66,56 @@ describe("bracketRows", () => {
   it("one row per published bracket with its tier and rank; missing files are skipped", () => {
     const rows = bracketRows([{ key: "low", snap: sl }, { key: "high", snap: null }], "Illidan", 200);
     expect(rows).toHaveLength(1);
-    expect(rows[0]).toMatchObject({ key: "low", label: "브론즈 – 플래티넘", tier: "A" });
+    expect(rows[0]).toMatchObject({ key: "low", tier: "A" });
     expect(rows[0]!.rank).toBeGreaterThan(0);
   });
 });
 
 describe("heroBuilds", () => {
   it("joins every build talent with its Korean name, icon and tooltip; English title when the game text is missing", () => {
-    const list = heroBuilds(builds, talents, "Illidan");
+    const list = heroBuilds(builds, talents, "Illidan", "ko");
     expect(list).toHaveLength(5);
     expect(list[0]!.talents).toHaveLength(7);
     expect(list[0]!.talents[0]).toMatchObject({ level: 1, ko: "끝없는 증오" });
     expect(list[0]!.talents[0]!.icon).toMatch(/\.png$/);
     expect(list[0]!.share).toBeCloseTo(list[0]!.games / Math.max(...list.map((b) => b.games)));
-    const bare = heroBuilds(builds, null, "Illidan");
+    const bare = heroBuilds(builds, null, "Illidan", "ko");
     expect(bare[0]!.talents[0]!.ko).toBe("Unending Hatred");
-    expect(heroBuilds(builds, talents, "Nobody")).toEqual([]);
-    expect(heroBuilds(null, talents, "Illidan")).toEqual([]);
+    expect(heroBuilds(builds, talents, "Nobody", "ko")).toEqual([]);
+    expect(heroBuilds(null, talents, "Illidan", "ko")).toEqual([]);
+  });
+
+  it("in English: the game's English name, tooltip and cooldown", () => {
+    const en = heroBuilds(builds, talents, "Illidan", "en");
+    const first = en[0]!.talents[0]!;
+    expect(first).toMatchObject({ level: 1, ko: "Unending Hatred" });
+    expect(first.icon).toBe(heroBuilds(builds, talents, "Illidan", "ko")[0]!.talents[0]!.icon);
+    const all = en.flatMap((b) => b.talents);
+    expect(all.every((t) => !/[\uac00-\ud7a3]/.test(`${t.ko}${t.desc ?? ""}${t.cd ?? ""}`))).toBe(true);
+    expect(all.filter((t) => t.desc).length).toBeGreaterThan(all.length / 2);
   });
 
   // 2026-09-29 design review: right after a patch, builds with 1-3 games printed "100.0%" in bold green
   it("marks builds under the sample floor as thin; their win rate is not a finding", () => {
     const hero = builds.heroes.Illidan!;
     const few: BuildsFile = { ...builds, heroes: { Illidan: [{ ...hero[0]!, games: 3, win_rate: 100 }, { ...hero[1]!, games: BUILD_MIN_GAMES, win_rate: 52 }] } };
-    const list = heroBuilds(few, talents, "Illidan");
+    const list = heroBuilds(few, talents, "Illidan", "ko");
     expect(list.map((b) => b.thin)).toEqual([true, false]);
     expect(BUILD_MIN_GAMES).toBeGreaterThanOrEqual(20);
-    expect(heroBuilds(builds, talents, "Illidan").every((b) => b.thin === b.games < BUILD_MIN_GAMES)).toBe(true);
+    expect(heroBuilds(builds, talents, "Illidan", "ko").every((b) => b.thin === b.games < BUILD_MIN_GAMES)).toBe(true);
   });
 });
 
 describe("descParts", () => {
   it("splits {{…}} markers into highlighted parts and never keeps the braces", () => {
-    expect(descParts("매초 {{22}}의 피해, {{4}}초")).toEqual([
+    expect(descParts("매초 {{22}}의 피해, {{4}}초", "ko")).toEqual([
       { text: "매초 ", hl: false },
       { text: "22", hl: true },
       { text: "의 피해, ", hl: false },
       { text: "4", hl: true },
       { text: "초", hl: false },
     ]);
-    expect(descParts(undefined)).toEqual([{ text: "설명이 아직 없습니다.", hl: false }]);
+    expect(descParts(undefined, "ko")).toEqual([{ text: "설명이 아직 없습니다.", hl: false }]);
+    expect(descParts(undefined, "en")).toEqual([{ text: "No description yet.", hl: false }]);
   });
 });

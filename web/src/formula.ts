@@ -1,4 +1,6 @@
 /** Tier formula. Every number here is printed on the page; nothing is hidden. */
+import type { Locale } from "./i18n/locale";
+import { messages } from "./i18n/messages";
 
 export interface Row {
   hero: string;
@@ -122,31 +124,23 @@ export function changedHeroes(rows: Row[], a: Preset, b: Preset, minGames = MIN_
 }
 
 /** The one-line explanation printed under the table. */
-export function formulaLine(p: Preset, hasBans: boolean): string {
-  const ban = hasBans && p.wBan ? ` + 밴률 × ${p.wBan}` : "";
+export function formulaLine(p: Preset, hasBans: boolean, locale: Locale): string {
+  const f = messages[locale].formula;
   switch (p.kind) {
     case "multiplicative":
-      return `티어 점수 = 픽률 × (승률 − 50) × ${p.wPick}${ban}`;
+      return f.multiplicative(String(p.wPick), hasBans && p.wBan ? f.ban(String(p.wBan)) : "");
     case "additive":
-      return `티어 점수 = (승률 − 50) + 픽률 × ${p.wPick}${hasBans ? ` + 밴률 × ${p.wBan}` : ""}`;
+      return f.additive(String(p.wPick), hasBans ? f.ban(String(p.wBan)) : "");
     case "winrate":
-      return "티어 점수 = 승률";
+      return f.winrate;
   }
 }
 
-/** The worked formula under "자세히", for the selected preset. */
-export function formulaDetail(p: Preset, hasBans: boolean, minGames: number): string {
-  const noBan = "   (빠른 대전은 밴이 없음)";
+/** The worked formula under "자세히" (Details), for the selected preset. */
+export function formulaDetail(p: Preset, hasBans: boolean, minGames: number, locale: Locale): string {
+  const f = messages[locale].formula;
+  const ban = hasBans ? f.ban(String(p.wBan)) : f.noBan;
   const score =
-    p.kind === "multiplicative"
-      ? `픽률 × (WRs − 50) × ${p.wPick}${hasBans ? ` + 밴률 × ${p.wBan}` : noBan}`
-      : p.kind === "additive"
-        ? `(WRs − 50) + 픽률 × ${p.wPick}${hasBans ? ` + 밴률 × ${p.wBan}` : noBan}`
-        : "WRs   (픽률·밴률은 쓰지 않음)";
-  return `WRs   = 50 + (승률 − 50) × 게임수 / (게임수 + ${p.k})
-점수  = ${score}
-티어  = ${minGames}게임 이상인 영웅을 점수순으로 세워 누적 비율로 자름 (S 6% · A 24% · B 54% · C 82% · D 94% · F 나머지)
-        경계는 단조 증가, 티어마다 최소 1명
-승률 ± 는 Wilson 95% 구간. 전장을 고르면 그 전장의 표본으로만 계산합니다.
-같은 데이터라도 공식이 다르면 티어가 다릅니다. 이 사이트는 공식을 숨기지 않습니다.`;
+    p.kind === "multiplicative" ? f.detailMultiplicative(String(p.wPick), ban) : p.kind === "additive" ? f.detailAdditive(String(p.wPick), ban) : f.detailWinrate;
+  return f.detail(String(p.k), score, String(minGames));
 }

@@ -5,7 +5,7 @@ import { dirname, join } from "node:path";
 import type { Snapshot } from "../src/formula";
 import type { HeroTable, MapTable } from "../src/data";
 import { knownOnly } from "../src/lib/known";
-import { MAP_TOP_N, mapDetail, type MapsMeta } from "../src/lib/maps";
+import { MAP_TOP_N, mapDetail, mapObjective, type MapInfo, type MapsMeta } from "../src/lib/maps";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const e2e = <T>(rel: string): T => JSON.parse(readFileSync(join(here, "e2e-data", rel), "utf-8")) as T;
@@ -41,6 +41,25 @@ describe("mapDetail", () => {
   });
 });
 
+describe("mapObjective", () => {
+  const ko = { title: "포로수용소", text: "적의 포로수용소를 공격하면" };
+  const en = { title: "Prison Camps", text: "Capture the enemy Prison Camp" };
+  const src = (l: string) => ({ title: l, url: `https://web.archive.org/web/1/${l}`, original: l });
+  const info: MapInfo = { name: "Alterac Pass", objective: [ko], source: src("ko"), en: { objective: [en], source: src("en") } };
+
+  it("Korean pages show the Korean text, English pages the English text with its own source", () => {
+    expect(mapObjective(info, "ko")).toEqual({ steps: [ko], source: src("ko"), fallback: false });
+    expect(mapObjective(info, "en")).toEqual({ steps: [en], source: src("en"), fallback: false });
+  });
+
+  it("without an English page, the English page falls back to the Korean text and says so", () => {
+    for (const noEn of [{ ...info, en: undefined }, { ...info, en: { fallback: "ko" as const } }]) {
+      expect(mapObjective(noEn, "en")).toEqual({ steps: [ko], source: src("ko"), fallback: true });
+      expect(mapObjective(noEn, "ko").fallback).toBe(false);
+    }
+  });
+});
+
 describe("data/maps_meta.json", () => {
   const meta = repo<MapsMeta>("maps_meta.json");
   const maps = repo<MapTable>("maps_ko.json").maps;
@@ -62,6 +81,24 @@ describe("data/maps_meta.json", () => {
       expect(m.source.title, slug).toContain("히어로즈 오브 더 스톰");
     }
     expect(meta._source.objectives).toContain("공식");
+  });
+
+  it("every map has the English objective from the same official page's en-us version, cited, three steps", () => {
+    for (const [slug, m] of Object.entries(meta.maps)) {
+      const en = m.en;
+      expect(en, slug).toBeDefined();
+      if (!en || !("objective" in en)) continue; // a documented Korean fallback would be allowed; none is needed today
+      expect(en.objective, slug).toHaveLength(3);
+      for (const s of en.objective) {
+        expect(s.title.trim(), slug).not.toBe("");
+        expect(s.text.length, slug).toBeGreaterThan(10);
+        expect(s.text, slug).not.toMatch(/[\uac00-\ud7a3]/);
+      }
+      expect(en.source.original, slug).toBe(m.source.original.replace("/ko-kr/", "/en-us/"));
+      expect(en.source.url, slug).toMatch(/^https:\/\/web\.archive\.org\/web\/\d{14}\/https:\/\/heroesofthestorm\.com\/en-us\/battlegrounds\//);
+      expect(en.source.title, slug).toContain("Heroes of the Storm");
+    }
+    expect(meta._source.objectives_en).toContain("en-us");
   });
 
   it("the e2e data set carries the same file", () => {

@@ -8,9 +8,12 @@ export interface SearchItem {
   role_ko: string;
   portrait?: string;
   tier?: string;
+  /** The name in the other language (English pages keep Korean names searchable). */
+  alt?: string;
 }
 
-const CHO = "ㄱㄲㄴㄷㄸㄹㅁㅂㅃㅅㅆㅇㅈㅉㅊㅋㅌㅍㅎ";
+/** The 19 initial consonants (ㄱ ㄲ ㄴ … ㅎ) in syllable order, as compatibility jamo — what people type. */
+const CHO = "\u3131\u3132\u3134\u3137\u3138\u3139\u3141\u3142\u3143\u3145\u3146\u3147\u3148\u3149\u314a\u314b\u314c\u314d\u314e";
 const HANGUL_START = 0xac00;
 const HANGUL_END = 0xd7a3;
 
@@ -48,8 +51,8 @@ export function searchHeroes<T extends SearchItem>(items: T[], query: string, li
   const scored: { item: T; score: number; i: number }[] = [];
   items.forEach((item, i) => {
     const ranks = cho
-      ? [matchRank(fold(chosung(item.ko)), q)]
-      : [matchRank(fold(item.ko), q), matchRank(fold(item.name), q), matchRank(item.slug.replace(/-/g, ""), q)];
+      ? [matchRank(fold(chosung(item.alt ?? item.ko)), q)]
+      : [matchRank(fold(item.ko), q), matchRank(fold(item.name), q), matchRank(item.slug.replace(/-/g, ""), q), item.alt ? matchRank(fold(item.alt), q) : -1];
     const hits = ranks.filter((r) => r >= 0);
     if (hits.length) scored.push({ item, score: Math.min(...hits), i });
   });

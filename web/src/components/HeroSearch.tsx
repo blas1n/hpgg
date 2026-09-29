@@ -2,11 +2,14 @@
 
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { hotsHref } from "@/data";
+import { useLocale, useT } from "@/i18n/client";
 import { searchHeroes, type SearchItem } from "@/lib/search";
 import { cx, Portrait, TierBadge } from "./ui";
 
 /** Hero search combobox: Korean, English and 초성 queries; ↑↓ Enter Esc; "/" focuses the header box. */
 export function HeroSearch({ items, id }: { items: SearchItem[]; id?: string }) {
+  const t = useT();
+  const locale = useLocale();
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(0);
@@ -37,7 +40,7 @@ export function HeroSearch({ items, id }: { items: SearchItem[]; id?: string }) 
   const go = (item: SearchItem | undefined) => {
     if (!item) return;
     setOpen(false);
-    window.location.assign(hotsHref.hero(item.slug));
+    window.location.assign(hotsHref(locale).hero(item.slug));
   };
 
   const onKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -62,7 +65,7 @@ export function HeroSearch({ items, id }: { items: SearchItem[]; id?: string }) 
   return (
     <div ref={wrap} className="relative w-full max-w-sm">
       <label className="sr-only" htmlFor={id ?? `${listId}-input`}>
-        영웅 검색
+        {t.search.label}
       </label>
       <div
         className="flex h-9 items-center gap-2 rounded-lg border border-line bg-surface-2 px-3 transition-colors focus-within:border-primary"
@@ -83,7 +86,7 @@ export function HeroSearch({ items, id }: { items: SearchItem[]; id?: string }) 
           autoComplete="off"
           spellCheck={false}
           value={query}
-          placeholder="영웅 검색 (예: 일리단, ㅇㄹㄷ)"
+          placeholder={t.search.placeholder}
           onChange={(e) => {
             setQuery(e.target.value);
             setActive(0);
@@ -101,10 +104,10 @@ export function HeroSearch({ items, id }: { items: SearchItem[]; id?: string }) 
         <ul
           id={`${listId}-list`}
           role="listbox"
-          aria-label="영웅 검색 결과"
+          aria-label={t.search.results}
           className="absolute inset-x-0 top-full z-50 mt-1.5 max-h-96 overflow-auto rounded-lg border border-line-strong bg-surface-2 py-1 shadow-2xl shadow-black/50"
         >
-          {results.length === 0 && <li className="px-3 py-3 text-[13px] text-muted">&lsquo;{query.trim()}&rsquo; 에 맞는 영웅이 없습니다</li>}
+          {results.length === 0 && <li className="px-3 py-3 text-[13px] text-muted">{t.search.none(query.trim())}</li>}
           {results.map((r, i) => (
             <li
               key={r.slug}

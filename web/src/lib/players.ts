@@ -1,17 +1,16 @@
 /** Player search (전적 검색): API client and view model. The API is our server (api.hpgg.win), which
  * calls Heroes Profile /players with the key and caches the answer; see docs/HANDOFF.md "Server". */
 import type { HeroInfo, HeroTable, MapTable } from "../data";
+import { localizedPath, type Locale } from "../i18n/locale";
+import { messages } from "../i18n/messages";
 
 export const API_BASE_DEFAULT = "https://api.hpgg.win";
 const apiBase = (): string => process.env.NEXT_PUBLIC_API_BASE || API_BASE_DEFAULT;
 
 export type Region = "KR" | "NA" | "EU";
-export const REGIONS: { value: Region; label: string }[] = [
-  { value: "KR", label: "아시아" },
-  { value: "NA", label: "아메리카" },
-  { value: "EU", label: "유럽" },
-];
-export const isRegion = (s: string | null | undefined): s is Region => REGIONS.some((r) => r.value === s);
+/** Asia (KR) first; labels: messages players.regions. */
+export const REGIONS: Region[] = ["KR", "NA", "EU"];
+export const isRegion = (s: string | null | undefined): s is Region => REGIONS.some((r) => r === s);
 
 /** Same rule as the server: a name without spaces or '#', then '#' and 3-8 digits. */
 const BATTLETAG = /^[^\s#]{1,24}#\d{3,8}$/u;
@@ -22,8 +21,8 @@ export function parseBattletag(input: string): string | null {
   return BATTLETAG.test(s) ? s : null;
 }
 
-export const playersHref = (tag?: string, region?: Region): string =>
-  tag ? `/hots/players/?${new URLSearchParams({ tag, region: region ?? "KR" })}` : "/hots/players/";
+export const playersHref = (locale: Locale, tag?: string, region?: Region): string =>
+  localizedPath("/hots/players/", locale) + (tag ? `?${new URLSearchParams({ tag, region: region ?? "KR" })}` : "");
 
 // --- API shapes (server/players/profile.py) ---
 export interface ModeStat {
@@ -126,44 +125,45 @@ const isResponse = (b: unknown): b is PlayerResponse =>
   typeof b === "object" && b !== null && typeof (b as PlayerResponse).player === "object" && (b as PlayerResponse).player !== null;
 
 // --- labels ---
-const MODE_KO: Record<string, string> = {
-  sl: "폭풍 리그",
-  qm: "빠른 대전",
-  ud: "일반 대전",
-  ar: "ARAM",
-  hl: "영웅 리그",
-  tl: "팀 리그",
+type ModeKey = keyof (typeof messages)["ko"]["players"]["modes"];
+/** HP mode codes (ud = Unranked Draft, ar = ARAM) as the game names them; unknown codes pass through. */
+export const modeLabel = (mode: string | null, locale: Locale): string => {
+  if (!mode) return "–";
+  const modes = messages[locale].players.modes;
+  return mode in modes ? modes[mode as ModeKey] : mode;
 };
-export const modeLabel = (mode: string | null): string => (mode ? (MODE_KO[mode] ?? mode) : "–");
 
-const LEAGUE: [string, string, string][] = [
-  ["grand master", "그랜드마스터", "grandmaster"],
-  ["master", "마스터", "master"],
-  ["diamond", "다이아몬드", "diamond"],
-  ["platinum", "플래티넘", "platinum"],
-  ["gold", "골드", "gold"],
-  ["silver", "실버", "silver"],
-  ["bronze", "브론즈", "bronze"],
+type LeagueKey = keyof (typeof messages)["ko"]["players"]["leagues"];
+/** HP league name (lower case prefix) → our key, which is also the colour key. Grand Master before Master. */
+const LEAGUE: [string, LeagueKey][] = [
+  ["grand master", "grandmaster"],
+  ["master", "master"],
+  ["diamond", "diamond"],
+  ["platinum", "platinum"],
+  ["gold", "gold"],
+  ["silver", "silver"],
+  ["bronze", "bronze"],
 ];
-const league = (tier: string | null) => (tier ? LEAGUE.find(([en]) => tier.toLowerCase().startsWith(en)) : undefined);
+const league = (tier: string | null) => (tier ? LEAGUE.find(([hp]) => tier.toLowerCase().startsWith(hp)) : undefined);
 
-/** "Diamond 2" → "다이아몬드 2"; unknown names pass through. */
-export function tierKo(tier: string | null): string | null {
+/** "Diamond 2" → "다이아몬드 2" / "Diamond 2"; unknown names pass through. */
+export function tierLabel(tier: string | null, locale: Locale): string | null {
   if (!tier) return null;
   const l = league(tier);
-  return l ? (l[1] + tier.slice(l[0].length)).trim() : tier;
+  return l ? (messages[locale].players.leagues[l[1]] + tier.slice(l[0].length)).trim() : tier;
 }
 
 /** HP match dates are UTC "YYYY-MM-DD HH:MM:SS". */
-export function relativeDay(date: string | null, now = new Date()): string {
+export function relativeDay(date: string | null, locale: Locale, now = new Date()): string {
   if (!date) return "";
   const t = Date.parse(date.replace(" ", "T") + "Z");
   if (Number.isNaN(t)) return "";
+  const p = messages[locale].players;
   const min = Math.floor((now.getTime() - t) / 60_000);
-  if (min < 60) return `${Math.max(0, min)}분 전`;
-  if (min < 24 * 60) return `${Math.floor(min / 60)}시간 전`;
+  if (min < 60) return p.minutesAgo(String(Math.max(0, min)));
+  if (min < 24 * 60) return p.hoursAgo(String(Math.floor(min / 60)));
   const days = Math.floor(min / (24 * 60));
-  return days <= 30 ? `${days}일 전` : date.slice(0, 10);
+  return days <= 30 ? p.daysAgo(String(days)) : date.slice(0, 10);
 }
 
 // --- view model ---
@@ -199,7 +199,9 @@ export interface PlayerView {
   fetchedLabel: string;
 }
 
-export function playerView(r: PlayerResponse, heroes: HeroTable, maps: MapTable, now = new Date()): PlayerView {
+/** `heroes` / `maps` in the page language (i18n/names.ts): their display names are what the page shows. */
+export function playerView(r: PlayerResponse, heroes: HeroTable, maps: MapTable, locale: Locale, now = new Date()): PlayerView {
+  const t = messages[locale].players;
   const p = r.player;
   const byShort = new Map<string, HeroInfo>();
   for (const h of heroes.heroes) {
@@ -207,10 +209,11 @@ export function playerView(r: PlayerResponse, heroes: HeroTable, maps: MapTable,
     byShort.set(h.name, h);
   }
   const hero = (name: string | null, short: string | null) => (short && byShort.get(short)) || (name ? byShort.get(name) : undefined);
-  const mapKo = new Map(maps.maps.map((m) => [m.name, m.ko]));
+  // ARAM maps have no stats page but do show up in match history
+  const mapKo = new Map([...maps.maps, ...(maps.aram ?? [])].map((m) => [m.name, m.ko]));
   const heroRow = (s: HeroStat): HeroRow => {
     const h = hero(s.hero, s.short_name);
-    return { name: h?.ko ?? s.hero, slug: h?.slug ?? null, portrait: h?.portrait, role: h?.role, href: h ? `/hots/heroes/${h.slug}/` : null, games: s.games, winRate: s.win_rate };
+    return { name: h?.ko ?? s.hero, slug: h?.slug ?? null, portrait: h?.portrait, role: h?.role, href: h ? localizedPath(`/hots/heroes/${h.slug}/`, locale) : null, games: s.games, winRate: s.win_rate };
   };
   const roleKo = new Map(heroes.roles.map((x) => [x.name, x.ko]));
   const roleOrder = heroes.roles.map((x) => x.name);
@@ -220,7 +223,7 @@ export function playerView(r: PlayerResponse, heroes: HeroTable, maps: MapTable,
   return {
     name: name ?? p.battletag,
     tag: disc ? `#${disc}` : "",
-    regionLabel: REGIONS.find((x) => x.value === p.region)?.label ?? p.region,
+    regionLabel: isRegion(p.region) ? t.regions[p.region] : p.region,
     level: p.account_level,
     games: p.wins + p.losses,
     wins: p.wins,
@@ -230,10 +233,10 @@ export function playerView(r: PlayerResponse, heroes: HeroTable, maps: MapTable,
     mvpRate: p.mvp_rate,
     modes: p.modes.map((m) => ({
       mode: m.mode,
-      label: modeLabel(m.mode),
+      label: modeLabel(m.mode, locale),
       mmr: m.mmr,
-      tier: tierKo(m.tier),
-      tierKey: league(m.tier)?.[2] ?? null,
+      tier: tierLabel(m.tier, locale),
+      tierKey: league(m.tier)?.[1] ?? null,
       games: m.wins + m.losses,
       wins: m.wins,
       losses: m.losses,
@@ -253,16 +256,16 @@ export function playerView(r: PlayerResponse, heroes: HeroTable, maps: MapTable,
         slug: h?.slug ?? null,
         portrait: h?.portrait,
         role: h?.role,
-        mode: modeLabel(m.mode),
+        mode: modeLabel(m.mode, locale),
         map: m.map ? (mapKo.get(m.map) ?? m.map) : "–",
         win: m.win,
         mmrChange: m.mmr_change,
-        when: relativeDay(m.date, now),
+        when: relativeDay(m.date, locale, now),
       };
     }),
     recent: { wins: p.recent_matches.filter((m) => m.win).length, losses: p.recent_matches.filter((m) => !m.win).length },
     stale: r.stale,
     notice: r.notice,
-    fetchedLabel: `${kst.slice(5, 7)}/${kst.slice(8, 10)} ${kst.slice(11, 16)} 기준`,
+    fetchedLabel: t.fetched(`${kst.slice(5, 7)}/${kst.slice(8, 10)} ${kst.slice(11, 16)}`),
   };
 }

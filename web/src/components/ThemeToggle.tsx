@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useSyncExternalStore } from "react";
+import { useT } from "@/i18n/client";
 import { THEME_COLOR, writeTheme, type Theme } from "@/lib/theme";
 
 // the theme lives on <html data-theme> (set before paint by THEME_INIT_SCRIPT); React only mirrors it
@@ -19,6 +20,7 @@ function apply(theme: Theme) {
 
 /** Header button: navy ↔ light. Remembered when the browser allows storage, for this visit otherwise. */
 export function ThemeToggle() {
+  const t = useT();
   const theme = useSyncExternalStore(subscribe, current, () => "dark" as Theme);
   const light = theme === "light";
   // the init script may run before the theme-color meta exists; line the browser chrome up once mounted
@@ -28,8 +30,8 @@ export function ThemeToggle() {
       type="button"
       id="theme-toggle"
       aria-pressed={light}
-      aria-label="라이트 테마"
-      title={light ? "다크 테마로 전환" : "라이트 테마로 전환"}
+      aria-label={t.theme.label}
+      title={light ? t.theme.toDark : t.theme.toLight}
       onClick={() => {
         const next: Theme = light ? "dark" : "light";
         apply(next);

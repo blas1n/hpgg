@@ -1,3 +1,5 @@
+import { messages } from "@/i18n/messages";
+
 /** hpgg.win root: one game so far — forward to /hots/. */
 export default function Root() {
   return (
@@ -5,7 +7,7 @@ export default function Root() {
       <meta httpEquiv="refresh" content="0; url=/hots/" />
       <main className="grid min-h-screen place-items-center">
         <a href="/hots/" className="text-primary">
-          hpgg.win · Heroes of the Storm →
+          {messages.ko.site.rootLink}
         </a>
       </main>
     </>
