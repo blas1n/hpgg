@@ -103,6 +103,23 @@ test("players: unknown player and upstream trouble", async ({ page }) => {
   await expect(page.getByRole("button", { name: "다시 시도" })).toBeVisible();
 });
 
+test("players: how records get here is explained up front; not found opens the upload guide", async ({ page }) => {
+  await mockApi(page, (route) => json(route, 404, { error: { code: "player_not_found" } }));
+  await page.goto("./players/");
+  const guide = page.locator("#upload-guide");
+  await expect(guide).toBeVisible();
+  await expect(guide).not.toHaveAttribute("open", "");
+  await expect(guide.locator("summary")).toContainText("공식 전적 API가 없어");
+  await page.locator("#player-search-tag").fill("Nobody#1234");
+  await page.locator("#player-search-tag").press("Enter");
+  await expect(page.locator("#player-result")).toHaveAttribute("data-state", "not_found");
+  await expect(guide).toHaveAttribute("open", "");
+  await expect(guide.locator('a[href="https://www.heroesprofile.com/Upload"]').first()).toBeVisible();
+  await expect(guide).toContainText("문서\\Heroes of the Storm\\Accounts");
+  await expect(guide).toContainText("~/Library/Application Support/Blizzard/Heroes of the Storm/Accounts");
+  await expect(page.locator("#player-result")).toContainText("아시아"); // the region hint sits in the not-found notice
+});
+
 test("players: a malformed BattleTag is caught before any request", async ({ page }) => {
   const seen = await mockApi(page, (route) => json(route, 200, fixture));
   await page.goto("./players/");

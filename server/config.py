@@ -26,7 +26,8 @@ class Settings(BaseSettings):
 
     # Player search. /players is on the 10,000/week bucket (Basic plan).
     player_ttl_seconds: int = 6 * 3600
-    not_found_ttl_seconds: int = 3600
+    # HP answers 404 for free; keep it short so someone who just uploaded sees their games soon.
+    not_found_ttl_seconds: int = 600
     quota_floor: int = 200  # stop live calls when HP reports this many left in the week
     daily_live_budget: int = 1300  # ≈ (10,000 − floor) / 7, so one busy day cannot starve the week
     ip_requests_per_minute: int = 20
