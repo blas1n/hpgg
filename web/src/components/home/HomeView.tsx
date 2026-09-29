@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { fallbackNote, hotsHref, MODE_LABEL, shortDate, type Mode } from "@/data";
 import type { HomeModel, MapCard, Mover, TopRow } from "@/lib/home";
 import { MapCardLink } from "../MapCardLink";
+import { PlayerSearchForm } from "../players/PlayerSearchForm";
 import { Card, CardHeader, cx, MoreLink, Portrait, RankDelta, Segmented } from "../ui";
 
 const pct = (n: number) => `${n.toFixed(1)}%`;
@@ -24,6 +25,7 @@ export function HomeView({ models, maps }: { models: Record<Mode, HomeModel>; ma
   return (
     <>
       <main className="page-x mt-6 space-y-6">
+        <PlayerSearchForm id="home-player-search" className="mx-auto max-w-xl" />
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
             <h1 className="text-2xl font-extrabold tracking-tight text-fg">오늘의 메타</h1>
