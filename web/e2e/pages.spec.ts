@@ -66,6 +66,7 @@ test("heroes: the universe filter keeps only that universe's heroes, lands in th
   await expect(page.locator('#universe option[value="Warcraft"]')).toHaveText("워크래프트");
   // the official five: Orphea, Qhira and The Lost Vikings are all 시공의 폭풍
   await expect(page.locator("#universe option")).toHaveCount(6);
+  await expect(page.locator('#universe option[value="all"]')).toHaveText("전체"); // like the role chips
   await page.locator("#universe").selectOption("Nexus");
   await expect(page.locator('#universe option[value="Nexus"]')).toHaveText("시공의 폭풍");
   await expect(cards).toHaveCount(3);

@@ -90,7 +90,7 @@ export const en: Messages = {
     role: "Role",
     allRoles: "All",
     universe: "Universe",
-    allUniverses: "All universes",
+    allUniverses: "All",
     // as Blizzard's English heroes page printed them (https://web.archive.org/web/20201204055304/https://heroesofthestorm.com/en-us/heroes/)
     universes: { Warcraft: "Warcraft", Starcraft: "StarCraft", Diablo: "Diablo", Overwatch: "Overwatch", Nexus: "Nexus" } as Record<string, string>,
     rank: "Rank",
