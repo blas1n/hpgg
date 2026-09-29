@@ -100,7 +100,7 @@ describe("heroBuilds", () => {
     const hero = builds.heroes.Illidan!;
     const few: BuildsFile = { ...builds, heroes: { Illidan: [{ ...hero[0]!, games: 3, win_rate: 100 }, { ...hero[1]!, games: BUILD_MIN_GAMES, win_rate: 52 }] } };
     const list = heroBuilds(few, talents, "Illidan", "ko");
-    expect(list.map((b) => b.thin)).toEqual([true, false]);
+    expect(list.map((b) => [b.games, b.thin])).toEqual([[BUILD_MIN_GAMES, false], [3, true]]); // most played first
     expect(BUILD_MIN_GAMES).toBeGreaterThanOrEqual(20);
     expect(heroBuilds(builds, talents, "Illidan", "ko").every((b) => b.thin === b.games < BUILD_MIN_GAMES)).toBe(true);
   });
@@ -117,5 +117,13 @@ describe("descParts", () => {
     ]);
     expect(descParts(undefined, "ko")).toEqual([{ text: "설명이 아직 없습니다.", hl: false }]);
     expect(descParts(undefined, "en")).toEqual([{ text: "No description yet.", hl: false }]);
+  });
+});
+
+describe("heroBuilds order", () => {
+  it("most played first, as the section title says (Heroes Profile's own order is not by games)", () => {
+    const t = (name: string) => ({ level: 1, name, title: name });
+    const file = { patch: "p", game_type: "qm,sl", collected_at: "t", heroes: { Illidan: [386, 409, 306].map((games, i) => ({ games, win_rate: 50, talents: [t(`T${i}`)] })) } };
+    expect(heroBuilds(file, null, "Illidan", "ko").map((b) => b.games)).toEqual([409, 386, 306]);
   });
 });

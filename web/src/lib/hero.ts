@@ -136,7 +136,8 @@ export interface BuildView {
 /** Each talent's name, tooltip and cooldown in the page language (English from gamestrings enus; HP's English
  *  title when the game data has no entry). */
 export function heroBuilds(builds: BuildsFile | null, talents: TalentTable | null, hero: string, locale: Locale): BuildView[] {
-  const list = builds?.heroes[hero] ?? [];
+  // most played first, as the section title says (Heroes Profile's "Popular" order is not by games)
+  const list = [...(builds?.heroes[hero] ?? [])].sort((a, b) => b.games - a.games);
   const max = Math.max(1, ...list.map((b) => b.games));
   return list.map((b) => ({
     games: b.games,
