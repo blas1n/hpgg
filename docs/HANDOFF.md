@@ -35,6 +35,14 @@ Frontend (`web/`, Next.js App Router, static export to `web/dist`):
 - Design system: tokens in `src/styles/globals.css` (`@theme`: surfaces, brand, tier and role colours), primitives in `src/components/ui.tsx` (TierBadge, Portrait, RankDelta, Card, Segmented), chrome in `SiteHeader` (hero search: Korean / English / 초성, `/` to focus) and `SiteFooter`.
 - Every page is written once in `src/routes/pages.tsx` (data reads at build time + the page's client view in `src/components/`); the files under `app/` only pick the language and export it. Views read UI text and the language from `LocaleProvider` (`useT()`, `useLocale()` in `src/i18n/client.tsx`); `ui.tsx` primitives do too, so render them from client components.
 
+## One reference patch (owner 2026-09-29)
+The whole site shows ONE patch: every page, both modes, brackets, regions, the talent builds, the matchups and the 밴픽 simulator. It is decided once per run by the collector (`collector/snapshot.py` `reference_patch`, written to `meta.json` as `reference_patch`): the previous patch while the current one is thin in Quick Match **or** Storm League (under half the heroes over the 200-game floor), else the current one. Brackets and regions never decide it.
+- The collector collects the builds and the matchups **for** the reference patch.
+- The web never decides: `referencePatch(meta)` / `referencePatchId(meta)` (`web/src/data.ts`) read it; `pickShown` shows the reference patch's file for every view, and a view with no valid file on it shows nothing (the tier table says "패치 X에는 이 보기의 데이터가 없습니다") — never another patch in its place. `onReference` drops a builds or matchups file of another patch (`readBuilds`, `readMatchups`, `loadMatchups`).
+- The one override is the reader's: the tier table's "현재 패치 보기" (`?patch=current|previous`).
+- A region's own thinness (`thinSample`, `#region-note`) is a warning only.
+- Before 2026-09-29 each file decided for itself (the tier page per file, matchups by SL, builds on the current patch), so a hero page showed 2.55.17 stats next to first-day 2.57 builds (5 builds, 12 games in all for Illidan).
+
 ## The formula (web/src/formula.ts — printed on the page)
 ```
 WRc   = WR + (WRsolo − (pooled_solo − 50) − WR) × m / (m + 1000)   party correction (#36), QM + SL overall only
@@ -64,7 +72,7 @@ Error responses and 202 job polling are not charged. `group_by_map=true` is rate
 ### Matchups (counters / synergies, #15)
 - `collector/matchups.py`. Storm League only (owner, Basic plan). One call per hero; recorded answer in `tests/fixtures/live_probe_matchups_abathur_sl_2.55.17.98025.json.gz`: `{ally, enemy, combined}`, one row per other hero with `wins`/`losses`/`games_played` from the asked hero's side — but on `enemy` rows `win_rate` is the asked hero's **loss** rate, so the collector recomputes every win rate from wins/games. `combined` is not stored.
 - **Gate (per hero file)**: due when the file is missing, is for another patch, or was collected ≥ 2 calendar days (UTC) ago. A failed, quota-stopped or time-boxed round leaves the other files as they are and those heroes are simply due again tomorrow. Matchups never fail the run.
-- **Patch**: the one the pages show for Storm League — the previous patch while the current sample is thin (same rule as `web/src/data.ts` `thinSample`), so the section is not empty for the week after a patch.
+- **Patch**: the reference patch (see "One reference patch"), like everything else.
 - **Ranking** (`web/src/lib/matchups.ts`, printed on the page): score = (pair win rate − the hero's own win rate in the same sample) × n/(n+100); pairs under 50 games are left out; top 5 enemies with the lowest score (상대하기 어려운 영웅) and allies with the highest (잘 맞는 영웅). The page shows the unshrunk gap (%p) and games.
 - Pages show the section in both modes, labelled 폭풍 리그; without a file the section says the data comes with the next collection.
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
-import { assetUrl, daysSince, hotsHref, loadSnapshot, REGIONS, regionSample, shortDate, snapshotKey, thinSample, type Bracket, type HeroTable, type MapTable, type Meta, type Mode, type Region } from "@/data";
+import { assetUrl, daysSince, hotsHref, loadSnapshot, REGIONS, referencePatch, regionSample, shortDate, snapshotKey, type Bracket, type HeroTable, type MapTable, type Meta, type Mode, type Region } from "@/data";
 import { useLocale, useT } from "@/i18n/client";
 import type { Locale } from "@/i18n/locale";
 import type { Messages } from "@/i18n/messages";
@@ -61,10 +61,8 @@ export function TierView({ meta, heroes, maps, initial }: { meta: Meta; heroes: 
   const { mode, bracket, region, map, role, sort, dir } = state;
   const sl = mode === "sl";
   const file = snapshotKey(mode, bracket, region);
-  const resolved = resolvePatch(meta, mode, state.patch, file);
-  // a previous-patch bracket file that is missing or of another bracket definition is never shown under this
-  // label (lib/shown.ts): the current patch instead, thin as it is
-  const { patch, auto } = resolved.patch === "previous" && loaded[`previous/${file}`] === null ? { patch: "current" as const, auto: false } : resolved;
+  // one reference patch for every view; a view with no file on it says so rather than showing another patch
+  const { patch, auto } = resolvePatch(meta, state.patch);
   const dirOf = (p: "current" | "previous") => (p === "previous" ? "previous" : "latest");
   const curKey = `${dirOf(patch)}/${file}`;
   const prevKey = patch === "current" && meta.previous_patch ? `previous/${file}` : null;
@@ -78,18 +76,20 @@ export function TierView({ meta, heroes, maps, initial }: { meta: Meta; heroes: 
     void Promise.all(
       want.map(async (k) => {
         const [d, f] = k.split("/") as ["latest" | "previous", string];
+        const shown = k === curKey; // the file this view shows (the other one only feeds ▲▼)
         try {
           // a region is published only once it has been collected (meta lists it); don't ask for a file that isn't there
-          if (region !== "all" && d === "latest" && !meta.modes[f]) {
+          if (region !== "all" && shown && d === "latest" && !meta.modes[f]) {
             setError(t.tier.regionNotCollected(t.common.regions[region]));
             return [k, null] as const;
           }
           const s = await loadSnapshot(f, d === "previous" ? "previous" : "current", heroes);
           if (bracketMatches(s, bracket) && regionMatches(s, region)) return [k, s] as const;
-          if (d === "latest") setError(t.tier.cohortMismatch(f, s.league_tier?.join(",") ?? t.tier.all, s.region ?? t.tier.all));
+          if (shown) setError(d === "previous" ? t.tier.noPatchData(meta.previous_patch ?? "") : t.tier.cohortMismatch(f, s.league_tier?.join(",") ?? t.tier.all, s.region ?? t.tier.all));
           return [k, null] as const;
         } catch (e) {
-          if (d === "latest") setError(e instanceof Error ? e.message : String(e));
+          // a view with no file on the patch it shows says so; it never borrows another patch's file
+          if (shown) setError(d === "previous" ? t.tier.noPatchData(meta.previous_patch ?? "") : e instanceof Error ? e.message : String(e));
           return [k, null] as const;
         }
       }),
@@ -422,7 +422,7 @@ function Delta({ rank, prev }: { rank: number; prev: number | null }) {
 function PatchBanner({ meta, mode, patch, auto, onCurrent }: { meta: Meta; mode: Mode; patch: "current" | "previous"; auto: boolean; onCurrent: () => void }) {
   const t = useT();
   const days = daysSince(meta.patch_started_at);
-  const note = patch === "previous" || (!auto && meta.previous_patch && thinSample(meta, mode));
+  const note = patch === "previous" || (!auto && referencePatch(meta) === "previous");
   if (!note) return null;
   return (
     <div id="patch-banner" className="rounded-lg border border-warn-line bg-warn-bg px-3 py-2 text-[13px] text-warn-fg">

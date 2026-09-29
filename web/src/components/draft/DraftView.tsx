@@ -91,7 +91,7 @@ export function DraftView({
     let live = true;
     void Promise.all(
       want.map(
-        async (s) => [s, await loadMatchups(s).catch(() => null)] as const,
+        async (s) => [s, await loadMatchups(s, patch).catch(() => null)] as const,
       ),
     ).then((pairs) => {
       if (live) setFiles((f) => new Map([...f, ...pairs]));

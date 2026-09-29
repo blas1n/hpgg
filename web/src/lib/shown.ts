@@ -1,9 +1,9 @@
-/** Which snapshot a page shows. One rule for every page: the current patch, or the previous one while the current
- *  sample is thin — and a bracket file is only shown under a bracket label when it covers exactly those league tiers. */
+/** Which snapshot a page shows. One reference patch for every page (meta.reference_patch, decided by the collector);
+ *  a view with no valid file on it shows nothing rather than another patch — and a bracket file is only shown under a
+ *  bracket label when it covers exactly those league tiers. */
 import type { Snapshot } from "../formula";
-import { BRACKET_TIERS, REGION_CODE, snapshotKey, type Bracket, type HeroTable, type Meta, type Mode, type Region } from "../data";
+import { BRACKET_TIERS, REGION_CODE, referencePatch, snapshotKey, type Bracket, type HeroTable, type Meta, type Mode, type Region } from "../data";
 import { knownOnly } from "./known";
-import { resolvePatch } from "./tier";
 
 export function bracketMatches(snap: Snapshot, bracket: Bracket): boolean {
   const want = BRACKET_TIERS[bracket];
@@ -16,7 +16,7 @@ export interface Shown {
   snap: Snapshot;
   /** Same file on the previous patch, for ▲▼ — only when `snap` is the current patch. */
   previous: Snapshot | null;
-  /** true = the current patch is too thin, `snap` is the previous patch. */
+  /** true = the reference patch is the previous one (the current is too thin), `snap` is on it. */
   fallback: boolean;
 }
 
@@ -31,8 +31,11 @@ export function regionMatches(snap: Snapshot, region: Region): boolean {
 export function pickShown(meta: Meta, mode: Mode, bracket: Bracket, read: Read, heroes: HeroTable, region: Region = "all"): Shown | null {
   const key = snapshotKey(mode, bracket, region);
   const valid = (s: Snapshot | null) => (s && bracketMatches(s, bracket) && regionMatches(s, region) ? knownOnly(s, heroes) : null);
+  if (referencePatch(meta) === "previous") {
+    const prev = valid(read(key, "previous"));
+    return prev ? { snap: prev, previous: null, fallback: true } : null;
+  }
   const cur = valid(read(key, "current"));
   const prev = meta.previous_patch ? valid(read(key, "previous")) : null;
-  if (resolvePatch(meta, mode, "auto", key).patch === "previous" && prev) return { snap: prev, previous: null, fallback: true };
   return cur ? { snap: cur, previous: prev, fallback: false } : null;
 }

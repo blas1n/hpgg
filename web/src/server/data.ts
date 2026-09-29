@@ -3,7 +3,7 @@ import "server-only";
 import { existsSync, readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { computeTiers, type Snapshot } from "../formula";
-import type { Bracket, BuildsFile, HeroTable, MapTable, MatchupsFile, Meta, Mode, Region, TalentTable } from "../data";
+import { onReference, type Bracket, type BuildsFile, type HeroTable, type MapTable, type MatchupsFile, type Meta, type Mode, type Region, type TalentTable } from "../data";
 import { pickShown, type Shown } from "../lib/shown";
 import type { SearchItem } from "../lib/search";
 import type { MapsMeta } from "../lib/maps";
@@ -28,12 +28,13 @@ export const readShown = (mode: Mode, bracket: Bracket = "all", region: Region =
 
 const opt = <T>(rel: string): T | null => (existsSync(join(dir, rel)) ? read<T>(rel) : null);
 let builds: BuildsFile | null | undefined; // 270 KB, read once per build rather than once per hero page
-export const readBuilds = (): BuildsFile | null => (builds === undefined ? (builds = opt<BuildsFile>("latest/builds.json")) : builds);
+/** Talent builds on the reference patch only (a thin new patch's builds are not shown under an old-patch page). */
+export const readBuilds = (): BuildsFile | null => (builds === undefined ? (builds = onReference(opt<BuildsFile>("latest/builds.json"), readMeta())) : builds);
 /** Official objective text per map (data/maps_meta.json); null if the file is missing. */
 export const readMapsMeta = (): MapsMeta | null => opt<MapsMeta>("maps_meta.json");
 export const readTalents = (slug: string): TalentTable | null => opt<TalentTable>(`talents/${slug}.json`);
 /** Storm League counters/synergies for one hero (collector/matchups.py); null until the first collection. */
-export const readMatchups = (slug: string): MatchupsFile | null => opt<MatchupsFile>(`matchups/${slug}.json`);
+export const readMatchups = (slug: string): MatchupsFile | null => onReference(opt<MatchupsFile>(`matchups/${slug}.json`), readMeta());
 
 /** Header search index: every hero, sorted by name in the page language, with the current tier in `mode`. */
 export function readSearchIndex(locale: Locale, mode: Mode = "qm"): SearchItem[] {

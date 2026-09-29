@@ -5,6 +5,9 @@ import { knownOnly } from "./lib/known";
 export interface Meta {
   current_patch: string;
   previous_patch: string | null;
+  /** The one patch the whole site shows (collector build_meta): the previous one while the current is thin in
+   *  Quick Match or Storm League. Pages never decide it themselves. Absent in meta from before 2026-09-29. */
+  reference_patch?: string;
   patch_started_at: string;
   collected_at: string;
   min_games_for_tier: number;
@@ -90,13 +93,26 @@ async function getJson<T>(path: string): Promise<T> {
 export const loadSnapshot = async (key: string, patch: PatchChoice, heroes: HeroTable): Promise<Snapshot> =>
   knownOnly(await getJson<Snapshot>(`${patch === "previous" ? "previous" : "latest"}/${key}.json`), heroes);
 
-/** A hero's matchups file (Storm League), or null when it has not been collected (404). */
-export async function loadMatchups(slug: string): Promise<MatchupsFile | null> {
+/** A hero's matchups file (Storm League) on patch `patch` (the reference patch), or null: not collected (404) or
+ *  collected for another patch. */
+export async function loadMatchups(slug: string, patch: string): Promise<MatchupsFile | null> {
   const res = await fetch(`${base}matchups/${slug}.json`, { cache: "no-cache" });
   if (res.status === 404) return null;
   if (!res.ok) throw new Error(`matchups/${slug}.json: HTTP ${res.status}`);
-  return (await res.json()) as MatchupsFile;
+  const file = (await res.json()) as MatchupsFile;
+  return file.patch === patch ? file : null;
 }
+
+/** Which patch directory the site shows: meta.reference_patch, decided once by the collector. */
+export function referencePatch(meta: Meta): PatchChoice {
+  return meta.previous_patch && meta.reference_patch === meta.previous_patch ? "previous" : "current";
+}
+
+/** The reference patch's build id (meta.reference_patch; the current patch in meta from before it existed). */
+export const referencePatchId = (meta: Meta): string => (referencePatch(meta) === "previous" ? meta.previous_patch! : meta.current_patch);
+
+/** A per-patch file (talent builds, matchups) is shown only when it is on the reference patch — never another patch's. */
+export const onReference = <T extends { patch: string }>(file: T | null, meta: Meta): T | null => (file && file.patch === referencePatchId(meta) ? file : null);
 
 /** Right after a patch the current build is thin; fall back to the previous patch for that mode. */
 /** `key`: a mode, or any snapshot file key (a region's file has its own sample size). */

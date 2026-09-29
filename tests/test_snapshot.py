@@ -14,6 +14,7 @@ from collector.snapshot import (
     commit_atomic,
     load_meta,
     normalize_by_map,
+    reference_patch,
     snapshot_to_json,
 )
 from tests.conftest import FIXTURES
@@ -286,3 +287,34 @@ def test_herostat_is_frozen() -> None:
     r = HeroStat("Nova", "all", 1, 1, 2, 0, 1.0, 1.0, 50.0, 0.0)
     with pytest.raises(dataclasses.FrozenInstanceError):
         r.wins = 5  # type: ignore[misc]
+
+
+def _modes(qm_over: int, sl_over: int, heroes: int = 90) -> dict:
+    return {
+        "qm": {"matches": 1, "heroes": heroes, "heroes_over_200": qm_over},
+        "sl": {"matches": 1, "heroes": heroes, "heroes_over_200": sl_over},
+        # brackets and regions never decide it
+        "sl_high": {"matches": 1, "heroes": heroes, "heroes_over_200": 0},
+        "qm_kr": {"matches": 1, "heroes": heroes, "heroes_over_200": 0},
+    }
+
+
+def test_reference_patch_is_one_patch_for_the_whole_site() -> None:
+    """Owner 2026-09-29: one reference patch, used everywhere (stats, builds, matchups, draft)."""
+    assert reference_patch("new", "old", _modes(80, 80)) == "new"
+    assert reference_patch("new", "old", _modes(80, 44)) == "old"  # SL thin: all on old
+    assert reference_patch("new", "old", _modes(44, 80)) == "old"
+    assert reference_patch("new", "old", _modes(45, 45)) == "new"  # half the heroes over the floor
+    assert reference_patch("new", None, _modes(0, 0)) == "new"  # nothing to fall back to
+    assert reference_patch("new", "old", {}) == "new"  # no sample recorded: nothing says thin
+
+
+def test_build_meta_records_the_reference_patch() -> None:
+    m1 = build_meta(
+        None, patch="p1", collected_at="2026-09-28T01:00:00Z", snapshots={"qm": _snap("qm", "p1")}
+    )
+    assert m1["reference_patch"] == "p1"
+    m2 = build_meta(
+        m1, patch="p2", collected_at="2026-10-01T01:00:00Z", snapshots={"qm": _snap("qm", "p2")}
+    )
+    assert m2["reference_patch"] == "p1"  # the new patch's one-game sample is thin

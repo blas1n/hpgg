@@ -2,7 +2,7 @@
 import { appliedParty, computeTiers, type Party, type Snapshot, type Tier } from "../formula";
 import { wilson } from "../wilson";
 import { sameCohort } from "./cohort";
-import { REGIONS, thinSample, type Bracket, type HeroTable, type Meta, type Mode, type PatchChoice, type Region } from "../data";
+import { referencePatch, REGIONS, type Bracket, type HeroTable, type Meta, type Mode, type PatchChoice, type Region } from "../data";
 import type { HeroRef } from "./home";
 
 export type SortKey = "score" | "win_rate" | "pick" | "ban_rate" | "games";
@@ -56,12 +56,14 @@ export function tierSearch(s: TierState): string {
   return q.toString();
 }
 
-/** Which patch a view shows. Right after a patch the current build is thin, so "auto" falls back to the previous one.
- *  `key`: the snapshot file (a region has its own sample size); callers stay on the current patch when that file has
- *  no previous-patch copy. */
-export function resolvePatch(meta: Meta, mode: Mode, choice: TierState["patch"], key: string = mode): { patch: PatchChoice; auto: boolean } {
+/** Which patch a view shows: "auto" is the site's one reference patch (meta.reference_patch); a patch chosen in the
+ *  URL ("현재 패치 보기") wins. */
+export function resolvePatch(meta: Meta, choice: TierState["patch"]): { patch: PatchChoice; auto: boolean } {
   if (!meta.previous_patch) return { patch: "current", auto: false };
-  if (choice === "auto") return thinSample(meta, key) ? { patch: "previous", auto: true } : { patch: "current", auto: false };
+  if (choice === "auto") {
+    const patch = referencePatch(meta);
+    return { patch, auto: patch === "previous" };
+  }
   return { patch: choice, auto: false };
 }
 

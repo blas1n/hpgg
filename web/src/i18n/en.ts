@@ -143,6 +143,7 @@ export const en: Messages = {
   tier: {
     title: "Hero tier list",
     loadError: (e: string) => `Could not load the data: ${e}`,
+    noPatchData: (patch: string) => `patch ${patch} has no data for this view`,
     loading: "Loading…",
     regionNotCollected: (region: string) => `${region} has not been collected yet — one region is collected per day, in turn`,
     cohortMismatch: (file: string, tiers: string, region: string) => `${file}.json covers other league tiers (${tiers}) or another region (${region}) than this selection`,

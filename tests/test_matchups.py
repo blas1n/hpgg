@@ -18,7 +18,6 @@ from collector.matchups import (
     MATCHUP_GAME_TYPE,
     collect_matchups,
     matchups_due,
-    matchups_patch,
     normalize_matchups,
 )
 from tests.conftest import BASE, FIXTURES, TOKEN
@@ -99,22 +98,6 @@ def test_matchups_due(existing: dict[str, Any] | None, today: str, due: bool) ->
 
 
 # --- patch: the one the pages show (same thin-sample rule as web/src/data.ts thinSample) -----
-
-
-def _meta(over: int, heroes: int = 90, previous: str | None = "2.55.17.98025") -> dict[str, Any]:
-    return {
-        "current_patch": "2.57.0.98285",
-        "previous_patch": previous,
-        "modes": {"sl": {"matches": 1, "heroes": heroes, "heroes_over_200": over}},
-    }
-
-
-def test_matchups_patch_follows_the_thin_sample_fallback() -> None:
-    assert matchups_patch(_meta(0)) == "2.55.17.98025"  # thin → previous, as the pages
-    assert matchups_patch(_meta(44)) == "2.55.17.98025"  # 44/90 < half
-    assert matchups_patch(_meta(45)) == "2.57.0.98285"  # half → current
-    assert matchups_patch(_meta(0, previous=None)) == "2.57.0.98285"  # nothing to fall back to
-    assert matchups_patch({**_meta(0), "modes": {}}) == "2.57.0.98285"
 
 
 # --- collection loop ------------------------------------------------------------------------

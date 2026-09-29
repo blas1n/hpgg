@@ -184,3 +184,10 @@ test("the formula line stays readable: at most about 90 characters wide on deskt
   });
   expect(ch).toBeLessThanOrEqual(90);
 });
+
+test("a view with no file on the patch it shows says so, and never shows another patch's file in its place", async ({ page }) => {
+  // the e2e previous patch has no region files: KR exists only on the current patch
+  await page.goto("./tier/?region=kr&patch=previous");
+  await expect(page.locator("#meta-line")).toContainText("패치 2.55.17.97771에는 이 보기의 데이터가 없습니다");
+  await expect(page.locator("#meta-line")).not.toContainText("2.55.17.98025");
+});

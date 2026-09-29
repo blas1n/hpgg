@@ -14,9 +14,11 @@ Start every session here. Operating guide and architecture: `docs/HANDOFF.md`. B
 ## First thing to check next session (2026-09-30)
 1. `gh run list --event schedule -L 3` — a scheduled run exists after 03:20 KST (GitHub may start it hours late; on 2026-09-29 one started at 08:16 and was cancelled only because a push deploy was queued behind it — `cancel-in-progress: false` still drops an older *pending* run). Empty = schedule dead → dispatch once and investigate.
 2. That run: `ls data/matchups | wc -l` = 90 (first matchups round), `data/latest/qm_kr.json` / `sl_kr.json` exist (first region day = KR), log has `matchups.done` and `hp.quota` remaining. **New since the last handoff**: 8 Heroes/Stats calls (2 `groupsize=Solo`), log `run.party` for qm and sl (not `run.party_skipped`), and `data/latest/qm.json` has a `party` block.
-3. Once `data/matchups/` is published: open https://hpgg.win/ko/hots/draft/?d=illidan.zeratul.tracer.genji.abathur — the suggestions should show non-zero 아군/상대 terms and no "상성 데이터가 없어" note for Abathur (#25). The hero pages' 상성 section fills at the same time.
-4. After three runs: `heroes_over_200` per region in `data/latest/meta.json` — Asia QM may be too thin for tiers.
-5. When most heroes pass 200 games on 2.57, the previous-patch fallback ends by itself; Xal'atath stays hidden until HeroesToolChest heroes-data ships a 2.57 build → `uv run python tools/build_assets.py --build <that build>` and commit (see #6 comment).
+3. `data/latest/meta.json` carries `reference_patch` written by the run (2.55.17.98025 while 2.57 is thin); `builds.json` has `"patch": "2.55.17.98025"` and the hero pages show builds again (they are hidden until then: the committed builds are 2.57's first day).
+4. Once `data/matchups/` is published: open https://hpgg.win/ko/hots/draft/?d=illidan.zeratul.tracer.genji.abathur — the suggestions should show non-zero 아군/상대 terms and no "상성 데이터가 없어" note for Abathur (#25). The hero pages' 상성 section fills at the same time.
+5. Region views (아시아/아메리카/유럽) say "패치 2.55.17.98025에는 이 보기의 데이터가 없습니다" while the reference patch is the previous one: regions were only ever collected on 2.57. They fill when 2.57 becomes the reference. Expected, not a bug.
+6. After three runs: `heroes_over_200` per region in `data/latest/meta.json` — Asia QM may be too thin for tiers.
+7. When most heroes pass 200 games on 2.57, the previous-patch fallback ends by itself; Xal'atath stays hidden until HeroesToolChest heroes-data ships a 2.57 build → `uv run python tools/build_assets.py --build <that build>` and commit (see #6 comment).
 
 ## Open threads
 - **Heroes Profile upload access — email sent 2026-09-29, waiting for a reply**: owner emailed ZEMILL@heroesprofile.com (HP's contact address) asking to allow `https://hpgg.win` in CORS for the keyless upload routes (`POST /v1/upload/heroesprofile/{source}`, `GET /v1/replays/fingerprints/{fp}`; per-IP 60/min, 20,000/day; `source` decides leaderboard eligibility), whether relaying through our server is acceptable, and how a `hpgg` source counts for leaderboards. Sent as email, not a public Discussion: it is a one-to-one access request that touches abuse limits. Text, facts and what to do for each answer: `docs/outreach/2026-09-29-heroes-profile-upload-cors.md`. Build nothing upload-related until HP answers.
@@ -36,6 +38,7 @@ Start every session here. Operating guide and architecture: `docs/HANDOFF.md`. B
 - `npx playwright test` alone serves a stale `web/dist-e2e`; `npm run e2e` rebuilds it.
 
 ## Owner rules learned 2026-09-29 (evening)
+- **One reference patch for the whole site** (`meta.reference_patch`, decided once by the collector; HANDOFF "One reference patch"). Pages, builds, matchups and 밴픽 all use it; a view without data on it says so.
 - **No person's name on the formula** — not on the page, in code, tests, docs or file names; the formula is shown as maths (presets removed). A guard for an absence checks structure, not the name.
 - **Names and labels come from the game's or Blizzard's own data**, like hero names — never made up. Where heroes-data has no UI string, Blizzard's official pages on the Internet Archive (`locStrings`) are the source (universes, #43).
 

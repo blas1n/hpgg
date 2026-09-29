@@ -259,11 +259,11 @@ test("hero detail: per-region rows for the mode, each with its collection date",
 
 test("tier table: a previous-patch bracket file of an older bracket definition is never shown under the new label", async ({ page }) => {
   // fixture previous/sl_low.json covers league tiers [1,2] (the 2026-09-28 definition); 브론즈 – 플래티넘 is [1-4]
+  // and no other patch's file takes its place (one reference patch, owner 2026-09-29): the view says it has no data
   await page.goto("./tier/?mode=sl&tier=low&patch=previous");
-  await expect(page.locator("#table")).toHaveAttribute("aria-busy", "false");
-  await expect(page.locator("#meta-line")).toContainText("브론즈 – 플래티넘");
-  await expect(page.locator("#meta-line")).toContainText("2.55.17.98025"); // the current patch's [1-4] file
+  await expect(page.locator("#meta-line")).toContainText("패치 2.55.17.97771에는 이 보기의 데이터가 없습니다");
   await expect(page.locator("#meta-line")).not.toContainText("3,362 매치"); // the old [1,2] cohort
+  await expect(page.locator("#meta-line")).not.toContainText("2.55.17.98025"); // nor the current patch's [1-4] file
 });
 
 test("hero detail: popular talent builds with Korean names, icons, games and win rate", async ({ page }) => {
