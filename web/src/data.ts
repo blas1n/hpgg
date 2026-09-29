@@ -25,7 +25,7 @@ export interface HeroInfo {
   role_ko: string;
   portrait?: string; // e.g. img/heroes/qhira.png (relative to the site root)
   short_name?: string; // Heroes Profile short_name (player search matches heroes by it)
-  /** heroes-data `franchise`: Warcraft, Starcraft, Diablo, Overwatch, Nexus, Classic (#43). */
+  /** Universe (#43): Warcraft, Starcraft, Diablo, Overwatch, Nexus — grouped as on Blizzard's heroes page. */
   franchise?: string;
 }
 export interface HeroTable {
