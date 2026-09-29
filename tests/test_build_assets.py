@@ -215,6 +215,7 @@ def test_main_adds_a_new_hero_once_the_game_data_build_has_it(
     kokr = {"gamestrings": {"unit": unit, "abiltalent": {"name": names}}}
     (cache / "herodata_99999.json").write_text(json.dumps(herodata))
     (cache / "kokr_99999.json").write_text(json.dumps(kokr))
+    (cache / "enus_99999.json").write_text(json.dumps(ENUS))
     argv = ["build_assets", "--build", "2.57.0.99999", "--data", str(data), "--cache", str(cache)]
     monkeypatch.setattr("sys.argv", [*argv, "--skip-icons"])
     ba.main()
@@ -224,12 +225,138 @@ def test_main_adds_a_new_hero_once_the_game_data_build_has_it(
         "name": "Xal'atath",
         "slug": "xal-atath",
         "ko": "잘아타스",
+        "en": "Xal'atath",
         "role": "Ranged Assassin",
         "role_ko": "원거리 암살자",
         "short_name": "xalatath",
         "portrait": "img/heroes/xal-atath.png",
     }
-    assert out["roles"] == ROLES and out["source"]["portraits"] == "heroes-images"
+    assert [{k: r[k] for k in ("name", "ko")} for r in out["roles"]] == ROLES
+    assert out["source"]["portraits"] == "heroes-images"
     assert "99999" in out["source"]["names"]
     talents = json.loads((data / "talents" / "xal-atath.json").read_text())["talents"]
-    assert talents == {"XalatathVoidEruption": {"ko": "공허 폭발", "icon": "x.png"}}
+    assert talents == {
+        "XalatathVoidEruption": {"ko": "공허 폭발", "icon": "x.png", "en": "XalatathVoidEruption"}
+    }  # no enus string and no English name in the game data → the nameId
+
+
+ENUS = {
+    "gamestrings": {
+        "unit": {
+            "name": {"Abathur": "Abathur", "Wizard": "Li-Ming", "Xalatath": "Xal'atath"},
+            "expandedrole": {
+                "Abathur": "Support",
+                "Wizard": "Ranged Assassin",
+                "Xalatath": "Ranged Assassin",
+            },
+        },
+        "abiltalent": {
+            "name": {
+                "AbathurPressureConvergence|X|Passive|True": "Pressure Convergence",
+                "WizardAetherWalker|Y|Q|False": "Aether Walker",
+            },
+            "full": {
+                "AbathurPressureConvergence|X|Passive|True": (
+                    'Increases range by <c val="x">20%</c>.'
+                ),
+                "WizardAetherWalker|Y|Q|False": 'Deals <c val="x">100~~0.04~~</c> damage.',
+            },
+            "cooldown": {"AbathurPressureConvergence|X|Passive|True": "Cooldown: 10 seconds"},
+        },
+    }
+}
+
+
+def test_clean_desc_in_english_prints_the_per_level_scaling_in_english() -> None:
+    raw = 'Deals <c val="x">108~~0.04~~</c> damage.<n/>Armor <s val="x" name="y">25</s>'
+    assert ba.clean_desc(raw, "en") == "Deals {{108 (+4% per level)}} damage.\nArmor 25"
+    assert ba.clean_desc('<c val="x">50~~0.025~~</c>', "en") == "{{50 (+2.5% per level)}}"
+    # Korean stays exactly as before (the default)
+    assert ba.clean_desc('<c val="x">50~~0.025~~</c>') == "{{50(레벨당 +2.5%)}}"
+
+
+def test_role_names_pair_each_korean_role_with_its_english_game_name() -> None:
+    roles = {"Abathur": "지원가", "Wizard": "원거리 암살자"}
+    kokr = {"gamestrings": {"unit": {"expandedrole": roles}}}
+    assert ba.role_names(kokr, ENUS) == {"지원가": "Support", "원거리 암살자": "Ranged Assassin"}
+
+
+def test_hero_rows_carry_the_english_game_name_when_enus_is_given() -> None:
+    kokr = {
+        "gamestrings": {
+            **KOKR["gamestrings"],
+            "unit": {
+                **KOKR["gamestrings"]["unit"],
+                "expandedrole": {"Abathur": "지원가", "Wizard": "원거리 암살자"},
+            },
+        }
+    }
+    rows, _ = ba.hero_rows(HERODATA, kokr, {"Li-Ming", "Abathur"}, ROLES, ENUS)
+    assert [r["en"] for r in rows] == ["Abathur", "Li-Ming"]
+    # Korean fields and their order are unchanged; `en` follows `ko`
+    keys = ["name", "slug", "ko", "en", "role", "role_ko", "short_name", "portrait"]
+    assert list(rows[0]) == keys
+
+
+def test_talent_files_carry_english_name_description_and_cooldown() -> None:
+    kokr = {
+        "gamestrings": {
+            **KOKR["gamestrings"],
+            "abiltalent": {
+                "name": KOKR["gamestrings"]["abiltalent"]["name"],
+                "full": {
+                    "AbathurPressureConvergence|X|Passive|True": '사거리 <c val="x">20%</c> 증가'
+                },
+                "cooldown": {"AbathurPressureConvergence|X|Passive|True": "재사용 대기시간: 10초"},
+            },
+        }
+    }
+    heroes = [{"name": "Abathur", "slug": "abathur"}, {"name": "Li-Ming", "slug": "li-ming"}]
+    files = ba.hero_talent_files(HERODATA, kokr, heroes, ENUS)
+    assert files["abathur"] == {
+        "AbathurPressureConvergence": {
+            "ko": "압박 수렴",
+            "icon": "a.png",
+            "desc": "사거리 {{20%}} 증가",
+            "cd": "재사용 대기시간: 10초",
+            "en": "Pressure Convergence",
+            "desc_en": "Increases range by {{20%}}.",
+            "cd_en": "Cooldown: 10 seconds",
+        }
+    }
+    assert files["li-ming"] == {
+        "WizardAetherWalker": {
+            "ko": "Aether Walker",
+            "icon": "b.png",
+            "en": "Aether Walker",
+            "desc_en": "Deals {{100 (+4% per level)}} damage.",
+        }
+    }
+
+
+def test_main_writes_english_names_next_to_the_korean_ones(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    data, cache = tmp_path / "data", tmp_path / "cache"
+    (data / "latest").mkdir(parents=True)
+    cache.mkdir()
+    table = {"roles": ROLES, "heroes": [{"name": "Abathur"}], "source": {"names": "old"}}
+    (data / "heroes_ko.json").write_text(json.dumps(table))
+    unit = {"name": {"Abathur": "아바투르"}, "expandedrole": {"Abathur": "지원가"}}
+    kokr = {"gamestrings": {"unit": unit, "abiltalent": KOKR["gamestrings"]["abiltalent"]}}
+    (cache / "herodata_99999.json").write_text(json.dumps({"Abathur": HERODATA["Abathur"]}))
+    (cache / "kokr_99999.json").write_text(json.dumps(kokr))
+    (cache / "enus_99999.json").write_text(json.dumps(ENUS))
+    argv = ["build_assets", "--build", "2.57.0.99999", "--data", str(data), "--cache", str(cache)]
+    monkeypatch.setattr("sys.argv", [*argv, "--skip-icons"])
+    ba.main()
+    out = json.loads((data / "heroes_ko.json").read_text())
+    assert out["heroes"][0]["en"] == "Abathur"
+    assert out["roles"] == [
+        {"name": "Support", "ko": "지원가", "en": "Support"},
+        {"name": "Ranged Assassin", "ko": "원거리 암살자", "en": "Ranged Assassin"},
+    ]
+    assert "enus" in out["source"]["names"]
+    talents = json.loads((data / "talents" / "abathur.json").read_text())
+    assert talents["talents"]["AbathurPressureConvergence"]["en"] == "Pressure Convergence"
+    assert "enus" in talents["source"]

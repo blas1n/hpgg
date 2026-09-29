@@ -3,10 +3,13 @@
   uv run python tools/build_assets.py --build 2.55.16.97039 [--icons <builds fixture>]
 
 Writes: data/heroes_ko.json (every hero already listed or in data/latest/, when the game data has
-it), data/img/heroes/<slug>.png (missing portraits), data/talents/<hero slug>.json (talent_name →
-Korean name, icon, description, cooldown), data/img/talents/*.png. A hero the build does not have
-yet (a new release) is logged and left out; the site shows only heroes in heroes_ko.json, so rerun
-with a newer --build to add it. Sources recorded per file. --skip-icons: tables only, no images.
+it; Korean and English names), data/img/heroes/<slug>.png (missing portraits),
+data/talents/<hero slug>.json (talent_name → Korean and English name, icon, description, cooldown),
+data/img/talents/*.png. Korean strings come from gamestrings kokr, English from gamestrings enus
+(the English fields sit next to the Korean ones, which stay byte for byte what kokr alone gives).
+A hero the build does not have yet (a new release) is logged and left out; the site shows only
+heroes in heroes_ko.json, so rerun with a newer --build to add it. Sources recorded per file.
+--skip-icons: tables only, no images.
 """
 
 from __future__ import annotations
@@ -75,11 +78,19 @@ def stats_hero_names(data_dir: Path) -> set[str]:
     return names
 
 
+def role_names(kokr: dict[str, Any], enus: dict[str, Any]) -> dict[str, str]:
+    """Korean role name → English role name, paired through the heroes that carry them."""
+    ko = kokr["gamestrings"]["unit"]["expandedrole"]
+    en = enus["gamestrings"]["unit"]["expandedrole"]
+    return {ko[hid]: en[hid] for hid in ko if hid in en}
+
+
 def hero_rows(
     herodata: dict[str, Any],
     kokr: dict[str, Any],
     names: set[str],
     roles: list[dict[str, str]],
+    enus: dict[str, Any] | None = None,
 ) -> tuple[list[dict[str, str]], list[str]]:
     """heroes_ko.json rows (by English name) for the heroes the game data has, and the names it
     does not have yet — a hero released after that heroes-data build. The site shows only heroes
@@ -96,17 +107,16 @@ def hero_rows(
             continue
         hid = found[0]
         role_ko = unit["expandedrole"][hid]
-        rows.append(
-            {
-                "name": n,
-                "slug": slug(n),
-                "ko": unit["name"][hid],
-                "role": role_by_ko[role_ko],
-                "role_ko": role_ko,
-                "short_name": norm(n),
-                "portrait": f"img/heroes/{slug(n)}.png",
-            }
-        )
+        row = {"name": n, "slug": slug(n), "ko": unit["name"][hid]}
+        if enus is not None:
+            row["en"] = enus["gamestrings"]["unit"]["name"].get(hid, n)
+        row |= {
+            "role": role_by_ko[role_ko],
+            "role_ko": role_ko,
+            "short_name": norm(n),
+            "portrait": f"img/heroes/{slug(n)}.png",
+        }
+        rows.append(row)
     return rows, missing
 
 
@@ -116,12 +126,19 @@ def portrait_file(hero: dict[str, Any]) -> str | None:
     return str(p) if p else None
 
 
+def _by_name_id(strings: dict[str, Any], field: str) -> dict[str, str]:
+    """gamestrings abiltalent/<field>, keyed `<nameId>|<buttonId>|<hotkey>|<isPassive>`, by
+    nameId (the first entry wins)."""
+    out: dict[str, str] = {}
+    for key, val in strings["gamestrings"]["abiltalent"].get(field, {}).items():
+        out.setdefault(key.split("|")[0], val)
+    return out
+
+
 def talent_table(herodata: dict[str, Any], kokr: dict[str, Any]) -> dict[str, dict[str, str]]:
     """talent nameId (= HP `talent_name`) → {ko, icon}. Korean names come from
     gamestrings abiltalent/name keyed `<nameId>|<buttonId>|<hotkey>|<isPassive>`."""
-    ko_by_name_id: dict[str, str] = {}
-    for key, val in kokr["gamestrings"]["abiltalent"]["name"].items():
-        ko_by_name_id.setdefault(key.split("|")[0], val)
+    ko_by_name_id = _by_name_id(kokr, "name")
     out: dict[str, dict[str, str]] = {}
     for h in herodata.values():
         for tier_talents in (h.get("talents") or {}).values():
@@ -167,15 +184,17 @@ def _pick_particle(before: str, options: str) -> str:
     return with_jong
 
 
-def _scaling(m: re.Match[str]) -> str:
-    pct = float(m.group(1)) * 100
-    return f"(레벨당 +{pct:g}%)"
+_SCALING = {"ko": "(레벨당 +{pct}%)", "en": " (+{pct}% per level)"}
 
 
-def clean_desc(raw: str) -> str:
+def clean_desc(raw: str, lang: str = "ko") -> str:
     """Game tooltip markup → plain text; highlighted values become {{…}} for the page to style.
-    `108~~0.04~~` means +4 % per hero level."""
-    s = re.sub(r"~~([0-9.]+)~~", _scaling, raw)
+    `108~~0.04~~` means +4 % per hero level (printed in `lang`: ko or en)."""
+    s = re.sub(
+        r"~~([0-9.]+)~~",
+        lambda m: _SCALING[lang].format(pct=f"{float(m.group(1)) * 100:g}"),
+        raw,
+    )
     s = re.sub(r"<n\s*/>|</n>", "\n", s)
     s = re.sub(r"<img[^>]*/?>", "", s)
     s = re.sub(r'<c val="[^"]*">(.*?)</c>', r"{{\1}}", s)
@@ -189,20 +208,20 @@ def clean_desc(raw: str) -> str:
 
 
 def hero_talent_files(
-    herodata: dict[str, Any], kokr: dict[str, Any], heroes: list[dict[str, Any]]
+    herodata: dict[str, Any],
+    kokr: dict[str, Any],
+    heroes: list[dict[str, Any]],
+    enus: dict[str, Any] | None = None,
 ) -> dict[str, dict[str, dict[str, str]]]:
-    """Per hero slug: talent nameId → {ko, icon, desc?, cd?}. One small file per hero so the hero
-    page loads only its own talents (descriptions for every hero are ~0.8 MB)."""
+    """Per hero slug: talent nameId → {ko, icon, desc?, cd?, en?, desc_en?, cd_en?}. One small
+    file per hero so the hero page loads only its own talents (every hero is ~0.8 MB)."""
     names = talent_table(herodata, kokr)
-    strings = kokr["gamestrings"]["abiltalent"]
-
-    def first(field: str) -> dict[str, str]:
-        out: dict[str, str] = {}
-        for key, val in strings.get(field, {}).items():
-            out.setdefault(key.split("|")[0], val)
-        return out
-
-    full, cooldown = first("full"), first("cooldown")
+    full, cooldown = _by_name_id(kokr, "full"), _by_name_id(kokr, "cooldown")
+    en_name, en_full, en_cd = (
+        (_by_name_id(enus, "name"), _by_name_id(enus, "full"), _by_name_id(enus, "cooldown"))
+        if enus is not None
+        else ({}, {}, {})
+    )
     idx = hero_index(herodata)
     files: dict[str, dict[str, dict[str, str]]] = {}
     for h in heroes:
@@ -220,6 +239,12 @@ def hero_talent_files(
                     entry["desc"] = clean_desc(full[name_id])
                 if name_id in cooldown:
                     entry["cd"] = clean_desc(cooldown[name_id])
+                if enus is not None:
+                    entry["en"] = en_name.get(name_id) or t.get("name", name_id)
+                    if name_id in en_full:
+                        entry["desc_en"] = clean_desc(en_full[name_id], "en")
+                    if name_id in en_cd:
+                        entry["cd_en"] = clean_desc(en_cd[name_id], "en")
                 table[name_id] = entry
         files[h["slug"]] = table
     return files
@@ -256,14 +281,17 @@ def main() -> None:
     b = args.build.split(".")[-1]
     herodata_p = cache / f"herodata_{b}.json"
     kokr_p = cache / f"kokr_{b}.json"
+    enus_p = cache / f"enus_{b}.json"
     for p, url in (
         (herodata_p, f"{RAW_DATA}/{args.build}/data/herodata_{b}_localized.json"),
         (kokr_p, f"{RAW_DATA}/{args.build}/gamestrings/gamestrings_{b}_kokr.json"),
+        (enus_p, f"{RAW_DATA}/{args.build}/gamestrings/gamestrings_{b}_enus.json"),
     ):
         if not p.exists() and not fetch(url, p):
             raise SystemExit(f"download failed: {url}")
     herodata = json.loads(herodata_p.read_text(encoding="utf-8"))
     kokr = json.loads(kokr_p.read_text(encoding="utf-8"))
+    enus = json.loads(enus_p.read_text(encoding="utf-8"))
 
     # talents
     talents = talent_table(herodata, kokr)
@@ -295,7 +323,7 @@ def main() -> None:
     table_p = data / "heroes_ko.json"
     table = json.loads(table_p.read_text(encoding="utf-8"))
     names = {h["name"] for h in table["heroes"]} | stats_hero_names(data)
-    heroes, missing_heroes = hero_rows(herodata, kokr, names, table["roles"])
+    heroes, missing_heroes = hero_rows(herodata, kokr, names, table["roles"], enus)
     if missing_heroes:
         log.warning(
             "assets.heroes_without_game_data",
@@ -304,7 +332,11 @@ def main() -> None:
             note="not shown on the site until a heroes-data build has them",
         )
     table["heroes"] = heroes
-    table["source"]["names"] = f"HeroesToolChest/heroes-data gamestrings kokr (build {b}, MIT)"
+    role_en = role_names(kokr, enus)
+    table["roles"] = [r | {"en": role_en.get(r["ko"], r["name"])} for r in table["roles"]]
+    table["source"]["names"] = (
+        f"HeroesToolChest/heroes-data gamestrings kokr + enus (build {b}, MIT)"
+    )
     table_p.write_text(json.dumps(table, ensure_ascii=False, indent=0), encoding="utf-8")
     idx = hero_index(herodata)
     for h in [] if args.skip_icons else heroes:
@@ -317,10 +349,12 @@ def main() -> None:
             log.warning("assets.portrait_missing", hero=h["name"], file=src)
             continue
         resize(tmp, dst, 96)
-    source = f"HeroesToolChest heroes-data {args.build} (gamestrings kokr) + heroes-images, MIT"
+    source = (
+        f"HeroesToolChest heroes-data {args.build} (gamestrings kokr, enus) + heroes-images, MIT"
+    )
     out_dir = data / "talents"
     out_dir.mkdir(parents=True, exist_ok=True)
-    for hero_slug, table in hero_talent_files(herodata, kokr, heroes).items():
+    for hero_slug, table in hero_talent_files(herodata, kokr, heroes, enus).items():
         (out_dir / f"{hero_slug}.json").write_text(
             json.dumps(
                 {"source": source, "talents": table}, ensure_ascii=False, separators=(",", ":")
