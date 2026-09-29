@@ -217,20 +217,28 @@ def _snap(key: str, patch: str) -> dict:
     }
 
 
+def _healthy(patch: str) -> dict[str, dict]:
+    """QM and SL snapshots with every hero over the tier floor: a build with a real sample."""
+    out = {}
+    for key in ("qm", "sl"):
+        snap = _snap(key, patch)
+        snap["rows"] = [{**r, "wins": 200, "losses": 200, "games": 400} for r in snap["rows"]]
+        out[key] = snap
+    return out
+
+
+def _thin(patch: str) -> dict[str, dict]:
+    return {key: _snap(key, patch) for key in ("qm", "sl")}
+
+
 def test_build_meta_first_run_and_patch_change() -> None:
-    m1 = build_meta(
-        None, patch="p1", collected_at="2026-09-28T01:00:00Z", snapshots={"qm": _snap("qm", "p1")}
-    )
+    m1 = build_meta(None, patch="p1", collected_at="2026-09-28T01:00:00Z", snapshots=_healthy("p1"))
     assert m1["current_patch"] == "p1" and m1["previous_patch"] is None
     assert m1["patch_started_at"] == "2026-09-28"
-    assert m1["modes"]["qm"]["heroes_over_200"] == 0 and m1["modes"]["qm"]["heroes"] == 1
-    m2 = build_meta(
-        m1, patch="p1", collected_at="2026-09-29T01:00:00Z", snapshots={"qm": _snap("qm", "p1")}
-    )
+    assert m1["modes"]["qm"]["heroes_over_200"] == 1 and m1["modes"]["qm"]["heroes"] == 1
+    m2 = build_meta(m1, patch="p1", collected_at="2026-09-29T01:00:00Z", snapshots=_healthy("p1"))
     assert m2["patch_started_at"] == "2026-09-28"  # unchanged while patch is the same
-    m3 = build_meta(
-        m2, patch="p2", collected_at="2026-10-01T01:00:00Z", snapshots={"qm": _snap("qm", "p2")}
-    )
+    m3 = build_meta(m2, patch="p2", collected_at="2026-10-01T01:00:00Z", snapshots=_thin("p2"))
     assert (m3["current_patch"], m3["previous_patch"], m3["patch_started_at"]) == (
         "p2",
         "p1",
@@ -241,22 +249,18 @@ def test_build_meta_first_run_and_patch_change() -> None:
 def test_commit_atomic_writes_latest_and_moves_previous_on_patch_change(tmp_path: Path) -> None:
     data, tmp = tmp_path / "data", tmp_path / "tmp"
     meta1 = build_meta(
-        None, patch="p1", collected_at="2026-09-28T00:00:00Z", snapshots={"qm": _snap("qm", "p1")}
+        None, patch="p1", collected_at="2026-09-28T00:00:00Z", snapshots=_healthy("p1")
     )
-    commit_atomic(
-        data_dir=data, tmp_dir=tmp, snapshots={"qm": _snap("qm", "p1")}, meta=meta1, prev_meta=None
-    )
+    commit_atomic(data_dir=data, tmp_dir=tmp, snapshots=_healthy("p1"), meta=meta1, prev_meta=None)
     assert json.loads((data / "latest" / "qm.json").read_text())["patch"] == "p1"
     assert load_meta(data) == meta1
     assert not (data / "previous").exists()
     assert not tmp.exists() or not any(tmp.iterdir())
     # patch change: latest → previous, new latest written, in one commit
     meta2 = build_meta(
-        meta1, patch="p2", collected_at="2026-10-01T00:00:00Z", snapshots={"qm": _snap("qm", "p2")}
+        meta1, patch="p2", collected_at="2026-10-01T00:00:00Z", snapshots=_thin("p2")
     )
-    commit_atomic(
-        data_dir=data, tmp_dir=tmp, snapshots={"qm": _snap("qm", "p2")}, meta=meta2, prev_meta=meta1
-    )
+    commit_atomic(data_dir=data, tmp_dir=tmp, snapshots=_thin("p2"), meta=meta2, prev_meta=meta1)
     assert json.loads((data / "latest" / "qm.json").read_text())["patch"] == "p2"
     assert json.loads((data / "previous" / "qm.json").read_text())["patch"] == "p1"
     assert load_meta(data)["previous_patch"] == "p1"
@@ -310,11 +314,57 @@ def test_reference_patch_is_one_patch_for_the_whole_site() -> None:
 
 
 def test_build_meta_records_the_reference_patch() -> None:
-    m1 = build_meta(
-        None, patch="p1", collected_at="2026-09-28T01:00:00Z", snapshots={"qm": _snap("qm", "p1")}
-    )
+    m1 = build_meta(None, patch="p1", collected_at="2026-09-28T01:00:00Z", snapshots=_healthy("p1"))
     assert m1["reference_patch"] == "p1"
-    m2 = build_meta(
-        m1, patch="p2", collected_at="2026-10-01T01:00:00Z", snapshots={"qm": _snap("qm", "p2")}
-    )
+    m2 = build_meta(m1, patch="p2", collected_at="2026-10-01T01:00:00Z", snapshots=_thin("p2"))
     assert m2["reference_patch"] == "p1"  # the new patch's one-game sample is thin
+
+
+def test_a_thin_build_is_never_promoted_to_previous(tmp_path: Path) -> None:
+    """2026-09-30: hotfix 2.57.0.98304 a day after 2.57.0.98285 (419 matches). The previous
+    patch stays the last build with a real sample (2.55.17.98025); the thin one is dropped."""
+    data, tmp = tmp_path / "data", tmp_path / "tmp"
+    m1 = build_meta(None, patch="p1", collected_at="2026-09-12T00:00:00Z", snapshots=_healthy("p1"))
+    commit_atomic(data_dir=data, tmp_dir=tmp, snapshots=_healthy("p1"), meta=m1, prev_meta=None)
+    m2 = build_meta(m1, patch="p2", collected_at="2026-09-28T00:00:00Z", snapshots=_thin("p2"))
+    commit_atomic(data_dir=data, tmp_dir=tmp, snapshots=_thin("p2"), meta=m2, prev_meta=m1)
+    assert (m2["previous_patch"], m2["reference_patch"]) == ("p1", "p1")
+    # the hotfix: p2 was thin, so it does not take p1's place
+    m3 = build_meta(m2, patch="p3", collected_at="2026-09-29T00:00:00Z", snapshots=_thin("p3"))
+    commit_atomic(data_dir=data, tmp_dir=tmp, snapshots=_thin("p3"), meta=m3, prev_meta=m2)
+    assert (m3["current_patch"], m3["previous_patch"], m3["reference_patch"]) == ("p3", "p1", "p1")
+    assert json.loads((data / "previous" / "qm.json").read_text())["patch"] == "p1"
+    assert json.loads((data / "latest" / "qm.json").read_text())["patch"] == "p3"
+    assert m3["patch_started_at"] == "2026-09-29"
+    # once p3 is healthy and p4 arrives, p3 is the previous patch
+    m4 = build_meta(m3, patch="p3", collected_at="2026-10-05T00:00:00Z", snapshots=_healthy("p3"))
+    commit_atomic(data_dir=data, tmp_dir=tmp, snapshots=_healthy("p3"), meta=m4, prev_meta=m3)
+    m5 = build_meta(m4, patch="p4", collected_at="2026-10-20T00:00:00Z", snapshots=_thin("p4"))
+    commit_atomic(data_dir=data, tmp_dir=tmp, snapshots=_thin("p4"), meta=m5, prev_meta=m4)
+    assert (m5["previous_patch"], m5["reference_patch"]) == ("p3", "p3")
+    assert json.loads((data / "previous" / "qm.json").read_text())["patch"] == "p3"
+
+
+def test_choose_patch_skips_a_build_added_within_the_last_hour() -> None:
+    """HP lists a new build before its stats accept it (two 10-minute caches): 422 on 2026-09-30."""
+    payload = {
+        "patches": [
+            {
+                "game_version": "2.57.0.98285",
+                "valid_globals": True,
+                "date_added": "2026-09-28T21:27:21.000000Z",
+            },
+            {
+                "game_version": "2.57.0.98304",
+                "valid_globals": True,
+                "date_added": "2026-09-29T22:08:51.000000Z",
+            },
+        ]
+    }
+    from datetime import UTC, datetime
+
+    at = lambda s: datetime.fromisoformat(s.replace("Z", "+00:00"))  # noqa: E731
+    assert choose_patch(payload, now=at("2026-09-29T22:15:51Z")) == "2.57.0.98285"
+    assert choose_patch(payload, now=at("2026-09-29T23:08:51Z")) == "2.57.0.98304"
+    assert choose_patch(payload) == "2.57.0.98304"  # no clock: every listed build
+    assert UTC is not None

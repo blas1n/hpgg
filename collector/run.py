@@ -363,7 +363,9 @@ async def _run_matchups(
 async def _run_stats(c: HPClient, settings: Settings, *, collected_at: str, sleep: SleepFn) -> int:
     try:
         patches = await c.get_json("/patches")
-        patch = choose_patch(patches)
+        patch = choose_patch(
+            patches, now=datetime.fromisoformat(collected_at.replace("Z", "+00:00"))
+        )
         log.info("run.patch", patch=patch, collected_at=collected_at)
         raw_by_key, snapshots = await _collect_all(
             c, settings, patch=patch, collected_at=collected_at, sleep=sleep
