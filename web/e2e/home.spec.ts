@@ -15,7 +15,7 @@ test("home: role leaders, top 10, movers, map cards and the mode toggle", async 
   await expect(page.locator("#top10 tbody tr").first()).toHaveAttribute("data-hero", "qhira");
   await expect(page.locator("#movers-sub")).toContainText("직전 패치"); // previous data exists in the fixture
   await expect(page.locator('#map-grid [data-card="map"]')).toHaveCount(1); // the fixture's SL has one real map
-  await expect(page.locator('#map-grid [data-card="map"][data-map="cursed-hollow"]')).toHaveAttribute("href", /\/hots\/tier\/\?mode=sl&map=Cursed/);
+  await expect(page.locator('#map-grid [data-card="map"][data-map="cursed-hollow"]')).toHaveAttribute("href", "/hots/maps/cursed-hollow/"); // the map page (#9)
   await page.locator("#mode-sl").click();
   await expect(page).toHaveURL(/mode=sl/);
   await expect(page.locator("#meta-line")).toContainText("폭풍 리그");
@@ -38,7 +38,7 @@ test("home: ?mode=sl in the URL opens Storm League", async ({ page }) => {
 });
 
 test("layout: no horizontal overflow on a phone, active nav item marked", async ({ page }) => {
-  for (const path of ["./", "./tier/", "./heroes/", "./heroes/illidan/", "./maps/", "./players/"]) {
+  for (const path of ["./", "./tier/", "./heroes/", "./heroes/illidan/", "./maps/", "./maps/cursed-hollow/", "./players/"]) {
     await page.goto(path);
     await expect(page.locator("header").first()).toBeVisible();
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);

@@ -6,6 +6,7 @@ import { computeTiers, PRESETS, type Snapshot } from "../formula";
 import type { Bracket, BuildsFile, HeroTable, MapTable, MatchupsFile, Meta, Mode, Region, TalentTable } from "../data";
 import { pickShown, type Shown } from "../lib/shown";
 import type { SearchItem } from "../lib/search";
+import type { MapsMeta } from "../lib/maps";
 
 const dir = resolve(process.cwd(), process.env.DATA_DIR ?? "../data");
 const read = <T>(rel: string): T => JSON.parse(readFileSync(join(dir, rel), "utf-8")) as T;
@@ -24,6 +25,8 @@ export const readShown = (mode: Mode, bracket: Bracket = "all", region: Region =
 const opt = <T>(rel: string): T | null => (existsSync(join(dir, rel)) ? read<T>(rel) : null);
 let builds: BuildsFile | null | undefined; // 270 KB, read once per build rather than once per hero page
 export const readBuilds = (): BuildsFile | null => (builds === undefined ? (builds = opt<BuildsFile>("latest/builds.json")) : builds);
+/** Official objective text per map (data/maps_meta.json); null if the file is missing. */
+export const readMapsMeta = (): MapsMeta | null => opt<MapsMeta>("maps_meta.json");
 export const readTalents = (slug: string): TalentTable | null => opt<TalentTable>(`talents/${slug}.json`);
 /** Storm League counters/synergies for one hero (collector/matchups.py); null until the first collection. */
 export const readMatchups = (slug: string): MatchupsFile | null => opt<MatchupsFile>(`matchups/${slug}.json`);

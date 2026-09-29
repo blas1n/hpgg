@@ -43,6 +43,12 @@ Automated as Playwright specs in `web/e2e/tierlist.spec.ts`, run with `npm run e
 - [x] Hero page 1280: header and stats share a band; maps left, brackets and builds right; builds start above the fold; map rows ≤ 44 px
 - [x] No text under 11 px on the hero page (tier badges excepted)
 
+## Automated — map detail (`e2e/maps.spec.ts`, #9)
+- [x] `/hots/maps/cursed-hollow/`: banner, 3 official objective steps, archive source link, top heroes sorted by win rate (≤ 10, links to hero SL page), link to the map's tier table, 전장 nav active
+- [x] A map without Storm League games still shows its objective and says there is no sample
+- [x] Every map card opens `/hots/maps/<slug>/`; unknown slug → 404; no horizontal scroll at 390 px
+- [x] Contrast sweep covers two map pages in both themes
+
 ## Human, against the live site
 - [ ] https://blas1n.github.io/hpgg/hots/ loads today's patch and match count in the meta line
 - [ ] Switching to Storm League and picking a map re-tiers within a second on a phone
