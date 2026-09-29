@@ -3,7 +3,7 @@
 Last updated 2026-09-29. Read `docs/STATUS.md` first for the current state; this file is how to operate and extend the project.
 
 ## What this is
-A static Korean-language Heroes of the Storm tier site. A Python collector pulls hero statistics once a day from the Heroes Profile API v1, commits JSON to `main`, and a Next.js static export (React 19 + Tailwind 4, `output: "export"`) renders the site; tiers are computed from the same JSON at build time (홈, search index) and in the browser (tier table, hero detail) with the formula printed on the page. No server, no database, no accounts.
+A static Korean-language Heroes of the Storm tier site. A Python collector pulls hero statistics once a day from the Heroes Profile API v1, commits JSON to `main`, and a Next.js static export (React 19 + Tailwind 4, `output: "export"`) renders the site; tiers are computed from the same JSON at build time (홈, search index) and in the browser (tier table, hero detail) with the formula printed on the page. Player search (전적 검색) is the one live feature: the page calls our own API server (`server/`, https://api.hpgg.win, Docker on the owner's Mac mini), which calls Heroes Profile with the key and caches the answers — see "Server (api.hpgg.win)". No accounts yet (#28).
 
 - Live: https://hpgg.win/hots/ (GitHub Pages + custom domain, HTTPS enforced; `data/CNAME` is published with the site so the domain survives every deploy). Root `/` forwards to `/hots/`; a second game would live at `/<game>/`.
 - Brand: hpgg.win — Happy Good Game. Logo, crops and palette in `docs/BRAND.md` and `data/img/brand/`.
@@ -82,12 +82,53 @@ Error responses and 202 job polling are not charged. `group_by_map=true` is rate
 ```bash
 uv run ruff check collector/ tests/ tools/ && uv run ruff format --check collector/ tests/ tools/
 uv run mypy collector/
-uv run pytest tests/ --cov=collector --cov-fail-under=80        # 40 tests, ~90 %
+uv run pytest tests/ --cov=collector --cov-fail-under=80        # collector ~90 % (tests/ also runs tests/server)
+uv run ruff check server/ tests/server/ && uv run ruff format --check server/ tests/server/
+uv run mypy server/
+uv run pytest tests/server/ --cov=server --cov-fail-under=80    # ~99 %
+docker build -f deploy/Dockerfile -t hpgg-api:ci .               # the server image builds
 cd web && npx tsc --noEmit && npm run test:cov && npm run e2e     # E2E_PORT=4391 when another checkout is serving 4173
 ```
 
+## Server (api.hpgg.win)
+HPGG's application backend. Today it serves player search; accounts (#28, Battle.net login) and community (#7) are meant to land here as further feature modules, not as new services.
+
+```
+browser (hpgg.win/hots/players/?tag=Name%231234&region=KR)
+  → GET https://api.hpgg.win/v1/players?battletag=Name%231234&region=KR
+  → Cloudflare (TLS, CF-Connecting-IP) → cloudflared tunnel → 127.0.0.1:8800 on the Mac mini (bsserver)
+  → container hpgg-api (FastAPI/uvicorn :8000) → SQLite cache → Heroes Profile GET /players (Bearer, server-side only)
+```
+- **Shape**: `server/app.py` `create_app(settings)` — CORS allowlist, JSON error envelope `{"error": {"code", "message"}}`, one structured log line per request, `/healthz`, then one router per feature (`server/players/router.py`). A new feature = a package with its router, tables on `server.db.Base` (imported in `server/models.py`) and an Alembic revision.
+- **Persistence**: one SQLite file (WAL) on the named volume `hpgg-api-data` (`/data/hpgg.sqlite`), SQLAlchemy async (aiosqlite), schema only through Alembic (`server/migrations/versions/`, applied at startup; `tests/server/test_db.py` fails if models and migrations drift). Why SQLite and not Postgres: one process on one Mac mini, a small write load (cache rows, later accounts/comments), nothing to operate or back up beyond one file; moving to Postgres later is a driver/URL change plus a data copy, because everything goes through SQLAlchemy and Alembic. The player cache lives in the same database (tables `hp_cache`, `hp_quota`, `hp_daily_usage`) — one volume, one backup.
+- **Player search**: one HP call per new player — `/players` (bucket *Player*, 10,000/week) returns account level, win rate, KDA, MVP, current MMR + league per mode (`*_mmr_data`), top-3 heroes/maps and the last 5 matches with MMR change (`matchData`), so the page needs no other endpoint. The server trims the ≈30 KB answer (talent objects) to a compact profile (`server/players/profile.py`, shape in `tests/server/fixtures/v1_players_200.json`, recorded 2026-09-29).
+- **Quota guard** (`server/players/service.py`): fresh cache 6 h (not-found 1 h) → identical concurrent lookups share one call → live call only while HP's `X-HP-Quota-Remaining` > `QUOTA_FLOOR` (200) and today's live calls < `DAILY_LIVE_BUDGET` (1,300 per UTC day). Otherwise, or after a 429 `quota_exceeded` (until its Retry-After), the page gets the cached profile marked `stale` with `notice: "quota_exceeded"`, or a 429 `quota_exceeded` ("오늘 조회 한도 초과") for a player never seen. HP 5xx/timeouts → cached profile with `notice: "upstream_unavailable"`, or 503. `/healthz` shows the last quota reading and today's live calls. `X-HP-Quota-Reset` is seconds until the window frees up (measured).
+- **Abuse**: 20 requests/min per visitor IP (`CF-Connecting-IP`, sliding window, in memory); inputs validated (BattleTag `name#digits`, region KR/NA/EU/CN, unknown params rejected); 404s from HP are free, so random tags cost nothing.
+- **Never** log or return the HP key or the Authorization header (`tests/server/test_app.py` asserts it on every error path).
+
+| Player endpoint (Basic, weekly) | Cap | Used by the site |
+|---|---|---|
+| `/players` | 10,000 | yes — every new search (cached 6 h) |
+| `/players/mmr` (+ `/heroes`, `/roles`, `/history*`) | 10,000 each | no (`/players` already carries MMR + league) |
+| `/players/matches` (match history) | 250 | no |
+| `/players/heroes*`, `/roles*`, `/maps*`, `/matchups`, `/friendfoe`, `/talents/build`, `/awards*` | 25 each | no — never in the default flow |
+
+**Config** (`deploy/.env` on the host, gitignored; template `deploy/.env.example`): `HP_API_TOKEN` (required, same key as the collector), optional `CORS_ORIGINS` (JSON list, default `["https://hpgg.win"]`), `LOG_LEVEL`, `PLAYER_TTL_SECONDS`, `NOT_FOUND_TTL_SECONDS`, `QUOTA_FLOOR`, `DAILY_LIVE_BUDGET`, `IP_REQUESTS_PER_MINUTE`. The web page reads `NEXT_PUBLIC_API_BASE` at build time (default `https://api.hpgg.win`); if the API is unreachable it shows "전적 검색 준비 중".
+
+**Deploy / operate** (host `bsserver`, Docker context `colima`):
+- autodeploy (`~/Works/_infra/scripts/autodeploy.sh`, every 2 min) rebuilds on a new `origin/main`: `docker-compose -p hpgg -f <WORK>/deploy/docker-compose.yml up -d --build --force-recreate` (project name = lower-cased repo dir). The image copies only `pyproject.toml`, `uv.lock` and `server/`, so the daily data commits rebuild from cache and just recreate the container (a few seconds; the cache survives on the volume, the per-IP limiter resets).
+- Manual restart: `docker --context colima restart hpgg-api`; health: `curl -s http://127.0.0.1:8800/healthz` on the host, `https://api.hpgg.win/healthz` outside.
+- Logs: `docker --context colima logs -f hpgg-api` — JSON lines (structlog + uvicorn), json-file driver capped at 5×10 MB.
+- Data: `docker --context colima volume inspect hpgg-api-data`; do not open the live SQLite from the host (copy it out first).
+- Local run: `HP_API_TOKEN=… CORS_ORIGINS='["http://localhost:5173"]' uv run python -m server` (DB in `data/.tmp/`), then `NEXT_PUBLIC_API_BASE=http://localhost:8000 npm run dev` in `web/`.
+- New migration: change models, `mkdir -p data/.tmp && uv run alembic -c server/alembic.ini revision --autogenerate -m "…"`, review, run `tests/server/test_db.py`.
+
+## Future: accounts (Battle.net login, #28)
+Not built. Verified from the Battle.net developer docs ("Using OAuth", 2026-09-29): OAuth 2.0 authorization-code flow at `https://oauth.battle.net/authorize` / `/token` for US, EU and APAC (APAC replaced the old kr/tw regions; China uses `oauth.battlenet.com.cn`); login needs no scope — without scopes an app gets the account ID and BattleTag; the `openid` scope exposes OIDC `https://oauth.battle.net/userinfo` (authorization-code token required); redirect URIs must be HTTPS; access tokens last 24 h. Plan: `server/accounts/` module on this server (`/v1/auth/battlenet/login|callback`, `state` check), HttpOnly Secure session cookie for `.hpgg.win`, store only account id + BattleTag; the BattleTag links straight to 전적 검색. **Unverified**: exact `/userinfo` field names, whether Battle.net reveals the player's HotS region (probably not — the page may still ask for the region), refresh-token behaviour.
+
 ## Where things are
 - `collector/` client (Bearer, 202 polling, bounded retries, quota log), snapshot (normalisation, atomic commit, meta), matchups (per-hero counters/synergies), run (orchestration, backfill), `__main__` (CLI, JSON logging; token never logged — asserted by tests)
+- `server/` the API (FastAPI): `app.py` factory, `players/` feature (hp client, profile, service, store, router, models), `db.py` + `migrations/` (Alembic), `logs.py`, `ratelimit.py`; tests in `tests/server/` with recorded HP fixtures; `deploy/` Dockerfile + compose
 - `tools/build_assets.py` asset/localisation generator (tests in `tests/test_build_assets.py`)
 - `web/app/` routes; `web/src/{components,lib,legacy,server,styles}`; `web/e2e/*.spec.ts` (served like Pages by `scripts/serve.mjs`); `web/tests/*.test.ts`
 - `.github/workflows/collect-and-deploy.yml` (collect + deploy on main), `.github/workflows/ci.yml` (all gates on every PR)
@@ -97,9 +138,9 @@ cd web && npx tsc --noEmit && npm run test:cov && npm run e2e     # E2E_PORT=439
 - Direction from the owner: production-site level; main UI follows LoL stat sites (lol.ps first), Overwatch sites only as a reference for maps; brand palette from `docs/BRAND.md` (tokens in `web/src/styles/globals.css`). Tier badge colours stay separate from the brand palette.
 - Copy: never claim the tiers "match your gut feel" (owner, 2026-09-28) — state what the site does. No voting.
 - Themes (#1): navy is the default and the brand; light is opt-in from the header toggle (`ThemeToggle`). The choice is stored in `localStorage["hpgg-theme"]` (reads/writes wrapped in try/catch — blocked storage means the choice lasts for the visit) and applied by an inline script in `app/layout.tsx` (`THEME_INIT_SCRIPT`, `src/lib/theme.ts`) before first paint. `prefers-color-scheme` is deliberately **not** followed: a visitor sees light only after choosing it. Light values for every themed token live under `:root[data-theme="light"]` in `globals.css`; tier and role colours are shared. Use tokens, never raw hex or `text-white`, in components. Contrast is gated twice: `tests/theme.test.ts` (token pairs, AA) and `e2e/theme.spec.ts` (every visible text run on every page, both themes, 390/1280).
-- Korean-first UI, but do not add Korea-only framing: the long-term goal is a global, multi-game community (issue #10 for i18n). Player search and community come later, so keep the header search generic.
+- Korean-first UI, but do not add Korea-only framing: the long-term goal is a global, multi-game community (issue #10 for i18n). Community comes later, so keep the header search generic (player search has its own page and the box on 홈).
 - Loop: `cd web && npm run dev` serves live data at http://localhost:5173/hots/ (dev builds into `.next-dev`, so a build or `npm run e2e` never breaks a running dev server); check phone (390 px) and desktop (1280 px) widths. On a real phone over Tailscale use the Mac's MagicDNS name or put its Tailscale IP in `web/.env.local` as `DEV_ORIGINS=100.x.y.z` (Next 16 blocks other dev origins). A `window.ethereum` error in the dev overlay comes from the Brave wallet, not from the site; `npm run e2e` pins behaviour (selectors are ids/data-attributes, not styles).
-- Next: #12 — rebuild the legacy pages in React one PR each (tier table → hero detail → heroes → maps, with #3 desktop density), then #1 light theme, #2 formula presets. Player search (#8) and community (#7) need a design session first (quota; no backend today) — see STATUS "Next session".
+- Next: #12 — rebuild the legacy pages in React one PR each (tier table → hero detail → heroes → maps, with #3 desktop density), then #1 light theme, #2 formula presets. Community (#7) and accounts (#28) build on the API server (see "Server").
 
 ## Backlog (see GitHub issues)
-UI polish (#1 light theme, #2 formula presets, #3 desktop density), i18n (#10), community/comments (#7), player search (Basic plan gives only 25 player calls/week — needs a plan change or a different design), Xal'atath (appears after a build_assets.py rerun with a 2.57 heroes-data build).
+UI polish (#1 light theme, #2 formula presets, #3 desktop density), i18n (#10), community/comments (#7), accounts with Battle.net login (#28), Xal'atath (appears after a build_assets.py rerun with a 2.57 heroes-data build). Player search (#8) is built on `/players` (10,000/week); it closes once api.hpgg.win is live.
