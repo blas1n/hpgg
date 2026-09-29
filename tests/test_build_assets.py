@@ -1,7 +1,10 @@
 from __future__ import annotations
 
 import importlib.util
+import json
 from pathlib import Path
+
+import pytest
 
 spec = importlib.util.spec_from_file_location(
     "build_assets", Path(__file__).parents[1] / "tools" / "build_assets.py"
@@ -69,6 +72,60 @@ def test_korean_hero_names_use_game_strings_including_manual_ids() -> None:
     }
 
 
+ROLES = [{"name": "Support", "ko": "지원가"}, {"name": "Ranged Assassin", "ko": "원거리 암살자"}]
+
+
+def test_stats_hero_names_are_every_hero_in_the_latest_stats_and_builds(tmp_path: Path) -> None:
+    latest = tmp_path / "latest"
+    latest.mkdir()
+    (latest / "qm.json").write_text(json.dumps({"rows": [{"hero": "Abathur", "map": "all"}]}))
+    (latest / "sl_low.json").write_text(json.dumps({"rows": [{"hero": "Li-Ming", "map": "x"}]}))
+    (latest / "builds.json").write_text(json.dumps({"heroes": {"Xal'atath": []}}))
+    (latest / "meta.json").write_text(json.dumps({"modes": {}}))
+    assert ba.stats_hero_names(tmp_path) == {"Abathur", "Li-Ming", "Xal'atath"}
+
+
+def test_hero_rows_come_from_game_data_and_skip_heroes_it_does_not_have_yet() -> None:
+    kokr = {
+        "gamestrings": {
+            **KOKR["gamestrings"],
+            "unit": {
+                **KOKR["gamestrings"]["unit"],
+                "expandedrole": {"Abathur": "지원가", "Wizard": "원거리 암살자"},
+            },
+        }
+    }
+    # #6: Xal'atath is in the stats of patch 2.57 but not in heroes-data 2.55.16 → left out, named
+    rows, missing = ba.hero_rows(HERODATA, kokr, {"Li-Ming", "Xal'atath", "Abathur"}, ROLES)
+    assert missing == ["Xal'atath"]
+    assert rows == [
+        {
+            "name": "Abathur",
+            "slug": "abathur",
+            "ko": "아바투르",
+            "role": "Support",
+            "role_ko": "지원가",
+            "short_name": "abathur",
+            "portrait": "img/heroes/abathur.png",
+        },
+        {
+            "name": "Li-Ming",
+            "slug": "li-ming",
+            "ko": "리밍",
+            "role": "Ranged Assassin",
+            "role_ko": "원거리 암살자",
+            "short_name": "liming",
+            "portrait": "img/heroes/li-ming.png",
+        },
+    ]
+
+
+def test_portrait_file_is_the_draft_portrait_of_the_game_data() -> None:
+    hero = {"portraits": {"draftScreen": "storm_ui_glues_draft_portrait_xalatath.png"}}
+    assert ba.portrait_file(hero) == "storm_ui_glues_draft_portrait_xalatath.png"
+    assert ba.portrait_file({}) is None
+
+
 def test_talent_table_maps_name_id_to_korean_and_icon_with_english_fallback() -> None:
     t = ba.talent_table(HERODATA, KOKR)
     assert t["AbathurPressureConvergence"] == {"ko": "압박 수렴", "icon": "a.png"}
@@ -125,3 +182,54 @@ def test_hero_talent_files_split_per_hero_slug_with_description_and_cooldown() -
     }
     # no Korean strings for Li-Ming's talent → English name, no description or cooldown keys
     assert files["li-ming"] == {"WizardAetherWalker": {"ko": "Aether Walker", "icon": "b.png"}}
+
+
+def test_main_adds_a_new_hero_once_the_game_data_build_has_it(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """#6 end to end: Xal'atath is in data/latest/ but not in heroes_ko.json; a rerun with a
+    heroes-data build that has her adds her row and talent file (no downloads: --skip-icons)."""
+    data, cache = tmp_path / "data", tmp_path / "cache"
+    (data / "latest").mkdir(parents=True)
+    cache.mkdir()
+    table = {
+        "roles": ROLES,
+        "heroes": [{"name": "Abathur"}],
+        "source": {"names": "old", "portraits": "heroes-images"},
+    }
+    (data / "heroes_ko.json").write_text(json.dumps(table))
+    rows = [{"hero": "Abathur", "map": "all"}, {"hero": "Xal'atath", "map": "all"}]
+    (data / "latest" / "qm.json").write_text(json.dumps({"rows": rows}))
+    herodata = {
+        "Abathur": HERODATA["Abathur"],
+        "Xalatath": {
+            "hyperlinkId": "Xalatath",
+            "talents": {"level10": [{"nameId": "XalatathVoidEruption", "icon": "x.png"}]},
+        },
+    }
+    unit = {
+        "name": {"Abathur": "아바투르", "Xalatath": "잘아타스"},
+        "expandedrole": {"Abathur": "지원가", "Xalatath": "원거리 암살자"},
+    }
+    names = {"XalatathVoidEruption|B|Heroic|False": "공허 폭발"}
+    kokr = {"gamestrings": {"unit": unit, "abiltalent": {"name": names}}}
+    (cache / "herodata_99999.json").write_text(json.dumps(herodata))
+    (cache / "kokr_99999.json").write_text(json.dumps(kokr))
+    argv = ["build_assets", "--build", "2.57.0.99999", "--data", str(data), "--cache", str(cache)]
+    monkeypatch.setattr("sys.argv", [*argv, "--skip-icons"])
+    ba.main()
+    out = json.loads((data / "heroes_ko.json").read_text())
+    assert [h["name"] for h in out["heroes"]] == ["Abathur", "Xal'atath"]
+    assert out["heroes"][1] == {
+        "name": "Xal'atath",
+        "slug": "xal-atath",
+        "ko": "잘아타스",
+        "role": "Ranged Assassin",
+        "role_ko": "원거리 암살자",
+        "short_name": "xalatath",
+        "portrait": "img/heroes/xal-atath.png",
+    }
+    assert out["roles"] == ROLES and out["source"]["portraits"] == "heroes-images"
+    assert "99999" in out["source"]["names"]
+    talents = json.loads((data / "talents" / "xal-atath.json").read_text())["talents"]
+    assert talents == {"XalatathVoidEruption": {"ko": "공허 폭발", "icon": "x.png"}}

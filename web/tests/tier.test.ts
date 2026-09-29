@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
+import { knownOnly } from "../src/lib/known";
 import type { Snapshot } from "../src/formula";
 import type { HeroTable, Meta } from "../src/data";
 import { DEFAULT_TIER_STATE, parseTierState, resolvePatch, tierSearch, tierTable, visibleRows, type TierState } from "../src/lib/tier";
@@ -10,8 +11,9 @@ const dataDir = join(dirname(fileURLToPath(import.meta.url)), "e2e-data");
 const json = <T>(rel: string): T => JSON.parse(readFileSync(join(dataDir, rel), "utf-8")) as T;
 const heroes = json<HeroTable>("heroes_ko.json");
 const meta = json<Meta>("latest/meta.json");
-const qm = json<Snapshot>("latest/qm.json");
-const sl = json<Snapshot>("latest/sl.json");
+// what the pages see: the e2e stats carry a hero without assets (Xal'atath), dropped by lib/known.ts
+const qm = knownOnly(json<Snapshot>("latest/qm.json"), heroes);
+const sl = knownOnly(json<Snapshot>("latest/sl.json"), heroes);
 
 describe("parseTierState / tierSearch", () => {
   it("an empty query is the default view: Quick Match, all maps, every role, by score descending", () => {

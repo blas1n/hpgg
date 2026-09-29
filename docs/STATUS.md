@@ -23,7 +23,7 @@ The patch changed overnight. Right after a patch the current sample is thin (QM 
 2. First community post (Inven / Arca) with a screenshot; watch day-7 uniques vs day-1 (success criterion in the design doc).
 
 ## Next session (owner, 2026-09-29)
-1. **Clear the existing issues**: ~~#12 React rebuild~~ (done), #3 desktop density, #1 light theme, #2 formula presets, #6 Xal'atath assets (when HeroesToolChest ships the data), #9 map detail, #10 i18n groundwork.
+1. **Clear the existing issues**: ~~#12 React rebuild~~ (done), #3 desktop density, #1 light theme, #2 formula presets, ~~#6~~ (heroes without assets are hidden; Xal'atath appears after `tools/build_assets.py --build <2.57 build>` once HeroesToolChest ships it), #9 map detail, #10 i18n groundwork.
 2. **Player search (전적검색, #8)** — design first. Heroes Profile Basic allows 25 player calls/week, so a live search needs a plan upgrade or a cached, on-demand design. The home page top is reserved for it (the search banner was removed; no non-working box is shown).
 3. **Counters / synergies on the hero page (#15)** → later a ban/pick simulator. `/heroes/matchups` exists (one hero per call, own 700/week bucket). References: lol.ps for the UI, hiosu.gg's simulator (`docs/refs/hiosu-banpick-2026-09-29.png`) for the draft flow — ours speaks in numbers, not per-pair prose.
 4. **Region filter (#14)** — 아시아 (KR) / 아메리카 (NA) / 유럽 (EU); decide the Heroes/Stats quota plan first (70/week, 28 used).

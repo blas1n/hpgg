@@ -204,6 +204,20 @@ def load_meta(data_dir: Path) -> dict[str, Any] | None:
     return loaded if isinstance(loaded, dict) else None
 
 
+def heroes_without_assets(
+    data_dir: Path, snapshots: dict[str, dict[str, Any]], builds: dict[str, Any] | None
+) -> list[str] | None:
+    """Heroes in the stats or builds that `heroes_ko.json` lacks — the site does not show them
+    (web/src/lib/known.ts). None when the hero table itself is missing."""
+    p = data_dir / "heroes_ko.json"
+    if not p.exists():
+        return None
+    known = {h["name"] for h in json.loads(p.read_text(encoding="utf-8"))["heroes"]}
+    seen = {r["hero"] for snap in snapshots.values() for r in snap["rows"]}
+    seen |= set((builds or {}).get("heroes", {}))
+    return sorted(seen - known)
+
+
 def build_meta(
     prev_meta: dict[str, Any] | None,
     *,

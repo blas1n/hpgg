@@ -26,6 +26,24 @@ test("heroes: grid of 90 with tier badges, search and role filter", async ({ pag
   expect(n).toBeLessThan(90);
 });
 
+// #6: the e2e stats carry a Xal'atath row (20,000 games, 67 % — rank 1 if counted) that heroes_ko.json does not have.
+// A hero without assets is shown nowhere and is left out before the tier cut, so every other expectation holds.
+test("a hero in the stats without assets appears on no page and takes no rank", async ({ page }) => {
+  const xal = (p: typeof page) => p.locator('[data-hero="xal-atath"], a[href*="xal-atath"]');
+  for (const path of ["./", "./?mode=sl", "./tier/", "./tier/?mode=sl", "./tier/?mode=sl&map=Cursed%20Hollow", "./tier/?mode=sl&tier=high", "./heroes/", "./maps/"]) {
+    await page.goto(path);
+    await expect(page.locator("main")).toBeVisible();
+    await expect(xal(page), path).toHaveCount(0);
+    await expect(page.locator("main"), path).not.toContainText("Xal'atath");
+  }
+  await page.goto("./tier/");
+  await expect(page.locator("#rows tr[data-hero]").first()).toHaveAttribute("data-hero", "qhira");
+  await page.locator("#site-search").fill("xal");
+  await expect(page.getByRole("listbox")).toContainText("맞는 영웅이 없습니다");
+  await page.goto("./heroes/xal-atath/");
+  await expect(page.locator("#meta-line")).toContainText("영웅이 없습니다");
+});
+
 test("heroes: the mode toggle swaps the tiers and the hero links carry the mode", async ({ page }) => {
   await page.goto("./heroes/?role=Healer");
   await expect(page.locator('#roles button[data-role="Healer"]')).toHaveAttribute("aria-pressed", "true");

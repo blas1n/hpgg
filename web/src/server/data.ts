@@ -19,7 +19,7 @@ export const readSnapshot = (key: string, patch: "current" | "previous" = "curre
 };
 
 /** What a page shows for a mode (+ bracket): the same patch rule as the tier table. */
-export const readShown = (mode: Mode, bracket: Bracket = "all"): Shown | null => pickShown(readMeta(), mode, bracket, readSnapshot);
+export const readShown = (mode: Mode, bracket: Bracket = "all"): Shown | null => pickShown(readMeta(), mode, bracket, readSnapshot, readHeroes());
 
 const opt = <T>(rel: string): T | null => (existsSync(join(dir, rel)) ? read<T>(rel) : null);
 let builds: BuildsFile | null | undefined; // 270 KB, read once per build rather than once per hero page
