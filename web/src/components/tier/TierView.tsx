@@ -38,7 +38,6 @@ export function TierView({ meta, heroes, maps, initial }: { meta: Meta; heroes: 
   const [state, setState] = useState<TierState>(DEFAULT_TIER_STATE);
   const [loaded, setLoaded] = useState<Loaded>({});
   const [error, setError] = useState<string | null>(null);
-  const [open, setOpen] = useState<string | null>(null);
 
   useEffect(() => {
     const s = parseTierState(location.search);
@@ -49,14 +48,13 @@ export function TierView({ meta, heroes, maps, initial }: { meta: Meta; heroes: 
     if (qs !== new URLSearchParams(location.search).toString()) history.replaceState(null, "", location.pathname + (qs ? `?${qs}` : ""));
   }, []);
 
-  const update = (patch: Partial<TierState>, closeRow = true) => {
+  const update = (patch: Partial<TierState>) => {
     setState((s) => {
       const next = { ...s, ...patch };
       const qs = tierSearch(next);
       history.replaceState(null, "", location.pathname + (qs ? `?${qs}` : ""));
       return next;
     });
-    if (closeRow) setOpen(null);
     setError(null);
   };
 
@@ -136,7 +134,7 @@ export function TierView({ meta, heroes, maps, initial }: { meta: Meta; heroes: 
         t.common.updated(shortDate(table.collectedAt)),
       ].join(" · ");
 
-  const sortBy = (key: SortKey) => update(sort === key ? { dir: dir === "desc" ? "asc" : "desc" } : { sort: key, dir: "desc" }, false);
+  const sortBy = (key: SortKey) => update(sort === key ? { dir: dir === "desc" ? "asc" : "desc" } : { sort: key, dir: "desc" });
 
   return (
     <main className="page-x mt-6 space-y-4 pb-10">
@@ -181,7 +179,7 @@ export function TierView({ meta, heroes, maps, initial }: { meta: Meta; heroes: 
               type="button"
               data-role={r.name}
               aria-pressed={role === r.name}
-              onClick={() => update({ role: r.name }, false)}
+              onClick={() => update({ role: r.name })}
               className={cx(
                 "shrink-0 whitespace-nowrap rounded-md px-2.5 py-1.5 text-[13px] font-semibold transition-colors",
                 role === r.name ? "bg-surface-3 text-fg" : "text-muted hover:text-fg",
@@ -293,13 +291,8 @@ export function TierView({ meta, heroes, maps, initial }: { meta: Meta; heroes: 
               <HeroRow
                 r={r}
                 cols={cols}
-                n={table.rows.length}
                 hasPrevious={table.hasPrevious}
-                sl={sl}
-                span={span}
                 mode={mode}
-                open={open === r.hero.slug}
-                onToggle={() => setOpen((o) => (o === r.hero.slug ? null : r.hero.slug))}
               />
               </Fragment>
             ))}
@@ -351,9 +344,8 @@ function RegionNote({ meta, mode, region }: { meta: Meta; mode: Mode; region: Ex
   );
 }
 
-function HeroRow({ r, cols, n, hasPrevious, sl, span, mode, open, onToggle }: { r: TierRow; cols: typeof COLUMNS; n: number; hasPrevious: boolean; sl: boolean; span: number; mode: Mode; open: boolean; onToggle: () => void }) {
-  const t = useT();
-  const href = hotsHref(useLocale());
+function HeroRow({ r, cols, hasPrevious, mode }: { r: TierRow; cols: typeof COLUMNS; hasPrevious: boolean; mode: Mode }) {
+  const link = hotsHref(useLocale()).hero(r.hero.slug, mode);
   const cell: Record<SortKey, string> = {
     score: formatScore(r.score),
     win_rate: pct(r.win_rate),
@@ -366,9 +358,12 @@ function HeroRow({ r, cols, n, hasPrevious, sl, span, mode, open, onToggle }: { 
       <tr
         data-hero={r.hero.slug}
         data-tier={r.tier}
-        // the whole row is a mouse target; the hero-name button is the one keyboard and screen readers use
-        onClick={onToggle}
-        className={cx("cursor-pointer border-b border-line/70 transition-colors hover:bg-surface-2", open && "bg-surface-2")}
+        // the whole row goes to the hero page (the table already shows every number; owner 2026-09-29);
+        // the hero name is the link keyboards, screen readers and new tabs use
+        onClick={(e) => {
+          if (!(e.target as HTMLElement).closest("a")) location.assign(link);
+        }}
+        className="cursor-pointer border-b border-line/70 transition-colors hover:bg-surface-2"
       >
         <td data-col="rank" className="py-1.5 pl-3 sm:pl-4">
           <span className="sm:flex sm:items-center sm:gap-2">
@@ -386,10 +381,9 @@ function HeroRow({ r, cols, n, hasPrevious, sl, span, mode, open, onToggle }: { 
             {/* the tier has its own column from 640px; on a phone it stays on the portrait */}
             <Portrait src={r.hero.portrait} size={34} tier={r.tier} tierClassName="sm:hidden" className="sm:size-7!" role={r.hero.role || undefined} />
             <span className="min-w-0 sm:flex sm:items-baseline sm:gap-1.5">
-              {/* no onClick of its own: its click reaches the row once */}
-              <button type="button" data-toggle aria-expanded={open} aria-controls={`detail-${r.hero.slug}`} className="block max-w-full truncate text-left font-semibold text-fg focus-visible:outline-2 focus-visible:outline-primary">
+              <a data-link href={link} className="block max-w-full truncate font-semibold text-fg focus-visible:outline-2 focus-visible:outline-primary">
                 <span data-name>{r.hero.ko}</span>
-              </button>
+              </a>
               <span className="hidden truncate text-2xs text-muted sm:block">
                 {/* the API name, where it differs from the name shown (on English pages it is the same) */}
                 {r.hero.name !== r.hero.ko && r.hero.name}
@@ -409,32 +403,7 @@ function HeroRow({ r, cols, n, hasPrevious, sl, span, mode, open, onToggle }: { 
           </td>
         ))}
       </tr>
-      {open && (
-        <tr id={`detail-${r.hero.slug}`} data-detail={r.hero.slug} className="border-b border-line/70 bg-surface-2">
-          <td colSpan={span} className="px-3 pb-3 sm:px-4">
-            <dl className="grid grid-cols-3 gap-1.5 pt-1 sm:grid-cols-5">
-              <Stat k={t.tier.detailRank} v={`${r.rank} / ${n}`} />
-              <Stat k={t.tier.detailWinRate} v={`${pct(r.win_rate)} ±${r.wrHalf.toFixed(1)}`} />
-              <Stat k={t.tier.detailSample} v={t.tier.detailGames(int(r.games))} />
-              <Stat k={t.common.pickRate} v={pct(r.pick)} />
-              {sl && <Stat k={t.common.banRate} v={pct(r.ban_rate)} id="d-ban" />}
-            </dl>
-            <a data-link href={href.hero(r.hero.slug, mode)} className="mt-2 inline-flex items-center rounded-md border border-line px-2.5 py-1.5 text-xs font-semibold text-fg-2 transition-colors hover:border-primary hover:text-primary">
-              {t.tier.heroDetail}
-            </a>
-          </td>
-        </tr>
-      )}
     </Fragment>
-  );
-}
-
-function Stat({ k, v, id }: { k: string; v: string; id?: string }) {
-  return (
-    <div className="rounded-md bg-surface px-2.5 py-1.5" data-stat={id}>
-      <dt className="text-2xs text-muted">{k}</dt>
-      <dd className="text-[13px] text-fg">{v}</dd>
-    </div>
   );
 }
 

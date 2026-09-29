@@ -8,7 +8,6 @@ test.beforeEach(async ({ page }) => {
 
 const row = (page: Page, slug: string) => page.locator(`#rows tr[data-hero="${slug}"]`);
 const tierOf = async (page: Page, slug: string) => row(page, slug).getAttribute("data-tier");
-const detail = (page: Page, slug: string) => page.locator(`#rows tr[data-detail="${slug}"]`);
 
 test("default view is Quick Match, all maps, no map dropdown, ban column hidden; expected tiers", async ({ page }) => {
   await page.goto("./tier/");
@@ -73,9 +72,8 @@ test("Storm League: map dropdown and ban column appear, tiers change", async ({ 
   expect(await tierOf(page, "illidan")).toBe("A");
   expect(await tierOf(page, "brightwing")).toBe("F");
   await expect(row(page, "brightwing").locator('td[data-col="ban_rate"] [data-v]')).toContainText("%");
-  await row(page, "brightwing").click();
-  await expect(detail(page, "brightwing")).toBeVisible();
-  await expect(detail(page, "brightwing").locator('[data-stat="d-ban"] dd')).toContainText("%");
+  // in Storm League the row goes to the hero page in Storm League
+  await expect(row(page, "brightwing").locator("a[data-link]")).toHaveAttribute("href", "/ko/hots/heroes/brightwing/?mode=sl");
 });
 
 test("selecting one map excludes thin rows from the cut and lists them as grey", async ({ page }) => {
@@ -90,25 +88,22 @@ test("selecting one map excludes thin rows from the cut and lists them as grey",
   await expect(row(page, firstGrey!)).toHaveCount(0);
 });
 
-test("detail row links to the hero page and asks for no vote (voting removed 2026-09-28)", async ({ page }) => {
+test("a row goes straight to the hero page: the name is the link, a click anywhere on the row follows it, nothing expands", async ({ page }) => {
   await page.goto("./tier/");
-  await row(page, "illidan").click();
-  const d = detail(page, "illidan");
-  await expect(d).toBeVisible(); // control: the row we inspect is really open
-  await expect(d.locator("a[data-link]")).toHaveAttribute("href", "/ko/hots/heroes/illidan/");
-  await expect(d.locator("button")).toHaveCount(0);
-  await expect(d.locator("dt")).not.toContainText(["점수"]); // the score is internal: table column only
-  await expect(d.locator("dt").first()).toHaveText("순위"); // control: the detail list is rendered
+  const link = row(page, "illidan").locator("a[data-link]");
+  await expect(link).toHaveAttribute("href", "/ko/hots/heroes/illidan/");
+  await expect(link).toHaveText("일리단");
+  await expect(page.locator("#rows tr[data-detail]")).toHaveCount(0);
+  await row(page, "illidan").locator('td[data-col="win_rate"]').click();
+  await expect(page).toHaveURL(/\/ko\/hots\/heroes\/illidan\/$/);
+  await expect(page.locator("h1")).toHaveText("일리단");
 });
 
-test("an opened row spans the whole table on a phone, and the table keeps its full width", async ({ page }) => {
+test("the table keeps its full width on a phone, with the name readable", async ({ page }) => {
   await page.goto("./tier/");
-  await row(page, "qhira").click();
   const visibleCols = await page.locator("#table thead th:visible").count();
   expect(visibleCols).toBe(5); // phone: rank, hero, score, win rate, pick
   const tableW = (await page.locator("#table").boundingBox())!.width;
-  const detailW = (await detail(page, "qhira").locator("td").boundingBox())!.width; // it spans the columns hidden on a phone too
-  expect(Math.abs(tableW - detailW)).toBeLessThanOrEqual(1);
   const rowW = (await row(page, "qhira").boundingBox())!.width;
   expect(Math.abs(tableW - rowW)).toBeLessThanOrEqual(1);
   await expect(row(page, "qhira").locator("[data-name]")).toBeVisible();
@@ -166,30 +161,13 @@ test("one formula: no formula selector, and an old ?preset= link opens the defau
   await expect(page.locator("#rows tr[data-changed]")).toHaveCount(0);
 });
 
-test("rows open with a real button: keyboard, aria-expanded and aria-controls; no <tr role=button> (#30)", async ({ page }) => {
-  await page.goto("./tier/");
-  await expect(page.locator('#rows tr[role="button"]')).toHaveCount(0);
-  const toggle = row(page, "illidan").locator("button[data-toggle]");
-  await expect(toggle).toHaveAttribute("aria-expanded", "false");
-  await toggle.focus();
+test("keyboard: the hero name is a real link (no <tr role=button>), Enter opens the hero page (#30)", async ({ page }) => {
+  await page.goto("./tier/?mode=sl");
+  await expect(page.locator('#rows tr[role="button"], #rows [data-toggle]')).toHaveCount(0);
+  await row(page, "qhira").locator("a[data-link]").focus();
   await page.keyboard.press("Enter");
-  await expect(detail(page, "illidan")).toBeVisible();
-  await expect(toggle).toHaveAttribute("aria-expanded", "true");
-  await expect(toggle).toHaveAttribute("aria-controls", "detail-illidan");
-  await expect(page.locator("#detail-illidan")).toBeVisible();
-  await page.keyboard.press("Space");
-  await expect(detail(page, "illidan")).toHaveCount(0);
-  // a click anywhere on the row still opens it, exactly once
-  await row(page, "qhira").locator('td[data-col="rank"]').click();
-  await expect(detail(page, "qhira")).toBeVisible();
-  await toggleClick(page);
+  await expect(page).toHaveURL(/\/ko\/hots\/heroes\/qhira\/\?mode=sl$/);
 });
-
-async function toggleClick(page: Page) {
-  // clicking the button itself toggles once (the click does not also count on the row)
-  await row(page, "qhira").locator("button[data-toggle]").click();
-  await expect(detail(page, "qhira")).toHaveCount(0);
-}
 
 test("the formula line stays readable: at most about 90 characters wide on desktop (#30)", async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 900 });

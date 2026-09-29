@@ -27,7 +27,7 @@ Automated as Playwright specs in `web/e2e/tierlist.spec.ts`, run with `npm run e
 - [x] Every old URL (`/hots/`, section pages, all 90 heroes, all 15 maps) serves a forwarder with canonical, meta refresh and noindex, and its target exists; with JS it keeps query and hash, `hots/*.html` go straight to the final URL, `/` and old links follow the stored language in one hop; without JS the meta refresh moves on
 - [x] Every page type (홈, 티어, 영웅, 영웅 상세, 전장, 전장 상세, 전적 검색): `#lang-toggle` on `/ko/…` links to `/en/…` + the same path; ko → en → ko, `html[lang]` and the heading follow
 - [x] English pages: `lang="en"`, canonical = the English URL, `hreflang` ko / en / x-default (= `/ko/…`); Korean pages point back
-- [x] No visible Korean on English pages, including browser-built views (SL, map + preset, bracket, region, player result, talent popover, tier row detail); control: the same check finds Korean on 홈
+- [x] No visible Korean on English pages, including browser-built views (SL, map, bracket, region, player result, talent popover, 밴픽); control: the same check finds Korean on 홈
 - [x] English player page: Storm League / Diamond 2 / Unranked Draft / ARAM, ARAM map names, hero links under `/en/`; Korean: 일반 선발전, 무작위 영웅 대전, 브락시스 전초기지
 - [x] Links stay in the language (nav, hero search incl. Korean query on English pages, map objective with its en-us source)
 - [x] The switch keeps query and hash; the stored choice redirects a Korean link to English before DOMContentLoaded and back; no choice = no redirect even with an English browser; blocked storage still switches without errors
@@ -80,3 +80,6 @@ Automated as Playwright specs in `web/e2e/tierlist.spec.ts`, run with `npm run e
 - [x] Cho'gall fills both slots where the team picks twice; undo takes both back
 - [x] The map sets a map term and lands in the URL; the first-pick toggle is disabled once the draft started
 - [x] In the header nav; no horizontal scroll at 390 px; contrast AA in both themes and languages; no Korean on the English page
+
+## Automated — tier rows go to the hero page (`e2e/tierlist.spec.ts`, owner 2026-09-29)
+- [x] No expanding row: the hero name is a link to the hero page (mode kept); a click anywhere on the row follows it; Enter on the focused link too

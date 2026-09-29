@@ -99,15 +99,11 @@ test("English pages show no Korean text, including views built in the browser", 
     await expect(page.locator("main"), v).toBeVisible();
     expect(await visibleHangul(page), v).toEqual([]);
   }
-  // the talent popover (English game text) and the tier row detail
+  // the talent popover (English game text)
   await page.goto("/en/hots/heroes/illidan/");
   await page.locator("#builds [data-talent]").first().click();
   await expect(page.locator("#talent-pop")).toBeVisible();
   await expect(page.locator("#talent-pop [data-pop-level]")).toContainText("Level 1");
-  expect(await visibleHangul(page)).toEqual([]);
-  await page.goto("/en/hots/tier/");
-  await page.locator("#rows tr[data-hero]").first().click();
-  await expect(page.locator("#rows tr[data-detail]")).toContainText("Hero details");
   expect(await visibleHangul(page)).toEqual([]);
 });
 
