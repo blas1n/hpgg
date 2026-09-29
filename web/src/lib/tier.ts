@@ -1,5 +1,5 @@
 /** Tier table view model. Pure: the default view is computed at build time, other views in the browser. */
-import { computeTiers, PRESETS, type Preset, type Snapshot, type Tier } from "../formula";
+import { appliedParty, computeTiers, PRESETS, type Party, type Preset, type Snapshot, type Tier } from "../formula";
 import { wilson } from "../wilson";
 import { sameCohort } from "./cohort";
 import { REGIONS, thinSample, type Bracket, type HeroTable, type Meta, type Mode, type PatchChoice, type Region } from "../data";
@@ -97,6 +97,7 @@ export interface TierTable {
   hasPrevious: boolean;
   patch: string;
   collectedAt: string;
+  party: Party | null; // printed in the formula when this view's win rates are party-corrected
 }
 
 const slugOf = (name: string) => name.toLowerCase().replace(/[^a-z0-9]+/g, "-");
@@ -144,6 +145,7 @@ export function tierTable(snap: Snapshot, previous: Snapshot | null, map: string
     hasPrevious: prev !== null,
     patch: snap.patch,
     collectedAt: snap.collected_at,
+    party: appliedParty(snap, rows),
   };
 }
 

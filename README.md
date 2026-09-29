@@ -19,7 +19,7 @@ uv run python -m collector      # ~5 min (group_by_map is limited to 1 request/m
 
 cd web && npm ci && npm test && npm run e2e && npm run build   # frontend; `npm run dev` serves ../data live at http://localhost:5173/ko/hots/
 ```
-If the Heroes Profile account is in **Test Data** mode, calls cost no quota and return placeholder rows (and `group_by_map` is ignored, so only `map: "all"` rows are produced). In **Live Data** mode the real per-map payload arrives; Heroes/Stats allows 70 calls per rolling week on the Basic plan and one run uses 5.
+If the Heroes Profile account is in **Test Data** mode, calls cost no quota and return placeholder rows (and `group_by_map` is ignored, so only `map: "all"` rows are produced). In **Live Data** mode the real per-map payload arrives; Heroes/Stats allows 70 calls per rolling week on the Basic plan and one run uses 8 (see `docs/HANDOFF.md` "Quotas").
 
 ## Rules
 - The token lives only in `.env`. It never appears in logs, exceptions or commits (asserted by tests).

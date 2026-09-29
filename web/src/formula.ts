@@ -14,6 +14,15 @@ export interface Row {
   win_rate: number; // %p 0–100
   ban_rate: number; // %p 0–100
   ci: number | null;
+  /** Party-corrected win rate (#36), set by the collector on the QM / SL `map="all"` rows: the formula's win-rate input. */
+  tier_win_rate?: number;
+}
+
+/** How the collector corrected the win rate for premade groups (collector/party.py). */
+export interface Party {
+  k: number;
+  solo_pooled: number; // %p, pooled win rate of solo-queue games
+  solo_games: number;
 }
 
 export interface Snapshot {
@@ -26,6 +35,7 @@ export interface Snapshot {
   collected_at: string;
   matches: number;
   rows: Row[];
+  party?: Party | null;
 }
 
 export type PresetKind = "multiplicative" | "additive" | "winrate";
@@ -61,7 +71,7 @@ export function shrinkWinRate(winRate: number, games: number, k: number): number
 }
 
 export function scoreRow(r: Row, p: Preset): number {
-  const wrs = shrinkWinRate(r.win_rate, r.games, p.k);
+  const wrs = shrinkWinRate(r.tier_win_rate ?? r.win_rate, r.games, p.k);
   switch (p.kind) {
     case "multiplicative":
       return r.pick * (wrs - 50) * p.wPick + r.ban_rate * p.wBan;
@@ -116,6 +126,11 @@ export function computeTiers(rows: Row[], preset: Preset, minGames = MIN_GAMES):
   return { ranked, grey };
 }
 
+/** The snapshot's party correction when the rows being ranked carry it (per-map rows never do). */
+export function appliedParty(snap: Snapshot | null, rows: Row[]): Party | null {
+  return snap?.party && rows.some((r) => r.tier_win_rate !== undefined) ? snap.party : null;
+}
+
 /** Heroes whose tier differs between two presets (rank-only moves do not count). */
 export function changedHeroes(rows: Row[], a: Preset, b: Preset, minGames = MIN_GAMES): string[] {
   const ta = new Map(computeTiers(rows, a, minGames).ranked.map((x) => [x.row.hero, x.tier]));
@@ -137,10 +152,13 @@ export function formulaLine(p: Preset, hasBans: boolean, locale: Locale): string
 }
 
 /** The worked formula under "자세히" (Details), for the selected preset. */
-export function formulaDetail(p: Preset, hasBans: boolean, minGames: number, locale: Locale): string {
+export function formulaDetail(p: Preset, hasBans: boolean, minGames: number, locale: Locale, party: Party | null = null): string {
   const f = messages[locale].formula;
   const ban = hasBans ? f.ban(String(p.wBan)) : f.noBan;
   const score =
     p.kind === "multiplicative" ? f.detailMultiplicative(String(p.wPick), ban) : p.kind === "additive" ? f.detailAdditive(String(p.wPick), ban) : f.detailWinrate;
-  return f.detail(String(p.k), score, String(minGames));
+  const detail = f.detail(String(p.k), score, String(minGames));
+  if (!party) return detail;
+  const shift = (50 - party.solo_pooled).toFixed(2);
+  return f.party(shift, String(party.k), party.solo_pooled.toFixed(2)) + "\n" + detail.replace(f.wrInput, f.wrInputCorrected);
 }

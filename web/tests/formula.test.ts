@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
-import { PRESETS, changedHeroes, formulaDetail, formulaLine, computeTiers, scoreRow, shrinkWinRate, type Row, type Snapshot } from "../src/formula";
+import { PRESETS, appliedParty, changedHeroes, formulaDetail, formulaLine, computeTiers, scoreRow, shrinkWinRate, type Row, type Snapshot } from "../src/formula";
 import { wilson } from "../src/wilson";
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -153,5 +153,35 @@ describe("printed formula follows the preset", () => {
     expect(d).toContain("score = pick rate × (WRs − 50) × 3   (Quick Match has no bans)");
     expect(d).toContain("heroes with 200+ games");
     expect(d).toContain("S 6% · A 24% · B 54% · C 82% · D 94%");
+  });
+});
+
+describe("party correction (#36): the collector's tier_win_rate is the formula's win-rate input", () => {
+  const base: Row = { hero: "X", map: "all", wins: 550, losses: 450, games: 1000, bans: 0, pick: 20, popularity: 20, win_rate: 55, ban_rate: 0, ci: null };
+  const party = { k: 1000, solo_pooled: 48.6312, solo_games: 265875 };
+
+  it("scoreRow reads tier_win_rate when the row has one, win_rate otherwise", () => {
+    expect(scoreRow({ ...base, tier_win_rate: 52 }, PRESETS.aichi)).toBeCloseTo(20 * (shrinkWinRate(52, 1000, 500) - 50) * 3, 6);
+    expect(scoreRow({ ...base, tier_win_rate: 52 }, PRESETS.winrate)).toBeCloseTo(shrinkWinRate(52, 1000, 500), 6);
+    expect(scoreRow(base, PRESETS.aichi)).toBeCloseTo(20 * (shrinkWinRate(55, 1000, 500) - 50) * 3, 6);
+  });
+
+  it("appliedParty: the snapshot's party block only when the rows being ranked carry the correction", () => {
+    const snap: Snapshot = { ...qm, party, rows: [{ ...base, tier_win_rate: 52 }, { ...base, map: "Cursed Hollow" }] };
+    expect(appliedParty(snap, snap.rows.filter((r) => r.map === "all"))).toEqual(party);
+    expect(appliedParty(snap, snap.rows.filter((r) => r.map === "Cursed Hollow"))).toBeNull();
+    expect(appliedParty(qm, allRows(qm))).toBeNull();
+  });
+
+  it("the printed details say how the win rate was corrected, with the numbers used", () => {
+    const ko = formulaDetail(PRESETS.aichi, false, 200, "ko", party);
+    expect(ko).toContain("보정승률 = 승률 + (솔로승률 + 1.37 − 승률) × 솔로게임수 / (솔로게임수 + 1000)");
+    expect(ko).toContain("WRs   = 50 + (보정승률 − 50) × 게임수 / (게임수 + 500)");
+    expect(ko).toContain("48.63%");
+    const en = formulaDetail(PRESETS.aichi, false, 200, "en", party);
+    expect(en).toContain("corrected WR = win rate + (solo WR + 1.37 − win rate) × solo games / (solo games + 1000)");
+    expect(en).toContain("WRs   = 50 + (corrected WR − 50) × games / (games + 500)");
+    // without the correction the text is exactly what it was
+    expect(formulaDetail(PRESETS.aichi, false, 200, "ko", null)).toBe(formulaDetail(PRESETS.aichi, false, 200, "ko"));
   });
 });

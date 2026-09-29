@@ -177,7 +177,8 @@ export const ko = {
     bannerPreviousEnd: " 기준으로 보여줍니다.",
     bannerShowCurrent: "현재 패치 보기",
     bannerThin: (patch: string, days: string) => `패치 ${patch} 후 ${days}일, 표본이 아직 적습니다.`,
-    formulaTail: (k: string) => ` · 승률은 표본 수축(k=${k}) · `,
+    formulaTail: (k: string, party = "") => ` · 승률은 ${party}표본 수축(k=${k}) · `,
+    formulaParty: (k: string) => `파티 보정(솔로 큐 기준, k=${k}) 후 `,
     formulaCuts: (min: string) => `${min}게임 미만 제외 · 상위 6% S / 24% A / 54% B / 82% C / 94% D`,
     details: "자세히",
   },
@@ -190,6 +191,12 @@ export const ko = {
     detailMultiplicative: (w: string, ban: string) => `픽률 × (WRs − 50) × ${w}${ban}`,
     detailAdditive: (w: string, ban: string) => `(WRs − 50) + 픽률 × ${w}${ban}`,
     detailWinrate: "WRs   (픽률·밴률은 쓰지 않음)",
+    party: (shift: string, k: string, pooled: string) =>
+      `보정승률 = 승률 + (솔로승률 + ${shift} − 승률) × 솔로게임수 / (솔로게임수 + ${k})
+        솔로승률 = 그 영웅을 혼자 큐를 돌린 플레이어가 한 게임만의 승률. 솔로 게임 전체 승률 ${pooled}% 를 50% 에 맞춤
+        (파티는 더 자주 이깁니다. 파티에서 많이 쓰는 영웅이 실제보다 강해 보이지 않도록. 표의 승률 열은 보정 전 그대로)`,
+    wrInput: "(승률 − 50) × 게임수",
+    wrInputCorrected: "(보정승률 − 50) × 게임수",
     detail: (k: string, score: string, min: string) => `WRs   = 50 + (승률 − 50) × 게임수 / (게임수 + ${k})
 점수  = ${score}
 티어  = ${min}게임 이상인 영웅을 점수순으로 세워 누적 비율로 자름 (S 6% · A 24% · B 54% · C 82% · D 94% · F 나머지)

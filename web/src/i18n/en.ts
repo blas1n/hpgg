@@ -173,7 +173,8 @@ export const en: Messages = {
     bannerPreviousEnd: ".",
     bannerShowCurrent: "Show the current patch",
     bannerThin: (patch: string, days: string) => `${plural(days, "day", "days")} after patch ${patch} there are still few games.`,
-    formulaTail: (k: string) => ` · win rate shrunk toward 50 (k=${k}) · `,
+    formulaTail: (k: string, party = "") => ` · win rate ${party}shrunk toward 50 (k=${k}) · `,
+    formulaParty: (k: string) => `party-corrected (solo-queue baseline, k=${k}), then `,
     formulaCuts: (min: string) => `heroes under ${min} games left out · top 6% S / 24% A / 54% B / 82% C / 94% D`,
     details: "Details",
   },
@@ -186,6 +187,12 @@ export const en: Messages = {
     detailMultiplicative: (w: string, ban: string) => `pick rate × (WRs − 50) × ${w}${ban}`,
     detailAdditive: (w: string, ban: string) => `(WRs − 50) + pick rate × ${w}${ban}`,
     detailWinrate: "WRs   (pick and ban rates are not used)",
+    party: (shift: string, k: string, pooled: string) =>
+      `corrected WR = win rate + (solo WR + ${shift} − win rate) × solo games / (solo games + ${k})
+        solo WR = the win rate of only the games in which the hero's player queued alone; all solo games together (${pooled}%) are re-centred on 50%
+        (premade groups win more; this keeps heroes popular in groups from looking stronger than they are. The table's win-rate column is uncorrected)`,
+    wrInput: "(win rate − 50) × games",
+    wrInputCorrected: "(corrected WR − 50) × games",
     detail: (k: string, score: string, min: string) => `WRs   = 50 + (win rate − 50) × games / (games + ${k})
 score = ${score}
 tier  = heroes with ${min}+ games, ranked by score, cut by cumulative share (S 6% · A 24% · B 54% · C 82% · D 94% · F the rest)

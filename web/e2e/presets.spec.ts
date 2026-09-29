@@ -26,8 +26,8 @@ test("presets: choosing 가산식 re-tiers, marks heroes whose tier moved, print
   await expect(row(page, "whitemane")).toHaveAttribute("data-changed", "S");
   await expect(row(page, "whitemane").locator("[data-base-tier]")).toHaveText("기본 S");
   await expect(row(page, "illidan")).not.toHaveAttribute("data-changed", /.*/); // B under both
-  await expect(page.locator("#rows tr[data-changed]")).toHaveCount(31); // 31 QM heroes change tier in the fixture
-  await expect(page.locator("#preset-diff")).toContainText("31");
+  await expect(page.locator("#rows tr[data-changed]")).toHaveCount(32); // 32 QM heroes change tier in the fixture (The Butcher's corrected win rate included)
+  await expect(page.locator("#preset-diff")).toContainText("32");
   await expect(page.locator("#formula")).toContainText("티어 점수 = (승률 − 50) + 픽률 × 0.15");
   await expect(page.locator("#formula")).not.toContainText("× 3");
   await page.locator("#formula + details summary").click();

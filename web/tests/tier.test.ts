@@ -83,6 +83,17 @@ describe("tierTable", () => {
     expect(t.rows.find((r) => r.hero.slug === "illidan")!.prevRank).toBeGreaterThan(0);
   });
 
+  it("carries the party correction for the printed formula only on the view that has it", () => {
+    const party = { k: 1000, solo_pooled: 48.63, solo_games: 1000 };
+    const snap: Snapshot = { ...qm, party, rows: qm.rows.map((r) => (r.map === "all" ? { ...r, tier_win_rate: r.win_rate } : r)) };
+    expect(tierTable(snap, null, "all", heroes, 200).party).toEqual(party);
+    expect(tierTable({ ...qm, party: null }, null, "all", heroes, 200).party).toBeNull();
+    const slSnap: Snapshot = { ...sl, party, rows: sl.rows.map((r) => (r.map === "all" ? { ...r, tier_win_rate: r.win_rate } : r)) };
+    const map = sl.rows.find((r) => r.map !== "all")!.map;
+    expect(tierTable(slSnap, null, "all", heroes, 200).party).toEqual(party);
+    expect(tierTable(slSnap, null, map, heroes, 200).party).toBeNull();
+  });
+
   it("ignores a previous snapshot of a different bracket cohort", () => {
     const prev: Snapshot = { ...sl, league_tier: [1, 2] };
     const cur: Snapshot = { ...sl, league_tier: [1, 2, 3, 4] };

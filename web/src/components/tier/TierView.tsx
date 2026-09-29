@@ -5,7 +5,7 @@ import { assetUrl, daysSince, hotsHref, loadSnapshot, REGIONS, regionSample, sho
 import { useLocale, useT } from "@/i18n/client";
 import type { Locale } from "@/i18n/locale";
 import type { Messages } from "@/i18n/messages";
-import { formulaDetail, formulaLine, PRESETS, type Preset, type Snapshot, type Tier } from "@/formula";
+import { formulaDetail, formulaLine, PRESETS, type Party, type Preset, type Snapshot, type Tier } from "@/formula";
 import { bracketMatches, regionMatches } from "@/lib/shown";
 import { DEFAULT_TIER_STATE, formatScore, parseTierState, resolvePatch, tierSearch, tierTable, visibleRows, type PresetId, type SortKey, type TierRow, type TierState, type TierTable } from "@/lib/tier";
 import { Card, cx, Portrait, Segmented, TierBadge, wrTone } from "../ui";
@@ -347,7 +347,7 @@ export function TierView({ meta, heroes, maps, initial }: { meta: Meta; heroes: 
         </section>
       )}
 
-      <Formula sl={sl} min={meta.min_games_for_tier} preset={preset} t={t} locale={locale} />
+      <Formula sl={sl} min={meta.min_games_for_tier} preset={preset} party={table.party} t={t} locale={locale} />
     </main>
   );
 }
@@ -530,18 +530,18 @@ function PatchBanner({ meta, mode, patch, auto, onCurrent }: { meta: Meta; mode:
   );
 }
 
-function Formula({ sl, min, preset, t, locale }: { sl: boolean; min: number; preset: Preset; t: Messages; locale: Locale }) {
+function Formula({ sl, min, preset, party, t, locale }: { sl: boolean; min: number; preset: Preset; party: Party | null; t: Messages; locale: Locale }) {
   return (
     <div className="space-y-2">
       <p id="formula" className="rounded-lg border border-line bg-surface px-3 py-2 font-mono text-xs [overflow-wrap:anywhere] text-fg-2">
         {formulaLine(preset, sl, locale)}
-        {t.tier.formulaTail(String(preset.k))}
+        {t.tier.formulaTail(String(preset.k), party ? t.tier.formulaParty(String(party.k)) : "")}
         {t.tier.formulaCuts(String(min))}
       </p>
       <details className="text-[13px]">
         <summary className="cursor-pointer text-secondary">{t.tier.details}</summary>
         <pre className="mt-2 whitespace-pre-wrap rounded-lg bg-surface p-3 text-xs [overflow-wrap:anywhere] text-fg-2">
-          {formulaDetail(preset, sl, min, locale)}
+          {formulaDetail(preset, sl, min, locale, party)}
         </pre>
       </details>
     </div>
