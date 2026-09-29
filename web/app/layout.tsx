@@ -5,7 +5,7 @@ import "@/styles/globals.css";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://hpgg.win"),
-  title: { default: "hpgg.win — Happy Good Game", template: "%s | HPGG" },
+  title: { default: "hpgg.win · Happy Good Game", template: "%s | HPGG" },
   description: "매치 데이터로 보는 게임 메타 통계. 공식을 숨기지 않습니다.",
   icons: { icon: "/img/brand/icon-sm.png", apple: "/img/brand/icon.png" },
   openGraph: { siteName: "hpgg.win", locale: "ko_KR", type: "website", images: ["/img/brand/logo-h.png"] },

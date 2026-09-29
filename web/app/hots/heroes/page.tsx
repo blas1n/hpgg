@@ -3,7 +3,7 @@ import { HeroesView } from "@/components/heroes/HeroesView";
 import { fallbackNote, type Mode } from "@/data";
 import { readHeroes, readMeta, readSearchIndex, readShown } from "@/server/data";
 
-export const metadata: Metadata = { title: "영웅", description: "히어로즈 오브 더 스톰 영웅 목록 — 역할별, 현재 티어와 함께." };
+export const metadata: Metadata = { title: "영웅", description: "히어로즈 오브 더 스톰 영웅 목록: 역할별, 현재 티어와 함께." };
 
 /** 영웅 — every hero with its tier in both modes, computed at build time; the page fetches nothing. */
 export default function HeroesPage() {

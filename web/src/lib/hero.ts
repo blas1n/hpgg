@@ -119,8 +119,13 @@ export interface BuildTalentView {
   desc?: string;
   cd?: string;
 }
+/** Below this many games a build's win rate is noise (right after a patch: 1-3 games, "100 %"). */
+export const BUILD_MIN_GAMES = 30;
+
 export interface BuildView {
   games: number;
+  /** games < BUILD_MIN_GAMES: listed, but its win rate is not presented as a finding. */
+  thin: boolean;
   win_rate: number;
   /** games relative to the most played build (bar length). */
   share: number;
@@ -132,6 +137,7 @@ export function heroBuilds(builds: BuildsFile | null, talents: TalentTable | nul
   const max = Math.max(1, ...list.map((b) => b.games));
   return list.map((b) => ({
     games: b.games,
+    thin: b.games < BUILD_MIN_GAMES,
     win_rate: b.win_rate,
     share: b.games / max,
     talents: b.talents.map((t) => {

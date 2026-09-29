@@ -55,6 +55,9 @@ export function Portrait({ src, size = 40, tier, role, className }: { src?: stri
   );
 }
 
+/** Win-rate colour: above / below 50 %, neutral when it prints as 50.0 %. */
+export const wrTone = (wr: number): string => (Math.abs(wr - 50) < 0.05 ? "text-fg-2" : wr > 50 ? "text-pos" : "text-neg");
+
 /** ▲3 / ▼2 / —. `value` = previous rank − current rank. */
 export function RankDelta({ value, className }: { value: number | null; className?: string }) {
   if (value === null) return <span className={cx("text-2xs text-muted", className)}>–</span>;
