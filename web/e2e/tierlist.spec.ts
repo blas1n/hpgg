@@ -112,7 +112,7 @@ test("the table keeps its full width on a phone, with the name readable", async 
 test("?patch=previous shows the banner and previous-patch data; state round-trips through the URL", async ({ page }) => {
   await page.goto("./tier/?patch=previous");
   await expect(page.locator("#patch-banner")).toBeVisible();
-  await expect(page.locator("#patch-banner")).toContainText("이전 패치");
+  await expect(page.locator("#patch-banner")).toHaveText("새 패치 2.55.17.98025의 표본을 쌓는 중입니다. 현재 패치 보기");
   await expect(page.locator("#meta-line")).toContainText("2.55.17.97771");
   await page.goto("./tier/?mode=sl&map=Cursed%20Hollow&role=Tank&sort=win_rate");
   await expect(page.locator("#mode-sl")).toHaveAttribute("aria-pressed", "true");
