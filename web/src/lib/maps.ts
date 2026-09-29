@@ -1,5 +1,5 @@
 /** Map detail view model (/hots/maps/<slug>/). Pure; computed at build time. */
-import { computeTiers, PRESETS, type Snapshot, type Tier } from "../formula";
+import { computeTiers, type Snapshot, type Tier } from "../formula";
 import { wilson } from "../wilson";
 import type { HeroTable } from "../data";
 import { DEFAULT_LOCALE, type Locale } from "../i18n/locale";
@@ -61,7 +61,7 @@ export interface MapDetail {
 export function mapDetail(sl: Snapshot, map: string, heroes: HeroTable, minGames: number, n = MAP_TOP_N): MapDetail {
   const by = new Map(heroes.heroes.map((h) => [h.name, h]));
   const rows = sl.rows.filter((r) => r.map === map);
-  const tier = new Map(computeTiers(rows, PRESETS.aichi, minGames).ranked.map((x) => [x.row.hero, x.tier]));
+  const tier = new Map(computeTiers(rows, minGames).ranked.map((x) => [x.row.hero, x.tier]));
   const qualified = rows.filter((r) => r.games >= minGames && by.has(r.hero));
   const top = [...qualified]
     .sort((a, b) => b.win_rate - a.win_rate || b.games - a.games)

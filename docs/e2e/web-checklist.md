@@ -41,11 +41,11 @@ Automated as Playwright specs in `web/e2e/tierlist.spec.ts`, run with `npm run e
 - [x] Storage that throws: page renders navy, toggle still works for the visit, no page error
 - [x] Every visible text run on 홈 / 티어 (QM, SL) / 영웅 / 영웅 상세 (QM, SL) / 전장 reaches WCAG AA against the colour behind it, both themes, 390 and 1280 px (a planted low-contrast line is caught — control)
 
-## Automated — formula presets (`e2e/presets.spec.ts`, #2)
-- [x] Default: `#preset` = 아이치, 아이치 formula printed, nothing marked
-- [x] 가산식: rows re-tier (Whitemane S→A in QM), 31 moved heroes carry `data-changed` + "기본 X" chip, count in `#preset-diff`, printed formula and "자세히" follow, `preset=additive` in the URL; "기본 공식으로" clears it
-- [x] `?mode=sl&preset=additive` opens with it (Brightwing F→A); `?preset=winrate` prints "티어 점수 = 승률" and unsigned scores; unknown value → 아이치
-- [x] No horizontal scroll at 390 px with the selector
+## Automated — one formula, party correction (`e2e/tierlist.spec.ts`, #36; presets removed 2026-09-29)
+- [x] No formula selector; the Storm League filters are region, bracket and map only; no person's name on the page
+- [x] An old `?preset=` link opens the default view and the parameter leaves the URL (`%20` vs `+` alone never rewrites a link)
+- [x] Quick Match ranks by `tier_win_rate` (fixture: The Butcher → F) while its win-rate cell stays raw
+- [x] The formula line and "자세히" print the party correction on QM; the uncorrected SL fixture prints none; English too
 
 ## Automated — desktop density and design review (`e2e/density.spec.ts`, #3 #16)
 - [x] 1280: tier table has its own tier column (no badge on the portrait), rows ≤ 42 px, ≥ 14 heroes above a 900 px fold

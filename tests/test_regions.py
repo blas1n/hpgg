@@ -76,8 +76,8 @@ async def test_run_collects_todays_region_for_qm_and_sl(
     assert set(meta["modes"]) == {"qm", "sl", "sl_low", "sl_high", "qm_kr", "sl_kr"}
     assert meta["modes"]["qm_kr"]["collected_at"] == "2026-09-30T18:30:00Z"
     assert meta["modes"]["qm_kr"]["heroes_over_200"] >= 0
-    # 4 stats + 2 region calls at 1/min (5 gaps) + 1 before builds
-    assert fake_sleep.calls == [60.0] * 6
+    # 4 stats + 2 solo + 2 region calls at 1/min (7 gaps) + 1 before builds
+    assert fake_sleep.calls == [60.0] * 8
 
 
 @respx.mock

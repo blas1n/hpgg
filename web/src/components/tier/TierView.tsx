@@ -5,9 +5,9 @@ import { assetUrl, daysSince, hotsHref, loadSnapshot, REGIONS, regionSample, sho
 import { useLocale, useT } from "@/i18n/client";
 import type { Locale } from "@/i18n/locale";
 import type { Messages } from "@/i18n/messages";
-import { formulaDetail, formulaLine, PRESETS, type Preset, type Snapshot, type Tier } from "@/formula";
+import { formulaDetail, formulaLine, FORMULA, type Party, type Snapshot } from "@/formula";
 import { bracketMatches, regionMatches } from "@/lib/shown";
-import { DEFAULT_TIER_STATE, formatScore, parseTierState, resolvePatch, tierSearch, tierTable, visibleRows, type PresetId, type SortKey, type TierRow, type TierState, type TierTable } from "@/lib/tier";
+import { DEFAULT_TIER_STATE, formatScore, parseTierState, resolvePatch, tierSearch, tierTable, visibleRows, type SortKey, type TierRow, type TierState, type TierTable } from "@/lib/tier";
 import { Card, cx, Portrait, Segmented, TierBadge, wrTone } from "../ui";
 
 const pct = (n: number) => `${n.toFixed(1)}%`;
@@ -23,7 +23,6 @@ const COLUMNS: { key: SortKey; sl?: true; wide?: true }[] = [{ key: "score" }, {
 const WIDE = "max-sm:w-0 max-sm:p-0 max-sm:*:hidden";
 const LG = "max-lg:w-0 max-lg:p-0 max-lg:*:hidden";
 const BRACKETS: Bracket[] = ["all", "low", "high"];
-const PRESET_IDS = Object.keys(PRESETS) as PresetId[];
 
 type Loaded = Record<string, Snapshot | null>; // "latest/qm", "previous/sl_low", … ; null = not published
 
@@ -42,7 +41,12 @@ export function TierView({ meta, heroes, maps, initial }: { meta: Meta; heroes: 
   const [open, setOpen] = useState<string | null>(null);
 
   useEffect(() => {
-    setState(parseTierState(location.search));
+    const s = parseTierState(location.search);
+    setState(s);
+    // a link from before a parameter was dropped (e.g. ?preset=, removed 2026-09-29) shows its canonical URL
+    const qs = tierSearch(s);
+    // (compared as re-encoded params, so %20 vs + alone never rewrites a shared link)
+    if (qs !== new URLSearchParams(location.search).toString()) history.replaceState(null, "", location.pathname + (qs ? `?${qs}` : ""));
   }, []);
 
   const update = (patch: Partial<TierState>, closeRow = true) => {
@@ -57,7 +61,6 @@ export function TierView({ meta, heroes, maps, initial }: { meta: Meta; heroes: 
   };
 
   const { mode, bracket, region, map, role, sort, dir } = state;
-  const preset = PRESETS[state.preset];
   const sl = mode === "sl";
   const file = snapshotKey(mode, bracket, region);
   const resolved = resolvePatch(meta, mode, state.patch, file);
@@ -67,7 +70,7 @@ export function TierView({ meta, heroes, maps, initial }: { meta: Meta; heroes: 
   const dirOf = (p: "current" | "previous") => (p === "previous" ? "previous" : "latest");
   const curKey = `${dirOf(patch)}/${file}`;
   const prevKey = patch === "current" && meta.previous_patch ? `previous/${file}` : null;
-  const isInitial = file === "qm" && map === "all" && patch === initial.patch && state.preset === "aichi";
+  const isInitial = file === "qm" && map === "all" && patch === initial.patch;
 
   useEffect(() => {
     if (isInitial) return;
@@ -104,8 +107,8 @@ export function TierView({ meta, heroes, maps, initial }: { meta: Meta; heroes: 
   const computed = useMemo(() => {
     if (isInitial) return initial.table;
     if (!snap || (prevKey && !(prevKey in loaded))) return null;
-    return tierTable(snap, prevKey ? (loaded[prevKey] ?? null) : null, map, heroes, meta.min_games_for_tier, preset);
-  }, [isInitial, initial.table, snap, prevKey, loaded, map, heroes, meta.min_games_for_tier, preset]);
+    return tierTable(snap, prevKey ? (loaded[prevKey] ?? null) : null, map, heroes, meta.min_games_for_tier);
+  }, [isInitial, initial.table, snap, prevKey, loaded, map, heroes, meta.min_games_for_tier]);
   // while a view loads, keep the last one on screen (dimmed) instead of an empty table
   const last = useRef(initial.table);
   if (computed) last.current = computed;
@@ -113,7 +116,6 @@ export function TierView({ meta, heroes, maps, initial }: { meta: Meta; heroes: 
   const busy = computed === null;
 
   const rows = useMemo(() => visibleRows(table.rows, role, sort, dir), [table.rows, role, sort, dir]);
-  const changed = state.preset === "aichi" ? 0 : table.rows.filter((r) => r.baseTier).length;
   const grey = table.grey.filter((g) => role === "all" || g.hero.role === role);
   const mapInfo = map === "all" ? undefined : maps.maps.find((m) => m.name === map);
   const cols = COLUMNS.filter((c) => !c.sl || sl);
@@ -233,16 +235,6 @@ export function TierView({ meta, heroes, maps, initial }: { meta: Meta; heroes: 
             </label>
             </>
           )}
-          <label id="preset-wrap" className="flex-1 sm:flex-none">
-            <span className="sr-only">{t.tier.formula}</span>
-            <select id="preset" value={state.preset} onChange={(e) => update({ preset: e.target.value as PresetId }, false)} className={SELECT}>
-              {PRESET_IDS.map((p) => (
-                <option key={p} value={p}>
-                  {t.tier.presets[p]}
-                </option>
-              ))}
-            </select>
-          </label>
         </div>
         {sl && (region !== "all" || bracket !== "all") && (
           <p id="combo-note" className="w-full text-2xs text-muted">
@@ -252,22 +244,6 @@ export function TierView({ meta, heroes, maps, initial }: { meta: Meta; heroes: 
       </Card>
 
       {region !== "all" && <RegionNote meta={meta} mode={mode} region={region} />}
-
-      {state.preset !== "aichi" && !busy && (
-        <p id="preset-diff" className="flex flex-wrap items-center gap-x-2 gap-y-1 rounded-lg border border-line bg-surface px-3 py-2 text-[13px] text-fg-2">
-          <span>
-            <b className="text-fg">{t.tier.presets[state.preset]}</b>
-            {t.tier.presetDiffBefore}
-            <b className="num text-fg">{changed}</b>
-            {t.tier.presetDiffAfter}
-            <BaseTierChip tier="S" example />
-            {t.tier.presetDiffEnd}
-          </span>
-          <button type="button" onClick={() => update({ preset: "aichi" }, false)} className="font-semibold text-secondary hover:text-primary">
-            {t.tier.backToDefault}
-          </button>
-        </p>
-      )}
 
       {/* clip, not hidden: hidden would make the card a scroll container and the sticky column header would stop */}
       <Card as="div" className="overflow-clip">
@@ -320,7 +296,6 @@ export function TierView({ meta, heroes, maps, initial }: { meta: Meta; heroes: 
                 n={table.rows.length}
                 hasPrevious={table.hasPrevious}
                 sl={sl}
-                preset={preset}
                 span={span}
                 mode={mode}
                 open={open === r.hero.slug}
@@ -347,7 +322,7 @@ export function TierView({ meta, heroes, maps, initial }: { meta: Meta; heroes: 
         </section>
       )}
 
-      <Formula sl={sl} min={meta.min_games_for_tier} preset={preset} t={t} locale={locale} />
+      <Formula sl={sl} min={meta.min_games_for_tier} party={table.party} t={t} locale={locale} />
     </main>
   );
 }
@@ -377,11 +352,11 @@ function RegionNote({ meta, mode, region }: { meta: Meta; mode: Mode; region: Ex
   );
 }
 
-function HeroRow({ r, cols, n, hasPrevious, sl, preset, span, mode, open, onToggle }: { r: TierRow; cols: typeof COLUMNS; n: number; hasPrevious: boolean; sl: boolean; preset: Preset; span: number; mode: Mode; open: boolean; onToggle: () => void }) {
+function HeroRow({ r, cols, n, hasPrevious, sl, span, mode, open, onToggle }: { r: TierRow; cols: typeof COLUMNS; n: number; hasPrevious: boolean; sl: boolean; span: number; mode: Mode; open: boolean; onToggle: () => void }) {
   const t = useT();
   const href = hotsHref(useLocale());
   const cell: Record<SortKey, string> = {
-    score: formatScore(r.score, preset),
+    score: formatScore(r.score),
     win_rate: pct(r.win_rate),
     pick: pct(r.pick),
     ban_rate: pct(r.ban_rate),
@@ -392,7 +367,6 @@ function HeroRow({ r, cols, n, hasPrevious, sl, preset, span, mode, open, onTogg
       <tr
         data-hero={r.hero.slug}
         data-tier={r.tier}
-        data-changed={r.baseTier}
         tabIndex={0}
         role="button"
         aria-expanded={open}
@@ -403,7 +377,7 @@ function HeroRow({ r, cols, n, hasPrevious, sl, preset, span, mode, open, onTogg
             onToggle();
           }
         }}
-        className={cx("cursor-pointer border-b border-line/70 transition-colors hover:bg-surface-2", open ? "bg-surface-2" : r.baseTier && "bg-secondary/[0.07]")}
+        className={cx("cursor-pointer border-b border-line/70 transition-colors hover:bg-surface-2", open && "bg-surface-2")}
       >
         <td data-col="rank" className="py-1.5 pl-3 sm:pl-4">
           <span className="sm:flex sm:items-center sm:gap-2">
@@ -421,18 +395,9 @@ function HeroRow({ r, cols, n, hasPrevious, sl, preset, span, mode, open, onTogg
             {/* the tier has its own column from 640px; on a phone it stays on the portrait */}
             <Portrait src={r.hero.portrait} size={34} tier={r.tier} tierClassName="sm:hidden" className="sm:size-7!" role={r.hero.role || undefined} />
             <span className="min-w-0 sm:flex sm:items-baseline sm:gap-1.5">
-              {r.baseTier ? (
-                <span className="flex min-w-0 flex-col items-start sm:flex-row sm:items-center">
-                  <span data-name className="block truncate font-semibold text-fg">
-                    {r.hero.ko}
-                  </span>
-                  <BaseTierChip tier={r.baseTier} />
-                </span>
-              ) : (
-                <span data-name className="block truncate font-semibold text-fg">
-                  {r.hero.ko}
-                </span>
-              )}
+              <span data-name className="block truncate font-semibold text-fg">
+                {r.hero.ko}
+              </span>
               <span className="hidden truncate text-2xs text-muted sm:block">
                 {/* the API name, where it differs from the name shown (on English pages it is the same) */}
                 {r.hero.name !== r.hero.ko && r.hero.name}
@@ -469,20 +434,6 @@ function HeroRow({ r, cols, n, hasPrevious, sl, preset, span, mode, open, onTogg
         </tr>
       )}
     </Fragment>
-  );
-}
-
-/** The hero's tier under 아이치, next to its name when another preset puts it elsewhere. */
-function BaseTierChip({ tier, example }: { tier: Tier; example?: boolean }) {
-  const t = useT();
-  return (
-    <span
-      data-base-tier={example ? undefined : tier}
-      title={example ? undefined : t.tier.baseTierTitle(tier)}
-      className="inline-block shrink-0 whitespace-nowrap rounded px-1 text-2xs ring-1 ring-inset ring-secondary/50 font-bold leading-4 text-secondary sm:ml-1.5"
-    >
-      {t.tier.baseTier(tier)}
-    </span>
   );
 }
 
@@ -530,18 +481,18 @@ function PatchBanner({ meta, mode, patch, auto, onCurrent }: { meta: Meta; mode:
   );
 }
 
-function Formula({ sl, min, preset, t, locale }: { sl: boolean; min: number; preset: Preset; t: Messages; locale: Locale }) {
+function Formula({ sl, min, party, t, locale }: { sl: boolean; min: number; party: Party | null; t: Messages; locale: Locale }) {
   return (
     <div className="space-y-2">
       <p id="formula" className="rounded-lg border border-line bg-surface px-3 py-2 font-mono text-xs [overflow-wrap:anywhere] text-fg-2">
-        {formulaLine(preset, sl, locale)}
-        {t.tier.formulaTail(String(preset.k))}
+        {formulaLine(sl, locale)}
+        {t.tier.formulaTail(String(FORMULA.k), party ? t.tier.formulaParty(String(party.k)) : "")}
         {t.tier.formulaCuts(String(min))}
       </p>
       <details className="text-[13px]">
         <summary className="cursor-pointer text-secondary">{t.tier.details}</summary>
         <pre className="mt-2 whitespace-pre-wrap rounded-lg bg-surface p-3 text-xs [overflow-wrap:anywhere] text-fg-2">
-          {formulaDetail(preset, sl, min, locale)}
+          {formulaDetail(sl, min, locale, party)}
         </pre>
       </details>
     </div>

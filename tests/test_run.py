@@ -37,6 +37,8 @@ def mock_api(
         assert q["timeframe_type"] == "minor" and q["timeframe"] == "2.55.17.97771"
         if fail_key == "sl_high" and q.get("league_tier") == "5,6":
             return httpx.Response(500, json={"error": {"code": "server_error", "message": "x"}})
+        if fail_key == "solo" and q.get("groupsize") == "Solo":
+            return httpx.Response(500, json={"error": {"code": "server_error", "message": "x"}})
         return httpx.Response(200, json=raw_by_map)
 
     respx.get(f"{BASE}/heroes/stats").mock(side_effect=stats)
@@ -79,17 +81,19 @@ async def test_run_writes_five_files_meta_and_raw_gz(
         "raw_builds.json.gz",
         "raw_qm.json.gz",
         "raw_qm_na.json.gz",
+        "raw_qm_solo.json.gz",
         "raw_sl.json.gz",
         "raw_sl_high.json.gz",
         "raw_sl_low.json.gz",
         "raw_sl_na.json.gz",
+        "raw_sl_solo.json.gz",
         "sl.json.gz",
         "sl_high.json.gz",
         "sl_low.json.gz",
         "sl_na.json.gz",
     ]
-    # 60 s spacing between the six group_by_map calls → 5 waits, + 1 before builds/all
-    assert fake_sleep.calls == [60.0] * 6
+    # 60 s spacing between the eight group_by_map calls → 7 waits, + 1 before builds/all
+    assert fake_sleep.calls == [60.0] * 8
 
 
 @respx.mock
@@ -103,14 +107,52 @@ async def test_run_passes_league_tier_and_game_type_per_spec(
         for c in respx.calls
         if c.request.url.path.endswith("/heroes/stats")
     ]
-    assert [(c["game_type"], c.get("league_tier"), c.get("region")) for c in calls] == [
-        ("qm", None, None),
-        ("sl", None, None),
-        ("sl", "1,2,3,4", None),
-        ("sl", "5,6", None),
-        ("qm", None, "NA"),
-        ("sl", None, "NA"),
+    assert [
+        (c["game_type"], c.get("league_tier"), c.get("region"), c.get("groupsize")) for c in calls
+    ] == [
+        ("qm", None, None, None),
+        ("sl", None, None, None),
+        ("sl", "1,2,3,4", None, None),
+        ("sl", "5,6", None, None),
+        ("qm", None, None, "Solo"),
+        ("sl", None, None, "Solo"),
+        ("qm", None, "NA", None),
+        ("sl", None, "NA", None),
     ]
+
+
+@respx.mock
+async def test_run_puts_the_party_correction_on_qm_and_sl_only(
+    tmp_path: Path, raw_by_map, patches_payload, fake_sleep
+) -> None:
+    mock_api(raw_by_map, patches_payload)
+    s = settings(tmp_path)
+    assert await run(s, sleep=fake_sleep, now=lambda: "2026-09-28T00:00:00Z") == 0
+    latest = s.data_dir / "latest"
+    for key in ("qm", "sl"):
+        snap = json.loads((latest / f"{key}.json").read_text())
+        assert snap["party"]["k"] == 1000
+        all_rows = [r for r in snap["rows"] if r["map"] == "all"]
+        assert all_rows and all("tier_win_rate" in r for r in all_rows)
+    for key in ("sl_low", "sl_high", "qm_na", "sl_na"):
+        snap = json.loads((latest / f"{key}.json").read_text())
+        assert "party" not in snap
+        assert all("tier_win_rate" not in r for r in snap["rows"])
+
+
+@respx.mock
+async def test_solo_call_failure_leaves_the_views_uncorrected_and_the_run_succeeds(
+    tmp_path: Path, raw_by_map, patches_payload, fake_sleep
+) -> None:
+    mock_api(raw_by_map, patches_payload, fail_key="solo")
+    s = settings(tmp_path)
+    with capture_logs() as logs:
+        assert await run(s, sleep=fake_sleep, now=lambda: "2026-09-28T00:00:00Z") == 0
+    qm = json.loads((s.data_dir / "latest" / "qm.json").read_text())
+    assert "party" not in qm and all("tier_win_rate" not in r for r in qm["rows"])
+    assert any(e["event"] == "run.party_skipped" for e in logs)
+    # the region calls still ran after the failed solo calls
+    assert (s.data_dir / "latest" / "qm_na.json").exists()
 
 
 @respx.mock
@@ -209,6 +251,11 @@ async def test_backfill_previous_writes_previous_and_meta_without_touching_lates
         "sl_low.json",
     ]
     assert json.loads((prev / "qm.json").read_text())["patch"] == "2.55.17.97650"
+    # previous ranks are compared with today's, so the backfill carries the same correction
+    assert json.loads((prev / "qm.json").read_text())["party"]["k"] == 1000
+    assert "party" not in json.loads((prev / "sl_low.json").read_text())
+    day = s.snapshot_out_dir / "2026-09-28"
+    assert (day / "backfill_2.55.17.97650_raw_qm_solo.json.gz").exists()
     meta = json.loads((s.data_dir / "latest" / "meta.json").read_text())
     assert meta["previous_patch"] == "2.55.17.97650" and meta["current_patch"] == "2.55.17.97771"
     after = {
@@ -287,7 +334,7 @@ async def test_run_collects_popular_builds_after_stats(
         "title": "Unending Hatred",
     }
     assert b["heroes"]["Nova"] == []
-    assert fake_sleep.calls == [60.0] * 6  # 5 between 4 stats + 2 region calls, 1 before builds
+    assert fake_sleep.calls == [60.0] * 8  # 7 between 4 stats + 2 solo + 2 region, 1 before builds
     assert (s.snapshot_out_dir / "2026-09-28" / "raw_builds.json.gz").exists()
 
 
@@ -392,7 +439,7 @@ async def test_run_collects_matchups_for_every_due_hero_after_the_stats(
     assert (m["patch"], m["collected_at"]) == ("2.55.17.97771", "2026-09-28T00:00:00Z")
     assert (s.snapshot_out_dir / "2026-09-28" / "matchups.json.gz").exists()
     # 5 between 6 stats calls + 1 before builds, then one gap between the two matchups calls
-    assert fake_sleep.calls == [60.0] * 6 + [s.matchups_call_spacing_seconds]
+    assert fake_sleep.calls == [60.0] * 8 + [s.matchups_call_spacing_seconds]
     # next day: nothing is due (every other day) → no calls, files untouched
     respx.reset()
     mock_api(raw_by_map, patches_payload)

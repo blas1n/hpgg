@@ -47,13 +47,6 @@ test.describe("desktop 1280", () => {
     expect(Math.abs(y - headerH)).toBeLessThanOrEqual(2);
   });
 
-  test("tier table: a preset-changed row is tinted, not striped", async ({ page }) => {
-    await page.goto("./tier/?preset=additive");
-    const r = page.locator("#rows tr[data-changed]").first();
-    await expect(r).toBeVisible();
-    expect(await r.evaluate((e) => getComputedStyle(e).boxShadow)).toBe("none");
-  });
-
   test("hero detail: header and stats share a row, the other sections sit next to the maps, above the fold", async ({ page }) => {
     await page.goto("./heroes/illidan/?mode=sl");
     const h1 = (await page.locator("h1").boundingBox())!;

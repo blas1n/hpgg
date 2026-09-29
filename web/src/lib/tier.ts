@@ -1,12 +1,9 @@
 /** Tier table view model. Pure: the default view is computed at build time, other views in the browser. */
-import { computeTiers, PRESETS, type Preset, type Snapshot, type Tier } from "../formula";
+import { appliedParty, computeTiers, type Party, type Snapshot, type Tier } from "../formula";
 import { wilson } from "../wilson";
 import { sameCohort } from "./cohort";
 import { REGIONS, thinSample, type Bracket, type HeroTable, type Meta, type Mode, type PatchChoice, type Region } from "../data";
 import type { HeroRef } from "./home";
-
-export type PresetId = keyof typeof PRESETS;
-const PRESET_IDS = Object.keys(PRESETS) as PresetId[];
 
 export type SortKey = "score" | "win_rate" | "pick" | "ban_rate" | "games";
 const SORT_KEYS: SortKey[] = ["score", "win_rate", "pick", "ban_rate", "games"];
@@ -21,11 +18,9 @@ export interface TierState {
   patch: PatchChoice | "auto";
   sort: SortKey;
   dir: "desc" | "asc";
-  /** Tier formula; 아이치 is the site's formula, the others are there to compare (#2). */
-  preset: PresetId;
 }
 
-export const DEFAULT_TIER_STATE: TierState = { mode: "qm", bracket: "all", region: "all", map: "all", role: "all", patch: "auto", sort: "score", dir: "desc", preset: "aichi" };
+export const DEFAULT_TIER_STATE: TierState = { mode: "qm", bracket: "all", region: "all", map: "all", role: "all", patch: "auto", sort: "score", dir: "desc" };
 
 export function parseTierState(search: string): TierState {
   const q = new URLSearchParams(search);
@@ -35,7 +30,6 @@ export function parseTierState(search: string): TierState {
   const patch = q.get("patch");
   const r = q.get("region") as Region | null;
   const region: Region = r && r !== "all" && REGIONS.includes(r) ? r : "all";
-  const preset = q.get("preset") as PresetId | null;
   return {
     mode,
     // region × bracket is not collected: a region in the URL wins
@@ -46,7 +40,6 @@ export function parseTierState(search: string): TierState {
     patch: patch === "previous" || patch === "current" ? patch : "auto",
     sort: sort && SORT_KEYS.includes(sort) ? sort : "score",
     dir: q.get("dir") === "asc" ? "asc" : "desc",
-    preset: preset && PRESET_IDS.includes(preset) ? preset : "aichi",
   };
 }
 
@@ -60,7 +53,6 @@ export function tierSearch(s: TierState): string {
   if (s.patch !== "auto") q.set("patch", s.patch);
   if (s.sort !== "score") q.set("sort", s.sort);
   if (s.dir !== "desc") q.set("dir", s.dir);
-  if (s.preset !== "aichi") q.set("preset", s.preset);
   return q.toString();
 }
 
@@ -86,8 +78,6 @@ export interface TierRow {
   pick: number;
   ban_rate: number;
   games: number;
-  /** Only under a non-default preset, and only when it differs: the hero's tier under 아이치. */
-  baseTier?: Tier;
 }
 
 export interface TierTable {
@@ -97,6 +87,7 @@ export interface TierTable {
   hasPrevious: boolean;
   patch: string;
   collectedAt: string;
+  party: Party | null; // printed in the formula when this view's win rates are party-corrected
 }
 
 const slugOf = (name: string) => name.toLowerCase().replace(/[^a-z0-9]+/g, "-");
@@ -112,17 +103,15 @@ function heroRef(heroes: HeroTable): (name: string) => HeroRef {
 }
 
 /** One snapshot + map → ranked rows. `previous` is the same file on the previous patch; a different bracket cohort is ignored. */
-export function tierTable(snap: Snapshot, previous: Snapshot | null, map: string, heroes: HeroTable, minGames: number, preset: Preset = PRESETS.aichi): TierTable {
+export function tierTable(snap: Snapshot, previous: Snapshot | null, map: string, heroes: HeroTable, minGames: number): TierTable {
   const ref = heroRef(heroes);
   const rows = snap.rows.filter((r) => r.map === map);
-  const { ranked, grey } = computeTiers(rows, preset, minGames);
+  const { ranked, grey } = computeTiers(rows, minGames);
   const prev = previous && sameCohort(previous, snap) ? previous : null;
-  const prevRank = new Map(prev ? computeTiers(prev.rows.filter((r) => r.map === map), preset, minGames).ranked.map((x) => [x.row.hero, x.rank]) : []);
-  const base = preset === PRESETS.aichi ? null : new Map(computeTiers(rows, PRESETS.aichi, minGames).ranked.map((x) => [x.row.hero, x.tier]));
+  const prevRank = new Map(prev ? computeTiers(prev.rows.filter((r) => r.map === map), minGames).ranked.map((x) => [x.row.hero, x.rank]) : []);
   return {
     rows: ranked.map((x) => {
       const [lo, hi] = wilson(x.row.wins, x.row.games);
-      const baseTier = base?.get(x.row.hero);
       return {
         hero: ref(x.row.hero),
         tier: x.tier,
@@ -134,8 +123,6 @@ export function tierTable(snap: Snapshot, previous: Snapshot | null, map: string
         pick: x.row.pick,
         ban_rate: x.row.ban_rate,
         games: x.row.games,
-        // left off the default table entirely: its pre-rendered payload stays what it was before presets
-        ...(baseTier && baseTier !== x.tier ? { baseTier } : {}),
       };
     }),
     grey: grey.map((r) => ({ hero: ref(r.hero), games: r.games })),
@@ -144,6 +131,7 @@ export function tierTable(snap: Snapshot, previous: Snapshot | null, map: string
     hasPrevious: prev !== null,
     patch: snap.patch,
     collectedAt: snap.collected_at,
+    party: appliedParty(snap, rows),
   };
 }
 
@@ -153,14 +141,7 @@ export function visibleRows(rows: TierRow[], role: string, sort: SortKey, dir: "
   return rows.filter((r) => role === "all" || r.hero.role === role).sort((a, b) => (dir === "desc" ? val(b) - val(a) : val(a) - val(b)) || a.rank - b.rank);
 }
 
-/** Score as printed: 아이치 in whole points with a sign, additive to one decimal with a sign, win rate as a %. */
-export function formatScore(score: number, preset: Preset): string {
-  switch (preset.kind) {
-    case "multiplicative":
-      return (score >= 0 ? "+" : "") + score.toFixed(0);
-    case "additive":
-      return (score >= 0 ? "+" : "") + score.toFixed(1);
-    case "winrate":
-      return score.toFixed(1);
-  }
+/** Score as printed: whole points with a sign. */
+export function formatScore(score: number): string {
+  return (score >= 0 ? "+" : "") + score.toFixed(0);
 }

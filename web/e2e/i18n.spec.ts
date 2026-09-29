@@ -82,7 +82,7 @@ test("English pages show no Korean text, including views built in the browser", 
   const views = [
     ...PAGES.map((p) => `/en${p.path}`),
     "/en/hots/?mode=sl",
-    "/en/hots/tier/?mode=sl&map=Cursed%20Hollow&preset=additive",
+    "/en/hots/tier/?mode=sl&map=Cursed%20Hollow",
     "/en/hots/tier/?mode=sl&tier=high",
     "/en/hots/tier/?region=kr",
     "/en/hots/heroes/illidan/?mode=sl",

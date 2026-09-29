@@ -25,6 +25,14 @@ SPECS: tuple[JobSpec, ...] = (
     JobSpec("sl_high", "sl", (5, 6), "sl_high.json"),
 )
 
+# Party correction (#36): the same QM and SL views, solo-queue games only. Folded into qm.json /
+# sl.json by collector.party (2 more Heroes/Stats calls → 56/70 a week); never written as files.
+SOLO_SPECS: tuple[JobSpec, ...] = (
+    JobSpec("qm_solo", "qm", None, "", groupsize="Solo"),
+    JobSpec("sl_solo", "sl", None, "", groupsize="Solo"),
+)
+SOLO_OF: dict[str, str] = {"qm_solo": "qm", "sl_solo": "sl"}
+
 MIN_GAMES_FOR_TIER = 200
 
 # Regions (#14, owner 2026-09-29, Basic plan): one region a day for QM + SL (2 extra Heroes/Stats

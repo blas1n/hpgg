@@ -27,6 +27,7 @@ class JobSpec:
     league_tier: tuple[int, ...] | None
     filename: str
     region: str | None = None  # HP region code (KR, NA, EU); None = every region
+    groupsize: str | None = None  # HP party size of the hero's player ("Solo"); None = all games
 
 
 @dataclass

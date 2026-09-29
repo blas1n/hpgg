@@ -6,7 +6,7 @@ A Heroes of the Storm tier list built from match data, in Korean (default, https
 - `collector/` — Python 3.11+ collector. `uv run python -m collector` makes the four daily stats calls (Quick Match, Storm League overall, Storm League league_tier 1-4 / 5-6 (브실골플 / 다마그), all with `group_by_map=true`) 60 seconds apart and **atomically** replaces `data/latest/{qm,sl,sl_low,sl_high,builds,meta}.json`. Raw responses are kept as `data/.snapshot_out/<date>/*.json.gz` and archived on the `snapshots` branch.
 - `data/latest/` — the frontend contract (schema in the design doc, "latest JSON schema"); `builds.json` holds the popular talent builds per hero.
 - `tools/build_assets.py` — regenerates `data/talents/<hero>.json` (Korean talent names, descriptions, cooldowns) and talent icons from HeroesToolChest game data (run it after a new hero ships; hero tables were produced the same way).
-- `web/` — Next.js 16 (App Router, static export, Turbopack) + React 19 + Tailwind 4 frontend. `src/formula.ts` is the tier formula (printed on the page); `npm test` runs vitest against the 2026-09-28 fixtures (13-hero verification table, presets, cuts), `npm run e2e` runs Playwright against a frozen data set in `tests/e2e-data`. Hero/map names and roles (Korean and English) come from `data/heroes_ko.json` and `data/maps_ko.json`; UI text from `src/i18n/{ko,en}.ts`; every language is pre-rendered from one route tree `app/[locale]` (languages: `src/i18n/locales.ts`).
+- `web/` — Next.js 16 (App Router, static export, Turbopack) + React 19 + Tailwind 4 frontend. `src/formula.ts` is the tier formula (printed on the page); `npm test` runs vitest against the 2026-09-28 fixtures (13-hero verification table, cuts), `npm run e2e` runs Playwright against a frozen data set in `tests/e2e-data`. Hero/map names and roles (Korean and English) come from `data/heroes_ko.json` and `data/maps_ko.json`; UI text from `src/i18n/{ko,en}.ts`; every language is pre-rendered from one route tree `app/[locale]` (languages: `src/i18n/locales.ts`).
 - `.github/workflows/collect-and-deploy.yml` — daily cron: collect → commit → archive snapshots → deploy to Pages. A push to `main` only rebuilds and deploys.
 
 ## Local run
@@ -19,7 +19,7 @@ uv run python -m collector      # ~5 min (group_by_map is limited to 1 request/m
 
 cd web && npm ci && npm test && npm run e2e && npm run build   # frontend; `npm run dev` serves ../data live at http://localhost:5173/ko/hots/
 ```
-If the Heroes Profile account is in **Test Data** mode, calls cost no quota and return placeholder rows (and `group_by_map` is ignored, so only `map: "all"` rows are produced). In **Live Data** mode the real per-map payload arrives; Heroes/Stats allows 70 calls per rolling week on the Basic plan and one run uses 5.
+If the Heroes Profile account is in **Test Data** mode, calls cost no quota and return placeholder rows (and `group_by_map` is ignored, so only `map: "all"` rows are produced). In **Live Data** mode the real per-map payload arrives; Heroes/Stats allows 70 calls per rolling week on the Basic plan and one run uses 8 (see `docs/HANDOFF.md` "Quotas").
 
 ## Rules
 - The token lives only in `.env`. It never appears in logs, exceptions or commits (asserted by tests).

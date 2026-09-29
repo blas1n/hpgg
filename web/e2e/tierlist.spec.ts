@@ -135,3 +135,33 @@ test("no horizontal scroll on a phone and the formula is printed", async ({ page
   await expect(page.locator("#formula")).toContainText("픽률 × (승률 − 50) × 3");
   await expect(page.locator("footer")).toContainText("Data provided by");
 });
+
+test("party correction (#36): Quick Match ranks by the corrected win rate, shows the raw one, and prints how", async ({ page }) => {
+  await page.goto("./tier/");
+  // the fixture corrects only The Butcher (52.56% → 44): it sinks to F, its win-rate cell stays raw
+  expect(await tierOf(page, "the-butcher")).toBe("F");
+  await expect(row(page, "the-butcher").locator('td[data-col="win_rate"]')).toContainText("52.6");
+  await expect(page.locator("#formula")).toContainText("승률은 파티 보정(솔로 큐 기준, k=1000) 후 표본 수축(k=500)");
+  await page.locator("#formula + details summary").click();
+  await expect(page.locator("#formula + details pre")).toContainText("보정승률 = 승률 + (솔로승률 + 1.37 − 승률)");
+  // the Storm League fixture has no correction: nothing is claimed
+  await page.goto("./tier/?mode=sl");
+  await expect(page.locator("#formula")).toContainText("픽률 × (승률 − 50) × 3");
+  await expect(page.locator("#formula")).not.toContainText("파티 보정");
+  await page.goto("/en/hots/tier/");
+  await expect(page.locator("#formula")).toContainText("win rate party-corrected (solo-queue baseline, k=1000), then shrunk toward 50");
+});
+
+test("one formula: no formula selector, and an old ?preset= link opens the default view", async ({ page }) => {
+  await page.goto("./tier/?mode=sl");
+  await expect(page.locator("#preset")).toHaveCount(0);
+  // the Storm League filters are the region, the bracket and the map
+  await expect(page.locator("main select")).toHaveCount(3);
+  await expect(page.locator("#region")).toBeVisible();
+  await expect(page.locator("#bracket")).toBeVisible();
+  await expect(page.locator("#map")).toBeVisible();
+  await page.goto("./tier/?preset=additive&role=Tank");
+  await expect(page).not.toHaveURL(/preset=/);
+  await expect(page.locator("#formula")).toContainText("티어 점수 = 픽률 × (승률 − 50) × 3");
+  await expect(page.locator("#rows tr[data-changed]")).toHaveCount(0);
+});

@@ -142,13 +142,7 @@ export const en: Messages = {
     mapBanner: (name: string) => `${name} · Storm League · computed from this map's games only`,
     notCollected: " · not collected yet",
     bracket: "League bracket",
-    formula: "Tier formula",
-    presets: { aichi: "Aichi formula (default)", additive: "Additive", winrate: "Win rate only" },
     comboNote: "Region data is collected for all leagues together — a region and a league bracket cannot be combined",
-    presetDiffBefore: " tiers. The ",
-    presetDiffAfter: " heroes whose tier differs under the Aichi formula also show their default tier, like ",
-    presetDiffEnd: ".",
-    backToDefault: "Back to the default formula",
     columns: { score: "Score", win_rate: "Win rate", pick: "Pick rate", ban_rate: "Ban rate", games: "Games" },
     tierGroup: (tier: string, n: string) => `Tier ${tier} · ${plural(n, "hero", "heroes")}`,
     grey: "Too few games",
@@ -164,8 +158,6 @@ export const en: Messages = {
     detailSample: "Sample",
     detailGames: (n: string) => plural(n, "game", "games"),
     heroDetail: "Hero details →",
-    baseTierTitle: (tier: string) => `Tier ${tier} under the Aichi formula`,
-    baseTier: (tier: string) => `default ${tier}`,
     deltaNewTitle: "Too few games on the previous patch",
     deltaTitle: (rank: string) => `#${rank} on the previous patch`,
     bannerPrevious: (patch: string, days: string) => `${plural(days, "day", "days")} after patch ${patch} there are too few games, so this shows `,
@@ -173,19 +165,22 @@ export const en: Messages = {
     bannerPreviousEnd: ".",
     bannerShowCurrent: "Show the current patch",
     bannerThin: (patch: string, days: string) => `${plural(days, "day", "days")} after patch ${patch} there are still few games.`,
-    formulaTail: (k: string) => ` · win rate shrunk toward 50 (k=${k}) · `,
+    formulaTail: (k: string, party = "") => ` · win rate ${party}shrunk toward 50 (k=${k}) · `,
+    formulaParty: (k: string) => `party-corrected (solo-queue baseline, k=${k}), then `,
     formulaCuts: (min: string) => `heroes under ${min} games left out · top 6% S / 24% A / 54% B / 82% C / 94% D`,
     details: "Details",
   },
   formula: {
     ban: (w: string) => ` + ban rate × ${w}`,
-    multiplicative: (w: string, ban: string) => `tier score = pick rate × (win rate − 50) × ${w}${ban}`,
-    additive: (w: string, ban: string) => `tier score = (win rate − 50) + pick rate × ${w}${ban}`,
-    winrate: "tier score = win rate",
+    line: (w: string, ban: string) => `tier score = pick rate × (win rate − 50) × ${w}${ban}`,
     noBan: "   (Quick Match has no bans)",
-    detailMultiplicative: (w: string, ban: string) => `pick rate × (WRs − 50) × ${w}${ban}`,
-    detailAdditive: (w: string, ban: string) => `(WRs − 50) + pick rate × ${w}${ban}`,
-    detailWinrate: "WRs   (pick and ban rates are not used)",
+    detailScore: (w: string, ban: string) => `pick rate × (WRs − 50) × ${w}${ban}`,
+    party: (shift: string, k: string, pooled: string) =>
+      `corrected WR = win rate + (solo WR + ${shift} − win rate) × solo games / (solo games + ${k})
+        solo WR = the win rate of only the games in which the hero's player queued alone; all solo games together (${pooled}%) are re-centred on 50%
+        (premade groups win more; this keeps heroes popular in groups from looking stronger than they are. The table's win-rate column is uncorrected)`,
+    wrInput: "(win rate − 50) × games",
+    wrInputCorrected: "(corrected WR − 50) × games",
     detail: (k: string, score: string, min: string) => `WRs   = 50 + (win rate − 50) × games / (games + ${k})
 score = ${score}
 tier  = heroes with ${min}+ games, ranked by score, cut by cumulative share (S 6% · A 24% · B 54% · C 82% · D 94% · F the rest)

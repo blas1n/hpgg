@@ -17,8 +17,11 @@ from collector.client import HPClient, HPError, SleepFn
 from collector.config import Settings
 from collector.matchups import collect_matchups, load_hero_list, matchups_patch
 from collector.models import JobSpec
+from collector.party import apply_party_correction
 from collector.snapshot import (
     REGION_KEYS,
+    SOLO_OF,
+    SOLO_SPECS,
     SPECS,
     build_meta,
     choose_patch,
@@ -111,12 +114,15 @@ async def _collect_all(
             params["league_tier"] = ",".join(str(t) for t in spec.league_tier)
         if spec.region:
             params["region"] = spec.region
+        if spec.groupsize:
+            params["groupsize"] = spec.groupsize
         log.info(
             "run.call",
             key=spec.key,
             game_type=spec.game_type,
             league_tier=params.get("league_tier"),
             region=spec.region,
+            groupsize=spec.groupsize,
             patch=patch,
         )
         raw = await c.get_json("/heroes/stats", params=params)
@@ -156,6 +162,44 @@ async def _collect_region(
     except ValueError as e:
         log.warning("run.region_skipped", region=region, error=str(e))
     return {}, {}
+
+
+async def _collect_party(
+    c: HPClient,
+    settings: Settings,
+    *,
+    patch: str,
+    collected_at: str,
+    sleep: SleepFn,
+    snapshots: dict[str, dict[str, Any]],
+) -> dict[str, Any]:
+    """Solo-only QM + SL, folded into `snapshots` as the party correction (#36) → raw by key.
+    A failure never fails the run: the views stay uncorrected and the page prints the formula
+    without the correction."""
+    try:
+        raw, solo = await _collect_all(
+            c,
+            settings,
+            patch=patch,
+            collected_at=collected_at,
+            sleep=sleep,
+            specs=SOLO_SPECS,
+            after_a_call=True,
+        )
+        corrected = {
+            SOLO_OF[key]: apply_party_correction(snapshots[SOLO_OF[key]], snap)
+            for key, snap in solo.items()
+        }
+    except HPError as e:
+        log.warning("run.party_skipped", status=e.status, code=e.code)
+        return {}
+    except ValueError as e:
+        log.warning("run.party_skipped", error=str(e))
+        return {}
+    snapshots.update(corrected)
+    for view, snap in corrected.items():
+        log.info("run.party", view=view, **snap["party"])
+    return raw
 
 
 def _carried_regions(
@@ -226,6 +270,9 @@ async def run_backfill_previous(
         raw_by_key, snapshots = await _collect_all(
             c, settings, patch=patch, collected_at=collected_at, sleep=sleep
         )
+        party_raw = await _collect_party(
+            c, settings, patch=patch, collected_at=collected_at, sleep=sleep, snapshots=snapshots
+        )
     except HPError as e:
         log.error("run.api_failed", status=e.status, code=e.code, message=e.message)
         return 1
@@ -266,6 +313,8 @@ async def run_backfill_previous(
     for key, raw in raw_by_key.items():
         _write_gz(day_dir / f"backfill_{patch}_raw_{key}.json.gz", raw)
         _write_gz(day_dir / f"backfill_{patch}_{key}.json.gz", snapshots[key])
+    for key, raw in party_raw.items():
+        _write_gz(day_dir / f"backfill_{patch}_raw_{key}.json.gz", raw)
     log.info("backfill.done", patch=patch, modes=sorted(snapshots))
     return 0
 
@@ -319,6 +368,9 @@ async def _run_stats(c: HPClient, settings: Settings, *, collected_at: str, slee
         raw_by_key, snapshots = await _collect_all(
             c, settings, patch=patch, collected_at=collected_at, sleep=sleep
         )
+        party_raw = await _collect_party(
+            c, settings, patch=patch, collected_at=collected_at, sleep=sleep, snapshots=snapshots
+        )
         region_raw, region_snaps = await _collect_region(
             c, settings, patch=patch, collected_at=collected_at, sleep=sleep
         )
@@ -360,6 +412,8 @@ async def _run_stats(c: HPClient, settings: Settings, *, collected_at: str, slee
     for key, raw in raw_by_key.items():
         _write_gz(day_dir / f"raw_{key}.json.gz", raw)
         _write_gz(day_dir / f"{key}.json.gz", snapshots[key])
+    for key, raw in party_raw.items():
+        _write_gz(day_dir / f"raw_{key}.json.gz", raw)
     (day_dir / "meta.json").parent.mkdir(parents=True, exist_ok=True)
     (day_dir / "meta.json").write_text(json.dumps(meta, ensure_ascii=False), encoding="utf-8")
     _warn_heroes_without_assets(settings.data_dir, snapshots, extra.get("builds.json"))

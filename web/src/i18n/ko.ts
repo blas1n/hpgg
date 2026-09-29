@@ -146,13 +146,7 @@ export const ko = {
     mapBanner: (name: string) => `${name} · 폭풍 리그 · 이 전장 표본으로만 계산`,
     notCollected: " · 수집 전",
     bracket: "리그 구간",
-    formula: "티어 공식",
-    presets: { aichi: "아이치 공식 (기본)", additive: "가산식", winrate: "승률만" },
     comboNote: "지역별 데이터는 전체 구간만 수집합니다 — 지역과 리그 구간은 함께 고를 수 없습니다",
-    presetDiffBefore: "으로 계산한 티어입니다. 아이치 공식과 티어가 다른 영웅 ",
-    presetDiffAfter: "명은 ",
-    presetDiffEnd: " 처럼 원래 티어를 함께 표시합니다.",
-    backToDefault: "기본 공식으로",
     columns: { score: "점수", win_rate: "승률", pick: "픽률", ban_rate: "밴률", games: "표본수" },
     tierGroup: (tier: string, n: string) => `${tier} 티어 · ${n}명`,
     grey: "표본 부족",
@@ -168,8 +162,6 @@ export const ko = {
     detailSample: "표본",
     detailGames: (n: string) => `${n}게임`,
     heroDetail: "영웅 상세 →",
-    baseTierTitle: (tier: string) => `아이치 공식으로는 ${tier} 티어`,
-    baseTier: (tier: string) => `기본 ${tier}`,
     deltaNewTitle: "직전 패치엔 표본 부족",
     deltaTitle: (rank: string) => `직전 패치 #${rank}`,
     bannerPrevious: (patch: string, days: string) => `패치 ${patch} 후 ${days}일, 표본이 적어 `,
@@ -177,19 +169,22 @@ export const ko = {
     bannerPreviousEnd: " 기준으로 보여줍니다.",
     bannerShowCurrent: "현재 패치 보기",
     bannerThin: (patch: string, days: string) => `패치 ${patch} 후 ${days}일, 표본이 아직 적습니다.`,
-    formulaTail: (k: string) => ` · 승률은 표본 수축(k=${k}) · `,
+    formulaTail: (k: string, party = "") => ` · 승률은 ${party}표본 수축(k=${k}) · `,
+    formulaParty: (k: string) => `파티 보정(솔로 큐 기준, k=${k}) 후 `,
     formulaCuts: (min: string) => `${min}게임 미만 제외 · 상위 6% S / 24% A / 54% B / 82% C / 94% D`,
     details: "자세히",
   },
   formula: {
     ban: (w: string) => ` + 밴률 × ${w}`,
-    multiplicative: (w: string, ban: string) => `티어 점수 = 픽률 × (승률 − 50) × ${w}${ban}`,
-    additive: (w: string, ban: string) => `티어 점수 = (승률 − 50) + 픽률 × ${w}${ban}`,
-    winrate: "티어 점수 = 승률",
+    line: (w: string, ban: string) => `티어 점수 = 픽률 × (승률 − 50) × ${w}${ban}`,
     noBan: "   (빠른 대전은 밴이 없음)",
-    detailMultiplicative: (w: string, ban: string) => `픽률 × (WRs − 50) × ${w}${ban}`,
-    detailAdditive: (w: string, ban: string) => `(WRs − 50) + 픽률 × ${w}${ban}`,
-    detailWinrate: "WRs   (픽률·밴률은 쓰지 않음)",
+    detailScore: (w: string, ban: string) => `픽률 × (WRs − 50) × ${w}${ban}`,
+    party: (shift: string, k: string, pooled: string) =>
+      `보정승률 = 승률 + (솔로승률 + ${shift} − 승률) × 솔로게임수 / (솔로게임수 + ${k})
+        솔로승률 = 그 영웅을 혼자 큐를 돌린 플레이어가 한 게임만의 승률. 솔로 게임 전체 승률 ${pooled}% 를 50% 에 맞춤
+        (파티는 더 자주 이깁니다. 파티에서 많이 쓰는 영웅이 실제보다 강해 보이지 않도록. 표의 승률 열은 보정 전 그대로)`,
+    wrInput: "(승률 − 50) × 게임수",
+    wrInputCorrected: "(보정승률 − 50) × 게임수",
     detail: (k: string, score: string, min: string) => `WRs   = 50 + (승률 − 50) × 게임수 / (게임수 + ${k})
 점수  = ${score}
 티어  = ${min}게임 이상인 영웅을 점수순으로 세워 누적 비율로 자름 (S 6% · A 24% · B 54% · C 82% · D 94% · F 나머지)

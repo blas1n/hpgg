@@ -1,5 +1,5 @@
 /** Hero detail view models. Pure: computed at build time for both modes and serialised into each hero page. */
-import { computeTiers, PRESETS, type Snapshot, type Tier } from "../formula";
+import { computeTiers, type Snapshot, type Tier } from "../formula";
 import type { BuildsFile, MapTable, Region, TalentTable } from "../data";
 import { DEFAULT_LOCALE, type Locale } from "../i18n/locale";
 import { localField } from "../i18n/names";
@@ -23,7 +23,7 @@ export type HeroSummary =
   | { kind: "none" };
 
 const place = (snap: Snapshot, map: string, hero: string, minGames: number) => {
-  const t = computeTiers(snap.rows.filter((r) => r.map === map), PRESETS.aichi, minGames);
+  const t = computeTiers(snap.rows.filter((r) => r.map === map), minGames);
   return { r: t.ranked.find((x) => x.row.hero === hero), grey: t.grey.find((x) => x.hero === hero), n: t.ranked.length };
 };
 
