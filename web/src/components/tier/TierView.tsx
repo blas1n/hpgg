@@ -366,16 +366,8 @@ function HeroRow({ r, cols, n, hasPrevious, sl, span, mode, open, onToggle }: { 
       <tr
         data-hero={r.hero.slug}
         data-tier={r.tier}
-        tabIndex={0}
-        role="button"
-        aria-expanded={open}
+        // the whole row is a mouse target; the hero-name button is the one keyboard and screen readers use
         onClick={onToggle}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" || e.key === " ") {
-            e.preventDefault();
-            onToggle();
-          }
-        }}
         className={cx("cursor-pointer border-b border-line/70 transition-colors hover:bg-surface-2", open && "bg-surface-2")}
       >
         <td data-col="rank" className="py-1.5 pl-3 sm:pl-4">
@@ -394,9 +386,10 @@ function HeroRow({ r, cols, n, hasPrevious, sl, span, mode, open, onToggle }: { 
             {/* the tier has its own column from 640px; on a phone it stays on the portrait */}
             <Portrait src={r.hero.portrait} size={34} tier={r.tier} tierClassName="sm:hidden" className="sm:size-7!" role={r.hero.role || undefined} />
             <span className="min-w-0 sm:flex sm:items-baseline sm:gap-1.5">
-              <span data-name className="block truncate font-semibold text-fg">
-                {r.hero.ko}
-              </span>
+              {/* no onClick of its own: its click reaches the row once */}
+              <button type="button" data-toggle aria-expanded={open} aria-controls={`detail-${r.hero.slug}`} className="block max-w-full truncate text-left font-semibold text-fg focus-visible:outline-2 focus-visible:outline-primary">
+                <span data-name>{r.hero.ko}</span>
+              </button>
               <span className="hidden truncate text-2xs text-muted sm:block">
                 {/* the API name, where it differs from the name shown (on English pages it is the same) */}
                 {r.hero.name !== r.hero.ko && r.hero.name}
@@ -417,7 +410,7 @@ function HeroRow({ r, cols, n, hasPrevious, sl, span, mode, open, onToggle }: { 
         ))}
       </tr>
       {open && (
-        <tr data-detail={r.hero.slug} className="border-b border-line/70 bg-surface-2">
+        <tr id={`detail-${r.hero.slug}`} data-detail={r.hero.slug} className="border-b border-line/70 bg-surface-2">
           <td colSpan={span} className="px-3 pb-3 sm:px-4">
             <dl className="grid grid-cols-3 gap-1.5 pt-1 sm:grid-cols-5">
               <Stat k={t.tier.detailRank} v={`${r.rank} / ${n}`} />
@@ -483,14 +476,15 @@ function PatchBanner({ meta, mode, patch, auto, onCurrent }: { meta: Meta; mode:
 function Formula({ sl, min, party, t, locale }: { sl: boolean; min: number; party: Party | null; t: Messages; locale: Locale }) {
   return (
     <div className="space-y-2">
-      <p id="formula" className="rounded-lg border border-line bg-surface px-3 py-2 font-mono text-xs [overflow-wrap:anywhere] text-fg-2">
+      {/* one readable line length (#30); Korean breaks only between words */}
+      <p id="formula" className="max-w-[80ch] rounded-lg border border-line bg-surface px-3 py-2 font-mono text-xs break-keep [overflow-wrap:anywhere] text-fg-2">
         {formulaLine(sl, locale)}
         {t.tier.formulaTail(String(FORMULA.k), party ? t.tier.formulaParty(String(party.k)) : "")}
         {t.tier.formulaCuts(String(min))}
       </p>
       <details className="text-[13px]">
         <summary className="cursor-pointer text-secondary">{t.tier.details}</summary>
-        <pre className="mt-2 whitespace-pre-wrap rounded-lg bg-surface p-3 text-xs [overflow-wrap:anywhere] text-fg-2">
+        <pre className="mt-2 whitespace-pre-wrap rounded-lg bg-surface p-3 text-xs break-keep [overflow-wrap:anywhere] text-fg-2">
           {formulaDetail(sl, min, locale, party)}
         </pre>
       </details>

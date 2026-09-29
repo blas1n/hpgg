@@ -165,3 +165,44 @@ test("one formula: no formula selector, and an old ?preset= link opens the defau
   await expect(page.locator("#formula")).toContainText("티어 점수 = 픽률 × (승률 − 50) × 3");
   await expect(page.locator("#rows tr[data-changed]")).toHaveCount(0);
 });
+
+test("rows open with a real button: keyboard, aria-expanded and aria-controls; no <tr role=button> (#30)", async ({ page }) => {
+  await page.goto("./tier/");
+  await expect(page.locator('#rows tr[role="button"]')).toHaveCount(0);
+  const toggle = row(page, "illidan").locator("button[data-toggle]");
+  await expect(toggle).toHaveAttribute("aria-expanded", "false");
+  await toggle.focus();
+  await page.keyboard.press("Enter");
+  await expect(detail(page, "illidan")).toBeVisible();
+  await expect(toggle).toHaveAttribute("aria-expanded", "true");
+  await expect(toggle).toHaveAttribute("aria-controls", "detail-illidan");
+  await expect(page.locator("#detail-illidan")).toBeVisible();
+  await page.keyboard.press("Space");
+  await expect(detail(page, "illidan")).toHaveCount(0);
+  // a click anywhere on the row still opens it, exactly once
+  await row(page, "qhira").locator('td[data-col="rank"]').click();
+  await expect(detail(page, "qhira")).toBeVisible();
+  await toggleClick(page);
+});
+
+async function toggleClick(page: Page) {
+  // clicking the button itself toggles once (the click does not also count on the row)
+  await row(page, "qhira").locator("button[data-toggle]").click();
+  await expect(detail(page, "qhira")).toHaveCount(0);
+}
+
+test("the formula line stays readable: at most about 90 characters wide on desktop (#30)", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.goto("./tier/");
+  const ch = await page.locator("#formula").evaluate((el) => {
+    const s = getComputedStyle(el);
+    const c = document.createElement("span");
+    c.textContent = "0";
+    c.style.font = s.font;
+    document.body.appendChild(c);
+    const w = c.getBoundingClientRect().width;
+    c.remove();
+    return el.getBoundingClientRect().width / w;
+  });
+  expect(ch).toBeLessThanOrEqual(90);
+});
