@@ -38,7 +38,7 @@ export const ROLE_RING: Record<string, string> = {
 };
 
 /** Square hero portrait with an optional tier badge on the top-left corner. */
-export function Portrait({ src, size = 40, tier, role, className }: { src?: string; size?: number; tier?: string; role?: string; className?: string }) {
+export function Portrait({ src, size = 40, tier, tierClassName, role, className }: { src?: string; size?: number; tier?: string; tierClassName?: string; role?: string; className?: string }) {
   return (
     <span className={cx("relative inline-block shrink-0", className)} style={{ width: size, height: size }}>
       {src ? (
@@ -54,7 +54,7 @@ export function Portrait({ src, size = 40, tier, role, className }: { src?: stri
       ) : (
         <span className="block size-full rounded-lg bg-portrait" />
       )}
-      {tier && <TierBadge tier={tier} size={size >= 56 ? "md" : "sm"} className="absolute -left-1.5 -top-1.5 ring-2 ring-surface" />}
+      {tier && <TierBadge tier={tier} size={size >= 56 ? "md" : "sm"} className={cx("absolute -left-1.5 -top-1.5 ring-2 ring-surface", tierClassName)} />}
     </span>
   );
 }
