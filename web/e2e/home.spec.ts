@@ -77,3 +77,13 @@ test("footer offers a contact address", async ({ page }) => {
   await page.goto("./");
   await expect(page.locator('footer a[href="mailto:contact@hpgg.win"]')).toBeVisible();
 });
+
+test("홈 says what the site is in one short line, above the player search (#30)", async ({ page }) => {
+  await page.goto("./");
+  const line = page.locator("#site-tagline");
+  await expect(line).toHaveText("히어로즈 오브 더 스톰 영웅 티어와 전적 검색");
+  const box = (await line.boundingBox())!;
+  expect(box.y + box.height).toBeLessThanOrEqual((await page.locator("#home-player-search").boundingBox())!.y); // above it, not over it
+  await page.goto("/en/hots/");
+  await expect(page.locator("#site-tagline")).toHaveText("Heroes of the Storm hero tiers and player search");
+});

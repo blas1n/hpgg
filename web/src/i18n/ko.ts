@@ -117,6 +117,7 @@ export const ko = {
   },
   home: {
     title: "오늘의 메타",
+    tagline: "히어로즈 오브 더 스톰 영웅 티어와 전적 검색",
     leaders: "역할별 1위",
     leadersSub: "역할마다 티어 점수가 가장 높은 영웅",
     fullTier: "전체 티어표",

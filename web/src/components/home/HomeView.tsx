@@ -28,7 +28,13 @@ export function HomeView({ models, maps }: { models: Record<Mode, HomeModel>; ma
   return (
     <>
       <main className="page-x mt-6 space-y-6">
-        <PlayerSearchForm id="home-player-search" className="mx-auto max-w-xl" />
+        <div className="space-y-2">
+          {/* what the site is, for a first visit (#30) */}
+          <p id="site-tagline" className="text-center text-[13px] font-semibold text-fg-2">
+            {t.home.tagline}
+          </p>
+          <PlayerSearchForm id="home-player-search" className="mx-auto max-w-xl" />
+        </div>
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
             <h1 className="text-2xl font-extrabold tracking-tight text-fg">{t.home.title}</h1>
