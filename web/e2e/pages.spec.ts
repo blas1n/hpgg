@@ -151,7 +151,7 @@ test("hero detail: unknown slug is a 404 page with a way back", async ({ page })
   await expect(page.locator("#meta-line")).toContainText("영웅이 없습니다");
 });
 
-test("maps: cards with images, match counts and top heroes; card links to the map tier table with a banner", async ({ page }) => {
+test("maps: cards with images, match counts and top heroes; card → map page → that map's tier table with a banner", async ({ page }) => {
   await page.goto("./maps/");
   await expect(page.locator("#map-grid a[data-map]")).toHaveCount(15);
   const card = page.locator('#map-grid a[data-map="cursed-hollow"]');
@@ -160,6 +160,8 @@ test("maps: cards with images, match counts and top heroes; card links to the ma
   await expect(page.locator("#map-grid a[data-map]").first()).toHaveAttribute("data-map", "cursed-hollow"); // most matches first
   await expect(page.locator('#map-grid a[data-map="towers-of-doom"]')).toContainText("표본 없음"); // fixture: no SL rows there
   await card.click();
+  await expect(page).toHaveURL(/\/hots\/maps\/cursed-hollow\/$/);
+  await page.locator("#map-tier-link a").click();
   await expect(page).toHaveURL(/tier\/\?mode=sl&map=Cursed(\+|%20)Hollow/);
   await expect(page.locator("#map-hero")).toBeVisible();
   await expect(page.locator("#map-hero h2")).toHaveText("저주받은 골짜기");

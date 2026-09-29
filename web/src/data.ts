@@ -40,6 +40,7 @@ export const hotsHref = {
   hero: (slug: string, mode?: Mode) => `/hots/heroes/${encodeURIComponent(slug)}/${mode === "sl" ? "?mode=sl" : ""}`,
   maps: "/hots/maps/",
   players: "/hots/players/",
+  map: (slug: string) => `/hots/maps/${encodeURIComponent(slug)}/`,
 };
 
 export type Mode = "qm" | "sl";

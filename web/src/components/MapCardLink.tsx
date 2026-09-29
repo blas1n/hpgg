@@ -4,11 +4,11 @@ import { Portrait } from "./ui";
 
 const int = (n: number) => n.toLocaleString("ko-KR");
 
-/** One map: image, Storm League match count, top 3 heroes; opens that map's tier table. Used by 홈 and 전장. */
+/** One map: image, Storm League match count, top 3 heroes; opens the map's page. Used by 홈 and 전장. */
 export function MapCardLink({ c }: { c: MapCard }) {
   return (
     <a
-      href={hotsHref.tier(new URLSearchParams({ mode: "sl", map: c.name }))}
+      href={hotsHref.map(c.slug)}
       data-map={c.slug}
       data-card="map"
       className="group relative block overflow-hidden rounded-lg border border-line bg-surface-2 transition-colors hover:border-primary"
