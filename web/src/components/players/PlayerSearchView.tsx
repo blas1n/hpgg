@@ -12,13 +12,13 @@ const pct = (n: number | null) => (n === null ? "–" : `${n.toFixed(1)}%`);
 const int = (n: number) => n.toLocaleString("ko-KR");
 const wrClass = (wr: number | null) => (wr === null ? "text-muted" : wr >= 50 ? "text-pos" : "text-neg");
 const LEAGUE_CLASS: Record<string, string> = {
-  grandmaster: "text-tier-s",
+  grandmaster: "text-secondary",
   master: "text-secondary",
   diamond: "text-primary",
   platinum: "text-accent",
-  gold: "text-tier-b",
+  gold: "text-warn-fg",
   silver: "text-fg-2",
-  bronze: "text-tier-a",
+  bronze: "text-fg-2",
 };
 
 /** 전적 검색: the query lives in the URL (?tag=Name%231234&region=KR), so a search is shareable and 홈 can link here. */
@@ -59,7 +59,7 @@ export function PlayerSearchView({ heroes, maps }: { heroes: HeroTable; maps: Ma
   return (
     <main className="page-x mt-6 space-y-4 pb-10">
       <div>
-        <h1 className="text-2xl font-extrabold tracking-tight text-white">전적 검색</h1>
+        <h1 className="text-2xl font-extrabold tracking-tight text-fg">전적 검색</h1>
         <p className="mt-0.5 text-xs text-muted">배틀태그와 지역으로 찾기 · Heroes Profile에 리플레이가 올라온 경기 기준</p>
       </div>
       <PlayerSearchForm key={formKey} initialTag={query?.tag ?? ""} initialRegion={query?.region ?? "KR"} onSearch={search} className="max-w-xl" />
@@ -99,7 +99,7 @@ function Result({ state, heroes, maps, retry }: { state: State; heroes: HeroTabl
 
 function Notice({ title, body, tone, retry }: { title: string; body: string; tone?: "info" | "warn"; retry?: () => void }) {
   return (
-    <Card className={cx("p-5", tone === "warn" && "border-neg/40", tone === "info" && "border-primary/40")}>
+    <Card className={cx("p-5", tone === "warn" && "border-warn-line", tone === "info" && "border-primary/40")}>
       <h2 className="text-[15px] font-bold text-fg">{title}</h2>
       <p className="mt-1 text-sm text-fg-2">{body}</p>
       {retry && (
@@ -115,13 +115,13 @@ function Profile({ v }: { v: PlayerView }) {
   return (
     <div className="space-y-4">
       {v.stale && (
-        <p id="player-stale" data-notice={v.notice} className="rounded-lg border border-neg/40 bg-surface px-4 py-2.5 text-xs text-fg-2">
+        <p id="player-stale" data-notice={v.notice} className="rounded-lg border border-warn-line bg-warn-bg px-4 py-2.5 text-xs text-warn-fg">
           {v.notice === "quota_exceeded" ? "오늘 조회 한도 초과" : "Heroes Profile 응답 없음"} — {v.fetchedLabel}에 저장된 전적입니다.
         </p>
       )}
       <Card className="p-4 sm:p-5">
         <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
-          <h2 id="player-name" className="text-xl font-extrabold text-white">
+          <h2 id="player-name" className="text-xl font-extrabold text-fg">
             {v.name}
             <span className="ml-0.5 text-base font-semibold text-muted">{v.tag}</span>
           </h2>

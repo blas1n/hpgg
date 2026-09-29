@@ -1,7 +1,12 @@
+import { fileURLToPath } from "node:url";
 import { expect, test, type Page } from "@playwright/test";
+
+const playerFixture = fileURLToPath(new URL("../tests/fixtures/api_player_zemill.json", import.meta.url));
 
 test.beforeEach(async ({ page }) => {
   await page.route("**/gc.zgo.at/**", (r) => r.abort());
+  // 전적 검색 results come from the API; serve the recorded profile so its text is measured too
+  await page.route("https://api.hpgg.win/**", (r) => r.fulfill({ status: 200, contentType: "application/json", headers: { "access-control-allow-origin": "*" }, path: playerFixture }));
 });
 
 // Light theme (#1): navy stays the default; the header toggle switches and remembers; no flash of the wrong theme.
@@ -143,7 +148,7 @@ for (const theme of ["dark", "light"] as const) {
     test(`contrast: ${theme} theme at ${width}px — all text on every page reaches WCAG AA`, async ({ page }) => {
       await page.setViewportSize({ width, height: 900 });
       if (theme === "light") await page.addInitScript(() => localStorage.setItem("hpgg-theme", "light"));
-      for (const path of ["./", "./tier/", "./tier/?mode=sl", "./heroes/", "./heroes/illidan/", "./heroes/illidan/?mode=sl", "./maps/"]) {
+      for (const path of ["./", "./tier/", "./tier/?mode=sl", "./heroes/", "./heroes/illidan/", "./heroes/illidan/?mode=sl", "./maps/", "./players/", "./players/?tag=Player12%231012&region=NA"]) {
         await page.goto(path);
         await expect(page.locator("main")).toBeVisible();
         if (theme === "light") await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
