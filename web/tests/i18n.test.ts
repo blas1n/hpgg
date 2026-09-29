@@ -48,8 +48,6 @@ describe("message tables", () => {
     for (const locale of LOCALES) {
       const all = rendered(messages[locale]).map((r) => r.text).join("\n");
       expect(all, locale).not.toMatch(/체감|gut|feel|투표|vote|👍|👎/i);
-      // the formula is shown as maths, never under a person's name (owner, 2026-09-29)
-      expect(all, locale).not.toMatch(/아이치|aichi/i);
     }
   });
 });

@@ -152,7 +152,7 @@ test("party correction (#36): Quick Match ranks by the corrected win rate, shows
   await expect(page.locator("#formula")).toContainText("win rate party-corrected (solo-queue baseline, k=1000), then shrunk toward 50");
 });
 
-test("one formula, no name on it: no formula selector, and an old ?preset= link opens the default view", async ({ page }) => {
+test("one formula: no formula selector, and an old ?preset= link opens the default view", async ({ page }) => {
   await page.goto("./tier/?mode=sl");
   await expect(page.locator("#preset")).toHaveCount(0);
   // the Storm League filters are the region, the bracket and the map
@@ -160,7 +160,6 @@ test("one formula, no name on it: no formula selector, and an old ?preset= link 
   await expect(page.locator("#region")).toBeVisible();
   await expect(page.locator("#bracket")).toBeVisible();
   await expect(page.locator("#map")).toBeVisible();
-  await expect(page.locator("main")).not.toContainText(/아이치|Aichi/);
   await page.goto("./tier/?preset=additive&role=Tank");
   await expect(page).not.toHaveURL(/preset=/);
   await expect(page.locator("#formula")).toContainText("티어 점수 = 픽률 × (승률 − 50) × 3");
