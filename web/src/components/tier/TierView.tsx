@@ -8,7 +8,7 @@ import type { Messages } from "@/i18n/messages";
 import { formulaDetail, formulaLine, FORMULA, type Party, type Snapshot } from "@/formula";
 import { bracketMatches, regionMatches } from "@/lib/shown";
 import { DEFAULT_TIER_STATE, formatScore, parseTierState, resolvePatch, tierSearch, tierTable, visibleRows, type SortKey, type TierRow, type TierState, type TierTable } from "@/lib/tier";
-import { Card, cx, Portrait, Segmented, TierBadge, wrTone } from "../ui";
+import { Card, cx, Portrait, SELECT, Segmented, TierBadge, wrTone } from "../ui";
 
 const pct = (n: number) => `${n.toFixed(1)}%`;
 const int = (n: number) => n.toLocaleString("ko-KR");
@@ -327,7 +327,6 @@ export function TierView({ meta, heroes, maps, initial }: { meta: Meta; heroes: 
   );
 }
 
-const SELECT = "w-full rounded-lg border border-line bg-surface-2 px-2.5 py-1.5 text-[13px] text-fg disabled:opacity-50 sm:w-auto";
 
 /** Which region, when it was collected (regions rotate one a day), and how thin its sample is. */
 function RegionNote({ meta, mode, region }: { meta: Meta; mode: Mode; region: Exclude<Region, "all"> }) {

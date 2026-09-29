@@ -55,6 +55,27 @@ test("heroes: the mode toggle swaps the tiers and the hero links carry the mode"
   await expect(bw).toHaveAttribute("href", "/ko/hots/heroes/brightwing/?mode=sl");
 });
 
+test("heroes: the universe filter keeps only that universe's heroes, lands in the URL and reads it back (#43)", async ({ page }) => {
+  await page.goto("./heroes/");
+  const cards = page.locator("#grid a[data-hero]");
+  await page.locator("#universe").selectOption("Overwatch");
+  await expect(page).toHaveURL(/universe=Overwatch/);
+  await expect(cards).toHaveCount(9);
+  await expect(page.locator('#grid a[data-hero="tracer"]')).toBeVisible();
+  await expect(page.locator('#grid a[data-hero="illidan"]')).toHaveCount(0);
+  await expect(page.locator('#universe option[value="Warcraft"]')).toHaveText("워크래프트");
+  // with a role: Overwatch healers only
+  await page.goto("./heroes/?role=Healer&universe=Overwatch");
+  await expect(page.locator("#universe")).toHaveValue("Overwatch");
+  await expect(cards).toHaveCount(2); // Ana, Lúcio
+  await expect(page.locator('#grid a[data-hero="ana"]')).toBeVisible();
+  await page.locator("#universe").selectOption("all");
+  await expect(page).not.toHaveURL(/universe=/);
+  await page.goto("/en/hots/heroes/?universe=Starcraft");
+  await expect(page.locator('#universe option[value="Starcraft"]')).toHaveText("StarCraft");
+  await expect(page.locator('#grid a[data-hero="raynor"]')).toBeVisible();
+});
+
 test("hero detail: three stat cards, per-map rows (not links) in SL, brackets, no vote", async ({ page }) => {
   await page.goto("./heroes/illidan/");
   await expect(page.locator("h1")).toHaveText("일리단");

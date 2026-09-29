@@ -6,6 +6,9 @@ import { useT } from "@/i18n/client";
 
 export const cx = (...c: (string | false | null | undefined)[]): string => c.filter(Boolean).join(" ");
 
+/** A filter <select> (tier table, 영웅). */
+export const SELECT = "w-full rounded-lg border border-line bg-surface-2 px-2.5 py-1.5 text-[13px] text-fg disabled:opacity-50 sm:w-auto";
+
 const TIER_BG: Record<string, string> = {
   S: "bg-tier-s",
   A: "bg-tier-a",

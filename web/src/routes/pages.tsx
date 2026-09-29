@@ -93,8 +93,12 @@ export function HeroesPage({ locale }: { locale: Locale }) {
       return [m, s ? `${s.snap.patch}${s.fallback ? ` · ${t.common.fallbackNote(meta.current_patch)}` : ""}` : ""];
     }),
   ) as Record<Mode, string>;
-  const heroes = index.qm.map(({ tier: _tier, ...h }) => h);
-  return <HeroesView heroes={heroes} roles={readHeroes(locale).roles} tiers={tiers} patches={patches} />;
+  const table = readHeroes(locale);
+  const franchise = new Map(table.heroes.map((h) => [h.slug, h.franchise]));
+  const heroes = index.qm.map(({ tier: _tier, ...h }) => ({ ...h, franchise: franchise.get(h.slug) }));
+  // the universes present, in the message table's order
+  const universes = Object.keys(t.common.universes).filter((u) => heroes.some((h) => h.franchise === u));
+  return <HeroesView heroes={heroes} roles={table.roles} universes={universes} tiers={tiers} patches={patches} />;
 }
 
 // --- 영웅 상세: one static page per hero; both modes computed at build time; the page fetches nothing ---
