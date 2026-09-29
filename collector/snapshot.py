@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 import shutil
 from dataclasses import asdict
-from datetime import date
+from datetime import date, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -48,6 +48,13 @@ def _thin(mode: dict[str, Any] | None) -> bool:
     return bool(heroes) and (mode or {}).get("heroes_over_200", 0) / heroes < THIN_SHARE
 
 
+def healthy(modes: dict[str, Any]) -> bool:
+    """A build with a real sample: recorded and not thin in Quick Match and Storm League. Only
+    such a build becomes the previous patch: a hotfix a day after a patch must not push a month
+    of data out."""
+    return all(m in modes and not _thin(modes[m]) for m in REFERENCE_MODES)
+
+
 def reference_patch(current: str, previous: str | None, modes: dict[str, Any]) -> str:
     if previous and any(_thin(modes.get(m)) for m in REFERENCE_MODES):
         return previous
@@ -78,12 +85,30 @@ def _version_key(v: str) -> tuple[int, ...]:
     return tuple(int(x) for x in v.split("."))
 
 
-def choose_patch(patches_payload: dict[str, Any]) -> str:
-    """Newest build (by version tuple) whose globals are queryable."""
+# HP lists a new build before its stats accept it (its patch list and its filter options are two
+# caches of 10 minutes each): the 2026-09-30 run got 422 invalid_parameters seven minutes after
+# 2.57.0.98304 appeared. A build is only chosen once it has been listed this long.
+PATCH_SETTLE = timedelta(hours=1)
+
+
+def _added(p: dict[str, Any]) -> datetime | None:
+    raw = p.get("date_added")
+    try:
+        return datetime.fromisoformat(str(raw).replace("Z", "+00:00")) if raw else None
+    except ValueError:
+        return None
+
+
+def choose_patch(patches_payload: dict[str, Any], now: datetime | None = None) -> str:
+    """Newest build (by version tuple) whose globals are queryable and, given `now`, that has been
+    listed for PATCH_SETTLE. One build is one patch: unannounced hotfixes change balance too
+    (2.55.17.97650: seven heroes; 2.55.17.97771: Chromie)."""
     candidates = [
         p["game_version"]
         for p in patches_payload.get("patches", [])
-        if p.get("valid_globals") and isinstance(p.get("game_version"), str)
+        if p.get("valid_globals")
+        and isinstance(p.get("game_version"), str)
+        and (now is None or (added := _added(p)) is None or added <= now - PATCH_SETTLE)
     ]
     if not candidates:
         raise ValueError("no patch with valid_globals=true in /patches")
@@ -279,7 +304,11 @@ def build_meta(
         previous_patch = prev_meta.get("previous_patch")
         patch_started_at = prev_meta.get("patch_started_at", today)
     elif prev_meta:
-        previous_patch = prev_meta.get("current_patch")
+        # the outgoing build becomes the previous patch only if it had a real sample
+        outgoing_ok = healthy(prev_meta.get("modes") or {})
+        previous_patch = (
+            prev_meta.get("current_patch") if outgoing_ok else prev_meta.get("previous_patch")
+        )
         patch_started_at = today
     else:
         previous_patch = None
@@ -382,10 +411,14 @@ def commit_atomic(
     patch_changed = (
         prev_meta is not None and prev_meta.get("current_patch") != meta["current_patch"]
     )
+    # latest/ moves to previous/ only when build_meta promoted the outgoing build (thin: dropped)
+    promoted = patch_changed and meta.get("previous_patch") == (prev_meta or {}).get(
+        "current_patch"
+    )
     latest = data_dir / "latest"
     previous = data_dir / "previous"
     stage_previous: Path | None = None
-    if patch_changed and latest.exists():
+    if promoted and latest.exists():
         stage_previous = stage / "previous"
         shutil.copytree(latest, stage_previous)
 
@@ -411,4 +444,5 @@ def commit_atomic(
         patch=meta["current_patch"],
         modes=sorted(snapshots),
         patch_changed=patch_changed,
+        promoted=promoted,
     )

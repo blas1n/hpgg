@@ -357,7 +357,12 @@ async def test_builds_are_collected_for_the_reference_patch(
     )
     s = settings(tmp_path)
     s.data_dir.joinpath("latest").mkdir(parents=True)
-    old = {"current_patch": "2.55.17.97650", "previous_patch": None, "modes": {}}
+    healthy = {"matches": 9000, "heroes": 90, "heroes_over_200": 90}
+    old = {
+        "current_patch": "2.55.17.97650",
+        "previous_patch": None,
+        "modes": {"qm": healthy, "sl": healthy},
+    }
     s.data_dir.joinpath("latest", "meta.json").write_text(json.dumps(old))
     assert await run(s, sleep=fake_sleep, now=lambda: "2026-09-28T00:00:00Z") == 0
     meta = json.loads((s.data_dir / "latest" / "meta.json").read_text())
@@ -378,7 +383,12 @@ async def test_matchups_are_collected_for_the_reference_patch(
     )
     s = settings(tmp_path)
     _seed_heroes(s, ["Abathur"])
-    old = {"current_patch": "2.55.17.97650", "previous_patch": None, "modes": {}}
+    healthy = {"matches": 9000, "heroes": 90, "heroes_over_200": 90}
+    old = {
+        "current_patch": "2.55.17.97650",
+        "previous_patch": None,
+        "modes": {"qm": healthy, "sl": healthy},
+    }
     s.data_dir.joinpath("latest").mkdir(parents=True)
     s.data_dir.joinpath("latest", "meta.json").write_text(json.dumps(old))
     assert await run(s, sleep=fake_sleep, now=lambda: "2026-09-28T00:00:00Z") == 0
