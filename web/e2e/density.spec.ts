@@ -13,7 +13,8 @@ test.describe("desktop 1280", () => {
     await page.goto("./tier/");
     const rows = page.locator("#rows tr[data-hero]");
     await expect(rows.first().locator('td[data-col="tier"] .tier-badge')).toHaveText("S");
-    await expect(page.locator('#rows tr[data-hero] td[data-col="hero"] .tier-badge')).toHaveCount(0); // not clipped on the portrait any more
+    const portraitBadges = page.locator('#rows tr[data-hero] td[data-col="hero"] .tier-badge');
+    expect(await portraitBadges.evaluateAll((els) => els.filter((e) => e.getBoundingClientRect().width > 0).length)).toBe(0); // not clipped on the portrait any more
     const h = (await rows.nth(3).boundingBox())!.height;
     expect(h).toBeLessThanOrEqual(42);
     const visible = await rows.evaluateAll((els) => els.filter((e) => e.getBoundingClientRect().bottom <= innerHeight).length);

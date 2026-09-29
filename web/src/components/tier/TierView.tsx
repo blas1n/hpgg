@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { assetUrl, daysSince, hotsHref, loadSnapshot, REGIONS, regionSample, shortDate, snapshotKey, thinSample, type Bracket, type HeroTable, type MapTable, type Meta, type Mode, type Region } from "@/data";
 import { useLocale, useT } from "@/i18n/client";
 import type { Locale } from "@/i18n/locale";
@@ -15,22 +15,15 @@ const int = (n: number) => n.toLocaleString("ko-KR");
 
 /** Labels: messages tier.columns. */
 const COLUMNS: { key: SortKey; sl?: true; wide?: true }[] = [{ key: "score" }, { key: "win_rate" }, { key: "pick" }, { key: "ban_rate", sl: true }, { key: "games", wide: true }];
+// Every column is in the pre-rendered HTML and CSS breakpoints fold the desktop ones: the tier and sample columns open
+// from 640px (sm), the role column from 1024px (lg), so the first paint at any width already has the final layout (no
+// JS media state). A folded column is kept as an empty zero-width cell rather than display:none, so the table always
+// has the same number of columns and a spanning row (tier divider, opened row) spans exactly all of them; with a
+// display:none cell the spanning row would add phantom columns that squeeze the hero column.
+const WIDE = "max-sm:w-0 max-sm:p-0 max-sm:*:hidden";
+const LG = "max-lg:w-0 max-lg:p-0 max-lg:*:hidden";
 const BRACKETS: Bracket[] = ["all", "low", "high"];
 const PRESET_IDS = Object.keys(PRESETS) as PresetId[];
-
-// the tier and sample columns appear from 640px, the role column from 1024px; an opened row must span exactly the
-// visible columns
-function useMedia(query: string): boolean {
-  return useSyncExternalStore(
-    (cb) => {
-      const m = matchMedia(query);
-      m.addEventListener("change", cb);
-      return () => m.removeEventListener("change", cb);
-    },
-    () => matchMedia(query).matches,
-    () => false,
-  );
-}
 
 type Loaded = Record<string, Snapshot | null>; // "latest/qm", "previous/sl_low", … ; null = not published
 
@@ -47,8 +40,6 @@ export function TierView({ meta, heroes, maps, initial }: { meta: Meta; heroes: 
   const [loaded, setLoaded] = useState<Loaded>({});
   const [error, setError] = useState<string | null>(null);
   const [open, setOpen] = useState<string | null>(null);
-  const wide = useMedia("(min-width: 640px)");
-  const lg = useMedia("(min-width: 1024px)");
 
   useEffect(() => {
     setState(parseTierState(location.search));
@@ -125,8 +116,8 @@ export function TierView({ meta, heroes, maps, initial }: { meta: Meta; heroes: 
   const changed = state.preset === "aichi" ? 0 : table.rows.filter((r) => r.baseTier).length;
   const grey = table.grey.filter((g) => role === "all" || g.hero.role === role);
   const mapInfo = map === "all" ? undefined : maps.maps.find((m) => m.name === map);
-  const cols = COLUMNS.filter((c) => (!c.sl || sl) && (!c.wide || wide));
-  const span = 2 + (wide ? 1 : 0) + (lg ? 1 : 0) + cols.length;
+  const cols = COLUMNS.filter((c) => !c.sl || sl);
+  const span = 4 + cols.length; // every column, folded or not (see WIDE)
   // ranked by score, the rows run tier by tier: a divider row opens each tier (not when sorted by another column)
   const groups = sort === "score";
 
@@ -286,26 +277,22 @@ export function TierView({ meta, heroes, maps, initial }: { meta: Meta; heroes: 
               <th data-col="rank" className="w-11 py-2.5 pl-3 text-left font-semibold sm:w-24 sm:pl-4">
                 {t.common.rank}
               </th>
-              {wide && (
-                <th data-col="tier" className="w-12 py-2.5 text-center font-semibold">
-                  {t.common.tier}
-                </th>
-              )}
+              <th data-col="tier" className={cx(WIDE, "w-12 py-2.5 text-center font-semibold")}>
+                <span>{t.common.tier}</span>
+              </th>
               <th data-col="hero" className="py-2.5 pl-1 text-left font-semibold lg:w-64">
                 {t.common.hero}
               </th>
-              {lg && (
-                <th data-col="role" className="w-28 py-2.5 text-left font-semibold">
-                  {t.common.role}
-                </th>
-              )}
+              <th data-col="role" className={cx(LG, "w-28 py-2.5 text-left font-semibold")}>
+                <span>{t.common.role}</span>
+              </th>
               {cols.map((c) => (
                 <th
                   key={c.key}
                   data-col={c.key}
                   data-sort={c.key}
                   aria-sort={sort === c.key ? (dir === "desc" ? "descending" : "ascending") : undefined}
-                  className={cx("py-2.5 pr-2 text-right font-semibold sm:pr-4", c.key === "games" ? "w-24" : c.key === "win_rate" ? "w-14 sm:w-24 lg:w-32" : "w-14 sm:w-24")}
+                  className={cx("py-2.5 pr-2 text-right font-semibold sm:pr-4", c.wide && WIDE, c.key === "games" ? "w-24" : c.key === "win_rate" ? "w-14 sm:w-24 lg:w-32" : "w-14 sm:w-24")}
                 >
                   <button type="button" onClick={() => sortBy(c.key)} className={cx("whitespace-nowrap transition-colors hover:text-fg", sort === c.key && "text-fg")}>
                     {t.tier.columns[c.key]}
@@ -328,10 +315,8 @@ export function TierView({ meta, heroes, maps, initial }: { meta: Meta; heroes: 
                 </tr>
               )}
               <HeroRow
-                wide={wide}
-                lg={lg}
                 r={r}
-                cols={cols.map((c) => c.key)}
+                cols={cols}
                 n={table.rows.length}
                 hasPrevious={table.hasPrevious}
                 sl={sl}
@@ -392,7 +377,7 @@ function RegionNote({ meta, mode, region }: { meta: Meta; mode: Mode; region: Ex
   );
 }
 
-function HeroRow({ r, wide, lg, cols, n, hasPrevious, sl, preset, span, mode, open, onToggle }: { r: TierRow; wide: boolean; lg: boolean; cols: SortKey[]; n: number; hasPrevious: boolean; sl: boolean; preset: Preset; span: number; mode: Mode; open: boolean; onToggle: () => void }) {
+function HeroRow({ r, cols, n, hasPrevious, sl, preset, span, mode, open, onToggle }: { r: TierRow; cols: typeof COLUMNS; n: number; hasPrevious: boolean; sl: boolean; preset: Preset; span: number; mode: Mode; open: boolean; onToggle: () => void }) {
   const t = useT();
   const href = hotsHref(useLocale());
   const cell: Record<SortKey, string> = {
@@ -428,15 +413,13 @@ function HeroRow({ r, wide, lg, cols, n, hasPrevious, sl, preset, span, mode, op
             {hasPrevious && <Delta rank={r.rank} prev={r.prevRank} />}
           </span>
         </td>
-        {wide && (
-          <td data-col="tier" className="py-1.5 text-center">
-            <TierBadge tier={r.tier} />
-          </td>
-        )}
+        <td data-col="tier" className={cx(WIDE, "py-1.5 text-center")}>
+          <TierBadge tier={r.tier} />
+        </td>
         <td data-col="hero" className="overflow-hidden py-1.5 pl-1">
           <span className="flex min-w-0 items-center gap-2.5">
             {/* the tier has its own column from 640px; on a phone it stays on the portrait */}
-            <Portrait src={r.hero.portrait} size={wide ? 28 : 34} tier={wide ? undefined : r.tier} role={r.hero.role || undefined} />
+            <Portrait src={r.hero.portrait} size={34} tier={r.tier} tierClassName="sm:hidden" className="sm:size-7!" role={r.hero.role || undefined} />
             <span className="min-w-0 sm:flex sm:items-baseline sm:gap-1.5">
               {r.baseTier ? (
                 <span className="flex min-w-0 flex-col items-start sm:flex-row sm:items-center">
@@ -452,20 +435,20 @@ function HeroRow({ r, wide, lg, cols, n, hasPrevious, sl, preset, span, mode, op
               )}
               <span className="hidden truncate text-2xs text-muted sm:block">
                 {/* the API name, where it differs from the name shown (on English pages it is the same) */}
-                {[r.hero.name !== r.hero.ko && r.hero.name, !lg && r.hero.role_ko].filter(Boolean).join(" · ")}
+                {r.hero.name !== r.hero.ko && r.hero.name}
+                {/* the role has its own column from 1024px */}
+                {r.hero.role_ko && <span className="lg:hidden">{(r.hero.name !== r.hero.ko ? " · " : "") + r.hero.role_ko}</span>}
               </span>
             </span>
           </span>
         </td>
-        {lg && (
-          <td data-col="role" className="truncate py-1.5 text-[13px] text-fg-2">
-            {r.hero.role_ko}
-          </td>
-        )}
-        {cols.map((k) => (
-          <td key={k} data-col={k} className={cx("py-1.5 pr-2 text-right sm:pr-4", k === "score" ? (r.score < 0 ? "font-bold text-neg" : "font-bold text-fg") : "text-fg-2", k === "win_rate" && wrTone(r.win_rate))}>
+        <td data-col="role" className={cx(LG, "truncate py-1.5 text-[13px] text-fg-2")}>
+          <span>{r.hero.role_ko}</span>
+        </td>
+        {cols.map(({ key: k, wide }) => (
+          <td key={k} data-col={k} className={cx("py-1.5 pr-2 text-right sm:pr-4", wide && WIDE, k === "score" ? (r.score < 0 ? "font-bold text-neg" : "font-bold text-fg") : "text-fg-2", k === "win_rate" && wrTone(r.win_rate))}>
             <span data-v>{cell[k]}</span>
-            {k === "win_rate" && lg && <span className="ml-1 text-2xs text-muted">±{r.wrHalf.toFixed(1)}</span>}
+            {k === "win_rate" && <span className="ml-1 hidden text-2xs text-muted lg:inline">±{r.wrHalf.toFixed(1)}</span>}
           </td>
         ))}
       </tr>

@@ -30,7 +30,7 @@ test("score, win rate, pick rate and sample size all show plain numbers (no sing
   const r = row(page, "illidan");
   for (const col of ["score", "win_rate", "pick", "games"]) await expect(r.locator(`td[data-col="${col}"] [data-v]`)).not.toHaveText("");
   await expect(r.locator('td[data-col="win_rate"] [data-v]')).toContainText("%");
-  await expect(r.locator(".tier-badge")).toHaveText("B");
+  await expect(r.locator('td[data-col="tier"] .tier-badge')).toHaveText("B");
 });
 
 test("sorting by pick rate reorders rows and is reflected in the URL; tiers stay", async ({ page }) => {
@@ -101,13 +101,14 @@ test("detail row links to the hero page and asks for no vote (voting removed 202
   await expect(d.locator("dt").first()).toHaveText("순위"); // control: the detail list is rendered
 });
 
-test("an opened row spans exactly the visible columns, so the table keeps its full width on a phone", async ({ page }) => {
+test("an opened row spans the whole table on a phone, and the table keeps its full width", async ({ page }) => {
   await page.goto("./tier/");
   await row(page, "qhira").click();
   const visibleCols = await page.locator("#table thead th:visible").count();
   expect(visibleCols).toBe(5); // phone: rank, hero, score, win rate, pick
-  await expect(detail(page, "qhira").locator("td")).toHaveAttribute("colspan", String(visibleCols));
   const tableW = (await page.locator("#table").boundingBox())!.width;
+  const detailW = (await detail(page, "qhira").locator("td").boundingBox())!.width; // it spans the columns hidden on a phone too
+  expect(Math.abs(tableW - detailW)).toBeLessThanOrEqual(1);
   const rowW = (await row(page, "qhira").boundingBox())!.width;
   expect(Math.abs(tableW - rowW)).toBeLessThanOrEqual(1);
   await expect(row(page, "qhira").locator("[data-name]")).toBeVisible();

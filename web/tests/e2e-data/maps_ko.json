@@ -1,0 +1,117 @@
+{
+"maps": [
+{
+"name": "Alterac Pass",
+"ko": "알터랙 고개",
+"slug": "alterac-pass",
+"image": "img/maps/alterac-pass.jpg"
+},
+{
+"name": "Battlefield of Eternity",
+"ko": "영원의 전쟁터",
+"slug": "battlefield-of-eternity",
+"image": "img/maps/battlefield-of-eternity.jpg"
+},
+{
+"name": "Blackheart's Bay",
+"ko": "블랙하트 항만",
+"slug": "blackheart-s-bay",
+"image": "img/maps/blackheart-s-bay.jpg"
+},
+{
+"name": "Braxis Holdout",
+"ko": "브락시스 항전",
+"slug": "braxis-holdout",
+"image": "img/maps/braxis-holdout.jpg"
+},
+{
+"name": "Cursed Hollow",
+"ko": "저주받은 골짜기",
+"slug": "cursed-hollow",
+"image": "img/maps/cursed-hollow.jpg"
+},
+{
+"name": "Dragon Shire",
+"ko": "용의 둥지",
+"slug": "dragon-shire",
+"image": "img/maps/dragon-shire.jpg"
+},
+{
+"name": "Garden of Terror",
+"ko": "공포의 정원",
+"slug": "garden-of-terror",
+"image": "img/maps/garden-of-terror.jpg"
+},
+{
+"name": "Hanamura Temple",
+"ko": "하나무라 사원",
+"slug": "hanamura-temple",
+"image": "img/maps/hanamura-temple.jpg"
+},
+{
+"name": "Haunted Mines",
+"ko": "죽음의 광산",
+"slug": "haunted-mines",
+"image": "img/maps/haunted-mines.jpg"
+},
+{
+"name": "Infernal Shrines",
+"ko": "불지옥 신단",
+"slug": "infernal-shrines",
+"image": "img/maps/infernal-shrines.jpg"
+},
+{
+"name": "Sky Temple",
+"ko": "하늘 사원",
+"slug": "sky-temple",
+"image": "img/maps/sky-temple.jpg"
+},
+{
+"name": "Tomb of the Spider Queen",
+"ko": "거미 여왕의 무덤",
+"slug": "tomb-of-the-spider-queen",
+"image": "img/maps/tomb-of-the-spider-queen.jpg"
+},
+{
+"name": "Towers of Doom",
+"ko": "파멸의 탑",
+"slug": "towers-of-doom",
+"image": "img/maps/towers-of-doom.jpg"
+},
+{
+"name": "Volskaya Foundry",
+"ko": "볼스카야 공장",
+"slug": "volskaya-foundry",
+"image": "img/maps/volskaya-foundry.jpg"
+},
+{
+"name": "Warhead Junction",
+"ko": "핵탄두 격전지",
+"slug": "warhead-junction",
+"image": "img/maps/warhead-junction.jpg"
+}
+],
+"source": {
+"images": "HeroesToolChest/heroes-images replaypreviews (MIT), resized to 480px",
+"names": "official Korean battleground names (cross-checked 2026-09-28)",
+"aram": "ARAM maps (player search only; no stats are collected for them). Braxis Outpost, Lost Cavern, Silver City: HeroesToolChest heroes-data 2.55.16.97039 gamestrings kokr/enus rewardportrait names (BraxisOutpostPortrait, LostCavernPortrait, SilverCityPortrait: '<map> Portrait' / '<map> 초상화'). Industrial District (not in the game strings): '공업 지구' from Blizzard's own Korean news, the weekly brawl posts that ran this same map (the Overwatch-themed single-lane Volskaya battleground) as a brawl before it joined ARAM, e.g. '2019년 1월 11일 주간 히어로즈 난투: 공업 지구' (news.blizzard.com/ko-kr/article/22863336, en-us counterpart 'Heroes Brawl of the Week, January 11, 2019: Industrial District'); also 2018-01-12 (21349577), 2018-03-23 (21651542), 2018-08-17 (22265424), 2018-10-12 (22548918)"
+},
+"aram": [
+{
+"name": "Braxis Outpost",
+"ko": "브락시스 전초기지"
+},
+{
+"name": "Industrial District",
+"ko": "공업 지구"
+},
+{
+"name": "Lost Cavern",
+"ko": "잃어버린 동굴"
+},
+{
+"name": "Silver City",
+"ko": "은빛 도시"
+}
+]
+}

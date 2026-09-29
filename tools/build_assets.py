@@ -1,12 +1,13 @@
 """Regenerate localisation tables and images from HeroesToolChest (MIT) game data.
 
-  uv run python tools/build_assets.py --build 2.55.16.97039 [--icons <builds fixture>]
+  uv run python tools/build_assets.py --build 2.55.16.97039
 
 Writes: data/heroes_ko.json (every hero already listed or in data/latest/, when the game data has
 it; Korean and English names), data/img/heroes/<slug>.png (missing portraits),
 data/talents/<hero slug>.json (talent_name → Korean and English name, icon, description, cooldown),
-data/img/talents/*.png. Korean strings come from gamestrings kokr, English from gamestrings enus
-(the English fields sit next to the Korean ones, which stay byte for byte what kokr alone gives).
+data/img/talents/*.png (every talent's icon). Korean strings come from gamestrings kokr, English
+from gamestrings enus (the English fields sit next to the Korean ones, which stay byte for byte
+what kokr alone gives).
 A hero the build does not have yet (a new release) is logged and left out; the site shows only
 heroes in heroes_ko.json, so rerun with a newer --build to add it. Sources recorded per file.
 --skip-icons: tables only, no images.
@@ -15,7 +16,6 @@ heroes in heroes_ko.json, so rerun with a newer --build to add it. Sources recor
 from __future__ import annotations
 
 import argparse
-import gzip
 import json
 import re
 import subprocess
@@ -270,9 +270,6 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--build", required=True, help="heroes-data build folder, e.g. 2.55.16.97039")
     ap.add_argument("--data", default="data")
-    ap.add_argument(
-        "--icons", help="builds_all fixture (.json or .json.gz): only download icons used there"
-    )
     ap.add_argument("--cache", default=".cache/htc")
     ap.add_argument("--skip-icons", action="store_true", help="tables only, no image downloads")
     args = ap.parse_args()
@@ -295,19 +292,9 @@ def main() -> None:
 
     # talents
     talents = talent_table(herodata, kokr)
-    want: set[str] = set()
-    if args.icons:
-        opener = gzip.open if args.icons.endswith(".gz") else open
-        with opener(args.icons, "rt", encoding="utf-8") as f:  # type: ignore[operator]
-            builds = json.load(f)
-        for v in builds.values():
-            if isinstance(v, list):
-                for bd in v:
-                    for k, t in bd.items():
-                        if k.startswith("level_") and isinstance(t, dict) and t.get("icon"):
-                            want.add(t["icon"])
-    else:
-        want = {t["icon"] for t in talents.values() if t["icon"]}
+    # every talent's icon, not only today's builds: the builds change daily, so any talent can
+    # reach a hero page tomorrow (narrowing this to one day's builds left Illidan's icons 404)
+    want = {t["icon"] for t in talents.values() if t["icon"]}
     tdir = data / "img" / "talents"
     missing = 0
     for icon in [] if args.skip_icons else sorted(want):
