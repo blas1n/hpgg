@@ -26,7 +26,7 @@ export function HomeView({ models, maps }: { models: Record<Mode, HomeModel>; ma
       <main className="page-x mt-6 space-y-6">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-extrabold tracking-tight text-white">오늘의 메타</h1>
+            <h1 className="text-2xl font-extrabold tracking-tight text-fg">오늘의 메타</h1>
             <p id="meta-line" className="num mt-0.5 text-xs text-muted">
               {MODE_LABEL[mode]} · 패치 {m.patch} · {int(m.matches)} 매치 · {shortDate(m.collectedAt)} 갱신
               {m.fallbackFrom && <span data-fallback> · {fallbackNote(m.fallbackFrom)}</span>}

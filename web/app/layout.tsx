@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import Script from "next/script";
+import { THEME_INIT_SCRIPT } from "@/lib/theme";
 import "@/styles/globals.css";
 
 export const metadata: Metadata = {
@@ -14,8 +15,10 @@ export const viewport: Viewport = { themeColor: "#0e1118", colorScheme: "dark" }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="ko">
+    // the init script sets data-theme before paint (light theme, #1): React must keep what it finds there
+    <html lang="ko" suppressHydrationWarning>
       <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
         <link rel="preconnect" href="https://cdn.jsdelivr.net" crossOrigin="anonymous" />
         <link
           rel="stylesheet"

@@ -14,7 +14,7 @@ export default function MapsPage() {
   return (
     <main className="page-x mt-6 space-y-4 pb-10">
       <div>
-        <h1 className="text-2xl font-extrabold tracking-tight text-white">전장</h1>
+        <h1 className="text-2xl font-extrabold tracking-tight text-fg">전장</h1>
         <p id="meta-line" className="num mt-0.5 text-xs text-muted">
           폭풍 리그 · 패치 {sl.patch} · {sl.matches.toLocaleString("ko-KR")} 매치 · {shortDate(sl.collected_at)} 갱신 · 누르면 그 전장의 티어표
           {fallback && <span data-fallback> · {fallbackNote(meta.current_patch)}</span>}

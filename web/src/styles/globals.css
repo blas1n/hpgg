@@ -1,5 +1,8 @@
 /* HPGG design tokens. Brand palette (docs/BRAND.md): primary #4FD1FF · accent #3EE6A1 · secondary #7B8CFF ·
-   bg #1B2030 · dark #0E1118. Tier colours are independent of the brand so tiers read the same in every game. */
+   bg #1B2030 · dark #0E1118. Tier colours are independent of the brand so tiers read the same in every game.
+   Navy (@theme below) is the default; the light theme (#1) overrides every themed token under
+   :root[data-theme="light"]. tests/theme.test.ts checks that each token has a light value and that text tokens
+   reach WCAG AA on every surface in both themes. */
 @layer theme, base, components, utilities;
 @import "tailwindcss/theme.css" layer(theme);
 @import "tailwindcss/preflight.css" layer(base);
@@ -17,7 +20,7 @@
   --color-line-strong: #333d57;
   --color-fg: #e9eef8;
   --color-fg-2: #b4bdd3;
-  --color-muted: #7d88a3;
+  --color-muted: #8691ac; /* AA on surface-3 as well */
 
   --color-primary: #4fd1ff;
   --color-primary-ink: #06202b;
@@ -25,6 +28,15 @@
   --color-secondary: #7b8cff;
   --color-pos: #3ee6a1;
   --color-neg: #ff6b6b;
+  /* notice banner (thin sample, previous patch) */
+  --color-warn-bg: #3b2f12;
+  --color-warn-line: #6b5416;
+  --color-warn-fg: #ffd8a8;
+  --color-warn-strong: #6b5416;
+  --color-warn-ink: #ffffff;
+  /* floating panels (talent popover) */
+  --color-pop: #1f2638;
+  --color-pop-fg: #cfd6e6;
 
   --color-tier-s: #ff5c5c;
   --color-tier-a: #ff9f43;
@@ -32,6 +44,7 @@
   --color-tier-c: #3ee6a1;
   --color-tier-d: #4fd1ff;
   --color-tier-f: #8b93a5;
+  --color-tier-ink: #10131c; /* text on a tier badge, both themes */
 
   --color-role-tank: #4f9cff;
   --color-role-bruiser: #f0883e;
@@ -46,6 +59,36 @@
 }
 
 @layer base {
+  /* Light theme: same roles, light surfaces; brand hues darkened until they read as text on white.
+     Tier and role colours are not redefined — they stay the same in both themes. */
+  :root[data-theme="light"] {
+    color-scheme: light;
+    --color-canvas: #edf0f5;
+    --color-bg: #f3f5f9;
+    --color-surface: #ffffff;
+    --color-surface-2: #f6f8fb;
+    --color-surface-3: #e6ebf2;
+    --color-line: #dfe4ec;
+    --color-line-strong: #c7cfdb;
+    --color-fg: #131a28;
+    --color-fg-2: #384359;
+    --color-muted: #566279;
+
+    --color-primary: #006b9c;
+    --color-primary-ink: #ffffff;
+    --color-accent: #07734d;
+    --color-secondary: #4552d0;
+    --color-pos: #07734d;
+    --color-neg: #c32b32;
+
+    --color-warn-bg: #fff4dc;
+    --color-warn-line: #f0d9a4;
+    --color-warn-fg: #6b4a00;
+    --color-warn-strong: #8a6100;
+    --color-warn-ink: #ffffff;
+    --color-pop: #ffffff;
+    --color-pop-fg: #384359;
+  }
   :root {
     --header-h: 98px; /* measured by SiteHeader at runtime; this is the phone value before hydration */
   }

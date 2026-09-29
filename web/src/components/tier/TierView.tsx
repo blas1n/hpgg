@@ -136,7 +136,7 @@ export function TierView({ meta, heroes, maps, initial }: { meta: Meta; heroes: 
   return (
     <main className="page-x mt-6 space-y-4 pb-10">
       <div>
-        <h1 className="text-2xl font-extrabold tracking-tight text-white">영웅 티어</h1>
+        <h1 className="text-2xl font-extrabold tracking-tight text-fg">영웅 티어</h1>
         <p id="meta-line" className="num mt-0.5 text-xs text-muted">
           {metaLine}
         </p>
@@ -150,7 +150,7 @@ export function TierView({ meta, heroes, maps, initial }: { meta: Meta; heroes: 
           )}
           <span className="absolute inset-0 bg-gradient-to-t from-surface via-surface/40 to-transparent" />
           <div className="absolute bottom-3 left-4">
-            <h2 className="text-xl font-extrabold text-white drop-shadow">{mapInfo.ko}</h2>
+            <h2 className="text-xl font-extrabold text-fg drop-shadow">{mapInfo.ko}</h2>
             <span className="text-xs text-fg-2">{mapInfo.name} · 폭풍 리그 · 이 전장 표본으로만 계산</span>
           </div>
         </div>
@@ -376,11 +376,11 @@ function PatchBanner({ meta, mode, patch, auto, onCurrent }: { meta: Meta; mode:
   const note = patch === "previous" || (!auto && meta.previous_patch && thinSample(meta, mode));
   if (!note) return null;
   return (
-    <div id="patch-banner" className="rounded-lg border border-[#6b5416] bg-[#3b2f12] px-3 py-2.5 text-[13px] text-[#ffd8a8]">
+    <div id="patch-banner" className="rounded-lg border border-warn-line bg-warn-bg px-3 py-2.5 text-[13px] text-warn-fg">
       {patch === "previous" ? (
         <>
           패치 {meta.current_patch} 후 {days}일, 표본이 적어 <b>이전 패치({meta.previous_patch})</b> 기준으로 보여줍니다.{" "}
-          <button type="button" onClick={onCurrent} className="ml-1 rounded-md bg-[#6b5416] px-2 py-0.5 font-semibold text-white">
+          <button type="button" onClick={onCurrent} className="ml-1 rounded-md bg-warn-strong px-2 py-0.5 font-semibold text-warn-ink">
             현재 패치 보기
           </button>
         </>

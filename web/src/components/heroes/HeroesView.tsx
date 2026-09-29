@@ -27,7 +27,7 @@ export function HeroesView({ heroes, roles, tiers, patches }: { heroes: SearchIt
   return (
     <main className="page-x mt-6 space-y-4 pb-10">
       <div>
-        <h1 className="text-2xl font-extrabold tracking-tight text-white">영웅</h1>
+        <h1 className="text-2xl font-extrabold tracking-tight text-fg">영웅</h1>
         <p id="meta-line" className="num mt-0.5 text-xs text-muted">
           {MODE_LABEL[mode]} 티어 · 패치 {patches[mode]} · 누르면 상세로
         </p>
