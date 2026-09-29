@@ -3,7 +3,7 @@ import "server-only";
 import { existsSync, readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { computeTiers, PRESETS, type Snapshot } from "../formula";
-import type { Bracket, BuildsFile, HeroTable, MapTable, Meta, Mode, TalentTable } from "../data";
+import type { Bracket, BuildsFile, HeroTable, MapTable, MatchupsFile, Meta, Mode, TalentTable } from "../data";
 import { pickShown, type Shown } from "../lib/shown";
 import type { SearchItem } from "../lib/search";
 
@@ -25,6 +25,8 @@ const opt = <T>(rel: string): T | null => (existsSync(join(dir, rel)) ? read<T>(
 let builds: BuildsFile | null | undefined; // 270 KB, read once per build rather than once per hero page
 export const readBuilds = (): BuildsFile | null => (builds === undefined ? (builds = opt<BuildsFile>("latest/builds.json")) : builds);
 export const readTalents = (slug: string): TalentTable | null => opt<TalentTable>(`talents/${slug}.json`);
+/** Storm League counters/synergies for one hero (collector/matchups.py); null until the first collection. */
+export const readMatchups = (slug: string): MatchupsFile | null => opt<MatchupsFile>(`matchups/${slug}.json`);
 
 /** Header search index: every hero, sorted by Korean name, with the current Quick Match tier. */
 export function readSearchIndex(mode: Mode = "qm"): SearchItem[] {

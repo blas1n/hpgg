@@ -25,6 +25,8 @@ jobs:
     # cron / manual only — a push just rebuilds and deploys what is already in data/
     if: github.event_name != 'push'
     runs-on: ubuntu-latest
+    # stats ~5 min + matchups (≤ 25 min budget, + at most one in-flight job poll of ≤ 15 min)
+    timeout-minutes: 60
     outputs:
       day: ${{ steps.run.outputs.day }}
     steps:
@@ -33,18 +35,20 @@ jobs:
           fetch-depth: 1
       - uses: astral-sh/setup-uv@v5
       - run: uv sync --frozen --no-dev
-      - name: Collect (4 stats calls + 1 builds call, ~5 min because group_by_map is 1 req/min)
+      - name: Collect (4 stats + 1 builds call, ~5 min at 1 req/min; then Storm League matchups for heroes due, every other day)
         id: run
         env:
           HP_API_TOKEN: ${{ secrets.HP_API_TOKEN }}
         run: |
           uv run python -m collector
           echo "day=$(date -u +%F)" >> "$GITHUB_OUTPUT"
-      - name: Commit data/latest (+ previous) to main
+      - name: Commit data/latest (+ previous, matchups) to main
         run: |
           git config user.name "hotsmeta-bot"
           git config user.email "bot@hpgg.win"
-          git add data/latest data/previous 2>/dev/null || git add data/latest
+          git add data/latest
+          if [ -d data/previous ]; then git add data/previous; fi
+          if [ -d data/matchups ]; then git add data/matchups; fi
           git commit -m "data: $(date -u +%F) $(python3 -c 'import json;print(json.load(open("data/latest/meta.json"))["current_patch"])')" || echo "nothing to commit"
           git pull --rebase --autostash origin main
           git push origin main

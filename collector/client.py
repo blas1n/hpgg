@@ -56,6 +56,27 @@ def _retry_after(resp: httpx.Response, default: float) -> float:
         return default
 
 
+def _int_header(resp: httpx.Response, name: str) -> int | None:
+    raw = resp.headers.get(name)
+    try:
+        return int(raw) if raw is not None else None
+    except ValueError:
+        return None
+
+
+def _log_quota(resp: httpx.Response) -> None:
+    """Every charged endpoint answers with X-HP-Quota-Remaining for its own weekly bucket."""
+    remaining = _int_header(resp, "X-HP-Quota-Remaining")
+    if remaining is None:
+        return
+    log.info(
+        "hp.quota",
+        path=resp.request.url.path,
+        remaining=remaining,
+        limit=_int_header(resp, "X-HP-Quota-Limit"),
+    )
+
+
 class HPClient:
     """Async client. Use as `async with HPClient(...) as c: await c.get_json(path, params)`."""
 
@@ -121,9 +142,11 @@ class HPClient:
                 )
                 await self._sleep(1.0)
                 continue
+            _log_quota(resp)
             if resp.status_code == 429:
                 code, msg = _envelope(resp)
-                if attempt >= 2:
+                # the weekly allowance does not come back in Retry-After seconds: never wait it out
+                if attempt >= 2 or code == "quota_exceeded":
                     raise HPError(429, code, msg)
                 wait = _retry_after(resp, self._poll_default)
                 log.warning("hp.rate_limited", code=code, retry_after=wait)

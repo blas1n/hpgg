@@ -20,6 +20,7 @@ GitHub Actions (cron 03:20 KST, workflow_dispatch, push:main)
       4× GET /v1/heroes/stats?group_by_map  → qm, sl, sl_low(1-4), sl_high(5-6)   (60 s apart)
       1× GET /v1/heroes/talents/builds/all  → popular builds, qm+sl combined                    (7/week cap!)
       atomic swap → data/latest/{qm,sl,sl_low,sl_high,builds,meta}.json (+ data/previous/ on patch change)
+      ≤90× GET /v1/heroes/matchups?hero=…   → data/matchups/<slug>.json, SL, heroes due only   (2 s apart, ≤25 min)
       raw + normalised gz → data/.snapshot_out/<day>/ → committed to the `snapshots` branch
     git commit data/ → git pull --rebase --autostash → push
   deploy job (always)
@@ -46,13 +47,21 @@ Why multiplicative: an additive formula ((WRs−50)+0.15·pick+0.15·ban) reprod
 |---|---|---|
 | Heroes/Stats | 70 | 4 (28/week; the rest is room for backfills) |
 | Heroes/Talents/Builds/All | **7** | 1 (quota_exceeded → collector keeps yesterday's builds.json, run still succeeds) |
+| Hero/Matchups | 700 | 90 every other day (315/week; a patch change adds one early round → ≤ 450) |
 | Patches, Heroes, Maps | 1,000,000 | 1 |
-Error responses and 202 job polling are not charged. `group_by_map=true` is rate-limited to 1 request/minute, hence the 60 s spacing (a run takes ~5 minutes). A manual `workflow_dispatch` costs a full day's calls — do not run it casually; the builds/all budget has no slack.
+Error responses and 202 job polling are not charged. `group_by_map=true` is rate-limited to 1 request/minute, hence the 60 s spacing (the stats part of a run takes ~5 minutes). `/heroes/matchups` without `group_by_map` answers `X-RateLimit-Limit: 60` (per minute, measured 2026-09-29) → 2 s spacing. Every charged answer carries `X-HP-Quota-Remaining`/`-Limit`, logged as `hp.quota`. `quota_exceeded` is never waited out (its Retry-After is the weekly reset, ~6 days). A manual `workflow_dispatch` costs a full day's calls — do not run it casually; the builds/all budget has no slack.
+
+### Matchups (counters / synergies, #15)
+- `collector/matchups.py`. Storm League only (owner, Basic plan). One call per hero; recorded answer in `tests/fixtures/live_probe_matchups_abathur_sl_2.55.17.98025.json.gz`: `{ally, enemy, combined}`, one row per other hero with `wins`/`losses`/`games_played` from the asked hero's side — but on `enemy` rows `win_rate` is the asked hero's **loss** rate, so the collector recomputes every win rate from wins/games. `combined` is not stored.
+- **Gate (per hero file)**: due when the file is missing, is for another patch, or was collected ≥ 2 calendar days (UTC) ago. A failed, quota-stopped or time-boxed round leaves the other files as they are and those heroes are simply due again tomorrow. Matchups never fail the run.
+- **Patch**: the one the pages show for Storm League — the previous patch while the current sample is thin (same rule as `web/src/data.ts` `thinSample`), so the section is not empty for the week after a patch.
+- **Ranking** (`web/src/lib/matchups.ts`, printed on the page): score = (pair win rate − the hero's own win rate in the same sample) × n/(n+100); pairs under 50 games are left out; top 5 enemies with the lowest score (상대하기 어려운 영웅) and allies with the highest (잘 맞는 영웅). The page shows the unshrunk gap (%p) and games.
+- Pages show the section in both modes, labelled 폭풍 리그; without a file the section says the data comes with the next collection.
 
 ## Operating notes
 - **Never** use `api.heroesprofile.com` or `?api_token=`: that is the old API (off 2027-01-01). v1 is `https://www.heroesprofile.com/api/external/v1` with `Authorization: Bearer <key>`. Key lives in `.env` locally and in the Actions secret `HP_API_TOKEN`. The key page shows "Last Used"; if it says Never, you are hitting the wrong host.
 - Account **Data mode** must be Live Data. Test Data mode returns placeholder rows and ignores `group_by_map` (the collector logs `normalize.flat_payload` and writes only `map: "all"` rows).
-- Local runs write `data/latest/`; **never commit it** (`git reset data/latest` before committing). The bot owns that path. Always `git pull --rebase --autostash` before pushing.
+- Local runs write `data/latest/` and `data/matchups/`; **never commit them** (`git reset data/latest data/matchups` before committing). The bot owns those paths. Always `git pull --rebase --autostash` before pushing.
 - Previous-patch data (`data/previous/`) rotates automatically on a patch change. To seed it after a gap: `uv run python -m collector --previous <build>` (4 calls).
 - **Only heroes with assets are shown** (#6, owner 2026-09-29: a new hero has no meaningful data at first anyway). A hero in the stats but not in `data/heroes_ko.json` is dropped from every page — tier table, 홈, 영웅, search, 전장, hero pages — by one rule, `web/src/lib/known.ts`, applied at both snapshot entry points (`pickShown` at build time, `loadSnapshot` in the browser). It is dropped **before** the tier cut, so tiers are computed over the heroes on the page. The daily run logs `run.heroes_without_assets` (warning) listing them.
 - New hero: rerun `uv run python tools/build_assets.py --build <heroes-data build>` once HeroesToolChest/heroes-data has a build with that hero. It rewrites `data/heroes_ko.json` (every hero already listed or seen in `data/latest/`, if the build has it; Korean name and role from the game strings), fetches missing portraits (heroes-images draft portrait, 96 px), and refreshes `data/talents/<hero slug>.json` (Korean name, icon, tooltip text with `{{…}}` highlights, cooldown — one file per hero so a hero page loads ~7 KB) and talent icons (`--icons data/latest/builds.json` to fetch only icons used in builds; `--skip-icons` for tables only). Heroes the build lacks are logged (`assets.heroes_without_game_data`) and stay hidden. Rerunning with 2.55.16.97039 reproduces today's tables byte for byte. `data/maps_ko.json` is still extended by hand. Both sources MIT.
@@ -66,11 +75,11 @@ Error responses and 202 job polling are not charged. `group_by_map=true` is rate
 uv run ruff check collector/ tests/ tools/ && uv run ruff format --check collector/ tests/ tools/
 uv run mypy collector/
 uv run pytest tests/ --cov=collector --cov-fail-under=80        # 40 tests, ~90 %
-cd web && npx tsc --noEmit && npm run test:cov && npm run e2e     # 43 vitest (95 %), 25 Playwright
+cd web && npx tsc --noEmit && npm run test:cov && npm run e2e     # E2E_PORT=4391 when another checkout is serving 4173
 ```
 
 ## Where things are
-- `collector/` client (Bearer, 202 polling, bounded retries), snapshot (normalisation, atomic commit, meta), run (orchestration, backfill), `__main__` (CLI, JSON logging; token never logged — asserted by tests)
+- `collector/` client (Bearer, 202 polling, bounded retries, quota log), snapshot (normalisation, atomic commit, meta), matchups (per-hero counters/synergies), run (orchestration, backfill), `__main__` (CLI, JSON logging; token never logged — asserted by tests)
 - `tools/build_assets.py` asset/localisation generator (tests in `tests/test_build_assets.py`)
 - `web/app/` routes; `web/src/{components,lib,legacy,server,styles}`; `web/e2e/*.spec.ts` (served like Pages by `scripts/serve.mjs`); `web/tests/*.test.ts`
 - `.github/workflows/collect-and-deploy.yml` (collect + deploy on main), `.github/workflows/ci.yml` (all gates on every PR)
