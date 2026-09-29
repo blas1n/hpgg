@@ -64,6 +64,13 @@ test("heroes: the universe filter keeps only that universe's heroes, lands in th
   await expect(page.locator('#grid a[data-hero="tracer"]')).toBeVisible();
   await expect(page.locator('#grid a[data-hero="illidan"]')).toHaveCount(0);
   await expect(page.locator('#universe option[value="Warcraft"]')).toHaveText("워크래프트");
+  // the official five: Orphea, Qhira and The Lost Vikings are all 시공의 폭풍
+  await expect(page.locator("#universe option")).toHaveCount(6);
+  await page.locator("#universe").selectOption("Nexus");
+  await expect(page.locator('#universe option[value="Nexus"]')).toHaveText("시공의 폭풍");
+  await expect(cards).toHaveCount(3);
+  await expect(page.locator('#grid a[data-hero="the-lost-vikings"]')).toBeVisible();
+  await page.locator("#universe").selectOption("Overwatch");
   // with a role: Overwatch healers only
   await page.goto("./heroes/?role=Healer&universe=Overwatch");
   await expect(page.locator("#universe")).toHaveValue("Overwatch");

@@ -85,6 +85,10 @@ def role_names(kokr: dict[str, Any], enus: dict[str, Any]) -> dict[str, str]:
     return {ko[hid]: en[hid] for hid in ko if hid in en}
 
 
+# heroesofthestorm.com/ko-kr/heroes/ (archived 2023-04-02): The Lost Vikings is "Retro" (Nexus)
+UNIVERSE_OF = {"Classic": "Nexus"}
+
+
 def hero_rows(
     herodata: dict[str, Any],
     kokr: dict[str, Any],
@@ -116,10 +120,12 @@ def hero_rows(
             "short_name": norm(n),
             "portrait": f"img/heroes/{slug(n)}.png",
         }
-        # the hero's universe (Warcraft, Starcraft, Diablo, Overwatch, Nexus, Classic), #43
+        # the hero's universe (#43): heroes-data `franchise`, grouped like Blizzard's heroes page,
+        # which has five (Warcraft, StarCraft, Diablo, Overwatch, Nexus) — its "Nexus" (key `retro`)
+        # holds heroes-data's Nexus and Classic (The Lost Vikings)
         franchise = found[1].get("franchise")
         if franchise:
-            row["franchise"] = franchise
+            row["franchise"] = UNIVERSE_OF.get(franchise, franchise)
         rows.append(row)
     return rows, missing
 

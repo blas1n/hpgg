@@ -28,7 +28,7 @@ HERODATA = {
         },
     },
     "Cho": {"hyperlinkId": "Chogall", "talents": {}},
-    "LostVikings": {"hyperlinkId": "LostVikings", "talents": {}},
+    "LostVikings": {"hyperlinkId": "LostVikings", "franchise": "Classic", "talents": {}},
     "Wizard": {
         "hyperlinkId": "LiMing",
         "franchise": "Diablo",
@@ -441,3 +441,34 @@ def test_main_downloads_the_icon_of_every_talent_not_only_those_in_one_days_buil
     monkeypatch.setattr("sys.argv", [*argv, "--icons", "builds.json"])
     with pytest.raises(SystemExit):
         ba.main()
+
+
+def test_the_lost_vikings_are_nexus_as_on_the_official_heroes_page() -> None:
+    kokr = {
+        "gamestrings": {
+            **KOKR["gamestrings"],
+            "unit": {**KOKR["gamestrings"]["unit"], "expandedrole": {"LostVikings": "지원가"}},
+        }
+    }
+    rows, _ = ba.hero_rows(HERODATA, kokr, {"The Lost Vikings"}, ROLES)
+    assert rows[0]["franchise"] == "Nexus"
+
+
+def test_every_hero_has_the_universe_of_the_official_heroes_page() -> None:
+    """#43: the universes follow Blizzard's heroes page (Retro there = Nexus here)."""
+    official = json.loads(
+        (Path(__file__).parent / "fixtures" / "official-universe-2023-04-02.json").read_text()
+    )["heroes"]
+    by_key = {k.replace("-", ""): v for k, v in official.items()}
+    to_ours = {"Warcraft": "Warcraft", "StarCraft": "Starcraft", "Diablo": "Diablo"}
+    to_ours |= {"Overwatch": "Overwatch", "Retro": "Nexus"}
+    heroes = json.loads((REPO_DATA / "heroes_ko.json").read_text(encoding="utf-8"))["heroes"]
+    wrong = {
+        h["slug"]: (h.get("franchise"), by_key.get(h["slug"].replace("-", "")))
+        for h in heroes
+        if h["slug"].replace("-", "") in by_key
+        and h.get("franchise") != to_ours[by_key[h["slug"].replace("-", "")]]
+    }
+    assert wrong == {}
+    # heroes released after the snapshot are not in it; they keep heroes-data's value
+    assert sum(h["slug"].replace("-", "") in by_key for h in heroes) == 90
