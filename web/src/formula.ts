@@ -133,3 +133,20 @@ export function formulaLine(p: Preset, hasBans: boolean): string {
       return "티어 점수 = 승률";
   }
 }
+
+/** The worked formula under "자세히", for the selected preset. */
+export function formulaDetail(p: Preset, hasBans: boolean, minGames: number): string {
+  const noBan = "   (빠른 대전은 밴이 없음)";
+  const score =
+    p.kind === "multiplicative"
+      ? `픽률 × (WRs − 50) × ${p.wPick}${hasBans ? ` + 밴률 × ${p.wBan}` : noBan}`
+      : p.kind === "additive"
+        ? `(WRs − 50) + 픽률 × ${p.wPick}${hasBans ? ` + 밴률 × ${p.wBan}` : noBan}`
+        : "WRs   (픽률·밴률은 쓰지 않음)";
+  return `WRs   = 50 + (승률 − 50) × 게임수 / (게임수 + ${p.k})
+점수  = ${score}
+티어  = ${minGames}게임 이상인 영웅을 점수순으로 세워 누적 비율로 자름 (S 6% · A 24% · B 54% · C 82% · D 94% · F 나머지)
+        경계는 단조 증가, 티어마다 최소 1명
+승률 ± 는 Wilson 95% 구간. 전장을 고르면 그 전장의 표본으로만 계산합니다.
+같은 데이터라도 공식이 다르면 티어가 다릅니다 — 이 사이트는 공식을 숨기지 않습니다.`;
+}

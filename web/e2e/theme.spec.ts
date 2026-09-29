@@ -148,7 +148,7 @@ for (const theme of ["dark", "light"] as const) {
     test(`contrast: ${theme} theme at ${width}px — all text on every page reaches WCAG AA`, async ({ page }) => {
       await page.setViewportSize({ width, height: 900 });
       if (theme === "light") await page.addInitScript(() => localStorage.setItem("hpgg-theme", "light"));
-      for (const path of ["./", "./tier/", "./tier/?mode=sl", "./heroes/", "./heroes/illidan/", "./heroes/illidan/?mode=sl", "./maps/", "./players/", "./players/?tag=Player12%231012&region=NA"]) {
+      for (const path of ["./", "./tier/", "./tier/?mode=sl", "./tier/?mode=sl&preset=additive", "./heroes/", "./heroes/illidan/", "./heroes/illidan/?mode=sl", "./maps/", "./players/", "./players/?tag=Player12%231012&region=NA"]) {
         await page.goto(path);
         await expect(page.locator("main")).toBeVisible();
         if (theme === "light") await expect(page.locator("html")).toHaveAttribute("data-theme", "light");

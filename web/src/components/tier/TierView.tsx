@@ -2,9 +2,9 @@
 
 import { Fragment, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { assetUrl, BRACKET_LABEL, daysSince, hotsHref, loadSnapshot, MODE_LABEL, REGION_LABEL, REGIONS, regionSample, shortDate, snapshotKey, thinSample, type Bracket, type HeroTable, type MapTable, type Meta, type Mode, type Region } from "@/data";
-import { formulaLine, PRESETS, type Snapshot } from "@/formula";
+import { formulaDetail, formulaLine, PRESETS, type Preset, type Snapshot, type Tier } from "@/formula";
 import { bracketMatches, regionMatches } from "@/lib/shown";
-import { DEFAULT_TIER_STATE, parseTierState, resolvePatch, tierSearch, tierTable, visibleRows, type SortKey, type TierRow, type TierState, type TierTable } from "@/lib/tier";
+import { DEFAULT_TIER_STATE, formatScore, parseTierState, resolvePatch, tierSearch, tierTable, visibleRows, type PresetId, type SortKey, type TierRow, type TierState, type TierTable } from "@/lib/tier";
 import { Card, cx, Portrait, Segmented } from "../ui";
 
 const pct = (n: number) => `${n.toFixed(1)}%`;
@@ -31,6 +31,8 @@ function useWide(): boolean {
     () => false,
   );
 }
+
+const PRESET_LABEL: Record<PresetId, string> = { aichi: "아이치 공식 (기본)", additive: "가산식", winrate: "승률만" };
 
 type Loaded = Record<string, Snapshot | null>; // "latest/qm", "previous/sl_low", … ; null = not published
 
@@ -63,6 +65,7 @@ export function TierView({ meta, heroes, maps, initial }: { meta: Meta; heroes: 
   };
 
   const { mode, bracket, region, map, role, sort, dir } = state;
+  const preset = PRESETS[state.preset];
   const sl = mode === "sl";
   const file = snapshotKey(mode, bracket, region);
   const resolved = resolvePatch(meta, mode, state.patch, file);
@@ -72,7 +75,7 @@ export function TierView({ meta, heroes, maps, initial }: { meta: Meta; heroes: 
   const dirOf = (p: "current" | "previous") => (p === "previous" ? "previous" : "latest");
   const curKey = `${dirOf(patch)}/${file}`;
   const prevKey = patch === "current" && meta.previous_patch ? `previous/${file}` : null;
-  const isInitial = file === "qm" && map === "all" && patch === initial.patch;
+  const isInitial = file === "qm" && map === "all" && patch === initial.patch && state.preset === "aichi";
 
   useEffect(() => {
     if (isInitial) return;
@@ -109,8 +112,8 @@ export function TierView({ meta, heroes, maps, initial }: { meta: Meta; heroes: 
   const computed = useMemo(() => {
     if (isInitial) return initial.table;
     if (!snap || (prevKey && !(prevKey in loaded))) return null;
-    return tierTable(snap, prevKey ? (loaded[prevKey] ?? null) : null, map, heroes, meta.min_games_for_tier);
-  }, [isInitial, initial.table, snap, prevKey, loaded, map, heroes, meta.min_games_for_tier]);
+    return tierTable(snap, prevKey ? (loaded[prevKey] ?? null) : null, map, heroes, meta.min_games_for_tier, preset);
+  }, [isInitial, initial.table, snap, prevKey, loaded, map, heroes, meta.min_games_for_tier, preset]);
   // while a view loads, keep the last one on screen (dimmed) instead of an empty table
   const last = useRef(initial.table);
   if (computed) last.current = computed;
@@ -118,6 +121,7 @@ export function TierView({ meta, heroes, maps, initial }: { meta: Meta; heroes: 
   const busy = computed === null;
 
   const rows = useMemo(() => visibleRows(table.rows, role, sort, dir), [table.rows, role, sort, dir]);
+  const changed = state.preset === "aichi" ? 0 : table.rows.filter((r) => r.baseTier).length;
   const grey = table.grey.filter((g) => role === "all" || g.hero.role === role);
   const mapInfo = map === "all" ? undefined : maps.maps.find((m) => m.name === map);
   const cols = COLUMNS.filter((c) => (!c.sl || sl) && (!c.wide || wide));
@@ -235,6 +239,16 @@ export function TierView({ meta, heroes, maps, initial }: { meta: Meta; heroes: 
             </label>
             </>
           )}
+          <label id="preset-wrap" className="flex-1 sm:flex-none">
+            <span className="sr-only">티어 공식</span>
+            <select id="preset" value={state.preset} onChange={(e) => update({ preset: e.target.value as PresetId }, false)} className={SELECT}>
+              {(Object.keys(PRESET_LABEL) as PresetId[]).map((p) => (
+                <option key={p} value={p}>
+                  {PRESET_LABEL[p]}
+                </option>
+              ))}
+            </select>
+          </label>
         </div>
         {sl && (region !== "all" || bracket !== "all") && (
           <p id="combo-note" className="w-full text-2xs text-muted">
@@ -244,6 +258,18 @@ export function TierView({ meta, heroes, maps, initial }: { meta: Meta; heroes: 
       </Card>
 
       {region !== "all" && <RegionNote meta={meta} mode={mode} region={region} />}
+
+      {state.preset !== "aichi" && !busy && (
+        <p id="preset-diff" className="flex flex-wrap items-center gap-x-2 gap-y-1 rounded-lg border border-line bg-surface px-3 py-2 text-[13px] text-fg-2">
+          <span>
+            <b className="text-fg">{PRESET_LABEL[state.preset]}</b>으로 계산한 티어입니다. 아이치 공식과 티어가 다른 영웅 <b className="num text-fg">{changed}</b>명은{" "}
+            <BaseTierChip tier="S" example /> 처럼 원래 티어를 함께 표시합니다.
+          </span>
+          <button type="button" onClick={() => update({ preset: "aichi" }, false)} className="font-semibold text-secondary hover:text-primary">
+            기본 공식으로
+          </button>
+        </p>
+      )}
 
       <Card as="div" className="overflow-hidden">
         <table id="table" aria-busy={busy} className={cx("num w-full table-fixed border-collapse text-[13px] transition-opacity sm:text-sm", busy && "opacity-50")}>
@@ -280,6 +306,7 @@ export function TierView({ meta, heroes, maps, initial }: { meta: Meta; heroes: 
                 n={table.rows.length}
                 hasPrevious={table.hasPrevious}
                 sl={sl}
+                preset={preset}
                 span={span}
                 mode={mode}
                 open={open === r.hero.slug}
@@ -305,7 +332,7 @@ export function TierView({ meta, heroes, maps, initial }: { meta: Meta; heroes: 
         </section>
       )}
 
-      <Formula sl={sl} min={meta.min_games_for_tier} />
+      <Formula sl={sl} min={meta.min_games_for_tier} preset={preset} />
     </main>
   );
 }
@@ -329,9 +356,9 @@ function RegionNote({ meta, mode, region }: { meta: Meta; mode: Mode; region: Ex
   );
 }
 
-function HeroRow({ r, cols, n, hasPrevious, sl, span, mode, open, onToggle }: { r: TierRow; cols: SortKey[]; n: number; hasPrevious: boolean; sl: boolean; span: number; mode: Mode; open: boolean; onToggle: () => void }) {
+function HeroRow({ r, cols, n, hasPrevious, sl, preset, span, mode, open, onToggle }: { r: TierRow; cols: SortKey[]; n: number; hasPrevious: boolean; sl: boolean; preset: Preset; span: number; mode: Mode; open: boolean; onToggle: () => void }) {
   const cell: Record<SortKey, string> = {
-    score: (r.score >= 0 ? "+" : "") + r.score.toFixed(0),
+    score: formatScore(r.score, preset),
     win_rate: pct(r.win_rate),
     pick: pct(r.pick),
     ban_rate: pct(r.ban_rate),
@@ -342,6 +369,7 @@ function HeroRow({ r, cols, n, hasPrevious, sl, span, mode, open, onToggle }: { 
       <tr
         data-hero={r.hero.slug}
         data-tier={r.tier}
+        data-changed={r.baseTier}
         tabIndex={0}
         role="button"
         aria-expanded={open}
@@ -352,7 +380,7 @@ function HeroRow({ r, cols, n, hasPrevious, sl, span, mode, open, onToggle }: { 
             onToggle();
           }
         }}
-        className={cx("cursor-pointer border-b border-line/70 transition-colors hover:bg-surface-2", open && "bg-surface-2")}
+        className={cx("cursor-pointer border-b border-line/70 transition-colors hover:bg-surface-2", open && "bg-surface-2", r.baseTier && "shadow-[inset_3px_0_0_var(--color-secondary)]")}
       >
         <td data-col="rank" className="py-2 pl-3 sm:pl-4">
           <span data-v className="block font-bold text-fg">
@@ -364,9 +392,18 @@ function HeroRow({ r, cols, n, hasPrevious, sl, span, mode, open, onToggle }: { 
           <span className="flex min-w-0 items-center gap-2.5">
             <Portrait src={r.hero.portrait} size={34} tier={r.tier} role={r.hero.role || undefined} />
             <span className="min-w-0 sm:flex sm:items-baseline sm:gap-1.5">
-              <span data-name className="block truncate font-semibold text-fg">
-                {r.hero.ko}
-              </span>
+              {r.baseTier ? (
+                <span className="flex min-w-0 flex-col items-start sm:flex-row sm:items-center">
+                  <span data-name className="block truncate font-semibold text-fg">
+                    {r.hero.ko}
+                  </span>
+                  <BaseTierChip tier={r.baseTier} />
+                </span>
+              ) : (
+                <span data-name className="block truncate font-semibold text-fg">
+                  {r.hero.ko}
+                </span>
+              )}
               <span className="hidden truncate text-2xs text-muted sm:block">
                 {r.hero.name}
                 {r.hero.role_ko && ` · ${r.hero.role_ko}`}
@@ -397,6 +434,19 @@ function HeroRow({ r, cols, n, hasPrevious, sl, span, mode, open, onToggle }: { 
         </tr>
       )}
     </Fragment>
+  );
+}
+
+/** The hero's tier under 아이치, next to its name when another preset puts it elsewhere. */
+function BaseTierChip({ tier, example }: { tier: Tier; example?: boolean }) {
+  return (
+    <span
+      data-base-tier={example ? undefined : tier}
+      title={example ? undefined : `아이치 공식으로는 ${tier} 티어`}
+      className="inline-block shrink-0 whitespace-nowrap rounded bg-secondary/15 px-1 text-[10px] font-bold leading-4 text-secondary sm:ml-1.5"
+    >
+      기본 {tier}
+    </span>
   );
 }
 
@@ -442,21 +492,19 @@ function PatchBanner({ meta, mode, patch, auto, onCurrent }: { meta: Meta; mode:
   );
 }
 
-function Formula({ sl, min }: { sl: boolean; min: number }) {
+function Formula({ sl, min, preset }: { sl: boolean; min: number; preset: Preset }) {
   return (
     <div className="space-y-2">
       <p id="formula" className="rounded-lg border border-line bg-surface px-3 py-2 font-mono text-xs [overflow-wrap:anywhere] text-fg-2">
-        {formulaLine(PRESETS.aichi, sl)} · 승률은 표본 수축(k=500) · {min}게임 미만 제외 · 상위 6% S / 24% A / 54% B / 82% C / 94% D
+        {formulaLine(preset, sl)}
+        {/* one text node, as before presets: the default page's markup stays byte for byte */}
+        {` · 승률은 표본 수축(k=${preset.k}) · `}
+        {min}게임 미만 제외 · 상위 6% S / 24% A / 54% B / 82% C / 94% D
       </p>
       <details className="text-[13px]">
         <summary className="cursor-pointer text-secondary">자세히</summary>
         <pre className="mt-2 whitespace-pre-wrap rounded-lg bg-surface p-3 text-xs [overflow-wrap:anywhere] text-fg-2">
-          {`WRs   = 50 + (승률 − 50) × 게임수 / (게임수 + 500)
-점수  = 픽률 × (WRs − 50) × 3${sl ? " + 밴률 × 1" : "   (빠른 대전은 밴이 없음)"}
-티어  = ${min}게임 이상인 영웅을 점수순으로 세워 누적 비율로 자름 (S 6% · A 24% · B 54% · C 82% · D 94% · F 나머지)
-        경계는 단조 증가, 티어마다 최소 1명
-승률 ± 는 Wilson 95% 구간. 전장을 고르면 그 전장의 표본으로만 계산합니다.
-같은 데이터라도 공식이 다르면 티어가 다릅니다 — 이 사이트는 공식을 숨기지 않습니다.`}
+          {formulaDetail(preset, sl, min)}
         </pre>
       </details>
     </div>
