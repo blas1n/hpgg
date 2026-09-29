@@ -185,6 +185,47 @@ test("tier table: Storm League rank-bracket selector loads sl_<bracket>.json and
   await expect(page).not.toHaveURL(/tier=/);
 });
 
+// e2e-data regions (synthetic, scaled from the global files): KR healthy (collected 09/27), NA thin (09/28), EU not collected
+test("tier table: region select loads {mode}_{region}.json, lands in the URL and shows that region's date", async ({ page }) => {
+  await page.goto("./tier/");
+  await expect(page.locator("#region option")).toHaveText(["전체 지역", "아시아 (KR)", "아메리카 (NA)", "유럽 (EU) · 수집 전"]);
+  await expect(page.locator('#region option[value="eu"]')).toHaveAttribute("disabled", "");
+  await page.locator("#region").selectOption("kr");
+  await expect(page).toHaveURL(/region=kr/);
+  await expect(page.locator("#table")).toHaveAttribute("aria-busy", "false");
+  await expect(page.locator("#meta-line")).toContainText("아시아 (KR)");
+  await expect(page.locator("#meta-line")).toContainText("12,570 매치");
+  await expect(page.locator("#region-note")).toContainText("09/27 수집");
+  await expect(page.locator("#region-note")).not.toHaveAttribute("data-thin", "true");
+  await expect(page.locator("#rows [data-delta]")).toHaveCount(0); // no previous-patch file for a region: no ▲▼
+  await page.locator("#mode-sl").click(); // the region stays across modes
+  await expect(page).toHaveURL(/mode=sl&region=kr/);
+  await expect(page.locator("#meta-line")).toContainText("폭풍 리그 · 아시아 (KR)");
+});
+
+test("tier table: a thin region says so; region and bracket exclude each other with a reason", async ({ page }) => {
+  await page.goto("./tier/?mode=sl&region=na");
+  await expect(page.locator("#region")).toHaveValue("na");
+  await expect(page.locator("#region-note")).toHaveAttribute("data-thin", "true");
+  await expect(page.locator("#region-note")).toContainText("12/91");
+  await expect(page.locator("#bracket")).toBeDisabled();
+  await expect(page.locator("#combo-note")).toContainText("지역별 데이터는 전체 구간만");
+  await page.locator("#region").selectOption("all");
+  await expect(page.locator("#bracket")).toBeEnabled();
+  await page.locator("#bracket").selectOption("high");
+  await expect(page.locator("#region")).toBeDisabled();
+  await expect(page.locator("#combo-note")).toContainText("지역별 데이터는 전체 구간만");
+  await expect(page).not.toHaveURL(/region=/);
+});
+
+test("hero detail: per-region rows for the mode, each with its collection date", async ({ page }) => {
+  await page.goto("./heroes/illidan/");
+  await expect(page.locator("#regions [data-region]")).toHaveCount(2); // KR, NA; EU not collected
+  await expect(page.locator('#regions [data-region="kr"]')).toContainText("아시아 (KR)");
+  await expect(page.locator('#regions [data-region="kr"]')).toContainText("09/27");
+  await expect(page.locator("nav[data-subnav] a[href='#regions-title']")).toBeVisible();
+});
+
 test("tier table: a previous-patch bracket file of an older bracket definition is never shown under the new label", async ({ page }) => {
   // fixture previous/sl_low.json covers league tiers [1,2] (the 2026-09-28 definition); 브론즈 – 플래티넘 is [1-4]
   await page.goto("./tier/?mode=sl&tier=low&patch=previous");

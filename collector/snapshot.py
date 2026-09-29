@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import shutil
 from dataclasses import asdict
+from datetime import date
 from pathlib import Path
 from typing import Any
 
@@ -25,6 +26,25 @@ SPECS: tuple[JobSpec, ...] = (
 )
 
 MIN_GAMES_FOR_TIER = 200
+
+# Regions (#14, owner 2026-09-29, Basic plan): one region a day for QM + SL (2 extra Heroes/Stats
+# calls → 14/week; 42/70 in total), KR → NA → EU by the day index below; each region is 3 days old
+# at most. Region × bracket is not collected. The in-game Asia server is `KR`; CN is left out.
+REGIONS: tuple[tuple[str, str], ...] = (("kr", "KR"), ("na", "NA"), ("eu", "EU"))
+REGION_EPOCH = date(2026, 9, 30)  # a KR day
+REGION_KEYS: tuple[str, ...] = tuple(f"{m}_{r}" for r, _ in REGIONS for m in ("qm", "sl"))
+
+
+def region_for_day(day: date) -> str:
+    """The region collected on this (UTC) day: KR, NA, EU, KR, … counted from REGION_EPOCH."""
+    return REGIONS[(day - REGION_EPOCH).days % len(REGIONS)][0]
+
+
+def region_specs(region: str) -> tuple[JobSpec, ...]:
+    code = dict(REGIONS)[region]
+    return tuple(
+        JobSpec(f"{m}_{region}", m, None, f"{m}_{region}.json", region=code) for m in ("qm", "sl")
+    )
 
 
 def _version_key(v: str) -> tuple[int, ...]:
@@ -190,6 +210,7 @@ def snapshot_to_json(snap: ModeSnapshot) -> dict[str, Any]:
         "mode": snap.key,
         "game_type": snap.game_type,
         "league_tier": list(snap.league_tier) if snap.league_tier else None,
+        "region": snap.region,
         "collected_at": snap.collected_at,
         "matches": snap.matches,
         "rows": [asdict(r) for r in snap.rows],
@@ -243,6 +264,7 @@ def build_meta(
             "matches": snap["matches"],
             "heroes": len(all_rows),
             "heroes_over_200": sum(1 for r in all_rows if r["games"] >= MIN_GAMES_FOR_TIER),
+            "collected_at": snap.get("collected_at"),
         }
     return {
         "current_patch": patch,

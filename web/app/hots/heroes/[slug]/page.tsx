@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { HeroView, type HeroModeModel } from "@/components/hero/HeroView";
 import type { Mode } from "@/data";
-import { bracketRows, heroBuilds, heroSummary, mapRows } from "@/lib/hero";
+import { bracketRows, heroBuilds, heroSummary, mapRows, regionRows } from "@/lib/hero";
 import { matchupsView } from "@/lib/matchups";
 import { readBuilds, readHeroes, readMaps, readMatchups, readMeta, readShown, readTalents } from "@/server/data";
 
@@ -39,6 +39,7 @@ export default async function HeroPage({ params }: { params: Promise<{ slug: str
       fallbackFrom: fallback ? meta.current_patch : null,
       summary: heroSummary(snap, previous, hero.name, min),
       maps: mapRows(snap, hero.name, maps, min),
+      regions: regionRows((["kr", "na", "eu"] as const).map((r) => ({ key: r, snap: readShown(mode, "all", r)?.snap ?? null })), hero.name, min),
       brackets: mode === "sl" ? bracketRows([{ key: "low", snap: readShown("sl", "low")?.snap ?? null }, { key: "high", snap: readShown("sl", "high")?.snap ?? null }], hero.name, min) : [],
     };
   };

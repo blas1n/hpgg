@@ -2,7 +2,7 @@
 import { computeTiers, PRESETS, type Snapshot, type Tier } from "../formula";
 import { wilson } from "../wilson";
 import { sameCohort } from "./cohort";
-import { thinSample, type Bracket, type HeroTable, type Meta, type Mode, type PatchChoice } from "../data";
+import { REGIONS, thinSample, type Bracket, type HeroTable, type Meta, type Mode, type PatchChoice, type Region } from "../data";
 import type { HeroRef } from "./home";
 
 export type SortKey = "score" | "win_rate" | "pick" | "ban_rate" | "games";
@@ -10,7 +10,8 @@ const SORT_KEYS: SortKey[] = ["score", "win_rate", "pick", "ban_rate", "games"];
 
 export interface TierState {
   mode: Mode;
-  bracket: Bracket; // Storm League only
+  bracket: Bracket; // Storm League only; "all" whenever a region is set (region × bracket is not collected)
+  region: Region; // both modes
   map: string; // "all" or a map name; Storm League only
   role: string; // "all" or a role name
   /** "auto" = current patch, or the previous one while the current sample is thin. */
@@ -19,7 +20,7 @@ export interface TierState {
   dir: "desc" | "asc";
 }
 
-export const DEFAULT_TIER_STATE: TierState = { mode: "qm", bracket: "all", map: "all", role: "all", patch: "auto", sort: "score", dir: "desc" };
+export const DEFAULT_TIER_STATE: TierState = { mode: "qm", bracket: "all", region: "all", map: "all", role: "all", patch: "auto", sort: "score", dir: "desc" };
 
 export function parseTierState(search: string): TierState {
   const q = new URLSearchParams(search);
@@ -27,9 +28,13 @@ export function parseTierState(search: string): TierState {
   const bracket = q.get("tier");
   const sort = q.get("sort") as SortKey | null;
   const patch = q.get("patch");
+  const r = q.get("region") as Region | null;
+  const region: Region = r && r !== "all" && REGIONS.includes(r) ? r : "all";
   return {
     mode,
-    bracket: mode === "sl" && (bracket === "low" || bracket === "high") ? bracket : "all",
+    // region × bracket is not collected: a region in the URL wins
+    bracket: mode === "sl" && region === "all" && (bracket === "low" || bracket === "high") ? bracket : "all",
+    region,
     map: mode === "sl" ? (q.get("map") ?? "all") : "all",
     role: q.get("role") ?? "all",
     patch: patch === "previous" || patch === "current" ? patch : "auto",
@@ -41,6 +46,7 @@ export function parseTierState(search: string): TierState {
 export function tierSearch(s: TierState): string {
   const q = new URLSearchParams();
   if (s.mode !== "qm") q.set("mode", s.mode);
+  if (s.region !== "all") q.set("region", s.region);
   if (s.mode === "sl" && s.bracket !== "all") q.set("tier", s.bracket);
   if (s.mode === "sl" && s.map !== "all") q.set("map", s.map);
   if (s.role !== "all") q.set("role", s.role);
@@ -50,10 +56,12 @@ export function tierSearch(s: TierState): string {
   return q.toString();
 }
 
-/** Which patch a view shows. Right after a patch the current build is thin, so "auto" falls back to the previous one. */
-export function resolvePatch(meta: Meta, mode: Mode, choice: TierState["patch"]): { patch: PatchChoice; auto: boolean } {
+/** Which patch a view shows. Right after a patch the current build is thin, so "auto" falls back to the previous one.
+ *  `key`: the snapshot file (a region has its own sample size); callers stay on the current patch when that file has
+ *  no previous-patch copy. */
+export function resolvePatch(meta: Meta, mode: Mode, choice: TierState["patch"], key: string = mode): { patch: PatchChoice; auto: boolean } {
   if (!meta.previous_patch) return { patch: "current", auto: false };
-  if (choice === "auto") return thinSample(meta, mode) ? { patch: "previous", auto: true } : { patch: "current", auto: false };
+  if (choice === "auto") return thinSample(meta, key) ? { patch: "previous", auto: true } : { patch: "current", auto: false };
   return { patch: choice, auto: false };
 }
 

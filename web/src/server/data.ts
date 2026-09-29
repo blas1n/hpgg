@@ -3,7 +3,7 @@ import "server-only";
 import { existsSync, readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { computeTiers, PRESETS, type Snapshot } from "../formula";
-import type { Bracket, BuildsFile, HeroTable, MapTable, MatchupsFile, Meta, Mode, TalentTable } from "../data";
+import type { Bracket, BuildsFile, HeroTable, MapTable, MatchupsFile, Meta, Mode, Region, TalentTable } from "../data";
 import { pickShown, type Shown } from "../lib/shown";
 import type { SearchItem } from "../lib/search";
 
@@ -19,7 +19,7 @@ export const readSnapshot = (key: string, patch: "current" | "previous" = "curre
 };
 
 /** What a page shows for a mode (+ bracket): the same patch rule as the tier table. */
-export const readShown = (mode: Mode, bracket: Bracket = "all"): Shown | null => pickShown(readMeta(), mode, bracket, readSnapshot, readHeroes());
+export const readShown = (mode: Mode, bracket: Bracket = "all", region: Region = "all"): Shown | null => pickShown(readMeta(), mode, bracket, readSnapshot, readHeroes(), region);
 
 const opt = <T>(rel: string): T | null => (existsSync(join(dir, rel)) ? read<T>(rel) : null);
 let builds: BuildsFile | null | undefined; // 270 KB, read once per build rather than once per hero page
