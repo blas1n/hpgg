@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
-import { PRESETS, appliedParty, changedHeroes, formulaDetail, formulaLine, computeTiers, scoreRow, shrinkWinRate, type Row, type Snapshot } from "../src/formula";
+import { appliedParty, formulaDetail, formulaLine, computeTiers, scoreRow, shrinkWinRate, type Row, type Snapshot } from "../src/formula";
 import { wilson } from "../src/wilson";
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -10,11 +10,11 @@ const load = (f: string): Snapshot => JSON.parse(readFileSync(join(here, "fixtur
 const sl = load("sl_2026-09-28.json");
 const qm = load("qm_2026-09-28.json");
 const allRows = (s: Snapshot): Row[] => s.rows.filter((r) => r.map === "all");
-const tierOf = (s: Snapshot, preset = PRESETS.aichi) => {
-  const t = computeTiers(allRows(s), preset);
+const tierOf = (s: Snapshot) => {
+  const t = computeTiers(allRows(s));
   return Object.fromEntries(t.ranked.map((x) => [x.row.hero, x.tier]));
 };
-const rankOf = (s: Snapshot, hero: string) => computeTiers(allRows(s), PRESETS.aichi).ranked.findIndex((x) => x.row.hero === hero) + 1;
+const rankOf = (s: Snapshot, hero: string) => computeTiers(allRows(s)).ranked.findIndex((x) => x.row.hero === hero) + 1;
 
 describe("shrinkWinRate", () => {
   it("pulls small samples toward 50 with k=500", () => {
@@ -24,19 +24,19 @@ describe("shrinkWinRate", () => {
   });
 });
 
-describe("scoreRow (aichi, multiplicative)", () => {
+describe("scoreRow", () => {
   it("is pick × (WRs − 50) × 3 + ban", () => {
     const r: Row = { hero: "X", map: "all", wins: 550, losses: 450, games: 1000, bans: 0, pick: 20, popularity: 20, win_rate: 55, ban_rate: 10, ci: null };
     const wrs = shrinkWinRate(55, 1000, 500); // 53.333
-    expect(scoreRow(r, PRESETS.aichi)).toBeCloseTo(20 * (wrs - 50) * 3 + 10, 6);
+    expect(scoreRow(r)).toBeCloseTo(20 * (wrs - 50) * 3 + 10, 6);
   });
   it("QM rows have no ban term", () => {
     const r: Row = { hero: "X", map: "all", wins: 550, losses: 450, games: 1000, bans: 0, pick: 20, popularity: 20, win_rate: 55, ban_rate: 0, ci: null };
-    expect(scoreRow(r, PRESETS.aichi)).toBeCloseTo(20 * (shrinkWinRate(55, 1000, 500) - 50) * 3, 6);
+    expect(scoreRow(r)).toBeCloseTo(20 * (shrinkWinRate(55, 1000, 500) - 50) * 3, 6);
   });
 });
 
-describe("design-doc verification table (2026-09-28 fixtures, aichi default)", () => {
+describe("design-doc verification table (2026-09-28 fixtures)", () => {
   const expected: Record<string, [string, string]> = {
     Qhira: ["S", "S"], Johanna: ["S", "A"], Rehgar: ["S", "B"], Falstad: ["A", "A"], Illidan: ["A", "B"],
     Azmodan: ["A", "S"], Abathur: ["A", "S"], Gazlowe: ["A", "B"], Samuro: ["B", "B"], Anduin: ["B", "B"],
@@ -58,30 +58,10 @@ describe("design-doc verification table (2026-09-28 fixtures, aichi default)", (
     expect(rankOf(qm, "Illidan")).toBe(35);
   });
   it("N=90 boundaries are 5/21/48/73/84 → S5 A16 B27 C25 D11 F6", () => {
-    const t = computeTiers(allRows(sl), PRESETS.aichi);
+    const t = computeTiers(allRows(sl));
     const count = (tier: string) => t.ranked.filter((x) => x.tier === tier).length;
     expect([count("S"), count("A"), count("B"), count("C"), count("D"), count("F")]).toEqual([5, 16, 27, 25, 11, 6]);
     expect(t.grey).toHaveLength(0);
-  });
-});
-
-describe("presets", () => {
-  it("additive preset reproduces the HOTS GG picture on SL", () => {
-    const t = tierOf(sl, PRESETS.additive);
-    expect(t.Brightwing).toBe("A");
-    expect(t.Stitches).toBe("B");
-    expect(t.Falstad).toBe("S");
-    expect(t.Gazlowe).toBe("B");
-  });
-  it("pure win-rate preset", () => {
-    const t = tierOf(sl, PRESETS.winrate);
-    expect(t.Brightwing).toBe("D");
-    expect(t.Samuro).toBe("A");
-    expect(t.Johanna).toBe("A");
-  });
-  it("aichi → additive moves 45 heroes on SL and 31 on QM (tier changes only)", () => {
-    expect(changedHeroes(allRows(sl), PRESETS.aichi, PRESETS.additive)).toHaveLength(45);
-    expect(changedHeroes(allRows(qm), PRESETS.aichi, PRESETS.additive)).toHaveLength(31);
   });
 });
 
@@ -91,18 +71,18 @@ describe("cuts and grey rows", () => {
   });
   it("rows under 200 games are grey and excluded from the denominator", () => {
     const rows = [mk("A", 1000, 55), mk("B", 199, 70), mk("C", 1000, 45)];
-    const t = computeTiers(rows, PRESETS.aichi);
+    const t = computeTiers(rows);
     expect(t.grey.map((r) => r.hero)).toEqual(["B"]);
     expect(t.ranked.map((x) => x.row.hero)).toEqual(["A", "C"]);
   });
   it("monotonic cuts: N=3 gives S/A/B one each, C/D/F empty", () => {
     const rows = [mk("A", 1000, 55), mk("B", 1000, 52), mk("C", 1000, 48)];
-    const t = computeTiers(rows, PRESETS.aichi);
+    const t = computeTiers(rows);
     expect(t.ranked.map((x) => x.tier)).toEqual(["S", "A", "B"]);
   });
   it("N=12 synthetic map keeps every tier non-empty until it runs out", () => {
     const rows = Array.from({ length: 12 }, (_, i) => mk(`H${i}`, 1000, 60 - i));
-    const tiers = computeTiers(rows, PRESETS.aichi).ranked.map((x) => x.tier);
+    const tiers = computeTiers(rows).ranked.map((x) => x.tier);
     expect(tiers).toEqual(["S", "A", "B", "B", "B", "B", "C", "C", "C", "D", "D", "F"]);
   });
 });
@@ -119,36 +99,23 @@ describe("wilson", () => {
   });
 });
 
-describe("printed formula follows the preset", () => {
-  it("아이치 text is exactly what the page printed before presets existed", () => {
-    expect(formulaLine(PRESETS.aichi, true, "ko")).toBe("티어 점수 = 픽률 × (승률 − 50) × 3 + 밴률 × 1");
-    expect(formulaLine(PRESETS.aichi, false, "ko")).toBe("티어 점수 = 픽률 × (승률 − 50) × 3");
-    expect(formulaDetail(PRESETS.aichi, true, 200, "ko")).toBe(`WRs   = 50 + (승률 − 50) × 게임수 / (게임수 + 500)
+describe("printed formula", () => {
+  it("the Korean text is exactly what the page printed before presets existed", () => {
+    expect(formulaLine(true, "ko")).toBe("티어 점수 = 픽률 × (승률 − 50) × 3 + 밴률 × 1");
+    expect(formulaLine(false, "ko")).toBe("티어 점수 = 픽률 × (승률 − 50) × 3");
+    expect(formulaDetail(true, 200, "ko")).toBe(`WRs   = 50 + (승률 − 50) × 게임수 / (게임수 + 500)
 점수  = 픽률 × (WRs − 50) × 3 + 밴률 × 1
 티어  = 200게임 이상인 영웅을 점수순으로 세워 누적 비율로 자름 (S 6% · A 24% · B 54% · C 82% · D 94% · F 나머지)
         경계는 단조 증가, 티어마다 최소 1명
 승률 ± 는 Wilson 95% 구간. 전장을 고르면 그 전장의 표본으로만 계산합니다.
 같은 데이터라도 공식이 다르면 티어가 다릅니다. 이 사이트는 공식을 숨기지 않습니다.`);
-    expect(formulaDetail(PRESETS.aichi, false, 200, "ko")).toContain("점수  = 픽률 × (WRs − 50) × 3   (빠른 대전은 밴이 없음)");
-  });
-
-  it("the additive and win-rate presets print their own score line, with their weights", () => {
-    expect(formulaLine(PRESETS.additive, true, "ko")).toBe("티어 점수 = (승률 − 50) + 픽률 × 0.15 + 밴률 × 0.15");
-    expect(formulaLine(PRESETS.additive, false, "ko")).toBe("티어 점수 = (승률 − 50) + 픽률 × 0.15");
-    expect(formulaDetail(PRESETS.additive, true, 200, "ko")).toContain("점수  = (WRs − 50) + 픽률 × 0.15 + 밴률 × 0.15");
-    expect(formulaDetail(PRESETS.additive, false, 200, "ko")).toContain("점수  = (WRs − 50) + 픽률 × 0.15   (빠른 대전은 밴이 없음)");
-    expect(formulaLine(PRESETS.winrate, true, "ko")).toBe("티어 점수 = 승률");
-    const wr = formulaDetail(PRESETS.winrate, true, 200, "ko");
-    expect(wr).toContain("점수  = WRs   (픽률·밴률은 쓰지 않음)");
-    expect(wr).not.toContain("× 3");
+    expect(formulaDetail(false, 200, "ko")).toContain("점수  = 픽률 × (WRs − 50) × 3   (빠른 대전은 밴이 없음)");
   });
 
   it("prints the same formula in English, with the same numbers", () => {
-    expect(formulaLine(PRESETS.aichi, true, "en")).toBe("tier score = pick rate × (win rate − 50) × 3 + ban rate × 1");
-    expect(formulaLine(PRESETS.aichi, false, "en")).toBe("tier score = pick rate × (win rate − 50) × 3");
-    expect(formulaLine(PRESETS.additive, true, "en")).toBe("tier score = (win rate − 50) + pick rate × 0.15 + ban rate × 0.15");
-    expect(formulaLine(PRESETS.winrate, true, "en")).toBe("tier score = win rate");
-    const d = formulaDetail(PRESETS.aichi, false, 200, "en");
+    expect(formulaLine(true, "en")).toBe("tier score = pick rate × (win rate − 50) × 3 + ban rate × 1");
+    expect(formulaLine(false, "en")).toBe("tier score = pick rate × (win rate − 50) × 3");
+    const d = formulaDetail(false, 200, "en");
     expect(d).toContain("WRs   = 50 + (win rate − 50) × games / (games + 500)");
     expect(d).toContain("score = pick rate × (WRs − 50) × 3   (Quick Match has no bans)");
     expect(d).toContain("heroes with 200+ games");
@@ -161,9 +128,8 @@ describe("party correction (#36): the collector's tier_win_rate is the formula's
   const party = { k: 1000, solo_pooled: 48.6312, solo_games: 265875 };
 
   it("scoreRow reads tier_win_rate when the row has one, win_rate otherwise", () => {
-    expect(scoreRow({ ...base, tier_win_rate: 52 }, PRESETS.aichi)).toBeCloseTo(20 * (shrinkWinRate(52, 1000, 500) - 50) * 3, 6);
-    expect(scoreRow({ ...base, tier_win_rate: 52 }, PRESETS.winrate)).toBeCloseTo(shrinkWinRate(52, 1000, 500), 6);
-    expect(scoreRow(base, PRESETS.aichi)).toBeCloseTo(20 * (shrinkWinRate(55, 1000, 500) - 50) * 3, 6);
+    expect(scoreRow({ ...base, tier_win_rate: 52 })).toBeCloseTo(20 * (shrinkWinRate(52, 1000, 500) - 50) * 3, 6);
+    expect(scoreRow(base)).toBeCloseTo(20 * (shrinkWinRate(55, 1000, 500) - 50) * 3, 6);
   });
 
   it("appliedParty: the snapshot's party block only when the rows being ranked carry the correction", () => {
@@ -174,14 +140,14 @@ describe("party correction (#36): the collector's tier_win_rate is the formula's
   });
 
   it("the printed details say how the win rate was corrected, with the numbers used", () => {
-    const ko = formulaDetail(PRESETS.aichi, false, 200, "ko", party);
+    const ko = formulaDetail(false, 200, "ko", party);
     expect(ko).toContain("보정승률 = 승률 + (솔로승률 + 1.37 − 승률) × 솔로게임수 / (솔로게임수 + 1000)");
     expect(ko).toContain("WRs   = 50 + (보정승률 − 50) × 게임수 / (게임수 + 500)");
     expect(ko).toContain("48.63%");
-    const en = formulaDetail(PRESETS.aichi, false, 200, "en", party);
+    const en = formulaDetail(false, 200, "en", party);
     expect(en).toContain("corrected WR = win rate + (solo WR + 1.37 − win rate) × solo games / (solo games + 1000)");
     expect(en).toContain("WRs   = 50 + (corrected WR − 50) × games / (games + 500)");
     // without the correction the text is exactly what it was
-    expect(formulaDetail(PRESETS.aichi, false, 200, "ko", null)).toBe(formulaDetail(PRESETS.aichi, false, 200, "ko"));
+    expect(formulaDetail(false, 200, "ko", null)).toBe(formulaDetail(false, 200, "ko"));
   });
 });

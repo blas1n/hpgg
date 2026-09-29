@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import { knownOnly } from "../src/lib/known";
-import { computeTiers, PRESETS, type Row, type Snapshot } from "../src/formula";
+import { computeTiers, type Row, type Snapshot } from "../src/formula";
 import type { HeroTable, MapTable } from "../src/data";
 import { messages } from "../src/i18n/messages";
 import { homeModel, mapCards, movers, roleLeaders, topHeroes } from "../src/lib/home";
@@ -15,7 +15,7 @@ const maps = json<MapTable>("maps_ko.json");
 // what the pages see: the e2e stats carry a hero without assets (Xal'atath), dropped by lib/known.ts
 const qm = knownOnly(json<Snapshot>("latest/qm.json"), heroes);
 const sl = knownOnly(json<Snapshot>("latest/sl.json"), heroes);
-const ranked = (rows: Row[]) => computeTiers(rows.filter((r) => r.map === "all"), PRESETS.aichi).ranked;
+const ranked = (rows: Row[]) => computeTiers(rows.filter((r) => r.map === "all")).ranked;
 
 describe("roleLeaders", () => {
   const leaders = roleLeaders(ranked(qm.rows), heroes);

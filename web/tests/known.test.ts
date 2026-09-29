@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { computeTiers, PRESETS, type Row, type Snapshot } from "../src/formula";
+import { computeTiers, type Row, type Snapshot } from "../src/formula";
 import { loadSnapshot, type HeroTable, type Meta } from "../src/data";
 import { knownOnly } from "../src/lib/known";
 import { pickShown } from "../src/lib/shown";
@@ -43,9 +43,9 @@ describe("knownOnly", () => {
   });
 
   it("the tier cut runs over the shown heroes: the unknown hero neither takes a rank nor a slot in the denominator", () => {
-    const raw = computeTiers(snap("new").rows, PRESETS.aichi, 200).ranked;
+    const raw = computeTiers(snap("new").rows, 200).ranked;
     expect(raw[0]?.row.hero).toBe("Xal'atath"); // control: counted, it would be rank 1
-    const shown = computeTiers(knownOnly(snap("new"), heroes).rows, PRESETS.aichi, 200).ranked;
+    const shown = computeTiers(knownOnly(snap("new"), heroes).rows, 200).ranked;
     expect(shown.map((x) => [x.row.hero, x.rank])).toEqual([
       ["A", 1],
       ["B", 2],

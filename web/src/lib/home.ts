@@ -1,5 +1,5 @@
 /** Home page view models. Pure: computed at build time for each mode and serialised into the page. */
-import { computeTiers, PRESETS, type Ranked, type Snapshot, type Tier } from "../formula";
+import { computeTiers, type Ranked, type Snapshot, type Tier } from "../formula";
 import type { HeroInfo, HeroTable, MapTable } from "../data";
 
 export type HeroRef = Pick<HeroInfo, "slug" | "ko" | "name" | "role" | "role_ko" | "portrait">;
@@ -115,7 +115,7 @@ export function mapCards(sl: Snapshot, maps: MapTable, heroes: HeroTable, minGam
       const rows = sl.rows.filter((r) => r.map === m.name);
       // every match has ten hero slots
       const matches = Math.round(rows.reduce((a, r) => a + r.games, 0) / 10);
-      const top = computeTiers(rows, PRESETS.aichi, minGames)
+      const top = computeTiers(rows, minGames)
         .ranked.filter((x) => refs.has(x.row.hero))
         .slice(0, 3)
         .map((x) => ({ hero: refs.get(x.row.hero)!, tier: x.tier }));
@@ -141,7 +141,7 @@ export interface HomeModel {
 
 /** One mode's home sections. `previous` is the same mode on the previous patch (null before the first patch change). */
 export function homeModel(mode: "qm" | "sl", snap: Snapshot, previous: Snapshot | null, previousPatch: string | null, heroes: HeroTable, minGames: number, fallbackFrom: string | null = null): HomeModel {
-  const rank = (s: Snapshot) => computeTiers(s.rows.filter((r) => r.map === "all"), PRESETS.aichi, minGames).ranked;
+  const rank = (s: Snapshot) => computeTiers(s.rows.filter((r) => r.map === "all"), minGames).ranked;
   const cur = rank(snap);
   const prev = previous ? rank(previous) : null;
   return {

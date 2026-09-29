@@ -2,7 +2,7 @@
 import "server-only";
 import { existsSync, readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
-import { computeTiers, PRESETS, type Snapshot } from "../formula";
+import { computeTiers, type Snapshot } from "../formula";
 import type { Bracket, BuildsFile, HeroTable, MapTable, MatchupsFile, Meta, Mode, Region, TalentTable } from "../data";
 import { pickShown, type Shown } from "../lib/shown";
 import type { SearchItem } from "../lib/search";
@@ -40,7 +40,7 @@ export function readSearchIndex(locale: Locale, mode: Mode = "qm"): SearchItem[]
   const heroes = readHeroes(locale);
   const meta = readMeta();
   const snap = readShown(mode)?.snap;
-  const tiers = snap ? computeTiers(snap.rows.filter((r) => r.map === "all"), PRESETS.aichi, meta.min_games_for_tier) : null;
+  const tiers = snap ? computeTiers(snap.rows.filter((r) => r.map === "all"), meta.min_games_for_tier) : null;
   const tierOf = new Map(tiers?.ranked.map((x) => [x.row.hero, x.tier]) ?? []);
   return [...heroes.heroes]
     .sort((a, b) => a.ko.localeCompare(b.ko, locale))
