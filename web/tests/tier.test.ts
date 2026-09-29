@@ -3,9 +3,9 @@ import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import { knownOnly } from "../src/lib/known";
-import type { Snapshot } from "../src/formula";
+import { changedHeroes, PRESETS, type Snapshot } from "../src/formula";
 import type { HeroTable, Meta } from "../src/data";
-import { DEFAULT_TIER_STATE, parseTierState, resolvePatch, tierSearch, tierTable, visibleRows, type TierState } from "../src/lib/tier";
+import { DEFAULT_TIER_STATE, formatScore, parseTierState, resolvePatch, tierSearch, tierTable, visibleRows, type TierState } from "../src/lib/tier";
 
 const dataDir = join(dirname(fileURLToPath(import.meta.url)), "e2e-data");
 const json = <T>(rel: string): T => JSON.parse(readFileSync(join(dataDir, rel), "utf-8")) as T;
@@ -22,7 +22,7 @@ describe("parseTierState / tierSearch", () => {
   });
 
   it("round-trips every non-default field", () => {
-    const s: TierState = { mode: "sl", bracket: "high", region: "all", map: "Cursed Hollow", role: "Tank", patch: "previous", sort: "win_rate", dir: "asc" };
+    const s: TierState = { mode: "sl", bracket: "high", region: "all", map: "Cursed Hollow", role: "Tank", patch: "previous", sort: "win_rate", dir: "asc", preset: "additive" };
     expect(parseTierState(tierSearch(s))).toEqual(s);
   });
 
@@ -34,6 +34,17 @@ describe("parseTierState / tierSearch", () => {
   it("keeps an explicit ?patch=current so a reload does not fall back to the previous patch again", () => {
     expect(parseTierState("?patch=current").patch).toBe("current");
     expect(tierSearch({ ...DEFAULT_TIER_STATE, patch: "current" })).toBe("patch=current");
+  });
+});
+
+describe("?preset=", () => {
+  it("reads additive / winrate, ignores anything else, and is left out of the URL for the default (아이치)", () => {
+    expect(DEFAULT_TIER_STATE.preset).toBe("aichi");
+    expect(parseTierState("?preset=additive").preset).toBe("additive");
+    expect(parseTierState("?preset=winrate&mode=sl").preset).toBe("winrate");
+    expect(parseTierState("?preset=bogus").preset).toBe("aichi");
+    expect(parseTierState("?preset=aichi").preset).toBe("aichi");
+    expect(tierSearch({ ...DEFAULT_TIER_STATE, preset: "winrate" })).toBe("preset=winrate");
   });
 });
 
@@ -99,6 +110,48 @@ describe("tierTable", () => {
     const x = tierTable(extra, null, "all", heroes, 200).rows.find((r) => r.hero.name === "Xal'atath")!;
     expect(x.hero.ko).toBe("Xal'atath");
     expect(x.hero.slug).toBe("xal-atath");
+  });
+});
+
+describe("tierTable with a formula preset", () => {
+  it("the default preset is the old call, value for value — no new keys on the pre-rendered table", () => {
+    const prev: Snapshot = { ...qm, rows: qm.rows.filter((r) => r.hero !== "Qhira") };
+    const old = tierTable(qm, prev, "all", heroes, 200);
+    const withPreset = tierTable(qm, prev, "all", heroes, 200, PRESETS.aichi);
+    expect(JSON.stringify(withPreset)).toBe(JSON.stringify(old));
+    expect(old.rows.some((r) => "baseTier" in r)).toBe(false);
+  });
+
+  it("another preset re-tiers the same rows and marks exactly the heroes whose tier differs from 아이치", () => {
+    for (const [snap, preset] of [
+      [qm, PRESETS.additive],
+      [sl, PRESETS.additive],
+      [sl, PRESETS.winrate],
+    ] as const) {
+      const aichi = tierTable(snap, null, "all", heroes, 200);
+      const t = tierTable(snap, null, "all", heroes, 200, preset);
+      expect(t.rows).toHaveLength(aichi.rows.length);
+      const marked = t.rows.filter((r) => r.baseTier !== undefined);
+      const expected = changedHeroes(snap.rows.filter((r) => r.map === "all"), PRESETS.aichi, preset, 200);
+      expect(marked.map((r) => r.hero.name).sort()).toEqual(expected);
+      expect(marked.length).toBeGreaterThan(0);
+      for (const r of marked) expect(r.baseTier).toBe(aichi.rows.find((a) => a.hero.slug === r.hero.slug)!.tier);
+      for (const r of marked) expect(r.baseTier).not.toBe(r.tier);
+    }
+  });
+
+  it("ranks the previous patch with the same preset for ▲▼", () => {
+    const prev: Snapshot = { ...sl, rows: sl.rows.map((r) => ({ ...r })) };
+    const t = tierTable(sl, prev, "all", heroes, 200, PRESETS.winrate);
+    expect(t.rows.every((r) => r.prevRank === r.rank)).toBe(true); // same data: no movement under the same formula
+  });
+
+  it("formats the score for the preset's scale", () => {
+    expect(formatScore(396.6, PRESETS.aichi)).toBe("+397");
+    expect(formatScore(-12.2, PRESETS.aichi)).toBe("-12");
+    expect(formatScore(3.456, PRESETS.additive)).toBe("+3.5");
+    expect(formatScore(-0.04, PRESETS.additive)).toBe("-0.0");
+    expect(formatScore(52.345, PRESETS.winrate)).toBe("52.3");
   });
 });
 

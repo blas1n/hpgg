@@ -28,6 +28,12 @@ Automated as Playwright specs in `web/e2e/tierlist.spec.ts`, run with `npm run e
 - [x] Storage that throws: page renders navy, toggle still works for the visit, no page error
 - [x] Every visible text run on 홈 / 티어 (QM, SL) / 영웅 / 영웅 상세 (QM, SL) / 전장 reaches WCAG AA against the colour behind it, both themes, 390 and 1280 px (a planted low-contrast line is caught — control)
 
+## Automated — formula presets (`e2e/presets.spec.ts`, #2)
+- [x] Default: `#preset` = 아이치, 아이치 formula printed, nothing marked
+- [x] 가산식: rows re-tier (Whitemane S→A in QM), 31 moved heroes carry `data-changed` + "기본 X" chip, count in `#preset-diff`, printed formula and "자세히" follow, `preset=additive` in the URL; "기본 공식으로" clears it
+- [x] `?mode=sl&preset=additive` opens with it (Brightwing F→A); `?preset=winrate` prints "티어 점수 = 승률" and unsigned scores; unknown value → 아이치
+- [x] No horizontal scroll at 390 px with the selector
+
 ## Human, against the live site
 - [ ] https://blas1n.github.io/hpgg/hots/ loads today's patch and match count in the meta line
 - [ ] Switching to Storm League and picking a map re-tiers within a second on a phone

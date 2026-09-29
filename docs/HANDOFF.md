@@ -41,7 +41,7 @@ score = pick% × (WRs − 50) × 3 + ban% × 1              multiplicative ("아
 tiers = heroes with n ≥ 200 (and in heroes_ko.json — see below), sorted by score, cut at cumulative 6/24/54/82/94 % → S/A/B/C/D/F
         boundary_i = min(N, max(floor(share_i·N), boundary_{i−1}+1))  (monotonic, ≥1 per tier)
 ```
-Why multiplicative: an additive formula ((WRs−50)+0.15·pick+0.15·ban) reproduces HOTS GG and promotes low-win-rate popular heroes (Brightwing 47.6 % WR → A). 45/90 heroes change tier between the two on the 2026-09-28 fixture. Presets exist in code (`PRESETS.additive`, `PRESETS.winrate`) but are not exposed in the UI yet.
+Why multiplicative: an additive formula ((WRs−50)+0.15·pick+0.15·ban) reproduces HOTS GG and promotes low-win-rate popular heroes (Brightwing 47.6 % WR → A). 45/90 heroes change tier between the two on the 2026-09-28 fixture. The tier page offers the presets (`PRESETS`: 아이치 default · 가산식 · 승률만) in a `#preset` select and `?preset=additive|winrate`; heroes whose tier differs from 아이치 are marked (`data-changed`, a "기본 X" chip) and the printed formula (`formulaLine`, `formulaDetail`) follows the selection. 홈, 영웅 and 영웅 상세 always use 아이치. The default view is pre-rendered exactly as before presets (`baseTier` is only set under another preset).
 
 ## Quotas and costs (Heroes Profile Basic, $5/month, rolling 7-day windows per endpoint)
 | Endpoint | Weekly cap | Daily use |
