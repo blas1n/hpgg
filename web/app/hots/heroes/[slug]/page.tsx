@@ -18,7 +18,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   if (!h) return {};
   return {
     title: h.ko,
-    description: `${h.ko}(${h.name}) ${h.role_ko} — 티어, 승률, 픽률, 밴률, 전장별 성적, 리그 구간별 성적, 상대하기 어려운 영웅·잘 맞는 영웅, 인기 특성 빌드.`,
+    description: `${h.ko}(${h.name}) ${h.role_ko}: 티어, 승률, 픽률, 밴률, 전장별 성적, 리그 구간별 성적, 상대하기 어려운 영웅·잘 맞는 영웅, 인기 특성 빌드.`,
     openGraph: h.portrait ? { images: [`/${h.portrait}`] } : undefined,
   };
 }

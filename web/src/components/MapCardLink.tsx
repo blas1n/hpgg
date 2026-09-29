@@ -16,7 +16,7 @@ export function MapCardLink({ c }: { c: MapCard }) {
       <span className="relative block aspect-[4/3] overflow-hidden sm:aspect-[16/7]">
         {c.image && (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={assetUrl(c.image)} alt="" loading="lazy" className="size-full object-cover transition-transform duration-300 group-hover:scale-105" />
+          <img src={assetUrl(c.image)} alt="" loading="lazy" className="size-full object-cover" />
         )}
         <span className="absolute inset-0 bg-gradient-to-t from-surface-2 via-surface-2/30 to-transparent" />
         <span className="absolute bottom-2 left-3">

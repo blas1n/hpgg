@@ -138,7 +138,7 @@ function Movers({ model, mode }: { model: HomeModel; mode: Mode }) {
       : "직전 패치와 순위 변동 없음"
     : "직전 패치 데이터가 쌓이면 표시됩니다";
   return (
-    <Card className="lg:col-span-5" aria-labelledby="h-movers">
+    <Card className="lg:col-span-5 lg:self-start" aria-labelledby="h-movers">
       <CardHeader
         id="h-movers"
         title="메타 변동"

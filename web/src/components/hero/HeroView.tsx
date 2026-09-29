@@ -5,7 +5,7 @@ import { createPortal } from "react-dom";
 import { assetUrl, fallbackNote, hotsHref, MODE_LABEL, shortDate, type HeroInfo, type Mode } from "@/data";
 import { descParts, type BracketRow, type BuildTalentView, type BuildView, type HeroSummary, type MapRow, type RegionRow } from "@/lib/hero";
 import { MATCHUP_RULE, type MatchupRow, type MatchupsView } from "@/lib/matchups";
-import { Card, cx, Portrait, Segmented, TierBadge } from "../ui";
+import { Card, cx, Portrait, Segmented, TierBadge, wrTone } from "../ui";
 
 const pct = (n: number) => `${n.toFixed(1)}%`;
 const int = (n: number) => n.toLocaleString("ko-KR");
@@ -68,6 +68,7 @@ export function HeroView({
 
   return (
     <main className="page-x pb-10">
+      <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,36rem)] lg:items-center lg:gap-x-8">
       <div className="mt-5 flex items-center gap-4">
         <Portrait src={hero.portrait} size={84} tier={s.kind === "ranked" ? s.tier : undefined} role={hero.role} />
         <div className="min-w-0">
@@ -95,18 +96,24 @@ export function HeroView({
         />
       </div>
 
-      <SectionTabs sections={sections} />
-
-      <div id="stats" className="grid grid-cols-3 gap-2">
+      <div id="stats" className="mt-4 grid grid-cols-3 gap-2 lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:mt-5">
         <StatCards s={s} sl={sl} minGames={minGames} />
       </div>
+      </div>
 
+      <SectionTabs sections={sections} />
+
+      {/* desktop: maps on the left, the other sections on the right, so the page is not one long column */}
+      <div className="lg:grid lg:grid-cols-2 lg:items-start lg:gap-x-6">
+      <section>
       <h2 id="maps-title" className={SECTION}>
         전장별 승률 ({MODE_LABEL[mode]})
       </h2>
-      <div id="maps" className="flex flex-col gap-1.5">
+      <div id="maps">
         <MapRows rows={m.maps} />
       </div>
+      </section>
+      <section>
 
       {sl && m.brackets.length > 0 && (
         <>
@@ -124,7 +131,7 @@ export function HeroView({
                   </span>
                 </span>
                 <span className="num text-right">
-                  <span className={cx("block text-[13px] font-bold", b.win_rate >= 50 ? "text-pos" : "text-neg")}>{pct(b.win_rate)}</span>
+                  <span className={cx("block text-[13px] font-bold", wrTone(b.win_rate))}>{pct(b.win_rate)}</span>
                   <span className="block text-2xs text-muted">
                     픽 {pct(b.pick)} · 밴 {pct(b.ban_rate)}
                   </span>
@@ -151,7 +158,7 @@ export function HeroView({
                   </span>
                 </span>
                 <span className="num text-right">
-                  <span className={cx("block text-[13px] font-bold", r.win_rate >= 50 ? "text-pos" : "text-neg")}>{pct(r.win_rate)}</span>
+                  <span className={cx("block text-[13px] font-bold", wrTone(r.win_rate))}>{pct(r.win_rate)}</span>
                   <span className="block text-2xs text-muted">픽 {pct(r.pick)}</span>
                 </span>
               </div>
@@ -173,6 +180,8 @@ export function HeroView({
           <Builds builds={builds} />
         </>
       )}
+      </section>
+      </div>
     </main>
   );
 }
@@ -266,11 +275,13 @@ function MapRows({ rows }: { rows: MapRow[] }) {
   if (!rows.length) return <p className="rounded-lg border border-line bg-surface px-3 py-4 text-center text-[13px] text-muted">이 모드엔 전장별 표본이 없습니다</p>;
   // bar length = distance from 50%, scaled to this hero's widest gap (at least 5%p)
   const span = Math.max(5, ...rows.map((r) => Math.abs(r.win_rate - 50)));
-  return rows.map((r) => {
+  return (
+    <div className="divide-y divide-line overflow-hidden rounded-card border border-line bg-surface">
+      {rows.map((r) => {
     const up = r.win_rate >= 50;
     // not a link: the per-map tier table is a different view (owner, 2026-09-28)
     return (
-      <div key={r.slug} data-map={r.slug} className="grid grid-cols-[44px_1fr_auto] items-center gap-3 rounded-lg border border-line bg-surface px-2.5 py-1.5">
+      <div key={r.slug} data-map={r.slug} className="grid grid-cols-[44px_1fr_auto] items-center gap-3 px-2.5 py-1">
         {r.image ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={assetUrl(r.image)} alt="" loading="lazy" className="h-[26px] w-11 rounded object-cover" />
@@ -287,12 +298,14 @@ function MapRows({ rows }: { rows: MapRow[] }) {
           </span>
         </span>
         <span className="num text-right">
-          <span className={cx("block text-[13px] font-semibold", up ? "text-pos" : "text-neg")}>{pct(r.win_rate)}</span>
-          <span className="block text-2xs text-muted">픽 {pct(r.pick)}</span>
+          <span className={cx("block text-[13px] font-semibold leading-4", wrTone(r.win_rate))}>{pct(r.win_rate)}</span>
+          <span className="block text-2xs leading-4 text-muted">픽 {pct(r.pick)}</span>
         </span>
       </div>
     );
-  });
+      })}
+    </div>
+  );
 }
 
 /** 상성 — Storm League only (the draft mode), whatever the mode toggle says; numbers only, no per-pair prose. */
@@ -411,16 +424,16 @@ function Builds({ builds }: { builds: BuildView[] }) {
   };
 
   return (
-    <div id="builds" className="grid gap-2 lg:grid-cols-2">
+    <div id="builds" className="grid gap-2">
       {builds.map((b, i) => (
-        <Card as="div" key={i} data-build={i + 1} className="grid grid-cols-[1fr_76px] gap-2 p-2">
+        <Card as="div" key={i} data-build={i + 1} data-thin={b.thin || undefined} className="grid grid-cols-[1fr_76px] gap-2 p-2">
           <div className="grid grid-cols-7 gap-1">
             {b.talents.map((t) => (
               <button
                 key={t.level}
                 type="button"
                 data-talent
-                aria-label={`${t.level}레벨 · ${t.ko} — 설명 보기`}
+                aria-label={`${t.level}레벨 · ${t.ko}, 설명 보기`}
                 onClick={(e) => open(e, t)}
                 className="group flex min-w-0 flex-col items-center gap-0.5"
               >
@@ -430,22 +443,23 @@ function Builds({ builds }: { builds: BuildView[] }) {
                 ) : (
                   <span className="size-9 rounded-md border border-line bg-surface-3 sm:size-11" />
                 )}
-                <span data-level className="text-[10px] text-muted">
+                <span data-level className="text-2xs text-muted">
                   {t.level}
                 </span>
-                <span data-tname className="line-clamp-2 text-center text-[10px] leading-tight text-fg-2 sm:text-[11px]">
+                <span data-tname className="line-clamp-2 text-center text-2xs leading-tight text-fg-2">
                   {t.ko}
                 </span>
               </button>
             ))}
           </div>
           <div className="num flex flex-col justify-center text-right">
-            <span data-wr className={cx("text-lg font-extrabold", b.win_rate >= 50 ? "text-pos" : "text-neg")}>
+            {/* a thin build's win rate is shown, but not as a finding */}
+            <span data-wr title={b.thin ? "표본이 적어 승률을 판단하기 어렵습니다" : undefined} className={cx("text-lg", b.thin ? "font-semibold text-muted" : cx("font-extrabold", wrTone(b.win_rate)))}>
               {pct(b.win_rate)}
             </span>
-            <span className="text-[10px] text-muted">승률</span>
+            <span className="text-2xs text-muted">{b.thin ? "승률 · 표본 적음" : "승률"}</span>
             <span className="text-[13px] text-fg">{int(b.games)}</span>
-            <span className="text-[10px] text-muted">게임</span>
+            <span className="text-2xs text-muted">게임</span>
             <span className="mt-1 block h-[3px] rounded-full bg-surface-3">
               <i className="block h-full rounded-full bg-accent" style={{ width: `${b.share * 100}%` }} />
             </span>

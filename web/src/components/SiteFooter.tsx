@@ -33,7 +33,7 @@ export function SiteFooter() {
               hpgg<span className="text-xs font-semibold text-primary">.win</span>
             </span>
           </div>
-          <p className="mt-2 text-[13px] text-fg-2">Happy Good Game — 매치 데이터로 보는 메타 통계. 공식을 숨기지 않습니다.</p>
+          <p className="mt-2 text-[13px] text-fg-2">Happy Good Game. 매치 데이터로 보는 메타 통계. 공식을 숨기지 않습니다.</p>
           <p className="mt-1 text-xs text-muted">
             Data provided by{" "}
             <a href="https://www.heroesprofile.com/" rel="noopener" className="text-secondary hover:text-primary">

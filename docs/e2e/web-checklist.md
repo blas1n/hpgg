@@ -34,6 +34,15 @@ Automated as Playwright specs in `web/e2e/tierlist.spec.ts`, run with `npm run e
 - [x] `?mode=sl&preset=additive` opens with it (Brightwing F→A); `?preset=winrate` prints "티어 점수 = 승률" and unsigned scores; unknown value → 아이치
 - [x] No horizontal scroll at 390 px with the selector
 
+## Automated — desktop density and design review (`e2e/density.spec.ts`, #3 #16)
+- [x] 1280: tier table has its own tier column (no badge on the portrait), rows ≤ 42 px, ≥ 14 heroes above a 900 px fold
+- [x] 1280: role column, win rate ± interval, hero column ≤ 360 px wide
+- [x] Tier divider rows (6) when ranked by score, none when sorted by another column
+- [x] Column header sticks under the site header while scrolling
+- [x] A preset-changed row is tinted (no stripe)
+- [x] Hero page 1280: header and stats share a band; maps left, brackets and builds right; builds start above the fold; map rows ≤ 44 px
+- [x] No text under 11 px on the hero page (tier badges excepted)
+
 ## Human, against the live site
 - [ ] https://blas1n.github.io/hpgg/hots/ loads today's patch and match count in the meta line
 - [ ] Switching to Storm League and picking a map re-tiers within a second on a phone

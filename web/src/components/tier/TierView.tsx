@@ -5,7 +5,7 @@ import { assetUrl, BRACKET_LABEL, daysSince, hotsHref, loadSnapshot, MODE_LABEL,
 import { formulaDetail, formulaLine, PRESETS, type Preset, type Snapshot, type Tier } from "@/formula";
 import { bracketMatches, regionMatches } from "@/lib/shown";
 import { DEFAULT_TIER_STATE, formatScore, parseTierState, resolvePatch, tierSearch, tierTable, visibleRows, type PresetId, type SortKey, type TierRow, type TierState, type TierTable } from "@/lib/tier";
-import { Card, cx, Portrait, Segmented } from "../ui";
+import { Card, cx, Portrait, Segmented, TierBadge, wrTone } from "../ui";
 
 const pct = (n: number) => `${n.toFixed(1)}%`;
 const int = (n: number) => n.toLocaleString("ko-KR");
@@ -18,16 +18,16 @@ const COLUMNS: { key: SortKey; label: string; sl?: true; wide?: true }[] = [
   { key: "games", label: "표본수", wide: true },
 ];
 
-// the sample column is hidden below 640px; an opened row must span exactly the visible columns
-const WIDE = "(min-width: 640px)";
-function useWide(): boolean {
+// the tier and sample columns appear from 640px, the role column from 1024px; an opened row must span exactly the
+// visible columns
+function useMedia(query: string): boolean {
   return useSyncExternalStore(
     (cb) => {
-      const m = matchMedia(WIDE);
+      const m = matchMedia(query);
       m.addEventListener("change", cb);
       return () => m.removeEventListener("change", cb);
     },
-    () => matchMedia(WIDE).matches,
+    () => matchMedia(query).matches,
     () => false,
   );
 }
@@ -47,7 +47,8 @@ export function TierView({ meta, heroes, maps, initial }: { meta: Meta; heroes: 
   const [loaded, setLoaded] = useState<Loaded>({});
   const [error, setError] = useState<string | null>(null);
   const [open, setOpen] = useState<string | null>(null);
-  const wide = useWide();
+  const wide = useMedia("(min-width: 640px)");
+  const lg = useMedia("(min-width: 1024px)");
 
   useEffect(() => {
     setState(parseTierState(location.search));
@@ -125,7 +126,9 @@ export function TierView({ meta, heroes, maps, initial }: { meta: Meta; heroes: 
   const grey = table.grey.filter((g) => role === "all" || g.hero.role === role);
   const mapInfo = map === "all" ? undefined : maps.maps.find((m) => m.name === map);
   const cols = COLUMNS.filter((c) => (!c.sl || sl) && (!c.wide || wide));
-  const span = 2 + cols.length;
+  const span = 2 + (wide ? 1 : 0) + (lg ? 1 : 0) + cols.length;
+  // ranked by score, the rows run tier by tier: a divider row opens each tier (not when sorted by another column)
+  const groups = sort === "score";
 
   // the loading table is the previous view: its patch and match count would be attributed to the new one
   const metaLine = error
@@ -271,23 +274,34 @@ export function TierView({ meta, heroes, maps, initial }: { meta: Meta; heroes: 
         </p>
       )}
 
-      <Card as="div" className="overflow-hidden">
+      {/* clip, not hidden: hidden would make the card a scroll container and the sticky column header would stop */}
+      <Card as="div" className="overflow-clip">
         <table id="table" aria-busy={busy} className={cx("num w-full table-fixed border-collapse text-[13px] transition-opacity sm:text-sm", busy && "opacity-50")}>
           <thead>
-            <tr className="border-b border-line text-xs text-muted">
-              <th data-col="rank" className="w-11 py-2.5 pl-3 text-left font-semibold sm:w-16 sm:pl-4">
+            <tr className="text-xs text-muted [&>th]:sticky [&>th]:top-[var(--header-h)] [&>th]:z-10 [&>th]:bg-surface [&>th]:shadow-[0_1px_0_var(--color-line)]">
+              <th data-col="rank" className="w-11 py-2.5 pl-3 text-left font-semibold sm:w-24 sm:pl-4">
                 순위
               </th>
-              <th data-col="hero" className="py-2.5 pl-1 text-left font-semibold">
+              {wide && (
+                <th data-col="tier" className="w-12 py-2.5 text-center font-semibold">
+                  티어
+                </th>
+              )}
+              <th data-col="hero" className="py-2.5 pl-1 text-left font-semibold lg:w-64">
                 영웅
               </th>
+              {lg && (
+                <th data-col="role" className="w-28 py-2.5 text-left font-semibold">
+                  역할
+                </th>
+              )}
               {cols.map((c) => (
                 <th
                   key={c.key}
                   data-col={c.key}
                   data-sort={c.key}
                   aria-sort={sort === c.key ? (dir === "desc" ? "descending" : "ascending") : undefined}
-                  className={cx("py-2.5 pr-2 text-right font-semibold sm:pr-4", c.key === "games" ? "w-24" : "w-14 sm:w-24")}
+                  className={cx("py-2.5 pr-2 text-right font-semibold sm:pr-4", c.key === "games" ? "w-24" : c.key === "win_rate" ? "w-14 sm:w-24 lg:w-32" : "w-14 sm:w-24")}
                 >
                   <button type="button" onClick={() => sortBy(c.key)} className={cx("whitespace-nowrap transition-colors hover:text-fg", sort === c.key && "text-fg")}>
                     {c.label}
@@ -298,9 +312,20 @@ export function TierView({ meta, heroes, maps, initial }: { meta: Meta; heroes: 
             </tr>
           </thead>
           <tbody id="rows">
-            {rows.map((r) => (
+            {rows.map((r, i) => (
+              <Fragment key={r.hero.slug}>
+              {groups && r.tier !== rows[i - 1]?.tier && (
+                <tr data-tier-group={r.tier} className="bg-surface-2">
+                  <td colSpan={span} className="px-3 py-1 text-2xs font-semibold text-muted sm:px-4">
+                    <span className="inline-flex items-center gap-1.5">
+                      <TierBadge tier={r.tier} size="sm" /> {r.tier} 티어 · {rows.filter((x) => x.tier === r.tier).length}명
+                    </span>
+                  </td>
+                </tr>
+              )}
               <HeroRow
-                key={r.hero.slug}
+                wide={wide}
+                lg={lg}
                 r={r}
                 cols={cols.map((c) => c.key)}
                 n={table.rows.length}
@@ -312,6 +337,7 @@ export function TierView({ meta, heroes, maps, initial }: { meta: Meta; heroes: 
                 open={open === r.hero.slug}
                 onToggle={() => setOpen((o) => (o === r.hero.slug ? null : r.hero.slug))}
               />
+              </Fragment>
             ))}
           </tbody>
         </table>
@@ -356,7 +382,7 @@ function RegionNote({ meta, mode, region }: { meta: Meta; mode: Mode; region: Ex
   );
 }
 
-function HeroRow({ r, cols, n, hasPrevious, sl, preset, span, mode, open, onToggle }: { r: TierRow; cols: SortKey[]; n: number; hasPrevious: boolean; sl: boolean; preset: Preset; span: number; mode: Mode; open: boolean; onToggle: () => void }) {
+function HeroRow({ r, wide, lg, cols, n, hasPrevious, sl, preset, span, mode, open, onToggle }: { r: TierRow; wide: boolean; lg: boolean; cols: SortKey[]; n: number; hasPrevious: boolean; sl: boolean; preset: Preset; span: number; mode: Mode; open: boolean; onToggle: () => void }) {
   const cell: Record<SortKey, string> = {
     score: formatScore(r.score, preset),
     win_rate: pct(r.win_rate),
@@ -380,17 +406,25 @@ function HeroRow({ r, cols, n, hasPrevious, sl, preset, span, mode, open, onTogg
             onToggle();
           }
         }}
-        className={cx("cursor-pointer border-b border-line/70 transition-colors hover:bg-surface-2", open && "bg-surface-2", r.baseTier && "shadow-[inset_3px_0_0_var(--color-secondary)]")}
+        className={cx("cursor-pointer border-b border-line/70 transition-colors hover:bg-surface-2", open ? "bg-surface-2" : r.baseTier && "bg-secondary/[0.07]")}
       >
-        <td data-col="rank" className="py-2 pl-3 sm:pl-4">
-          <span data-v className="block font-bold text-fg">
-            {r.rank}
+        <td data-col="rank" className="py-1.5 pl-3 sm:pl-4">
+          <span className="sm:flex sm:items-center sm:gap-2">
+            <span data-v className="block font-bold text-fg">
+              {r.rank}
+            </span>
+            {hasPrevious && <Delta rank={r.rank} prev={r.prevRank} />}
           </span>
-          {hasPrevious && <Delta rank={r.rank} prev={r.prevRank} />}
         </td>
-        <td data-col="hero" className="overflow-hidden py-2 pl-1">
+        {wide && (
+          <td data-col="tier" className="py-1.5 text-center">
+            <TierBadge tier={r.tier} />
+          </td>
+        )}
+        <td data-col="hero" className="overflow-hidden py-1.5 pl-1">
           <span className="flex min-w-0 items-center gap-2.5">
-            <Portrait src={r.hero.portrait} size={34} tier={r.tier} role={r.hero.role || undefined} />
+            {/* the tier has its own column from 640px; on a phone it stays on the portrait */}
+            <Portrait src={r.hero.portrait} size={wide ? 28 : 34} tier={wide ? undefined : r.tier} role={r.hero.role || undefined} />
             <span className="min-w-0 sm:flex sm:items-baseline sm:gap-1.5">
               {r.baseTier ? (
                 <span className="flex min-w-0 flex-col items-start sm:flex-row sm:items-center">
@@ -406,14 +440,20 @@ function HeroRow({ r, cols, n, hasPrevious, sl, preset, span, mode, open, onTogg
               )}
               <span className="hidden truncate text-2xs text-muted sm:block">
                 {r.hero.name}
-                {r.hero.role_ko && ` · ${r.hero.role_ko}`}
+                {!lg && r.hero.role_ko && ` · ${r.hero.role_ko}`}
               </span>
             </span>
           </span>
         </td>
+        {lg && (
+          <td data-col="role" className="truncate py-1.5 text-[13px] text-fg-2">
+            {r.hero.role_ko}
+          </td>
+        )}
         {cols.map((k) => (
-          <td key={k} data-col={k} className={cx("py-2 pr-2 text-right sm:pr-4", k === "score" ? (r.score < 0 ? "font-bold text-neg" : "font-bold text-fg") : "text-fg-2", k === "win_rate" && (r.win_rate >= 50 ? "text-pos" : "text-neg"))}>
+          <td key={k} data-col={k} className={cx("py-1.5 pr-2 text-right sm:pr-4", k === "score" ? (r.score < 0 ? "font-bold text-neg" : "font-bold text-fg") : "text-fg-2", k === "win_rate" && wrTone(r.win_rate))}>
             <span data-v>{cell[k]}</span>
+            {k === "win_rate" && lg && <span className="ml-1 text-2xs text-muted">±{r.wrHalf.toFixed(1)}</span>}
           </td>
         ))}
       </tr>
@@ -443,7 +483,7 @@ function BaseTierChip({ tier, example }: { tier: Tier; example?: boolean }) {
     <span
       data-base-tier={example ? undefined : tier}
       title={example ? undefined : `아이치 공식으로는 ${tier} 티어`}
-      className="inline-block shrink-0 whitespace-nowrap rounded bg-secondary/15 px-1 text-[10px] font-bold leading-4 text-secondary sm:ml-1.5"
+      className="inline-block shrink-0 whitespace-nowrap rounded px-1 text-2xs ring-1 ring-inset ring-secondary/50 font-bold leading-4 text-secondary sm:ml-1.5"
     >
       기본 {tier}
     </span>
@@ -464,7 +504,7 @@ function Delta({ rank, prev }: { rank: number; prev: number | null }) {
   const d = prev === null ? null : prev - rank;
   const [text, tone] = d === null ? ["NEW", "bg-primary/15 text-primary"] : d === 0 ? ["— 0", "bg-surface-3 text-muted"] : d > 0 ? [`▲ ${d}`, "bg-pos/15 text-pos"] : [`▼ ${-d}`, "bg-neg/15 text-neg"];
   return (
-    <span data-delta={d ?? "new"} title={prev === null ? "직전 패치엔 표본 부족" : `직전 패치 #${prev}`} className={cx("mt-0.5 inline-block whitespace-nowrap rounded-full px-1.5 text-[10px] font-bold", tone)}>
+    <span data-delta={d ?? "new"} title={prev === null ? "직전 패치엔 표본 부족" : `직전 패치 #${prev}`} className={cx("mt-0.5 inline-block whitespace-nowrap rounded-full px-1.5 text-2xs font-bold sm:mt-0", tone)}>
       {text}
     </span>
   );
@@ -475,7 +515,7 @@ function PatchBanner({ meta, mode, patch, auto, onCurrent }: { meta: Meta; mode:
   const note = patch === "previous" || (!auto && meta.previous_patch && thinSample(meta, mode));
   if (!note) return null;
   return (
-    <div id="patch-banner" className="rounded-lg border border-warn-line bg-warn-bg px-3 py-2.5 text-[13px] text-warn-fg">
+    <div id="patch-banner" className="rounded-lg border border-warn-line bg-warn-bg px-3 py-2 text-[13px] text-warn-fg">
       {patch === "previous" ? (
         <>
           패치 {meta.current_patch} 후 {days}일, 표본이 적어 <b>이전 패치({meta.previous_patch})</b> 기준으로 보여줍니다.{" "}
@@ -485,7 +525,7 @@ function PatchBanner({ meta, mode, patch, auto, onCurrent }: { meta: Meta; mode:
         </>
       ) : (
         <>
-          패치 {meta.current_patch} 후 {days}일 — 표본이 아직 적습니다.
+          패치 {meta.current_patch} 후 {days}일, 표본이 아직 적습니다.
         </>
       )}
     </div>

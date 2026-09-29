@@ -5,7 +5,7 @@ import { dirname, join } from "node:path";
 import { knownOnly } from "../src/lib/known";
 import type { Snapshot } from "../src/formula";
 import type { BuildsFile, HeroTable, MapTable, TalentTable } from "../src/data";
-import { bracketRows, descParts, heroBuilds, heroSummary, mapRows } from "../src/lib/hero";
+import { BUILD_MIN_GAMES, bracketRows, descParts, heroBuilds, heroSummary, mapRows } from "../src/lib/hero";
 
 const dataDir = join(dirname(fileURLToPath(import.meta.url)), "e2e-data");
 const json = <T>(rel: string): T => JSON.parse(readFileSync(join(dataDir, rel), "utf-8")) as T;
@@ -83,6 +83,16 @@ describe("heroBuilds", () => {
     expect(bare[0]!.talents[0]!.ko).toBe("Unending Hatred");
     expect(heroBuilds(builds, talents, "Nobody")).toEqual([]);
     expect(heroBuilds(null, talents, "Illidan")).toEqual([]);
+  });
+
+  // 2026-09-29 design review: right after a patch, builds with 1-3 games printed "100.0%" in bold green
+  it("marks builds under the sample floor as thin; their win rate is not a finding", () => {
+    const hero = builds.heroes.Illidan!;
+    const few: BuildsFile = { ...builds, heroes: { Illidan: [{ ...hero[0]!, games: 3, win_rate: 100 }, { ...hero[1]!, games: BUILD_MIN_GAMES, win_rate: 52 }] } };
+    const list = heroBuilds(few, talents, "Illidan");
+    expect(list.map((b) => b.thin)).toEqual([true, false]);
+    expect(BUILD_MIN_GAMES).toBeGreaterThanOrEqual(20);
+    expect(heroBuilds(builds, talents, "Illidan").every((b) => b.thin === b.games < BUILD_MIN_GAMES)).toBe(true);
   });
 });
 
