@@ -227,7 +227,7 @@ async def test_unexpected_4xx_is_unavailable_and_not_cached(
 
 
 def test_not_found_is_retried_soon_after_an_upload() -> None:
-    # HP answers 404 for free; a long cache only keeps someone who just uploaded their replays from seeing them.
+    # HP answers 404 for free; a long cache only hides games someone just uploaded.
     from server.config import Settings
 
     assert Settings(hp_api_token="x").not_found_ttl_seconds <= 600
