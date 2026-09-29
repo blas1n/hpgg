@@ -1,7 +1,8 @@
 /** Which snapshot a page shows. One rule for every page: the current patch, or the previous one while the current
  *  sample is thin — and a bracket file is only shown under a bracket label when it covers exactly those league tiers. */
 import type { Snapshot } from "../formula";
-import { BRACKET_TIERS, snapshotKey, type Bracket, type Meta, type Mode } from "../data";
+import { BRACKET_TIERS, snapshotKey, type Bracket, type HeroTable, type Meta, type Mode } from "../data";
+import { knownOnly } from "./known";
 import { resolvePatch } from "./tier";
 
 export function bracketMatches(snap: Snapshot, bracket: Bracket): boolean {
@@ -21,9 +22,10 @@ export interface Shown {
 
 type Read = (key: string, patch: "current" | "previous") => Snapshot | null;
 
-export function pickShown(meta: Meta, mode: Mode, bracket: Bracket, read: Read): Shown | null {
+/** `heroes`: rows of heroes without assets are dropped from both files (lib/known.ts). */
+export function pickShown(meta: Meta, mode: Mode, bracket: Bracket, read: Read, heroes: HeroTable): Shown | null {
   const key = snapshotKey(mode, bracket);
-  const valid = (s: Snapshot | null) => (s && bracketMatches(s, bracket) ? s : null);
+  const valid = (s: Snapshot | null) => (s && bracketMatches(s, bracket) ? knownOnly(s, heroes) : null);
   const cur = valid(read(key, "current"));
   const prev = meta.previous_patch ? valid(read(key, "previous")) : null;
   if (resolvePatch(meta, mode, "auto").patch === "previous" && prev) return { snap: prev, previous: null, fallback: true };

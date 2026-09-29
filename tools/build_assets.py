@@ -2,9 +2,11 @@
 
   uv run python tools/build_assets.py --build 2.55.16.97039 [--icons <builds fixture>]
 
-Writes: data/talents/<hero slug>.json (talent_name → Korean name, icon, description, cooldown),
-data/img/talents/*.png. Hero tables (data/heroes_ko.json, portraits) were produced the same way.
-Sources recorded per file. --skip-icons regenerates the tables without touching images.
+Writes: data/heroes_ko.json (every hero already listed or in data/latest/, when the game data has
+it), data/img/heroes/<slug>.png (missing portraits), data/talents/<hero slug>.json (talent_name →
+Korean name, icon, description, cooldown), data/img/talents/*.png. A hero the build does not have
+yet (a new release) is logged and left out; the site shows only heroes in heroes_ko.json, so rerun
+with a newer --build to add it. Sources recorded per file. --skip-icons: tables only, no images.
 """
 
 from __future__ import annotations
@@ -19,8 +21,12 @@ from pathlib import Path
 from typing import Any
 from urllib.request import urlopen
 
+import structlog
+
 RAW_DATA = "https://raw.githubusercontent.com/HeroesToolChest/heroes-data/master/heroesdata"
 RAW_IMG = "https://raw.githubusercontent.com/HeroesToolChest/heroes-images/master/heroesimages"
+log = structlog.get_logger(__name__)
+
 MANUAL_HERO_KEYS = {"cho": "Cho", "thelostvikings": "LostVikings"}
 
 
@@ -57,6 +63,57 @@ def korean_hero_names(
         hid, _ = idx[norm(n)]
         out[n] = names[hid]
     return out
+
+
+def stats_hero_names(data_dir: Path) -> set[str]:
+    """Every hero the collector saw: stats rows of data/latest/*.json plus the builds' hero keys."""
+    names: set[str] = set()
+    for p in (data_dir / "latest").glob("*.json"):
+        d = json.loads(p.read_text(encoding="utf-8"))
+        names |= {r["hero"] for r in d.get("rows", [])}
+        names |= set(d.get("heroes", {}))
+    return names
+
+
+def hero_rows(
+    herodata: dict[str, Any],
+    kokr: dict[str, Any],
+    names: set[str],
+    roles: list[dict[str, str]],
+) -> tuple[list[dict[str, str]], list[str]]:
+    """heroes_ko.json rows (by English name) for the heroes the game data has, and the names it
+    does not have yet — a hero released after that heroes-data build. The site shows only heroes
+    with a row (web/src/lib/known.ts); rerunning with a newer build adds them."""
+    unit = kokr["gamestrings"]["unit"]
+    role_by_ko = {r["ko"]: r["name"] for r in roles}
+    idx = hero_index(herodata)
+    rows: list[dict[str, str]] = []
+    missing: list[str] = []
+    for n in sorted(names):
+        found = idx.get(norm(n))
+        if not found:
+            missing.append(n)
+            continue
+        hid = found[0]
+        role_ko = unit["expandedrole"][hid]
+        rows.append(
+            {
+                "name": n,
+                "slug": slug(n),
+                "ko": unit["name"][hid],
+                "role": role_by_ko[role_ko],
+                "role_ko": role_ko,
+                "short_name": norm(n),
+                "portrait": f"img/heroes/{slug(n)}.png",
+            }
+        )
+    return rows, missing
+
+
+def portrait_file(hero: dict[str, Any]) -> str | None:
+    """heroes-images heroportraits/ file name: the draft-screen portrait."""
+    p = (hero.get("portraits") or {}).get("draftScreen")
+    return str(p) if p else None
 
 
 def talent_table(herodata: dict[str, Any], kokr: dict[str, Any]) -> dict[str, dict[str, str]]:
@@ -234,7 +291,32 @@ def main() -> None:
             missing += 1
             continue
         resize(tmp, dst, 40)
-    heroes = json.loads((data / "heroes_ko.json").read_text(encoding="utf-8"))["heroes"]
+    # heroes: every hero already listed or seen by the collector, if the game data has it
+    table_p = data / "heroes_ko.json"
+    table = json.loads(table_p.read_text(encoding="utf-8"))
+    names = {h["name"] for h in table["heroes"]} | stats_hero_names(data)
+    heroes, missing_heroes = hero_rows(herodata, kokr, names, table["roles"])
+    if missing_heroes:
+        log.warning(
+            "assets.heroes_without_game_data",
+            heroes=missing_heroes,
+            build=args.build,
+            note="not shown on the site until a heroes-data build has them",
+        )
+    table["heroes"] = heroes
+    table["source"]["names"] = f"HeroesToolChest/heroes-data gamestrings kokr (build {b}, MIT)"
+    table_p.write_text(json.dumps(table, ensure_ascii=False, indent=0), encoding="utf-8")
+    idx = hero_index(herodata)
+    for h in [] if args.skip_icons else heroes:
+        dst = data / h["portrait"]
+        src = portrait_file(idx[norm(h["name"])][1])
+        if dst.exists() or not src:
+            continue
+        tmp = cache / "portraits" / src
+        if not tmp.exists() and not fetch(f"{RAW_IMG}/heroportraits/{src}", tmp):
+            log.warning("assets.portrait_missing", hero=h["name"], file=src)
+            continue
+        resize(tmp, dst, 96)
     source = f"HeroesToolChest heroes-data {args.build} (gamestrings kokr) + heroes-images, MIT"
     out_dir = data / "talents"
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -245,7 +327,13 @@ def main() -> None:
             ),
             encoding="utf-8",
         )
-    print(f"talents: {len(talents)} names, icons wanted {len(want)}, missing {missing}, dir {tdir}")
+    log.info(
+        "assets.done",
+        heroes=len(heroes),
+        talents=len(talents),
+        icons_wanted=len(want),
+        icons_missing=missing,
+    )
 
 
 if __name__ == "__main__":

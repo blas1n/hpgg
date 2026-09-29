@@ -1,4 +1,5 @@
 import type { Snapshot } from "./formula";
+import { knownOnly } from "./lib/known";
 
 export interface Meta {
   current_patch: string;
@@ -55,8 +56,9 @@ async function getJson<T>(path: string): Promise<T> {
   return (await res.json()) as T;
 }
 
-export const loadSnapshot = (key: string, patch: PatchChoice): Promise<Snapshot> =>
-  getJson<Snapshot>(`${patch === "previous" ? "previous" : "latest"}/${key}.json`);
+/** A snapshot file as the pages see it: rows of heroes without assets dropped (lib/known.ts). */
+export const loadSnapshot = async (key: string, patch: PatchChoice, heroes: HeroTable): Promise<Snapshot> =>
+  knownOnly(await getJson<Snapshot>(`${patch === "previous" ? "previous" : "latest"}/${key}.json`), heroes);
 
 /** Right after a patch the current build is thin; fall back to the previous patch for that mode. */
 export function thinSample(meta: Meta, mode: Mode): boolean {

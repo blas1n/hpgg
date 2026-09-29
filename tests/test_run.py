@@ -7,6 +7,7 @@ from typing import Any
 
 import httpx
 import respx
+from structlog.testing import capture_logs
 
 from collector.config import Settings
 from collector.run import run
@@ -304,3 +305,44 @@ async def test_builds_quota_exceeded_keeps_yesterdays_file_and_still_succeeds(
     assert b["collected_at"] == "2026-09-28T00:00:00Z"  # yesterday's kept
     meta = json.loads((s.data_dir / "latest" / "meta.json").read_text())
     assert meta["collected_at"] == "2026-09-29T00:00:00Z"
+
+
+@respx.mock
+async def test_run_warns_about_heroes_in_the_stats_without_assets(
+    tmp_path: Path, raw_by_map, patches_payload, fake_sleep
+) -> None:
+    # #6: a new hero reaches the stats before tools/build_assets.py can give it a Korean name and
+    # portrait; the site hides it (web/src/lib/known.ts), so the run log is where we notice it.
+    mock_api(raw_by_map, patches_payload)
+    s = settings(tmp_path)
+    s.data_dir.mkdir(parents=True)
+    (s.data_dir / "heroes_ko.json").write_text(
+        json.dumps({"roles": [], "heroes": [{"name": "Illidan"}, {"name": "Brightwing"}]})
+    )
+    with capture_logs() as logs:
+        assert await run(s, sleep=fake_sleep, now=lambda: "2026-09-28T00:00:00Z") == 0
+    warned = [e for e in logs if e["event"] == "run.heroes_without_assets"]
+    assert warned == [
+        {
+            "event": "run.heroes_without_assets",
+            "log_level": "warning",
+            "heroes": ["Nova", "Probius"],  # Probius in the stats, Nova only in builds
+            "fix": "rerun tools/build_assets.py with a heroes-data build that has them",
+        }
+    ]
+
+
+@respx.mock
+async def test_run_is_quiet_when_every_hero_has_assets_and_says_so_when_the_table_is_missing(
+    tmp_path: Path, raw_by_map, patches_payload, fake_sleep
+) -> None:
+    mock_api(raw_by_map, patches_payload)
+    s = settings(tmp_path)
+    with capture_logs() as logs:
+        assert await run(s, sleep=fake_sleep, now=lambda: "2026-09-28T00:00:00Z") == 0
+    assert [e["event"] for e in logs if e["log_level"] == "warning"] == ["run.hero_table_missing"]
+    names = [{"name": n} for n in ("Illidan", "Brightwing", "Probius", "Nova")]
+    (s.data_dir / "heroes_ko.json").write_text(json.dumps({"roles": [], "heroes": names}))
+    with capture_logs() as logs:
+        assert await run(s, sleep=fake_sleep, now=lambda: "2026-09-29T00:00:00Z") == 0
+    assert [e for e in logs if e["log_level"] == "warning"] == []

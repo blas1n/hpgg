@@ -20,6 +20,7 @@ from collector.snapshot import (
     build_meta,
     choose_patch,
     commit_atomic,
+    heroes_without_assets,
     load_meta,
     normalize_builds,
     normalize_by_map,
@@ -115,6 +116,21 @@ async def _collect_all(
         snapshots[spec.key] = snapshot_to_json(snap)
         log.info("run.normalized", key=spec.key, matches=snap.matches, rows=len(snap.rows))
     return raw_by_key, snapshots
+
+
+def _warn_heroes_without_assets(
+    data_dir: Path, snapshots: dict[str, dict[str, Any]], builds: dict[str, Any] | None
+) -> None:
+    """A new hero is in the stats before it has a Korean name and portrait; the site hides it."""
+    missing = heroes_without_assets(data_dir, snapshots, builds)
+    if missing is None:
+        log.warning("run.hero_table_missing", path=str(data_dir / "heroes_ko.json"))
+    elif missing:
+        log.warning(
+            "run.heroes_without_assets",
+            heroes=missing,
+            fix="rerun tools/build_assets.py with a heroes-data build that has them",
+        )
 
 
 def _client(settings: Settings, sleep: SleepFn) -> HPClient:
@@ -252,5 +268,6 @@ async def run(
         _write_gz(day_dir / f"{key}.json.gz", snapshots[key])
     (day_dir / "meta.json").parent.mkdir(parents=True, exist_ok=True)
     (day_dir / "meta.json").write_text(json.dumps(meta, ensure_ascii=False), encoding="utf-8")
+    _warn_heroes_without_assets(settings.data_dir, snapshots, extra.get("builds.json"))
     log.info("run.done", patch=patch, day=collected_at[:10], modes=sorted(snapshots))
     return 0

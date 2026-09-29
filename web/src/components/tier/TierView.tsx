@@ -83,7 +83,7 @@ export function TierView({ meta, heroes, maps, initial }: { meta: Meta; heroes: 
       want.map(async (k) => {
         const [d, f] = k.split("/") as ["latest" | "previous", string];
         try {
-          const s = await loadSnapshot(f, d === "previous" ? "previous" : "current");
+          const s = await loadSnapshot(f, d === "previous" ? "previous" : "current", heroes);
           if (bracketMatches(s, bracket)) return [k, s] as const;
           if (d === "latest") setError(`${f}.json 의 리그 구간(${s.league_tier?.join(",") ?? "전체"})이 이 구간 정의와 다릅니다`);
           return [k, null] as const;
@@ -98,7 +98,7 @@ export function TierView({ meta, heroes, maps, initial }: { meta: Meta; heroes: 
     return () => {
       live = false;
     };
-  }, [isInitial, curKey, prevKey, loaded]);
+  }, [isInitial, curKey, prevKey, loaded, heroes]);
 
   const snap = loaded[curKey];
   const computed = useMemo(() => {

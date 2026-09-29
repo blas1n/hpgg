@@ -2,15 +2,18 @@ import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
+import { knownOnly } from "../src/lib/known";
 import type { Snapshot } from "../src/formula";
-import type { BuildsFile, MapTable, TalentTable } from "../src/data";
+import type { BuildsFile, HeroTable, MapTable, TalentTable } from "../src/data";
 import { bracketRows, descParts, heroBuilds, heroSummary, mapRows } from "../src/lib/hero";
 
 const dataDir = join(dirname(fileURLToPath(import.meta.url)), "e2e-data");
 const json = <T>(rel: string): T => JSON.parse(readFileSync(join(dataDir, rel), "utf-8")) as T;
 const maps = json<MapTable>("maps_ko.json");
-const qm = json<Snapshot>("latest/qm.json");
-const sl = json<Snapshot>("latest/sl.json");
+const heroes = json<HeroTable>("heroes_ko.json");
+// what the pages see: the e2e stats carry a hero without assets (Xal'atath), dropped by lib/known.ts
+const qm = knownOnly(json<Snapshot>("latest/qm.json"), heroes);
+const sl = knownOnly(json<Snapshot>("latest/sl.json"), heroes);
 const qmPrev = json<Snapshot>("previous/qm.json");
 const builds = json<BuildsFile>("latest/builds.json");
 const talents = json<TalentTable>("talents/illidan.json");
