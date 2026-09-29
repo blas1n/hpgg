@@ -11,7 +11,7 @@ import { LanguageToggle } from "./LanguageToggle";
 import { ThemeToggle } from "./ThemeToggle";
 import { cx } from "./ui";
 
-const NAV_IDS = ["home", "tier", "heroes", "maps", "players"] as const;
+const NAV_IDS = ["home", "tier", "heroes", "draft", "maps", "players"] as const;
 type NavId = (typeof NAV_IDS)[number];
 
 function activeId(path: string): NavId {
@@ -20,6 +20,7 @@ function activeId(path: string): NavId {
   if (p.startsWith("/hots/heroes")) return "heroes";
   if (p.startsWith("/hots/maps")) return "maps";
   if (p.startsWith("/hots/players")) return "players";
+  if (p.startsWith("/hots/draft")) return "draft";
   return "home";
 }
 
@@ -27,7 +28,7 @@ function activeId(path: string): NavId {
 export function SiteHeader({ searchIndex }: { searchIndex: SearchItem[] }) {
   const t = useT();
   const href = hotsHref(useLocale());
-  const nav = NAV_IDS.map((id) => ({ id, href: id === "tier" ? href.tier() : href[id], label: t.nav[id] }));
+  const nav = NAV_IDS.map((id) => ({ id, href: id === "tier" ? href.tier() : id === "draft" ? href.draft() : href[id], label: t.nav[id] }));
   const active = activeId(usePathname() ?? "/hots/");
   const ref = useRef<HTMLElement>(null);
   // --header-h lets sticky sub-navigation and anchor targets sit exactly under the header (it is two rows on phones)

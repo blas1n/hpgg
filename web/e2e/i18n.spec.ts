@@ -24,6 +24,7 @@ const PAGES = [
   { path: "/hots/maps/", h1: "Battlegrounds", ko: "전장" },
   { path: "/hots/maps/cursed-hollow/", h1: "Cursed Hollow", ko: "저주받은 골짜기" },
   { path: "/hots/players/", h1: "Player search", ko: "전적 검색" },
+  { path: "/hots/draft/", h1: "Draft simulator", ko: "밴픽 시뮬레이터" },
 ];
 
 /** Visible text on the page, minus the language switch (labelled in the other language on purpose). */
@@ -85,6 +86,7 @@ test("English pages show no Korean text, including views built in the browser", 
     "/en/hots/tier/?mode=sl&map=Cursed%20Hollow",
     "/en/hots/tier/?mode=sl&tier=high",
     "/en/hots/tier/?region=kr",
+    "/en/hots/draft/?map=Cursed%20Hollow&d=illidan.zeratul.tracer.genji.abathur.uther.muradin",
     "/en/hots/heroes/illidan/?mode=sl",
     "/en/hots/players/?tag=Player12%231012&region=NA",
   ];
@@ -132,7 +134,7 @@ test("Korean player page: 일반 선발전 and 무작위 영웅 대전, ARAM map
 
 test("English links stay in English: nav, hero search, cards and the map objective's English source", async ({ page }) => {
   await page.goto("/en/hots/");
-  for (const id of ["home", "tier", "heroes", "maps", "players"]) await expect(page.locator(`header a[data-page="${id}"]`).first()).toHaveAttribute("href", /^\/en\/hots\//);
+  for (const id of ["home", "tier", "heroes", "draft", "maps", "players"]) await expect(page.locator(`header a[data-page="${id}"]`).first()).toHaveAttribute("href", /^\/en\/hots\//);
   await page.locator("#site-search").fill("일리"); // Korean names stay searchable on English pages
   await expect(page.getByRole("listbox")).toContainText("Illidan");
   await page.locator("#site-search").press("Enter");

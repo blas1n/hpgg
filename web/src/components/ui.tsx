@@ -120,12 +120,14 @@ export function Segmented<T extends string>({
   onChange,
   label,
   idPrefix,
+  disabled,
 }: {
   value: T;
   options: { value: T; label: string }[];
   onChange: (v: T) => void;
   label: string;
   idPrefix?: string;
+  disabled?: boolean;
 }) {
   return (
     <div role="group" aria-label={label} className="inline-flex rounded-lg border border-line bg-surface-2 p-0.5">
@@ -135,9 +137,10 @@ export function Segmented<T extends string>({
           type="button"
           id={idPrefix ? `${idPrefix}-${o.value}` : undefined}
           aria-pressed={value === o.value}
+          disabled={disabled}
           onClick={() => onChange(o.value)}
           className={cx(
-            "rounded-md px-3 py-1.5 text-[13px] font-semibold transition-colors",
+            "rounded-md px-3 py-1.5 text-[13px] font-semibold transition-colors disabled:cursor-not-allowed",
             value === o.value ? "bg-primary text-primary-ink shadow-sm" : "text-muted hover:text-fg",
           )}
         >

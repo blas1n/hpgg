@@ -5,6 +5,7 @@
  */
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { DraftView } from "@/components/draft/DraftView";
 import { HeroView, type HeroModeModel } from "@/components/hero/HeroView";
 import { HeroesView } from "@/components/heroes/HeroesView";
 import { HomeView } from "@/components/home/HomeView";
@@ -17,6 +18,7 @@ import { TierView } from "@/components/tier/TierView";
 import type { Mode } from "@/data";
 import { alternates, DEFAULT_LOCALE, type Locale } from "@/i18n/locale";
 import { messages } from "@/i18n/messages";
+import { draftHeroes } from "@/lib/draft";
 import { bracketRows, heroBuilds, heroSummary, mapRows, regionRows } from "@/lib/hero";
 import { homeModel, mapCards } from "@/lib/home";
 import { mapDetail } from "@/lib/maps";
@@ -207,4 +209,18 @@ export const playersMetadata = (locale: Locale): Metadata => ({
 
 export function PlayersPage({ locale }: { locale: Locale }) {
   return <PlayerSearchView heroes={readHeroes(locale)} maps={readMaps(locale)} />;
+}
+
+// --- 밴픽: Storm League draft simulator; hero records at build time, the picked heroes' matchups fetched in the browser ---
+export const draftMetadata = (locale: Locale): Metadata => ({
+  title: messages[locale].meta.draftTitle,
+  description: messages[locale].meta.draftDescription,
+  alternates: alternates("/hots/draft/", locale),
+});
+
+export function DraftPage({ locale }: { locale: Locale }) {
+  const table = readHeroes(locale);
+  const shown = readShown("sl");
+  const heroes = draftHeroes(shown?.snap ?? null, table).sort((a, b) => a.ko.localeCompare(b.ko, locale));
+  return <DraftView heroes={heroes} maps={readMaps(locale).maps} roles={table.roles} patch={shown?.snap.patch ?? ""} />;
 }
