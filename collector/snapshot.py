@@ -35,6 +35,25 @@ SOLO_OF: dict[str, str] = {"qm_solo": "qm", "sl_solo": "sl"}
 
 MIN_GAMES_FOR_TIER = 200
 
+# The reference patch (owner 2026-09-29): ONE patch for the whole site — every page, the talent
+# builds, the matchups and the draft simulator. The previous patch while the current one is thin
+# in Quick Match or Storm League (under half the heroes over the tier floor), else the current one.
+# Brackets and regions never decide it. Written to meta.json; the web reads it and never decides.
+THIN_SHARE = 0.5
+REFERENCE_MODES: tuple[str, ...] = ("qm", "sl")
+
+
+def _thin(mode: dict[str, Any] | None) -> bool:
+    heroes = (mode or {}).get("heroes") or 0
+    return bool(heroes) and (mode or {}).get("heroes_over_200", 0) / heroes < THIN_SHARE
+
+
+def reference_patch(current: str, previous: str | None, modes: dict[str, Any]) -> str:
+    if previous and any(_thin(modes.get(m)) for m in REFERENCE_MODES):
+        return previous
+    return current
+
+
 # Regions (#14, owner 2026-09-29, Basic plan): one region a day for QM + SL (2 extra Heroes/Stats
 # calls → 14/week; 42/70 in total), KR → NA → EU by the day index below; each region is 3 days old
 # at most. Region × bracket is not collected. The in-game Asia server is `KR`; CN is left out.
@@ -277,6 +296,7 @@ def build_meta(
     return {
         "current_patch": patch,
         "previous_patch": previous_patch,
+        "reference_patch": reference_patch(patch, previous_patch, modes),
         "patch_started_at": patch_started_at,
         "collected_at": collected_at,
         "min_games_for_tier": MIN_GAMES_FOR_TIER,

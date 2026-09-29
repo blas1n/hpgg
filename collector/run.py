@@ -15,7 +15,7 @@ import structlog
 
 from collector.client import HPClient, HPError, SleepFn
 from collector.config import Settings
-from collector.matchups import collect_matchups, load_hero_list, matchups_patch
+from collector.matchups import collect_matchups, load_hero_list
 from collector.models import JobSpec
 from collector.party import apply_party_correction
 from collector.snapshot import (
@@ -350,7 +350,7 @@ async def _run_matchups(
     if not heroes or meta is None:
         log.info("matchups.skipped", reason="no heroes_ko.json or meta.json")
         return
-    patch = matchups_patch(meta)
+    patch = str(meta.get("reference_patch") or meta["current_patch"])  # decided once, in build_meta
     res = await collect_matchups(
         c, settings, heroes=heroes, patch=patch, collected_at=collected_at, sleep=sleep
     )
@@ -377,8 +377,11 @@ async def _run_stats(c: HPClient, settings: Settings, *, collected_at: str, slee
         raw_by_key.update(region_raw)
         snapshots.update(region_snaps)
         snapshots.update(_carried_regions(settings.data_dir, patch=patch, fresh=snapshots))
+        prev_meta = load_meta(settings.data_dir)
+        meta = build_meta(prev_meta, patch=patch, collected_at=collected_at, snapshots=snapshots)
+        # builds follow the one reference patch, like every page (thin new patch → previous)
         builds_result = await _collect_builds(
-            c, settings, patch=patch, collected_at=collected_at, sleep=sleep
+            c, settings, patch=meta["reference_patch"], collected_at=collected_at, sleep=sleep
         )
     except HPError as e:
         log.error("run.api_failed", status=e.status, code=e.code, message=e.message)
@@ -387,8 +390,6 @@ async def _run_stats(c: HPClient, settings: Settings, *, collected_at: str, slee
         log.error("run.bad_payload", error=str(e))
         return 1
 
-    prev_meta = load_meta(settings.data_dir)
-    meta = build_meta(prev_meta, patch=patch, collected_at=collected_at, snapshots=snapshots)
     extra: dict[str, Any] = {}
     if builds_result is not None:
         extra["builds.json"] = builds_result[1]

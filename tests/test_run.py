@@ -14,6 +14,14 @@ from collector.run import run
 from tests.conftest import BASE, TOKEN
 
 
+def thin(raw_by_map: dict[str, Any]) -> dict[str, Any]:
+    """The same payload with every hero far under the tier floor: a new patch's first day."""
+    return {
+        m: {**v, "data": [{**r, "wins": 1, "losses": 1, "games_played": 2} for r in v["data"]]}
+        for m, v in raw_by_map.items()
+    }
+
+
 def settings(tmp_path: Path, **kw: Any) -> Settings:
     return Settings(
         _env_file=None,
@@ -336,6 +344,46 @@ async def test_run_collects_popular_builds_after_stats(
     assert b["heroes"]["Nova"] == []
     assert fake_sleep.calls == [60.0] * 8  # 7 between 4 stats + 2 solo + 2 region, 1 before builds
     assert (s.snapshot_out_dir / "2026-09-28" / "raw_builds.json.gz").exists()
+
+
+@respx.mock
+async def test_builds_are_collected_for_the_reference_patch(
+    tmp_path: Path, raw_by_map, patches_payload, fake_sleep
+) -> None:
+    """A new patch with a thin sample: builds follow the pages, on the previous patch."""
+    mock_api(thin(raw_by_map), patches_payload)
+    route = respx.get(f"{BASE}/heroes/talents/builds/all").mock(
+        return_value=httpx.Response(200, json=_builds_payload())
+    )
+    s = settings(tmp_path)
+    s.data_dir.joinpath("latest").mkdir(parents=True)
+    old = {"current_patch": "2.55.17.97650", "previous_patch": None, "modes": {}}
+    s.data_dir.joinpath("latest", "meta.json").write_text(json.dumps(old))
+    assert await run(s, sleep=fake_sleep, now=lambda: "2026-09-28T00:00:00Z") == 0
+    meta = json.loads((s.data_dir / "latest" / "meta.json").read_text())
+    assert (meta["current_patch"], meta["reference_patch"]) == ("2.55.17.97771", "2.55.17.97650")
+    q = dict(httpx.QueryParams(route.calls[0].request.url.query))
+    assert q["timeframe"] == "2.55.17.97650"
+    b = json.loads((s.data_dir / "latest" / "builds.json").read_text())
+    assert b["patch"] == "2.55.17.97650"
+
+
+@respx.mock
+async def test_matchups_are_collected_for_the_reference_patch(
+    tmp_path: Path, raw_by_map, patches_payload, fake_sleep
+) -> None:
+    mock_api(thin(raw_by_map), patches_payload)
+    route = respx.get(f"{BASE}/heroes/matchups").mock(
+        return_value=httpx.Response(200, json=_matchups_payload())
+    )
+    s = settings(tmp_path)
+    _seed_heroes(s, ["Abathur"])
+    old = {"current_patch": "2.55.17.97650", "previous_patch": None, "modes": {}}
+    s.data_dir.joinpath("latest").mkdir(parents=True)
+    s.data_dir.joinpath("latest", "meta.json").write_text(json.dumps(old))
+    assert await run(s, sleep=fake_sleep, now=lambda: "2026-09-28T00:00:00Z") == 0
+    q = dict(httpx.QueryParams(route.calls[0].request.url.query))
+    assert q["timeframe"] == "2.55.17.97650"  # the reference patch, not the thin new one
 
 
 @respx.mock

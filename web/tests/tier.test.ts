@@ -47,16 +47,17 @@ describe("?preset= (formula presets were removed)", () => {
 
 
 describe("resolvePatch", () => {
-  const thin: Meta = { ...meta, previous_patch: "2.55.17.97771", modes: { qm: { matches: 10, heroes: 90, heroes_over_200: 10 } } };
+  const ref: Meta = { ...meta, previous_patch: "2.55.17.97771", reference_patch: "2.55.17.97771" };
 
-  it("falls back to the previous patch on a thin sample unless the URL chose a patch", () => {
-    expect(resolvePatch(thin, "qm", "auto")).toEqual({ patch: "previous", auto: true });
-    expect(resolvePatch(thin, "qm", "current")).toEqual({ patch: "current", auto: false });
+  it("auto is the reference patch; a patch chosen in the URL wins", () => {
+    expect(resolvePatch(ref, "auto")).toEqual({ patch: "previous", auto: true });
+    expect(resolvePatch(ref, "current")).toEqual({ patch: "current", auto: false });
+    expect(resolvePatch({ ...ref, reference_patch: ref.current_patch }, "auto")).toEqual({ patch: "current", auto: false });
   });
 
-  it("uses the current patch when the sample is healthy or there is no previous patch", () => {
-    expect(resolvePatch({ ...meta, previous_patch: "x" }, "qm", "auto")).toEqual({ patch: "current", auto: false });
-    expect(resolvePatch({ ...thin, previous_patch: null }, "qm", "previous")).toEqual({ patch: "current", auto: false });
+  it("no previous patch: always the current one", () => {
+    expect(resolvePatch({ ...ref, previous_patch: null }, "previous")).toEqual({ patch: "current", auto: false });
+    expect(resolvePatch({ ...ref, previous_patch: null }, "auto")).toEqual({ patch: "current", auto: false });
   });
 });
 

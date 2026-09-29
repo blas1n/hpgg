@@ -4,13 +4,15 @@ import type { HeroTable, Meta } from "../src/data";
 import { bracketMatches, pickShown } from "../src/lib/shown";
 
 const snap = (patch: string, league_tier: number[] | null = null): Snapshot => ({ patch, mode: "sl", game_type: "sl", league_tier, collected_at: "2026-09-29T00:00:00Z", matches: 1, rows: [] });
-const meta = (thin: boolean, previous: string | null = "old"): Meta => ({
+/** `reference`: meta.reference_patch — the one patch the whole site shows (collector build_meta). */
+const meta = (reference: string | undefined, previous: string | null = "old", thinSl = false): Meta => ({
   current_patch: "new",
   previous_patch: previous,
+  ...(reference ? { reference_patch: reference } : {}),
   patch_started_at: "2026-09-29",
   collected_at: "2026-09-29T00:00:00Z",
   min_games_for_tier: 200,
-  modes: { qm: { matches: 1, heroes: 90, heroes_over_200: thin ? 1 : 80 }, sl: { matches: 1, heroes: 90, heroes_over_200: thin ? 0 : 80 } },
+  modes: { qm: { matches: 1, heroes: 90, heroes_over_200: 80 }, sl: { matches: 1, heroes: 90, heroes_over_200: thinSl ? 0 : 80 } },
 });
 const heroes: HeroTable = { roles: [], heroes: [] }; // rows are empty here; lib/known.ts is covered in known.test.ts
 const files = (entries: Record<string, Snapshot>) => (key: string, patch: "current" | "previous") => entries[`${patch}/${key}`] ?? null;
@@ -26,28 +28,33 @@ describe("bracketMatches", () => {
   });
 });
 
-describe("pickShown", () => {
-  const all = files({ "current/qm": snap("new"), "previous/qm": snap("old") });
+describe("pickShown: one reference patch for every view (owner 2026-09-29)", () => {
+  const all = files({ "current/qm": snap("new"), "previous/qm": snap("old"), "current/sl": snap("new"), "previous/sl": snap("old") });
 
-  it("healthy sample: the current patch, with the previous one for ▲▼", () => {
-    expect(pickShown(meta(false), "qm", "all", all, heroes)).toMatchObject({ snap: { patch: "new" }, previous: { patch: "old" }, fallback: false });
+  it("reference = current: the current patch, with the previous one for ▲▼", () => {
+    expect(pickShown(meta("new"), "qm", "all", all, heroes)).toMatchObject({ snap: { patch: "new" }, previous: { patch: "old" }, fallback: false });
   });
 
-  it("thin sample right after a patch: the previous patch, flagged, and no ▲▼ base", () => {
-    expect(pickShown(meta(true), "qm", "all", all, heroes)).toMatchObject({ snap: { patch: "old" }, previous: null, fallback: true });
+  it("reference = previous: the previous patch, flagged, and no ▲▼ base", () => {
+    expect(pickShown(meta("old"), "qm", "all", all, heroes)).toMatchObject({ snap: { patch: "old" }, previous: null, fallback: true });
   });
 
-  it("thin but no previous patch: the current one", () => {
-    expect(pickShown(meta(true, null), "qm", "all", all, heroes)).toMatchObject({ snap: { patch: "new" }, previous: null, fallback: false });
+  it("a view never decides for itself: a thin Storm League sample under a current reference stays current", () => {
+    expect(pickShown(meta("new", "old", true), "sl", "all", all, heroes)).toMatchObject({ snap: { patch: "new" }, fallback: false });
   });
 
-  it("a previous bracket file from an older bracket definition is never shown under the new label: current patch instead", () => {
+  it("no reference recorded (meta from before it existed) or no previous patch: the current one", () => {
+    expect(pickShown(meta(undefined), "qm", "all", all, heroes)).toMatchObject({ snap: { patch: "new" }, fallback: false });
+    expect(pickShown(meta("old", null), "qm", "all", all, heroes)).toMatchObject({ snap: { patch: "new" }, fallback: false });
+  });
+
+  it("a view with no file on the reference patch shows nothing — never another patch in its place", () => {
     const read = files({ "current/sl_low": snap("new", [1, 2, 3, 4]), "previous/sl_low": snap("old", [1, 2]) });
-    expect(pickShown(meta(true), "sl", "low", read, heroes)).toMatchObject({ snap: { patch: "new" }, previous: null, fallback: false });
-    expect(pickShown(meta(false), "sl", "low", read, heroes)).toMatchObject({ snap: { patch: "new" }, previous: null }); // and no ▲▼ against it
+    expect(pickShown(meta("old"), "sl", "low", read, heroes)).toBeNull(); // the previous file is of another bracket definition
+    expect(pickShown(meta("new"), "sl", "low", read, heroes)).toMatchObject({ snap: { patch: "new" }, previous: null }); // and no ▲▼ against it
   });
 
   it("nothing valid to show: null", () => {
-    expect(pickShown(meta(false), "sl", "high", files({ "current/sl_high": snap("new", [5]) }), heroes)).toBeNull();
+    expect(pickShown(meta("new"), "sl", "high", files({ "current/sl_high": snap("new", [5]) }), heroes)).toBeNull();
   });
 });

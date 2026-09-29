@@ -75,14 +75,16 @@ describe("region files", () => {
     const read = (key: string, patch: "current" | "previous") => files[`${patch}/${key}`] ?? null;
     expect(pickShown(meta, "qm", "all", read, noHeroes, "kr")).toMatchObject({ snap: { region: "KR" }, previous: null, fallback: false });
     expect(pickShown(meta, "qm", "all", read, noHeroes, "na")).toBeNull();
+    // the reference patch is the previous one and this region has no file there: nothing, not the current file
+    expect(pickShown({ ...meta, reference_patch: "old" }, "qm", "all", read, noHeroes, "kr")).toBeNull();
   });
   it("sample health per region: thin when under half the heroes pass the floor", () => {
     expect(thinSample(meta, "qm_na")).toBe(true);
     expect(thinSample(meta, "qm_kr")).toBe(false);
     expect(regionSample(meta, "qm", "na")).toEqual({ collectedAt: "2026-10-01T18:30:00Z", heroes: 90, over: 12, thin: true });
     expect(regionSample(meta, "qm", "eu")).toBeNull(); // not collected yet
-    // a thin region with no previous-patch file of its own stays on the current patch
-    expect(resolvePatch(meta, "qm", "auto", "qm_kr").patch).toBe("current");
+    // the region's own thinness is a warning only; it never picks the patch
+    expect(resolvePatch(meta, "auto").patch).toBe("current");
   });
 });
 

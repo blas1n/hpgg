@@ -148,6 +148,7 @@ export const ko = {
   tier: {
     title: "영웅 티어",
     loadError: (e: string) => `데이터를 불러오지 못했습니다: ${e}`,
+    noPatchData: (patch: string) => `패치 ${patch}에는 이 보기의 데이터가 없습니다`,
     loading: "불러오는 중…",
     regionNotCollected: (region: string) => `${region}은(는) 아직 수집되지 않았습니다 — 지역은 하루 한 곳씩 돌아가며 수집합니다`,
     cohortMismatch: (file: string, tiers: string, region: string) => `${file}.json 의 리그 구간(${tiers}) 또는 지역(${region})이 이 선택과 다릅니다`,

@@ -34,7 +34,6 @@ log = structlog.get_logger(__name__)
 
 MATCHUP_GAME_TYPE = "sl"
 MATCHUP_EVERY_DAYS = 2
-THIN_SHARE = 0.5  # same as web/src/data.ts thinSample: < half the heroes over the tier floor
 
 
 @dataclass
@@ -101,18 +100,6 @@ def matchups_due(existing: dict[str, Any] | None, *, patch: str, today: date) ->
     except ValueError:
         return True
     return (today - collected).days >= MATCHUP_EVERY_DAYS
-
-
-def matchups_patch(meta: dict[str, Any]) -> str:
-    """The patch the hero page shows for Storm League: the previous one while the current
-    sample is thin (the web rule), otherwise the current one."""
-    current = str(meta["current_patch"])
-    previous = meta.get("previous_patch")
-    sl = (meta.get("modes") or {}).get(MATCHUP_GAME_TYPE) or {}
-    heroes = sl.get("heroes") or 0
-    if previous and heroes and sl.get("heroes_over_200", 0) / heroes < THIN_SHARE:
-        return str(previous)
-    return current
 
 
 def _read(path: Path) -> dict[str, Any] | None:
