@@ -93,6 +93,10 @@ export const ko = {
     gameMode: "게임 모드",
     role: "역할",
     allRoles: "전체",
+    universe: "세계관",
+    allUniverses: "모든 세계관",
+    // heroes-data `franchise` values (#43); Nexus / Classic have no Korean game string — the owner may rename them
+    universes: { Warcraft: "워크래프트", Starcraft: "스타크래프트", Diablo: "디아블로", Overwatch: "오버워치", Nexus: "시공의 폭풍", Classic: "클래식" } as Record<string, string>,
     rank: "순위",
     tier: "티어",
     hero: "영웅",

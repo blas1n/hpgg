@@ -16,6 +16,7 @@ spec.loader.exec_module(ba)
 HERODATA = {
     "Abathur": {
         "hyperlinkId": "Abathur",
+        "franchise": "Starcraft",
         "talents": {
             "level1": [
                 {
@@ -30,6 +31,7 @@ HERODATA = {
     "LostVikings": {"hyperlinkId": "LostVikings", "talents": {}},
     "Wizard": {
         "hyperlinkId": "LiMing",
+        "franchise": "Diablo",
         "talents": {
             "level1": [{"nameId": "WizardAetherWalker", "name": "Aether Walker", "icon": "b.png"}]
         },
@@ -107,6 +109,7 @@ def test_hero_rows_come_from_game_data_and_skip_heroes_it_does_not_have_yet() ->
             "role_ko": "지원가",
             "short_name": "abathur",
             "portrait": "img/heroes/abathur.png",
+            "franchise": "Starcraft",
         },
         {
             "name": "Li-Ming",
@@ -116,6 +119,7 @@ def test_hero_rows_come_from_game_data_and_skip_heroes_it_does_not_have_yet() ->
             "role_ko": "원거리 암살자",
             "short_name": "liming",
             "portrait": "img/heroes/li-ming.png",
+            "franchise": "Diablo",
         },
     ]
 
@@ -294,7 +298,7 @@ def test_hero_rows_carry_the_english_game_name_when_enus_is_given() -> None:
     rows, _ = ba.hero_rows(HERODATA, kokr, {"Li-Ming", "Abathur"}, ROLES, ENUS)
     assert [r["en"] for r in rows] == ["Abathur", "Li-Ming"]
     # Korean fields and their order are unchanged; `en` follows `ko`
-    keys = ["name", "slug", "ko", "en", "role", "role_ko", "short_name", "portrait"]
+    keys = ["name", "slug", "ko", "en", "role", "role_ko", "short_name", "portrait", "franchise"]
     assert list(rows[0]) == keys
 
 

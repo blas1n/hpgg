@@ -116,6 +116,10 @@ def hero_rows(
             "short_name": norm(n),
             "portrait": f"img/heroes/{slug(n)}.png",
         }
+        # the hero's universe (Warcraft, Starcraft, Diablo, Overwatch, Nexus, Classic), #43
+        franchise = found[1].get("franchise")
+        if franchise:
+            row["franchise"] = franchise
         rows.append(row)
     return rows, missing
 

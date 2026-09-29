@@ -5,27 +5,31 @@ import { hotsHref, type Mode } from "@/data";
 import { useLocale, useT } from "@/i18n/client";
 import { filterHeroes } from "@/lib/heroes";
 import type { SearchItem } from "@/lib/search";
-import { Card, cx, Portrait, Segmented } from "../ui";
+import { Card, cx, Portrait, SELECT, Segmented } from "../ui";
 
-export function HeroesView({ heroes, roles, tiers, patches }: { heroes: SearchItem[]; roles: { name: string; ko: string }[]; tiers: Record<Mode, Record<string, string>>; patches: Record<Mode, string> }) {
+export function HeroesView({ heroes, roles, universes, tiers, patches }: { heroes: (SearchItem & { franchise?: string })[]; roles: { name: string; ko: string }[]; universes: string[]; tiers: Record<Mode, Record<string, string>>; patches: Record<Mode, string> }) {
   const t = useT();
   const href = hotsHref(useLocale());
   const [mode, setMode] = useState<Mode>("qm");
   const [role, setRole] = useState("all");
+  const [universe, setUniverse] = useState("all");
   const [query, setQuery] = useState("");
   useEffect(() => {
     const q = new URLSearchParams(location.search);
     if (q.get("mode") === "sl") setMode("sl");
     const r = q.get("role");
     if (r && roles.some((x) => x.name === r)) setRole(r);
-  }, [roles]);
-  const sync = (m: Mode, r: string) => {
+    const u = q.get("universe");
+    if (u && universes.includes(u)) setUniverse(u);
+  }, [roles, universes]);
+  const sync = (m: Mode, r: string, u: string) => {
     const q = new URLSearchParams();
     if (m !== "qm") q.set("mode", m);
     if (r !== "all") q.set("role", r);
+    if (u !== "all") q.set("universe", u);
     history.replaceState(null, "", location.pathname + (q.size ? `?${q}` : ""));
   };
-  const list = filterHeroes(heroes, role, query);
+  const list = filterHeroes(heroes, role, query, universe);
 
   return (
     <main className="page-x mt-6 space-y-4 pb-10">
@@ -43,7 +47,7 @@ export function HeroesView({ heroes, roles, tiers, patches }: { heroes: SearchIt
           value={mode}
           onChange={(m: Mode) => {
             setMode(m);
-            sync(m, role);
+            sync(m, role, universe);
           }}
           options={[
             { value: "qm", label: t.common.modes.qm },
@@ -59,7 +63,7 @@ export function HeroesView({ heroes, roles, tiers, patches }: { heroes: SearchIt
               aria-pressed={role === r.name}
               onClick={() => {
                 setRole(r.name);
-                sync(mode, r.name);
+                sync(mode, r.name, universe);
               }}
               className={cx("shrink-0 whitespace-nowrap rounded-md px-2.5 py-1.5 text-[13px] font-semibold transition-colors", role === r.name ? "bg-surface-3 text-fg" : "text-muted hover:text-fg")}
             >
@@ -67,7 +71,26 @@ export function HeroesView({ heroes, roles, tiers, patches }: { heroes: SearchIt
             </button>
           ))}
         </div>
-        <label className="w-full lg:ml-auto lg:w-60">
+        <label className="w-full sm:w-auto lg:ml-auto">
+          <span className="sr-only">{t.common.universe}</span>
+          <select
+            id="universe"
+            value={universe}
+            onChange={(e) => {
+              setUniverse(e.target.value);
+              sync(mode, role, e.target.value);
+            }}
+            className={SELECT}
+          >
+            <option value="all">{t.common.allUniverses}</option>
+            {universes.map((u) => (
+              <option key={u} value={u}>
+                {t.common.universes[u]}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="w-full lg:w-60">
           <span className="sr-only">{t.common.heroSearch}</span>
           <input
             id="search"

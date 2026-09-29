@@ -66,3 +66,8 @@ Automated as Playwright specs in `web/e2e/tierlist.spec.ts`, run with `npm run e
 - [ ] https://blas1n.github.io/hpgg/hots/ loads today's patch and match count in the meta line
 - [ ] Switching to Storm League and picking a map re-tiers within a second on a phone
 - [ ] Owner reads the QM S/A tiers and notes any hero that contradicts gut feel (input for the vote sensor, not for hand edits)
+
+## Automated — universe filter on 영웅 (`e2e/pages.spec.ts`, #43)
+- [x] `#universe` select: Overwatch → 9 heroes, `universe=Overwatch` in the URL; "all" clears it
+- [x] `?role=Healer&universe=Overwatch` opens with both (Ana, Lúcio); English labels (StarCraft)
+- [x] No horizontal scroll at 390 px (screenshot checked 2026-09-29)
