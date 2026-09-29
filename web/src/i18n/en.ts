@@ -112,6 +112,7 @@ export const en: Messages = {
   },
   home: {
     title: "Today's meta",
+    tagline: "Heroes of the Storm hero tiers and player search",
     leaders: "Top hero per role",
     leadersSub: "The hero with the highest tier score in each role",
     fullTier: "Full tier list",
