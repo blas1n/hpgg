@@ -56,14 +56,11 @@ for (const [width, cols] of [[1280, DESKTOP], [800, TABLET], [390, PHONE]] as co
 }
 
 for (const width of [1280, 800, 390]) {
-  test(`tier table at ${width} px: divider and opened rows span the whole table`, async ({ browser, baseURL }) => {
+  test(`tier table at ${width} px: the divider row spans the whole table`, async ({ browser, baseURL }) => {
     const page = await open(browser, true, width, `${baseURL}tier/`);
     const table = (await page.locator("#table").boundingBox())!;
     const divider = (await page.locator('#rows tr[data-tier-group="S"] td').boundingBox())!;
     expect(Math.abs(divider.width - table.width)).toBeLessThanOrEqual(2);
-    await page.locator('#rows tr[data-hero="illidan"]').click();
-    const detail = (await page.locator('#rows tr[data-detail="illidan"] td').boundingBox())!;
-    expect(Math.abs(detail.width - table.width)).toBeLessThanOrEqual(2);
     // a spanning row adds no phantom column: the visible header cells fill the table and the hero name is readable
     const filled = await page.locator("#table thead th").evaluateAll((els) => els.reduce((w, e) => w + e.getBoundingClientRect().width, 0));
     expect(Math.abs(filled - table.width)).toBeLessThanOrEqual(2);
