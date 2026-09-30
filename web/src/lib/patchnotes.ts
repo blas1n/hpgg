@@ -79,10 +79,14 @@ export function heroPatchNotes(
       build: h.build,
       view: () => {
         const groups = (h.heroes[hero] ?? []).flatMap((t) => {
-          const name = text(t);
-          return name
-            ? [{ section: "talents" as const, level: null, ability: name, changes: t.changes.map((c) => ({ text: `${num(c.old)} → ${num(c.new)}`, direction: "neutral" as const })) }]
-            : [];
+          const name = t.kind === "base" ? null : text(t);
+          if (t.kind !== "base" && !name) return [];
+          const changes = t.changes.map((c) => ({
+            text: `${c.label ? `${c.label[locale]} ` : ""}${num(c.old)} → ${num(c.new)}`,
+            direction: "neutral" as const,
+          }));
+          const ability = name && t.key ? `${name} [${t.key}]` : name;
+          return [{ section: t.kind === "talent" ? ("talents" as const) : ("base" as const), level: null, ability, changes }];
         });
         return groups.length ? { kind: "hotfix", id: h.build, published: h.first_seen, title: h.build, url: null, status: null, verdict: null, groups } : null;
       },

@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import subprocess
 import unicodedata
@@ -217,6 +218,76 @@ def clean_desc(raw: str, lang: str = "ko") -> str:
     return out.replace("{{}}", "").strip()
 
 
+# abilities the hotfix diff can name (#62); mount, hearth, spray, voice, item actives are not
+_ABILITY_TIERS = {"basic", "heroic", "trait"}
+# Blizzard's patch notes write the heroic as [R] and the trait as [D]
+_HOTKEY = {"Heroic": "R", "Trait": "D"}
+
+
+def hero_game_ids(
+    herodata: dict[str, Any],
+    kokr: dict[str, Any],
+    heroes: list[dict[str, Any]],
+    enus: dict[str, Any],
+) -> dict[str, dict[str, Any]]:
+    """Per hero slug: the game ids the hotfix diff names a changed number by (#62) — the hero
+    unit, its weapons, the life/energy words of the game strings, and each ability by the
+    common id prefix of its buttons ("MalGanisFelClaws" for First/Second/Third)."""
+    ko_name, en_name = _by_name_id(kokr, "name"), _by_name_id(enus, "name")
+    ko_unit = kokr["gamestrings"].get("unit", {})
+    en_unit = enus["gamestrings"].get("unit", {})
+    idx = hero_index(herodata)
+    out: dict[str, dict[str, Any]] = {}
+    for h in heroes:
+        found = idx.get(norm(h["name"]))
+        if not found:
+            continue
+        key, hd = found
+        buttons: list[dict[str, Any]] = []
+        tiers = [hd.get("abilities") or {}]
+        for sub in hd.get("subAbilities") or []:
+            tiers.extend(sub.values())
+        for t in tiers:
+            for tier, abilities in t.items():
+                if tier in _ABILITY_TIERS:
+                    buttons.extend(a for a in abilities if "Cancel" not in a.get("buttonId", ""))
+        by_name: dict[str, list[dict[str, Any]]] = {}
+        for a in buttons:
+            name = ko_name.get(a["nameId"])
+            if name:
+                by_name.setdefault(name, []).append(a)
+        abilities: dict[str, dict[str, str]] = {}
+        for name, group in by_name.items():
+            # only the hero's own ids ("Stoneform" is a talent's, shared by name)
+            group = [a for a in group if a["nameId"].startswith(key)]
+            if not group:
+                continue
+            ids = [a["nameId"] for a in group]
+            prefix = os.path.commonprefix(ids)
+            # the buttons of one ability share an id prefix longer than the hero's own
+            keys = [prefix] if len(prefix) > len(key) else ids
+            first = group[0]
+            for k in keys:
+                abilities[k] = {
+                    "ko": name,
+                    "en": next((en_name[i] for i in ids if i in en_name), name),
+                    "key": _HOTKEY.get(first["abilityType"], first["abilityType"]),
+                }
+
+        def words(field: str, key: str = key) -> dict[str, str] | None:
+            ko = ko_unit.get(field, {}).get(key)
+            return {"ko": ko, "en": en_unit.get(field, {}).get(key, ko)} if ko else None
+
+        out[h["slug"]] = {
+            "unit": hd.get("unitId", f"Hero{key}"),
+            "weapons": [w["nameId"] for w in hd.get("weapons") or [] if w.get("nameId")],
+            "life": words("lifetype"),
+            "energy": words("energytype"),
+            "abilities": abilities,
+        }
+    return out
+
+
 def hero_talent_files(
     herodata: dict[str, Any],
     kokr: dict[str, Any],
@@ -351,11 +422,11 @@ def main() -> None:
     )
     out_dir = data / "talents"
     out_dir.mkdir(parents=True, exist_ok=True)
+    game = hero_game_ids(herodata, kokr, heroes, enus)
     for hero_slug, table in hero_talent_files(herodata, kokr, heroes, enus).items():
+        body = {"source": source, "talents": table, "game": game.get(hero_slug)}
         (out_dir / f"{hero_slug}.json").write_text(
-            json.dumps(
-                {"source": source, "talents": table}, ensure_ascii=False, separators=(",", ":")
-            ),
+            json.dumps(body, ensure_ascii=False, separators=(",", ":")),
             encoding="utf-8",
         )
     log.info(

@@ -105,7 +105,26 @@ describe("heroPatchNotes", () => {
   it("a build an official note belongs to is shown once, as the note", () => {
     // the watcher records every new build; 2.55.17.97605 is the 2026-07-21 note's build
     const withNoted: HotfixesFile = JSON.parse(JSON.stringify(hotfixes));
-    withNoted.builds.push({ build: "2.55.17.97605", previous: "2.55.16.97039", first_seen: "2026-07-20T17:08:51Z", parser: 1, heroes: { Abathur: [{ talent: "X", ko: "무언가", en: "Something", changes: [{ old: "1", new: "2" }] }] } });
+    withNoted.builds.push({ build: "2.55.17.97605", previous: "2.55.16.97039", first_seen: "2026-07-20T17:08:51Z", parser: 1, heroes: { Abathur: [{ kind: "talent", id: "X", ko: "무언가", en: "Something", changes: [{ old: "1", new: "2" }] }] } });
     expect(heroPatchNotes(file, "Abathur", REF, "ko", withNoted).notes.map((n) => n.kind)).toEqual(["note", "note"]);
+  });
+
+  it("base stats read as the game's word and the numbers; an ability carries its hotkey (parser 3)", () => {
+    const one: HotfixesFile = { builds: [{ build: "2.57.0.99999", previous: "2.57.0.98304", first_seen: "2026-10-01T00:00:00Z", parser: 3, heroes: {
+      "Mal'Ganis": [
+        { kind: "base", id: "base", ko: null, en: null, changes: [{ old: "2600", new: "2700", label: { ko: "생명력", en: "Health" } }] },
+        { kind: "ability", id: "MalGanisNightRush", ko: "밤의 질주", en: "Night Rush", key: "E", changes: [{ old: "0.75", new: "0.625" }] },
+        { kind: "talent", id: "MalGanisNightRushSpreadingPlague", ko: "퍼져나가는 역병", en: "Spreading Plague", changes: [{ old: "0.1", new: "0.15" }] },
+      ],
+    } }] };
+    const h = heroPatchNotes(null, "Mal'Ganis", REF, "ko", one).notes[0]!;
+    expect(h.groups).toEqual([
+      { section: "base", level: null, ability: null, changes: [{ text: "생명력 2600 → 2700", direction: "neutral" }] },
+      { section: "base", level: null, ability: "밤의 질주 [E]", changes: [{ text: "0.75 → 0.625", direction: "neutral" }] },
+      { section: "talents", level: null, ability: "퍼져나가는 역병", changes: [{ text: "0.1 → 0.15", direction: "neutral" }] },
+    ]);
+    const en = heroPatchNotes(null, "Mal'Ganis", REF, "en", one).notes[0]!;
+    expect(en.groups[0]!.changes[0]!.text).toBe("Health 2600 → 2700");
+    expect(en.groups[1]!.ability).toBe("Night Rush [E]");
   });
 });
