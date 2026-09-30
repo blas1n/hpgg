@@ -130,11 +130,6 @@ export function regionSample(meta: Meta, mode: Mode, region: Exclude<Region, "al
   return { collectedAt: m.collected_at ?? null, heroes: m.heroes, over: m.heroes_over_200, thin: thinSample(meta, key) };
 }
 
-export function daysSince(isoDate: string, now = new Date()): number {
-  const start = new Date(isoDate + "T00:00:00Z").getTime();
-  return Math.max(0, Math.floor((now.getTime() - start) / 86_400_000));
-}
-
 /** "2026-09-28T04:07:19Z" → "09/28" */
 export const shortDate = (iso: string): string => iso.slice(5, 10).replace("-", "/");
 

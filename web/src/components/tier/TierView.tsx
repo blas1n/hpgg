@@ -1,7 +1,7 @@
 "use client";
 
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
-import { assetUrl, daysSince, hotsHref, loadSnapshot, REGIONS, referencePatch, regionSample, shortDate, snapshotKey, type Bracket, type HeroTable, type MapTable, type Meta, type Mode, type Region } from "@/data";
+import { assetUrl, hotsHref, loadSnapshot, REGIONS, referencePatch, regionSample, shortDate, snapshotKey, type Bracket, type HeroTable, type MapTable, type Meta, type Mode, type Region } from "@/data";
 import { useLocale, useT } from "@/i18n/client";
 import type { Locale } from "@/i18n/locale";
 import type { Messages } from "@/i18n/messages";
@@ -159,7 +159,7 @@ export function TierView({ meta, heroes, maps, initial }: { meta: Meta; heroes: 
         </div>
       )}
 
-      <PatchBanner meta={meta} mode={mode} patch={patch} auto={auto} onCurrent={() => update({ patch: "current" })} />
+      <PatchBanner meta={meta} patch={patch} auto={auto} onCurrent={() => update({ patch: "current" })} />
 
       <Card as="div" className="flex flex-wrap items-center gap-2 p-2.5">
         <Segmented
@@ -419,24 +419,21 @@ function Delta({ rank, prev }: { rank: number; prev: number | null }) {
   );
 }
 
-function PatchBanner({ meta, mode, patch, auto, onCurrent }: { meta: Meta; mode: Mode; patch: "current" | "previous"; auto: boolean; onCurrent: () => void }) {
+function PatchBanner({ meta, patch, auto, onCurrent }: { meta: Meta; patch: "current" | "previous"; auto: boolean; onCurrent: () => void }) {
   const t = useT();
-  const days = daysSince(meta.patch_started_at);
   const note = patch === "previous" || (!auto && referencePatch(meta) === "previous");
   if (!note) return null;
   return (
     <div id="patch-banner" className="rounded-lg border border-warn-line bg-warn-bg px-3 py-2 text-[13px] text-warn-fg">
       {patch === "previous" ? (
         <>
-          {t.tier.bannerPrevious(meta.current_patch, String(days))}
-          <b>{t.tier.bannerPreviousPatch(meta.previous_patch ?? "")}</b>
-          {t.tier.bannerPreviousEnd}{" "}
+          {t.tier.bannerPrevious(meta.current_patch)}{" "}
           <button type="button" onClick={onCurrent} className="ml-1 rounded-md bg-warn-strong px-2 py-0.5 font-semibold text-warn-ink">
             {t.tier.bannerShowCurrent}
           </button>
         </>
       ) : (
-        <>{t.tier.bannerThin(meta.current_patch, String(days))}</>
+        <>{t.tier.bannerThin(meta.current_patch)}</>
       )}
     </div>
   );

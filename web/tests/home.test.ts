@@ -120,8 +120,15 @@ describe("homeModel", () => {
 
   it("carries the thin current patch it fell back from, and the page says so in one shared sentence", () => {
     expect(homeModel("qm", qm, null, null, heroes, 200, "2.57.0.98285").fallbackFrom).toBe("2.57.0.98285");
-    expect(messages.ko.common.fallbackNote("2.57.0.98285")).toBe("새 패치 2.57.0.98285 표본이 아직 적어 이전 패치 기준");
-    expect(messages.en.common.fallbackNote("2.57.0.98285")).toBe("new patch 2.57.0.98285 has too few games yet, showing the previous patch");
+    expect(messages.ko.common.fallbackNote("2.57.0.98285")).toBe("새 패치 2.57.0.98285 표본 쌓는 중");
+    expect(messages.en.common.fallbackNote("2.57.0.98285")).toBe("new patch 2.57.0.98285: collecting games");
+  });
+
+  it("the tier banner says the new patch is collecting games, without a day count (owner 2026-09-30)", () => {
+    expect(messages.ko.tier.bannerPrevious("2.57.0.98304")).toBe("새 패치 2.57.0.98304의 표본을 쌓는 중입니다.");
+    expect(messages.ko.tier.bannerThin("2.57.0.98304")).toBe("패치 2.57.0.98304의 표본을 쌓는 중입니다.");
+    expect(messages.en.tier.bannerPrevious("2.57.0.98304")).toBe("New patch 2.57.0.98304 is still collecting games.");
+    expect(messages.en.tier.bannerThin("2.57.0.98304")).toBe("Patch 2.57.0.98304 is still collecting games.");
   });
 
   it("carries the previous patch and movers when the previous snapshot exists", () => {
