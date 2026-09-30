@@ -191,3 +191,14 @@ test("a view with no file on the patch it shows says so, and never shows another
   await expect(page.locator("#meta-line")).toContainText("패치 2.55.17.97771에는 이 보기의 데이터가 없습니다");
   await expect(page.locator("#meta-line")).not.toContainText("2.55.17.98025");
 });
+
+test("region menu follows the patch the table shows: a region backfilled into previous/ is selectable there", async ({ page }) => {
+  // e2e meta.previous_modes lists EU only; on the current patch EU is not collected (KR, NA are)
+  await page.goto("./tier/?patch=previous");
+  await expect(page.locator("#region option")).toHaveText(["전체 지역", "아시아 (KR) · 수집 전", "아메리카 (NA) · 수집 전", "유럽 (EU)"]);
+  // (picking a region resets the patch to the reference one, which is the current patch in e2e data: open it by URL)
+  await page.goto("./tier/?region=eu&patch=previous");
+  await expect(page.locator("#region")).toHaveValue("eu");
+  await expect(page.locator("#region-note")).toContainText("09/26 수집");
+  await expect(page.locator("#rows tr").first()).toBeVisible();
+});

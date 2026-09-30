@@ -12,7 +12,16 @@ export interface Meta {
   collected_at: string;
   min_games_for_tier: number;
   /** Per snapshot file key (qm, sl, sl_low, qm_kr, …); `collected_at` is set since #14 (regions rotate, so their dates differ). */
-  modes: Record<string, { matches: number; heroes: number; heroes_over_200: number; collected_at?: string }>;
+  modes: Record<string, ModeSample>;
+  /** The same for the files in previous/ on previous_patch (regions arrive there on their own days and by backfill).
+   *  Absent in meta from before 2026-09-30. */
+  previous_modes?: Record<string, ModeSample>;
+}
+export interface ModeSample {
+  matches: number;
+  heroes: number;
+  heroes_over_200: number;
+  collected_at?: string;
 }
 
 /** `ko` / `role_ko` are the display names: Korean in heroes_ko.json, English on English pages (i18n/names.ts). */
@@ -117,17 +126,15 @@ export const onReference = <T extends { patch: string }>(file: T | null, meta: M
 /** Right after a patch the current build is thin; fall back to the previous patch for that mode. */
 /** `key`: a mode, or any snapshot file key (a region's file has its own sample size). */
 export function thinSample(meta: Meta, key: string): boolean {
-  const m = meta.modes[key];
-  if (!m || !m.heroes) return false;
-  return m.heroes_over_200 / m.heroes < 0.5;
+  return thin(meta.modes[key]);
 }
+const thin = (m: ModeSample | undefined): boolean => !!m?.heroes && m.heroes_over_200 / m.heroes < 0.5;
 
-/** A region's sample health and collection date from meta; null = that region has not been collected yet. */
-export function regionSample(meta: Meta, mode: Mode, region: Exclude<Region, "all">): { collectedAt: string | null; heroes: number; over: number; thin: boolean } | null {
-  const key = snapshotKey(mode, "all", region);
-  const m = meta.modes[key];
+/** A region's sample health and collection date on the patch a view shows; null = not collected on that patch yet. */
+export function regionSample(meta: Meta, mode: Mode, region: Exclude<Region, "all">, patch: PatchChoice): { collectedAt: string | null; heroes: number; over: number; thin: boolean } | null {
+  const m = (patch === "previous" ? meta.previous_modes : meta.modes)?.[snapshotKey(mode, "all", region)];
   if (!m) return null;
-  return { collectedAt: m.collected_at ?? null, heroes: m.heroes, over: m.heroes_over_200, thin: thinSample(meta, key) };
+  return { collectedAt: m.collected_at ?? null, heroes: m.heroes, over: m.heroes_over_200, thin: thin(m) };
 }
 
 /** "2026-09-28T04:07:19Z" → "09/28" */

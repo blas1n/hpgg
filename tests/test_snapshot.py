@@ -14,6 +14,7 @@ from collector.snapshot import (
     commit_atomic,
     load_meta,
     normalize_by_map,
+    previous_modes,
     reference_patch,
     snapshot_to_json,
 )
@@ -368,3 +369,21 @@ def test_choose_patch_skips_a_build_added_within_the_last_hour() -> None:
     assert choose_patch(payload, now=at("2026-09-29T23:08:51Z")) == "2.57.0.98304"
     assert choose_patch(payload) == "2.57.0.98304"  # no clock: every listed build
     assert UTC is not None
+
+
+def test_previous_modes_describe_the_previous_patch_files_only(tmp_path: Path) -> None:
+    """The pages decide which views exist on the previous patch from meta (#14: a region
+    backfilled into previous/ is invisible to the tier page otherwise)."""
+    prev = tmp_path / "previous"
+    prev.mkdir()
+    row = {"hero": "Nova", "map": "all", "games": 300}
+    snap = {"patch": "old", "collected_at": "c", "matches": 7, "rows": [row, {**row, "map": "x"}]}
+    (prev / "qm_kr.json").write_text(json.dumps(snap))
+    (prev / "qm_na.json").write_text(json.dumps({**snap, "patch": "older"}))  # another build
+    (prev / "meta.json").write_text(json.dumps({"current_patch": "old"}))  # copied with latest/
+    (prev / "builds.json").write_text(json.dumps({"patch": "old", "heroes": {}}))
+    assert previous_modes(tmp_path, "old") == {
+        "qm_kr": {"matches": 7, "heroes": 1, "heroes_over_200": 1, "collected_at": "c"}
+    }
+    assert previous_modes(tmp_path, None) == {}
+    assert previous_modes(tmp_path / "nowhere", "old") == {}

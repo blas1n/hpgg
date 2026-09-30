@@ -33,6 +33,7 @@ from collector.snapshot import (
     load_meta,
     normalize_builds,
     normalize_by_map,
+    refresh_previous_modes,
     region_for_day,
     region_specs,
     snapshot_to_json,
@@ -308,6 +309,7 @@ async def run_backfill_previous_regions(
     previous.mkdir(parents=True, exist_ok=True)
     for key, snap in snapshots.items():
         _write_atomic(previous / f"{key}.json", snap)
+    refresh_previous_modes(settings.data_dir)
     log.info("backfill_regions.done", patch=patch, views=sorted(snapshots))
     return 0
 
@@ -378,6 +380,7 @@ async def run_backfill_previous(
     (settings.data_dir / "latest" / "meta.json").write_text(
         json.dumps(meta, ensure_ascii=False, separators=(",", ":")), encoding="utf-8"
     )
+    refresh_previous_modes(settings.data_dir)
     day_dir = settings.snapshot_out_dir / collected_at[:10]
     for key, raw in raw_by_key.items():
         _write_gz(day_dir / f"backfill_{patch}_raw_{key}.json.gz", raw)
@@ -525,6 +528,7 @@ async def _run_stats(c: HPClient, settings: Settings, *, collected_at: str, slee
         previous.mkdir(parents=True, exist_ok=True)
         for key, snap in region_previous.items():
             _write_atomic(previous / f"{key}.json", snap)
+    refresh_previous_modes(settings.data_dir)
     if builds_result is not None:
         day_dir_b = settings.snapshot_out_dir / collected_at[:10]
         _write_gz(day_dir_b / "raw_builds.json.gz", builds_result[0])

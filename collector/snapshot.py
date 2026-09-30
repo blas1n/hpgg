@@ -291,6 +291,43 @@ def heroes_without_assets(
     return sorted(seen - known)
 
 
+def _mode_summary(snap: dict[str, Any]) -> dict[str, Any]:
+    all_rows = [r for r in snap["rows"] if r["map"] == "all"]
+    return {
+        "matches": snap["matches"],
+        "heroes": len(all_rows),
+        "heroes_over_200": sum(1 for r in all_rows if r["games"] >= MIN_GAMES_FOR_TIER),
+        "collected_at": snap.get("collected_at"),
+    }
+
+
+def previous_modes(data_dir: Path, patch: str | None) -> dict[str, Any]:
+    """meta.previous_modes: the snapshot files in data/previous/ on the previous patch, in the
+    shape of meta.modes. Regions reach previous/ on their own days and by backfill (#14), so
+    this is read from the files, never carried."""
+    prev = data_dir / "previous"
+    if not patch or not prev.is_dir():
+        return {}
+    out: dict[str, Any] = {}
+    for f in sorted(prev.glob("*.json")):
+        snap = json.loads(f.read_text(encoding="utf-8"))
+        if isinstance(snap, dict) and "rows" in snap and snap.get("patch") == patch:
+            out[f.stem] = _mode_summary(snap)
+    return out
+
+
+def refresh_previous_modes(data_dir: Path) -> None:
+    """Rewrite latest/meta.json's previous_modes from data/previous/ (after anything wrote it)."""
+    meta = load_meta(data_dir)
+    if meta is None:
+        return
+    meta["previous_modes"] = previous_modes(data_dir, meta.get("previous_patch"))
+    p = data_dir / "latest" / "meta.json"
+    tmp = p.with_suffix(".json.tmp")
+    _write_json(tmp, meta)
+    tmp.replace(p)
+
+
 def build_meta(
     prev_meta: dict[str, Any] | None,
     *,
@@ -313,15 +350,7 @@ def build_meta(
     else:
         previous_patch = None
         patch_started_at = today
-    modes: dict[str, Any] = {}
-    for key, snap in snapshots.items():
-        all_rows = [r for r in snap["rows"] if r["map"] == "all"]
-        modes[key] = {
-            "matches": snap["matches"],
-            "heroes": len(all_rows),
-            "heroes_over_200": sum(1 for r in all_rows if r["games"] >= MIN_GAMES_FOR_TIER),
-            "collected_at": snap.get("collected_at"),
-        }
+    modes = {key: _mode_summary(snap) for key, snap in snapshots.items()}
     return {
         "current_patch": patch,
         "previous_patch": previous_patch,
