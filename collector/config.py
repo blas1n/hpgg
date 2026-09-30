@@ -25,6 +25,8 @@ class Settings(BaseSettings):
     # stay due and are collected by the next run
     matchups_budget_seconds: float = 1500.0
     request_timeout: float = 60.0
+    # official patch notes kept on the hero pages (newest live/balance notes, #62)
+    patchnotes_limit: int = 12
     log_level: str = "INFO"
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")

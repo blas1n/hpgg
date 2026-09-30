@@ -11,6 +11,7 @@ from datetime import UTC, date, datetime
 from pathlib import Path
 from typing import Any
 
+import httpx
 import structlog
 
 from collector.client import HPClient, HPError, SleepFn
@@ -18,6 +19,7 @@ from collector.config import Settings
 from collector.matchups import collect_matchups, load_hero_list
 from collector.models import JobSpec
 from collector.party import apply_party_correction
+from collector.patchnotes import collect_patchnotes
 from collector.snapshot import (
     REGION_KEYS,
     SOLO_OF,
@@ -334,10 +336,44 @@ async def run(
         code = await _run_stats(c, settings, collected_at=collected_at, sleep=sleep)
         if code == 0:
             await _run_matchups(c, settings, collected_at=collected_at, sleep=sleep)
+        # Blizzard's notes do not depend on HP: collected even when the stats failed
+        await _run_patchnotes(c, settings, collected_at=collected_at)
         return code
     finally:
         if own_client:
             await c.__aexit__(None, None, None)
+
+
+async def _run_patchnotes(c: HPClient, settings: Settings, *, collected_at: str) -> None:
+    """Best effort: a failure keeps yesterday's file and never fails the run."""
+    path = settings.data_dir / "patchnotes.json"
+    try:
+        try:
+            patches = await c.get_json("/patches")  # 1,000,000/week
+        except HPError as e:
+            log.warning("run.patchnotes_no_builds", status=e.status, code=e.code)
+            patches = {"patches": []}  # known notes keep their build; new ones get it next time
+        heroes = _load_json(settings.data_dir / "heroes_ko.json") or {"heroes": []}
+        # a client of its own: the HP token must never reach another host
+        async with httpx.AsyncClient(
+            timeout=settings.request_timeout, follow_redirects=True
+        ) as http:
+            out = await collect_patchnotes(
+                http,
+                patches,
+                heroes,
+                existing=_load_json(path),
+                now=datetime.fromisoformat(collected_at.replace("Z", "+00:00")),
+                limit=settings.patchnotes_limit,
+            )
+    except Exception as e:  # noqa: BLE001 — a side step: log it and keep yesterday's file
+        log.warning("run.patchnotes_failed", error=type(e).__name__, detail=str(e)[:200])
+        return
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = path.with_suffix(".json.tmp")
+    tmp.write_text(json.dumps(out, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
+    tmp.replace(path)
+    log.info("run.patchnotes", notes=len(out["notes"]))
 
 
 async def _run_matchups(

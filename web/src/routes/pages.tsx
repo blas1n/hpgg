@@ -15,7 +15,7 @@ import { PlayerSearchView } from "@/components/players/PlayerSearchView";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 import { TierView } from "@/components/tier/TierView";
-import type { Mode } from "@/data";
+import { referencePatchId, type Mode } from "@/data";
 import { alternates, DEFAULT_LOCALE, type Locale } from "@/i18n/locale";
 import { messages } from "@/i18n/messages";
 import { draftHeroes } from "@/lib/draft";
@@ -23,8 +23,9 @@ import { bracketRows, heroBuilds, heroSummary, mapRows, regionRows } from "@/lib
 import { homeModel, mapCards } from "@/lib/home";
 import { mapDetail } from "@/lib/maps";
 import { matchupsView } from "@/lib/matchups";
+import { heroPatchNotes } from "@/lib/patchnotes";
 import { tierTable } from "@/lib/tier";
-import { readBuilds, readHeroes, readMaps, readMapsMeta, readMatchups, readMeta, readSearchIndex, readShown, readTalents } from "@/server/data";
+import { readBuilds, readHeroes, readMaps, readMapsMeta, readMatchups, readMeta, readPatchNotes, readSearchIndex, readShown, readTalents } from "@/server/data";
 
 type Params = { params: Promise<{ slug: string }> };
 
@@ -146,6 +147,7 @@ export async function HeroPage({ locale, params }: { locale: Locale } & Params) 
       builds={heroBuilds(builds, readTalents(slug), hero.name, locale)}
       buildsPatch={builds?.patch ?? null}
       matchups={matchupsView(readMatchups(slug), heroes)}
+      patches={heroPatchNotes(readPatchNotes(), hero.name, referencePatchId(meta), locale)}
       minGames={min}
     />
   );

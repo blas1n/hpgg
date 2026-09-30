@@ -42,13 +42,14 @@ jobs:
         run: |
           uv run python -m collector
           echo "day=$(date -u +%F)" >> "$GITHUB_OUTPUT"
-      - name: Commit data/latest (+ previous, matchups) to main
+      - name: Commit data/latest (+ previous, matchups, patch notes) to main
         run: |
           git config user.name "hotsmeta-bot"
           git config user.email "bot@hpgg.win"
           git add data/latest
           if [ -d data/previous ]; then git add data/previous; fi
           if [ -d data/matchups ]; then git add data/matchups; fi
+          if [ -f data/patchnotes.json ]; then git add data/patchnotes.json; fi
           git commit -m "data: $(date -u +%F) $(python3 -c 'import json;print(json.load(open("data/latest/meta.json"))["current_patch"])')" || echo "nothing to commit"
           git pull --rebase --autostash origin main
           git push origin main

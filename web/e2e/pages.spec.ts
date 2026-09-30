@@ -175,6 +175,38 @@ test("hero detail: no matchups file yet says so instead of an empty list", async
   await expect(page.locator("nav[data-subnav] a[href='#matchups-title']")).toHaveCount(0);
 });
 
+test("hero detail: patch changes from the official notes, marked against the reference patch (#62)", async ({ page }) => {
+  await page.goto("./heroes/abathur/");
+  const notes = page.locator("#patches [data-note]");
+  await expect(page.locator("#patches-title")).toContainText("패치 변경");
+  await expect(notes).toHaveCount(2);
+  const sep = notes.first();
+  await expect(sep).toHaveAttribute("data-note", "24303007");
+  await expect(sep.locator("[data-status]")).toHaveText("표본 쌓는 중"); // 2.57 is newer than the reference patch
+  await expect(notes.nth(1).locator("[data-status]")).toHaveText("현재 통계 기준");
+  await expect(sep.locator("a[href='https://news.blizzard.com/ko-kr/article/24303007/']")).toBeVisible();
+  await expect(sep.locator("[data-verdict]")).toHaveText("조정");
+  await expect(sep).toContainText("13레벨");
+  await expect(sep).toContainText("포격충 변종");
+  const line = sep.locator("[data-change]").first();
+  await expect(line).toHaveAttribute("data-change", "down");
+  await expect(line).toContainText("생명력 감쇠 감소량이 50%에서 40%로 감소했습니다.");
+  await expect(page.locator("nav[data-subnav] a[href='#patches-title']")).toBeVisible();
+
+  await page.goto("./heroes/mal-ganis/");
+  await expect(page.locator("#patches [data-note]").first().locator("[data-verdict]")).toHaveText("버프");
+
+  // a hero in none of the notes says since when
+  await page.goto("./heroes/nova/");
+  await expect(page.locator("#patches [data-note]")).toHaveCount(0);
+  await expect(page.locator("#patches")).toContainText("이후 공식 패치 노트에 변경이 없습니다");
+
+  await page.goto("/en/hots/heroes/abathur/");
+  await expect(page.locator("#patches-title")).toContainText("Patch changes");
+  await expect(page.locator("#patches [data-note]").first()).toContainText("Health decay reduction lowered from 50% to 40%.");
+  await expect(page.locator("#patches [data-note]").first().locator("[data-verdict]")).toHaveText("Mixed");
+});
+
 test("hero detail: unknown slug is a 404 page with a way back", async ({ page }) => {
   await page.goto("./heroes/nobody/");
   await expect(page.locator("#meta-line")).toContainText("영웅이 없습니다");
