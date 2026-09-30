@@ -3,7 +3,7 @@ import "server-only";
 import { existsSync, readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { computeTiers, type Snapshot } from "../formula";
-import { onReference, type Bracket, type BuildsFile, type HeroTable, type MapTable, type MatchupsFile, type Meta, type Mode, type Region, type TalentTable } from "../data";
+import { onReference, type Bracket, type BuildsFile, type HeroTable, type MapTable, type MatchupsFile, type Meta, type PatchNotesFile, type Mode, type Region, type TalentTable } from "../data";
 import { pickShown, type Shown } from "../lib/shown";
 import type { SearchItem } from "../lib/search";
 import type { MapsMeta } from "../lib/maps";
@@ -35,6 +35,10 @@ export const readMapsMeta = (): MapsMeta | null => opt<MapsMeta>("maps_meta.json
 export const readTalents = (slug: string): TalentTable | null => opt<TalentTable>(`talents/${slug}.json`);
 /** Storm League counters/synergies for one hero (collector/matchups.py); null until the first collection. */
 export const readMatchups = (slug: string): MatchupsFile | null => onReference(opt<MatchupsFile>(`matchups/${slug}.json`), readMeta());
+
+let patchNotes: PatchNotesFile | null | undefined;
+/** Blizzard's official patch notes (collector/patchnotes.py); null until the first collection. Read once per build. */
+export const readPatchNotes = (): PatchNotesFile | null => (patchNotes === undefined ? (patchNotes = opt<PatchNotesFile>("patchnotes.json")) : patchNotes);
 
 /** Header search index: every hero, sorted by name in the page language, with the current tier in `mode`. */
 export function readSearchIndex(locale: Locale, mode: Mode = "qm"): SearchItem[] {

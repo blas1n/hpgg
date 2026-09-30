@@ -30,7 +30,7 @@ def settings(tmp_path: Path, **kw: Any) -> Settings:
         data_dir=tmp_path / "data",
         tmp_dir=tmp_path / "tmp",
         snapshot_out_dir=tmp_path / "snap",
-        **kw,
+        **{"patchnotes_limit": 3, **kw},  # the three notes in fixtures/patchnotes
     )
 
 
@@ -53,6 +53,7 @@ def mock_api(
     respx.get(f"{BASE}/heroes/talents/builds/all").mock(
         return_value=httpx.Response(200, json={"Nova": []})
     )
+    _mock_blizzard()
 
 
 @respx.mock
@@ -541,3 +542,77 @@ async def test_failed_stats_run_makes_no_matchups_calls(
     _seed_heroes(s, ["Illidan"])
     assert await run(s, sleep=fake_sleep, now=lambda: "2026-09-28T00:00:00Z") == 1
     assert route.call_count == 0
+
+
+# --- official patch notes (#62) ------------------------------------------------------------------
+
+PN = Path(__file__).parent / "fixtures" / "patchnotes"
+
+
+def _mock_blizzard(status: int = 200) -> list[httpx.Request]:
+    seen: list[httpx.Request] = []
+
+    def answer(request: httpx.Request) -> httpx.Response:
+        seen.append(request)
+        if status != 200:
+            return httpx.Response(status)
+        parts = request.url.path.strip("/").split("/")  # ko-kr/api/news/… or ko-kr/article/<id>
+        loc = parts[0]
+        name = f"list_{loc}.json" if parts[1] == "api" else f"{parts[2]}_{loc}.html"
+        return httpx.Response(200, text=(PN / name).read_text("utf-8"))
+
+    respx.get(url__startswith="https://news.blizzard.com/").mock(side_effect=answer)
+    return seen
+
+
+@respx.mock
+async def test_run_writes_the_patch_notes_without_sending_the_hp_token(
+    tmp_path: Path, raw_by_map, patches_payload, fake_sleep
+) -> None:
+    mock_api(raw_by_map, patches_payload)
+    seen = _mock_blizzard()  # replaces the route mock_api added, to record the requests
+    s = settings(tmp_path)
+    assert await run(s, sleep=fake_sleep, now=lambda: "2026-09-28T00:00:00Z") == 0
+    out = json.loads((s.data_dir / "patchnotes.json").read_text("utf-8"))
+    assert [n["id"] for n in out["notes"]] == ["24303007", "24291432", "24276959"]
+    assert seen and all("authorization" not in r.headers for r in seen)
+    assert all(TOKEN not in str(r.url) for r in seen)
+
+
+@respx.mock
+async def test_blizzard_down_keeps_the_patch_notes_and_the_run_succeeds(
+    tmp_path: Path, raw_by_map, patches_payload, fake_sleep
+) -> None:
+    mock_api(raw_by_map, patches_payload)
+    _mock_blizzard(status=503)
+    s = settings(tmp_path)
+    s.data_dir.mkdir(parents=True)
+    (s.data_dir / "patchnotes.json").write_text('{"notes": [{"id": "1"}]}', "utf-8")
+    with capture_logs() as logs:
+        assert await run(s, sleep=fake_sleep, now=lambda: "2026-09-28T00:00:00Z") == 0
+    assert json.loads((s.data_dir / "patchnotes.json").read_text("utf-8")) == {
+        "notes": [{"id": "1"}]
+    }
+    assert any(e["event"] == "run.patchnotes_failed" for e in logs)
+
+
+@respx.mock
+async def test_patch_notes_follow_blizzards_redirect_to_the_slugged_article(
+    tmp_path: Path, raw_by_map, patches_payload, fake_sleep
+) -> None:
+    # measured 2026-09-30: /ko-kr/article/24303007/ → 302 → /ko-kr/article/24303007/2026-9-29
+    mock_api(raw_by_map, patches_payload)
+
+    def answer(request: httpx.Request) -> httpx.Response:
+        parts = request.url.path.strip("/").split("/")
+        loc = parts[0]
+        if parts[1] == "api":
+            return httpx.Response(200, text=(PN / f"list_{loc}.json").read_text("utf-8"))
+        if len(parts) == 3:
+            return httpx.Response(302, headers={"Location": f"{request.url.path}slug"})
+        return httpx.Response(200, text=(PN / f"{parts[2]}_{loc}.html").read_text("utf-8"))
+
+    respx.get(url__startswith="https://news.blizzard.com/").mock(side_effect=answer)
+    s = settings(tmp_path)
+    assert await run(s, sleep=fake_sleep, now=lambda: "2026-09-28T00:00:00Z") == 0
+    assert len(json.loads((s.data_dir / "patchnotes.json").read_text("utf-8"))["notes"]) == 3

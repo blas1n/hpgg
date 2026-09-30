@@ -167,6 +167,31 @@ export interface MatchupPair {
   wins: number; // the page hero's wins
   win_rate: number; // the page hero's win rate, %
 }
+/** data/patchnotes.json — Blizzard's official live/balance notes, parsed by collector/patchnotes.py (#62). */
+export type PatchDirection = "up" | "down" | "neutral";
+export type PatchVerdict = "buff" | "nerf" | "mixed";
+export interface PatchNotesFile {
+  parser: number;
+  fetched_at: string;
+  /** newest first */
+  notes: PatchNote[];
+}
+export interface PatchNote {
+  id: string;
+  published: string;
+  /** the first build HP listed around the note; null until it is listed */
+  build: string | null;
+  title: { ko: string; en: string };
+  url: { ko: string; en: string };
+  /** by API hero name */
+  heroes: Record<string, { verdict: PatchVerdict; groups: PatchGroup[] }>;
+}
+export interface PatchGroup {
+  section: "base" | "talents";
+  level: number | null;
+  ability: { ko: string; en: string | null } | null;
+  changes: { ko: string; en: string | null; direction: PatchDirection }[];
+}
 /** data/matchups/<slug>.json — Storm League, one hero per file, collected every other day (collector/matchups.py). */
 export interface MatchupsFile {
   hero: string;

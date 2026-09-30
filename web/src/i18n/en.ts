@@ -197,7 +197,7 @@ The same data gives different tiers under a different formula. This site always 
     none: "No hero matches",
   },
   hero: {
-    sections: { top: "Summary", maps: "Maps", brackets: "Brackets", regions: "Regions", matchups: "Matchups", builds: "Talent builds" },
+    sections: { top: "Summary", maps: "Maps", brackets: "Brackets", regions: "Regions", matchups: "Matchups", builds: "Talent builds", patches: "Patches" },
     sectionNav: "Sections",
     mapsTitle: (mode: string) => `Win rate per battleground (${mode})`,
     bracketsTitle: "Per league bracket",
@@ -218,6 +218,14 @@ The same data gives different tiers under a different formula. This site always 
     matchupsSub: (patch: string, date: string, hero: string, wr: string, games: string) =>
       `patch ${patch} · collected ${date} · against ${hero}'s win rate of ${wr} (${plural(games, "game", "games")})`,
     matchupsLater: "Matchups appear after the next scheduled collection (Storm League, every other day)",
+    patchesTitle: "Patch changes",
+    patchesSub: "Blizzard's official patch notes",
+    patchVerdict: { buff: "Buff", nerf: "Nerf", mixed: "Mixed" },
+    patchStatus: { current: "Current stats", collecting: "Collecting games" },
+    patchSection: { base: "Base", talents: "Talents" },
+    patchLevel: (n: string) => `Level ${n}`,
+    noPatches: (month: string) => `No change in the official patch notes since ${month}`,
+    patchesRule: "▲ buff · ▼ nerf, read from the direction of the changed number. Mixed = both, or a line not read either way",
     counters: "Hardest to play against",
     countersNote: "win rate gap with them on the enemy team",
     synergies: "Best teammates",

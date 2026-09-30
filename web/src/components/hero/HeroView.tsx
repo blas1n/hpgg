@@ -6,6 +6,7 @@ import { assetUrl, hotsHref, shortDate, type HeroInfo, type Mode } from "@/data"
 import { useLocale, useT } from "@/i18n/client";
 import { descParts, type BracketRow, type BuildTalentView, type BuildView, type HeroSummary, type MapRow, type RegionRow } from "@/lib/hero";
 import { matchupRule, type MatchupRow, type MatchupsView } from "@/lib/matchups";
+import type { HeroPatchNotes, PatchNoteView } from "@/lib/patchnotes";
 import { Card, cx, Portrait, Segmented, TierBadge, wrTone } from "../ui";
 
 const pct = (n: number) => `${n.toFixed(1)}%`;
@@ -32,6 +33,7 @@ export function HeroView({
   builds,
   buildsPatch,
   matchups,
+  patches,
   minGames,
 }: {
   hero: HeroInfo;
@@ -40,6 +42,8 @@ export function HeroView({
   buildsPatch: string | null;
   /** Storm League counters/synergies; null until the first matchups collection. */
   matchups: MatchupsView | null;
+  /** This hero in Blizzard's official patch notes (#62); the same in both modes. */
+  patches: HeroPatchNotes;
   minGames: number;
 }) {
   const t = useT();
@@ -63,6 +67,7 @@ export function HeroView({
   const sections = [
     { id: "top", label: tab.top },
     { id: "maps-title", label: tab.maps },
+    ...(patches.notes.length || patches.since ? [{ id: "patches-title", label: tab.patches, nav: "nav-patches" }] : []),
     ...(sl && m.brackets.length ? [{ id: "brackets-title", label: tab.brackets, nav: "nav-brackets" }] : []),
     ...(m.regions.length ? [{ id: "regions-title", label: tab.regions, nav: "nav-regions" }] : []),
     ...(matchups ? [{ id: "matchups-title", label: tab.matchups, nav: "nav-matchups" }] : []),
@@ -118,6 +123,8 @@ export function HeroView({
       </div>
       </section>
       <section>
+
+      <Patches p={patches} />
 
       {sl && m.brackets.length > 0 && (
         <>
@@ -311,6 +318,78 @@ function MapRows({ rows }: { rows: MapRow[] }) {
     );
       })}
     </div>
+  );
+}
+
+const VERDICT_TONE = {
+  buff: "border-pos/40 text-pos",
+  nerf: "border-neg/40 text-neg",
+  mixed: "border-warn-line bg-warn-bg text-warn-fg",
+} as const;
+
+function Patches({ p }: { p: HeroPatchNotes }) {
+  const t = useT();
+  if (!p.notes.length && !p.since) return null;
+  return (
+    <>
+      <h2 id="patches-title" className={SECTION}>
+        {t.hero.patchesTitle} <span className="text-xs font-normal text-muted">{t.hero.patchesSub}</span>
+      </h2>
+      <div id="patches" className="flex flex-col gap-2">
+        {p.notes.length === 0 ? (
+          <p className="rounded-lg border border-line bg-surface px-3 py-4 text-center text-[13px] text-muted">{t.hero.noPatches(p.since!.slice(0, 7))}</p>
+        ) : (
+          <>
+            {p.notes.map((n) => (
+              <PatchNote key={n.id} n={n} />
+            ))}
+            <p id="patches-rule" className="text-2xs leading-relaxed text-muted">
+              {t.hero.patchesRule}
+            </p>
+          </>
+        )}
+      </div>
+    </>
+  );
+}
+
+function PatchNote({ n }: { n: PatchNoteView }) {
+  const t = useT();
+  return (
+    <article data-note={n.id} className="rounded-card border border-line bg-surface px-3 py-2.5">
+      <header className="flex flex-wrap items-center gap-x-2 gap-y-1">
+        <span data-verdict={n.verdict} className={cx("rounded border px-1.5 py-px text-2xs font-bold", VERDICT_TONE[n.verdict])}>
+          {t.hero.patchVerdict[n.verdict]}
+        </span>
+        <a href={n.url} target="_blank" rel="noopener noreferrer" className="min-w-0 text-[13px] font-semibold text-fg hover:underline">
+          {n.title}
+        </a>
+        {n.status && (
+          <span data-status={n.status} className="text-2xs text-muted">
+            {t.hero.patchStatus[n.status]}
+          </span>
+        )}
+      </header>
+      <div className="mt-1.5 flex flex-col gap-1.5">
+        {n.groups.map((g, i) => (
+          <div key={i}>
+            <div className="text-2xs text-muted">
+              {[t.hero.patchSection[g.section], g.level !== null && t.hero.patchLevel(String(g.level)), g.ability].filter(Boolean).join(" · ")}
+            </div>
+            <ul className="mt-0.5 flex flex-col gap-0.5">
+              {g.changes.map((c, j) => (
+                <li key={j} data-change={c.direction} className="grid grid-cols-[14px_1fr] gap-1 text-[13px] leading-snug text-fg-2">
+                  <span aria-hidden className={cx("text-center text-2xs leading-5", c.direction === "up" ? "text-pos" : c.direction === "down" ? "text-neg" : "text-muted")}>
+                    {c.direction === "up" ? "▲" : c.direction === "down" ? "▼" : "·"}
+                  </span>
+                  <span>{c.text}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
+      </div>
+    </article>
   );
 }
 
