@@ -22,6 +22,7 @@ from collector.party import apply_party_correction
 from collector.patchnotes import collect_patchnotes
 from collector.snapshot import (
     REGION_KEYS,
+    REGIONS,
     SOLO_OF,
     SOLO_SPECS,
     SPECS,
@@ -264,6 +265,51 @@ def _client(settings: Settings, sleep: SleepFn) -> HPClient:
         poll_max_seconds=settings.poll_max_seconds,
         timeout=settings.request_timeout,
     )
+
+
+async def run_backfill_previous_regions(
+    settings: Settings,
+    *,
+    sleep: SleepFn = asyncio.sleep,
+    now: Callable[[], str] = utc_now_iso,
+    client: HPClient | None = None,
+) -> int:
+    """One-off: every region (QM + SL) of the previous patch still missing in data/previous/.
+    A finished patch never changes, so each is fetched once (owner 2026-09-30: 6 calls rather
+    than three days of the daily rotation). Exit 2 = refused (no previous patch)."""
+    meta = load_meta(settings.data_dir)
+    patch = (meta or {}).get("previous_patch")
+    if not patch:
+        log.error("backfill_regions.refused", reason="no previous patch in data/latest/meta.json")
+        return 2
+    previous = settings.data_dir / "previous"
+    specs = tuple(
+        spec
+        for region, _ in REGIONS
+        for spec in region_specs(region)
+        if (_load_json(previous / f"{spec.key}.json") or {}).get("patch") != patch
+    )
+    if not specs:
+        log.info("backfill_regions.nothing_to_do", patch=patch)
+        return 0
+    collected_at = now()
+    own = client is None
+    c = client or _client(settings, sleep)
+    try:
+        _, snapshots = await _collect_all(
+            c, settings, patch=patch, collected_at=collected_at, sleep=sleep, specs=specs
+        )
+    except HPError as e:
+        log.error("run.api_failed", status=e.status, code=e.code, message=e.message)
+        return 1
+    finally:
+        if own:
+            await c.__aexit__(None, None, None)
+    previous.mkdir(parents=True, exist_ok=True)
+    for key, snap in snapshots.items():
+        _write_atomic(previous / f"{key}.json", snap)
+    log.info("backfill_regions.done", patch=patch, views=sorted(snapshots))
+    return 0
 
 
 async def run_backfill_previous(

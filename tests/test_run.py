@@ -10,7 +10,7 @@ import respx
 from structlog.testing import capture_logs
 
 from collector.config import Settings
-from collector.run import run
+from collector.run import run, run_backfill_previous_regions
 from tests.conftest import BASE, TOKEN
 
 
@@ -683,3 +683,41 @@ async def test_patch_notes_follow_blizzards_redirect_to_the_slugged_article(
     s = settings(tmp_path)
     assert await run(s, sleep=fake_sleep, now=lambda: "2026-09-28T00:00:00Z") == 0
     assert len(json.loads((s.data_dir / "patchnotes.json").read_text("utf-8"))["notes"]) == 3
+
+
+@respx.mock
+async def test_backfill_previous_regions_fetches_each_missing_region_once(
+    tmp_path: Path, raw_by_map, patches_payload, fake_sleep
+) -> None:
+    """A finished patch's regions in one go (owner 2026-09-30): 3 regions × QM/SL into
+    previous/, a region already there is skipped, and the current patch is refused."""
+    mock_api(raw_by_map, patches_payload)
+    s = settings(tmp_path)
+    s.data_dir.joinpath("latest").mkdir(parents=True)
+    meta = {"current_patch": "2.55.17.97771", "previous_patch": "2.55.17.97650"}
+    s.data_dir.joinpath("latest", "meta.json").write_text(json.dumps(meta))
+    s.data_dir.joinpath("previous").mkdir()
+    had = {"patch": "2.55.17.97650", "region": "KR", "rows": []}
+    for m in ("qm", "sl"):
+        s.data_dir.joinpath("previous", f"{m}_kr.json").write_text(json.dumps(had))
+    assert await run_backfill_previous_regions(s, sleep=fake_sleep, now=lambda: "t") == 0
+    calls = [
+        dict(httpx.QueryParams(c.request.url.query))
+        for c in respx.calls
+        if c.request.url.path.endswith("/heroes/stats")
+    ]
+    assert [(c["game_type"], c["region"], c["timeframe"]) for c in calls] == [
+        ("qm", "NA", "2.55.17.97650"),
+        ("sl", "NA", "2.55.17.97650"),
+        ("qm", "EU", "2.55.17.97650"),
+        ("sl", "EU", "2.55.17.97650"),
+    ]
+    for key in ("qm_na", "sl_na", "qm_eu", "sl_eu"):
+        snap = json.loads((s.data_dir / "previous" / f"{key}.json").read_text())
+        assert snap["patch"] == "2.55.17.97650" and snap["region"] == key[-2:].upper()
+    assert json.loads((s.data_dir / "previous" / "qm_kr.json").read_text()) == had
+    n = len(respx.calls)
+    assert await run_backfill_previous_regions(s, sleep=fake_sleep, now=lambda: "t") == 0
+    assert len(respx.calls) == n  # nothing left to fetch
+    s.data_dir.joinpath("latest", "meta.json").write_text(json.dumps({"current_patch": "x"}))
+    assert await run_backfill_previous_regions(s, sleep=fake_sleep, now=lambda: "t") == 2
