@@ -67,11 +67,12 @@ export function HeroView({
   const sections = [
     { id: "top", label: tab.top },
     { id: "maps-title", label: tab.maps },
-    ...(patches.notes.length || patches.since ? [{ id: "patches-title", label: tab.patches, nav: "nav-patches" }] : []),
     ...(sl && m.brackets.length ? [{ id: "brackets-title", label: tab.brackets, nav: "nav-brackets" }] : []),
     ...(m.regions.length ? [{ id: "regions-title", label: tab.regions, nav: "nav-regions" }] : []),
     ...(matchups ? [{ id: "matchups-title", label: tab.matchups, nav: "nav-matchups" }] : []),
     ...(builds.length ? [{ id: "builds-title", label: tab.builds, nav: "nav-builds" }] : []),
+    // long and not what people come for first: last, below both columns
+    ...(patches.notes.length || patches.since ? [{ id: "patches-title", label: tab.patches, nav: "nav-patches" }] : []),
   ];
 
   return (
@@ -123,8 +124,6 @@ export function HeroView({
       </div>
       </section>
       <section>
-
-      <Patches p={patches} />
 
       {sl && m.brackets.length > 0 && (
         <>
@@ -191,6 +190,7 @@ export function HeroView({
       )}
       </section>
       </div>
+      <Patches p={patches} />
     </main>
   );
 }
