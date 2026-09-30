@@ -409,6 +409,39 @@ async def test_regions_are_collected_for_the_reference_patch_where_the_pages_rea
 
 
 @respx.mock
+async def test_a_region_already_final_on_the_previous_patch_is_not_fetched_again(
+    tmp_path: Path, raw_by_map, patches_payload, fake_sleep
+) -> None:
+    """A finished patch does not change: once today's region is in previous/, the day's two
+    calls build the new patch's region, ready for when the new patch becomes the reference."""
+    mock_api(thin(raw_by_map), patches_payload)
+    s = settings(tmp_path)
+    s.data_dir.joinpath("latest").mkdir(parents=True)
+    healthy = {"matches": 9000, "heroes": 90, "heroes_over_200": 90}
+    old = {
+        "current_patch": "2.55.17.97650",
+        "previous_patch": None,
+        "modes": {"qm": healthy, "sl": healthy},
+    }
+    s.data_dir.joinpath("latest", "meta.json").write_text(json.dumps(old))
+    # the first run fills previous/ (the region on the reference patch)
+    assert await run(s, sleep=fake_sleep, now=lambda: "2026-09-28T00:00:00Z") == 0
+    kept = (s.data_dir / "previous" / "qm_na.json").read_text()
+    first = len(respx.calls)
+    # three days later NA comes round again: previous/ has it, so the new patch is collected
+    assert await run(s, sleep=fake_sleep, now=lambda: "2026-10-01T00:00:00Z") == 0
+    calls = [
+        dict(httpx.QueryParams(c.request.url.query))
+        for c in list(respx.calls)[first:]
+        if c.request.url.path.endswith("/heroes/stats") and "region" in str(c.request.url)
+    ]
+    assert [c["timeframe"] for c in calls] == ["2.55.17.97771", "2.55.17.97771"]
+    assert (s.data_dir / "previous" / "qm_na.json").read_text() == kept
+    latest = json.loads((s.data_dir / "latest" / "qm_na.json").read_text())
+    assert latest["patch"] == "2.55.17.97771"
+
+
+@respx.mock
 async def test_matchups_are_collected_for_the_reference_patch(
     tmp_path: Path, raw_by_map, patches_payload, fake_sleep
 ) -> None:
