@@ -6,10 +6,12 @@ import { assetUrl, hotsHref, shortDate, type HeroInfo, type Mode } from "@/data"
 import { useLocale, useT } from "@/i18n/client";
 import { descParts, type BracketRow, type BuildTalentView, type BuildView, type HeroSummary, type MapRow, type RegionRow } from "@/lib/hero";
 import { matchupRule, type MatchupRow, type MatchupsView } from "@/lib/matchups";
+import { summaryLines, type SummaryLine } from "@/lib/summary";
 import { Card, cx, Portrait, Segmented, TierBadge, wrTone } from "../ui";
 
 const pct = (n: number) => `${n.toFixed(1)}%`;
 const int = (n: number) => n.toLocaleString("ko-KR");
+const signed = (d: number) => `${d >= 0 ? "+" : ""}${d.toFixed(1)}%p`;
 
 export interface HeroModeModel {
   patch: string;
@@ -104,6 +106,8 @@ export function HeroView({
         <StatCards s={s} sl={sl} minGames={minGames} />
       </div>
       </div>
+
+      <Summary lines={summaryLines(s, m.maps, matchups)} />
 
       <SectionTabs sections={sections} />
 
@@ -315,6 +319,51 @@ function MapRows({ rows }: { rows: MapRow[] }) {
 }
 
 /** 상성 — Storm League only (the draft mode), whatever the mode toggle says; numbers only, no per-pair prose. */
+/** #37: one line per finding, each carrying its number; matchups are Storm League whichever mode is shown. */
+function Summary({ lines }: { lines: SummaryLine[] }) {
+  const t = useT();
+  const href = hotsHref(useLocale());
+  if (!lines.length) return null;
+  const body = (l: SummaryLine) => {
+    if (l.key === "change") return <span className={l.wrChange >= 0 ? "text-pos" : "text-neg"}>{t.hero.summaryChangeValue(signed(l.wrChange))}</span>;
+    if (l.key === "map")
+      return (
+        <>
+          <span className="font-semibold">{l.map.ko}</span> <span className={wrTone(l.map.win_rate)}>{pct(l.map.win_rate)}</span>
+        </>
+      );
+    const h = l.hero;
+    return (
+      <>
+        {h.slug ? (
+          <a href={href.hero(h.slug)} className="font-semibold hover:underline">
+            {h.ko}
+          </a>
+        ) : (
+          <span className="font-semibold">{h.ko}</span>
+        )}{" "}
+        <span className={h.delta >= 0 ? "text-pos" : "text-neg"}>{signed(h.delta)}</span>
+        {/* phones: the sample on its own line, like the matchup rows */}
+        <span className="block text-2xs text-muted sm:inline sm:text-xs">
+          <span className="hidden sm:inline"> · </span>
+          {t.common.games(int(h.games))} · {t.common.modes.sl}
+        </span>
+      </>
+    );
+  };
+  const label = { change: t.hero.summaryChange, map: t.hero.summaryMap, watch: t.hero.counters, pair: t.hero.synergies };
+  return (
+    <ul id="summary" className="mt-4 flex flex-col gap-1 rounded-card border border-line bg-surface px-3 py-2.5 text-[13px]">
+      {lines.map((l) => (
+        <li key={l.key} data-line={l.key} className="grid grid-cols-[8.5rem_1fr] gap-2 sm:grid-cols-[11rem_1fr]">
+          <span className="text-muted">{label[l.key]}</span>
+          <span className="num min-w-0 text-fg">{body(l)}</span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 function Matchups({ hero, v }: { hero: HeroInfo; v: MatchupsView | null }) {
   const t = useT();
   const locale = useLocale();
