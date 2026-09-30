@@ -101,4 +101,11 @@ describe("heroPatchNotes", () => {
     expect(en.groups[0]!.ability).toBe("A Touch of Honey");
     expect(heroPatchNotes(file, "Abathur", REF, "ko", hotfixes).notes.map((n) => n.kind)).toEqual(["note", "note"]);
   });
+
+  it("a build an official note belongs to is shown once, as the note", () => {
+    // the watcher records every new build; 2.55.17.97605 is the 2026-07-21 note's build
+    const withNoted: HotfixesFile = JSON.parse(JSON.stringify(hotfixes));
+    withNoted.builds.push({ build: "2.55.17.97605", previous: "2.55.16.97039", first_seen: "2026-07-20T17:08:51Z", parser: 1, heroes: { Abathur: [{ talent: "X", ko: "무언가", en: "Something", changes: [{ old: "1", new: "2" }] }] } });
+    expect(heroPatchNotes(file, "Abathur", REF, "ko", withNoted).notes.map((n) => n.kind)).toEqual(["note", "note"]);
+  });
 });

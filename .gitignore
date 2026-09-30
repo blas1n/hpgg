@@ -28,3 +28,5 @@ web/.env*.local
 
 # API server (deploy/.env holds the HP key on the host)
 deploy/.env
+tools/hotfix/.casclib/
+tools/hotfix/bin/

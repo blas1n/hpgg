@@ -16,7 +16,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-HOTFIX_PARSER = 1
+HOTFIX_PARSER = 2
 
 # attributes that name a slot rather than hold a value
 _KEY_ATTRS = {"id", "index", "parent"}
@@ -157,15 +157,22 @@ class TalentIndex:
         return (best[1], best[2]) if best else None
 
 
+def _same(c: NumericChange) -> tuple[str, str, str]:
+    return (c.path.rsplit("/", 1)[-1], c.old, c.new)
+
+
 def hero_changes(
     files: list[tuple[str, str]], index: TalentIndex
 ) -> dict[str, list[dict[str, Any]]]:
     """API hero name → talents with their changed numbers (each old → new pair once)."""
     heroes: dict[str, dict[str, dict[str, Any]]] = {}
     for old, new in files:
-        for c in numeric_changes(old, new):
-            own = index.owner(c)
-            if own is None:
+        changes = [(c, index.owner(c)) for c in numeric_changes(old, new)]
+        # the same number changed the same way outside every talent too (Mal'Ganis's leech on
+        # every damage effect): the hero's trait or ability changed, not the talents
+        shared = {_same(c) for c, own in changes if own is None}
+        for c, own in changes:
+            if own is None or _same(c) in shared:
                 continue
             slug, nid = own
             talent = heroes.setdefault(index.names[slug], {}).setdefault(
