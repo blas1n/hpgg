@@ -8,6 +8,8 @@ import pytest
 
 from collector.models import HeroStat
 from collector.snapshot import (
+    MIN_GAMES_FOR_TIER,
+    PATCH_HEALTH_GAMES,
     SPECS,
     build_meta,
     choose_patch,
@@ -247,6 +249,20 @@ def test_build_meta_first_run_and_patch_change() -> None:
     )
 
 
+def test_the_tier_floor_and_the_patch_health_floor_are_counted_apart() -> None:
+    """Owner 2026-10-01: tiers from 50 games (a hero never tiered says nothing); whether a
+    patch has a real sample stays at 200 (reference patch, promotion)."""
+    assert (MIN_GAMES_FOR_TIER, PATCH_HEALTH_GAMES) == (50, 200)
+    snaps = _healthy("p1")
+    for snap in snaps.values():
+        snap["rows"] = [{**r, "wins": 60, "losses": 60, "games": 120} for r in snap["rows"]]
+    m = build_meta(None, patch="p1", collected_at="2026-10-01T01:00:00Z", snapshots=snaps)
+    assert m["min_games_for_tier"] == 50
+    assert (m["modes"]["qm"]["heroes_ranked"], m["modes"]["qm"]["heroes_over_200"]) == (1, 0)
+    m2 = build_meta(m, patch="p2", collected_at="2026-10-02T01:00:00Z", snapshots=_healthy("p2"))
+    assert m2["previous_patch"] is None  # 120 games each: tiered, but not a patch to fall back to
+
+
 def test_commit_atomic_writes_latest_and_moves_previous_on_patch_change(tmp_path: Path) -> None:
     data, tmp = tmp_path / "data", tmp_path / "tmp"
     meta1 = build_meta(
@@ -383,7 +399,13 @@ def test_previous_modes_describe_the_previous_patch_files_only(tmp_path: Path) -
     (prev / "meta.json").write_text(json.dumps({"current_patch": "old"}))  # copied with latest/
     (prev / "builds.json").write_text(json.dumps({"patch": "old", "heroes": {}}))
     assert previous_modes(tmp_path, "old") == {
-        "qm_kr": {"matches": 7, "heroes": 1, "heroes_over_200": 1, "collected_at": "c"}
+        "qm_kr": {
+            "matches": 7,
+            "heroes": 1,
+            "heroes_ranked": 1,
+            "heroes_over_200": 1,
+            "collected_at": "c",
+        }
     }
     assert previous_modes(tmp_path, None) == {}
     assert previous_modes(tmp_path / "nowhere", "old") == {}

@@ -12,7 +12,7 @@ const meta = (reference: string | undefined, previous: string | null = "old", th
   patch_started_at: "2026-09-29",
   collected_at: "2026-09-29T00:00:00Z",
   min_games_for_tier: 200,
-  modes: { qm: { matches: 1, heroes: 90, heroes_over_200: 80 }, sl: { matches: 1, heroes: 90, heroes_over_200: thinSl ? 0 : 80 } },
+  modes: { qm: { matches: 1, heroes: 90, heroes_ranked: 80, heroes_over_200: 80 }, sl: { matches: 1, heroes: 90, heroes_ranked: thinSl ? 0 : 80, heroes_over_200: thinSl ? 0 : 80 } },
 });
 const heroes: HeroTable = { roles: [], heroes: [] }; // rows are empty here; lib/known.ts is covered in known.test.ts
 const files = (entries: Record<string, Snapshot>) => (key: string, patch: "current" | "previous") => entries[`${patch}/${key}`] ?? null;

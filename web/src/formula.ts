@@ -43,7 +43,6 @@ export type Tier = (typeof TIERS)[number];
 
 /** Cumulative share of the ranked (n ≥ minGames) heroes per tier: S 6% / A 24% / B 54% / C 82% / D 94% / F rest. */
 export const CUTS = [0.06, 0.24, 0.54, 0.82, 0.94, 1.01] as const;
-export const MIN_GAMES = 200;
 
 /** The one formula: pick × (WRs − 50) × 3 + ban × 1, win rate shrunk with k = 500. Low-WR popular heroes sink. */
 export const FORMULA = { wPick: 3, wBan: 1, k: 500 } as const;
@@ -83,7 +82,7 @@ export function boundaries(n: number): number[] {
   return out;
 }
 
-export function computeTiers(rows: Row[], minGames = MIN_GAMES): TierResult {
+export function computeTiers(rows: Row[], minGames: number): TierResult {
   const grey = rows.filter((r) => r.games < minGames);
   const scored = rows
     .filter((r) => r.games >= minGames)

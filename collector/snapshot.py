@@ -33,11 +33,17 @@ SOLO_SPECS: tuple[JobSpec, ...] = (
 )
 SOLO_OF: dict[str, str] = {"qm_solo": "qm", "sl_solo": "sl"}
 
-MIN_GAMES_FOR_TIER = 200
+# A hero is tiered from this many games; under it the row is grey (owner 2026-10-01: 50, tuned
+# as the sample allows — the win rate is shrunk toward 50 anyway, and a hero never tiered says
+# nothing). The pages read it from meta.min_games_for_tier.
+MIN_GAMES_FOR_TIER = 50
+# Whether a build has a real sample (reference patch, promotion to previous) is judged apart,
+# on heroes over this many games.
+PATCH_HEALTH_GAMES = 200
 
 # The reference patch (owner 2026-09-29): ONE patch for the whole site — every page, the talent
 # builds, the matchups and the draft simulator. The previous patch while the current one is thin
-# in Quick Match or Storm League (under half the heroes over the tier floor), else the current one.
+# in Quick Match or Storm League (under half the heroes over PATCH_HEALTH_GAMES), else the current.
 # Brackets and regions never decide it. Written to meta.json; the web reads it and never decides.
 THIN_SHARE = 0.5
 REFERENCE_MODES: tuple[str, ...] = ("qm", "sl")
@@ -296,7 +302,8 @@ def _mode_summary(snap: dict[str, Any]) -> dict[str, Any]:
     return {
         "matches": snap["matches"],
         "heroes": len(all_rows),
-        "heroes_over_200": sum(1 for r in all_rows if r["games"] >= MIN_GAMES_FOR_TIER),
+        "heroes_ranked": sum(1 for r in all_rows if r["games"] >= MIN_GAMES_FOR_TIER),
+        "heroes_over_200": sum(1 for r in all_rows if r["games"] >= PATCH_HEALTH_GAMES),
         "collected_at": snap.get("collected_at"),
     }
 

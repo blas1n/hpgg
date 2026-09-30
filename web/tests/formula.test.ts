@@ -11,10 +11,10 @@ const sl = load("sl_2026-09-28.json");
 const qm = load("qm_2026-09-28.json");
 const allRows = (s: Snapshot): Row[] => s.rows.filter((r) => r.map === "all");
 const tierOf = (s: Snapshot) => {
-  const t = computeTiers(allRows(s));
+  const t = computeTiers(allRows(s), 200);
   return Object.fromEntries(t.ranked.map((x) => [x.row.hero, x.tier]));
 };
-const rankOf = (s: Snapshot, hero: string) => computeTiers(allRows(s)).ranked.findIndex((x) => x.row.hero === hero) + 1;
+const rankOf = (s: Snapshot, hero: string) => computeTiers(allRows(s), 200).ranked.findIndex((x) => x.row.hero === hero) + 1;
 
 describe("shrinkWinRate", () => {
   it("pulls small samples toward 50 with k=500", () => {
@@ -58,7 +58,7 @@ describe("design-doc verification table (2026-09-28 fixtures)", () => {
     expect(rankOf(qm, "Illidan")).toBe(35);
   });
   it("N=90 boundaries are 5/21/48/73/84 → S5 A16 B27 C25 D11 F6", () => {
-    const t = computeTiers(allRows(sl));
+    const t = computeTiers(allRows(sl), 200);
     const count = (tier: string) => t.ranked.filter((x) => x.tier === tier).length;
     expect([count("S"), count("A"), count("B"), count("C"), count("D"), count("F")]).toEqual([5, 16, 27, 25, 11, 6]);
     expect(t.grey).toHaveLength(0);
@@ -71,18 +71,18 @@ describe("cuts and grey rows", () => {
   });
   it("rows under 200 games are grey and excluded from the denominator", () => {
     const rows = [mk("A", 1000, 55), mk("B", 199, 70), mk("C", 1000, 45)];
-    const t = computeTiers(rows);
+    const t = computeTiers(rows, 200);
     expect(t.grey.map((r) => r.hero)).toEqual(["B"]);
     expect(t.ranked.map((x) => x.row.hero)).toEqual(["A", "C"]);
   });
   it("monotonic cuts: N=3 gives S/A/B one each, C/D/F empty", () => {
     const rows = [mk("A", 1000, 55), mk("B", 1000, 52), mk("C", 1000, 48)];
-    const t = computeTiers(rows);
+    const t = computeTiers(rows, 200);
     expect(t.ranked.map((x) => x.tier)).toEqual(["S", "A", "B"]);
   });
   it("N=12 synthetic map keeps every tier non-empty until it runs out", () => {
     const rows = Array.from({ length: 12 }, (_, i) => mk(`H${i}`, 1000, 60 - i));
-    const tiers = computeTiers(rows).ranked.map((x) => x.tier);
+    const tiers = computeTiers(rows, 200).ranked.map((x) => x.tier);
     expect(tiers).toEqual(["S", "A", "B", "B", "B", "B", "C", "C", "C", "D", "D", "F"]);
   });
 });

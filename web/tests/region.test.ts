@@ -18,9 +18,9 @@ const meta: Meta = {
   collected_at: "2026-10-01T18:30:00Z",
   min_games_for_tier: 200,
   modes: {
-    qm: { matches: 1, heroes: 90, heroes_over_200: 80 },
-    qm_kr: { matches: 1, heroes: 90, heroes_over_200: 60, collected_at: "2026-09-30T18:30:00Z" },
-    qm_na: { matches: 1, heroes: 90, heroes_over_200: 12, collected_at: "2026-10-01T18:30:00Z" },
+    qm: { matches: 1, heroes: 90, heroes_ranked: 80, heroes_over_200: 80 },
+    qm_kr: { matches: 1, heroes: 90, heroes_ranked: 60, heroes_over_200: 60, collected_at: "2026-09-30T18:30:00Z" },
+    qm_na: { matches: 1, heroes: 90, heroes_ranked: 12, heroes_over_200: 12, collected_at: "2026-10-01T18:30:00Z" },
   },
 };
 const noHeroes: HeroTable = { roles: [], heroes: [] };
@@ -86,11 +86,15 @@ describe("region files", () => {
     // the region's own thinness is a warning only; it never picks the patch
     expect(resolvePatch(meta, "auto").patch).toBe("current");
   });
+  it("the note counts heroes over the tier floor (heroes_ranked), not the patch-health count", () => {
+    const m: Meta = { ...meta, min_games_for_tier: 50, modes: { qm_kr: { matches: 1, heroes: 90, heroes_ranked: 76, heroes_over_200: 20, collected_at: "c" } } };
+    expect(regionSample(m, "qm", "kr", "current")).toEqual({ collectedAt: "c", heroes: 90, over: 76, thin: false });
+  });
   it("a region is looked up on the patch the view shows: previous-patch regions live in meta.previous_modes", () => {
     const onOld: Meta = {
       ...meta,
       reference_patch: "old",
-      previous_modes: { qm_kr: { matches: 1, heroes: 90, heroes_over_200: 30, collected_at: "2026-09-30T13:18:25Z" } },
+      previous_modes: { qm_kr: { matches: 1, heroes: 90, heroes_ranked: 30, heroes_over_200: 30, collected_at: "2026-09-30T13:18:25Z" } },
     };
     expect(regionSample(onOld, "qm", "kr", "previous")).toEqual({ collectedAt: "2026-09-30T13:18:25Z", heroes: 90, over: 30, thin: true });
     expect(regionSample(onOld, "qm", "na", "previous")).toBeNull(); // NA is on the current patch only
