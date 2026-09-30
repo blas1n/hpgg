@@ -356,14 +356,18 @@ function Patches({ p }: { p: HeroPatchNotes }) {
 function PatchNote({ n }: { n: PatchNoteView }) {
   const t = useT();
   return (
-    <article data-note={n.id} className="rounded-card border border-line bg-surface px-3 py-2.5">
+    <article data-note={n.id} data-kind={n.kind} className="rounded-card border border-line bg-surface px-3 py-2.5">
       <header className="flex flex-wrap items-center gap-x-2 gap-y-1">
-        <span data-verdict={n.verdict} className={cx("rounded border px-1.5 py-px text-2xs font-bold", VERDICT_TONE[n.verdict])}>
-          {t.hero.patchVerdict[n.verdict]}
+        <span data-verdict={n.verdict ?? "hotfix"} className={cx("rounded border px-1.5 py-px text-2xs font-bold", n.verdict ? VERDICT_TONE[n.verdict] : "border-line text-fg-2")}>
+          {n.verdict ? t.hero.patchVerdict[n.verdict] : t.hero.hotfixBadge}
         </span>
-        <a href={n.url} target="_blank" rel="noopener noreferrer" className="min-w-0 text-[13px] font-semibold text-fg hover:underline">
-          {n.title}
-        </a>
+        {n.url ? (
+          <a href={n.url} target="_blank" rel="noopener noreferrer" className="min-w-0 text-[13px] font-semibold text-fg hover:underline">
+            {n.title}
+          </a>
+        ) : (
+          <span className="min-w-0 text-[13px] font-semibold text-fg">{t.hero.hotfixTitle(n.title)}</span>
+        )}
         {n.status && (
           <span data-status={n.status} className="text-2xs text-muted">
             {t.hero.patchStatus[n.status]}

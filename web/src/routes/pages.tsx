@@ -25,7 +25,7 @@ import { mapDetail } from "@/lib/maps";
 import { matchupsView } from "@/lib/matchups";
 import { heroPatchNotes } from "@/lib/patchnotes";
 import { tierTable } from "@/lib/tier";
-import { readBuilds, readHeroes, readMaps, readMapsMeta, readMatchups, readMeta, readPatchNotes, readSearchIndex, readShown, readTalents } from "@/server/data";
+import { readBuilds, readHeroes, readMaps, readMapsMeta, readMatchups, readMeta, readHotfixes, readPatchNotes, readSearchIndex, readShown, readTalents } from "@/server/data";
 
 type Params = { params: Promise<{ slug: string }> };
 
@@ -147,7 +147,7 @@ export async function HeroPage({ locale, params }: { locale: Locale } & Params) 
       builds={heroBuilds(builds, readTalents(slug), hero.name, locale)}
       buildsPatch={builds?.patch ?? null}
       matchups={matchupsView(readMatchups(slug), heroes)}
-      patches={heroPatchNotes(readPatchNotes(), hero.name, referencePatchId(meta), locale)}
+      patches={heroPatchNotes(readPatchNotes(), hero.name, referencePatchId(meta), locale, readHotfixes())}
       minGames={min}
     />
   );

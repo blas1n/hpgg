@@ -207,6 +207,25 @@ test("hero detail: patch changes from the official notes, marked against the ref
   await expect(page.locator("#patches [data-note]").first().locator("[data-verdict]")).toHaveText("Mixed");
 });
 
+test("hero detail: an unannounced hotfix shows the talent and its numbers old → new, no link (#62)", async ({ page }) => {
+  await page.goto("./heroes/chromie/");
+  const hotfix = page.locator("#patches [data-note='2.55.17.97771']");
+  await expect(hotfix).toHaveAttribute("data-kind", "hotfix");
+  await expect(hotfix.locator("[data-verdict]")).toHaveText("핫픽스");
+  await expect(hotfix).toContainText("공지 없는 핫픽스 2.55.17.97771");
+  await expect(hotfix.locator("[data-status]")).toHaveText("현재 통계 기준");
+  await expect(hotfix.locator("a")).toHaveCount(0);
+  await expect(hotfix).toContainText("다시 처음으로");
+  await expect(hotfix.locator("[data-change]").first()).toHaveText(/−0\.55 → −0\.5/);
+  await expect(page.locator("#patches [data-note='2.55.17.97650']")).toContainText("만성적인 현상");
+
+  await page.goto("/en/hots/heroes/chromie/");
+  const en = page.locator("#patches [data-note='2.55.17.97771']");
+  await expect(en.locator("[data-verdict]")).toHaveText("Hotfix");
+  await expect(en).toContainText("Unannounced hotfix 2.55.17.97771");
+  await expect(en).toContainText("Once Again the First Time");
+});
+
 test("hero detail: unknown slug is a 404 page with a way back", async ({ page }) => {
   await page.goto("./heroes/nobody/");
   await expect(page.locator("#meta-line")).toContainText("영웅이 없습니다");
