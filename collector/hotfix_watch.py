@@ -7,7 +7,9 @@ into data/hotfixes.json. The first run only remembers the build: there is nothin
 
 from __future__ import annotations
 
+import asyncio
 import json
+import shutil
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -57,6 +59,38 @@ def _hp(h: str) -> str:
     return f"{h[:2]}/{h[2:4]}/{h}"
 
 
+def casccdn_lister(s: HotfixSettings) -> Lister:
+    """List a build with tools/hotfix/bin/casccdn; its cache (encoding + root, ~150 MB a build)
+    is deleted afterwards. A failed listing raises: an empty one would read as "no files"."""
+
+    async def list_build(b: BuildInfo) -> str:
+        cache = s.work_dir / "casc"
+        try:
+            proc = await asyncio.create_subprocess_exec(
+                str(s.casccdn),
+                str(cache),
+                b.build_config,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE,
+            )
+            out, err = await proc.communicate()
+            if proc.returncode != 0:
+                raise RuntimeError(f"casccdn failed: {err.decode(errors='replace')[-300:]}")
+            return out.decode("utf-8", errors="replace")
+        finally:
+            shutil.rmtree(cache, ignore_errors=True)
+
+    return list_build
+
+
+async def live_archives(s: HotfixSettings, http: httpx.AsyncClient, cdn_config: str) -> list[str]:
+    """The archives of a CDN config: the live one resolves old builds' files too (an old
+    config can 404)."""
+    c = await http.get(f"{s.cdn_base}/config/{_hp(cdn_config)}")
+    c.raise_for_status()
+    return parse_archives(c.text)
+
+
 async def watch_once(
     s: HotfixSettings, http: httpx.AsyncClient, lister: Lister, *, now: datetime
 ) -> WatchResult:
@@ -91,10 +125,7 @@ async def watch_once(
     changed = changed_hero_xml(old_rows, new_rows)
     files: list[tuple[str, str]] = []
     if changed:
-        c = await http.get(f"{s.cdn_base}/config/{_hp(cur.cdn_config)}")
-        c.raise_for_status()
-        # the current CDN config's archives resolve old builds' files too (an old config can 404)
-        archives = parse_archives(c.text)
+        archives = await live_archives(s, http, cur.cdn_config)
         rows = [row for pair in changed for row in pair]
         got = await fetch_files(http, s.cdn_base, archives, rows, s.work_dir / "idx")
         files = [(got[o.ckey], got[n.ckey]) for o, n in changed]

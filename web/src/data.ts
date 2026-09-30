@@ -203,8 +203,19 @@ export interface Hotfix {
   /** when the build first appeared on Blizzard's CDN */
   first_seen: string;
   parser: number;
-  /** by API hero name */
-  heroes: Record<string, { talent: string; ko: string | null; en: string | null; changes: { old: string; new: string }[] }[]>;
+  /** by API hero name: base stats first, then abilities, then talents (collector/hotfixes.py) */
+  heroes: Record<string, HotfixItem[]>;
+}
+type Words = { ko: string; en: string };
+export interface HotfixItem {
+  kind: "base" | "ability" | "talent";
+  id: string;
+  /** null for the base item: each change carries its stat's word instead */
+  ko: string | null;
+  en: string | null;
+  /** abilities: Q W E R D */
+  key?: string;
+  changes: { old: string; new: string; label?: Words }[];
 }
 /** data/matchups/<slug>.json — Storm League, one hero per file, collected every other day (collector/matchups.py). */
 export interface MatchupsFile {

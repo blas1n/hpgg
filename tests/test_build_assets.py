@@ -364,6 +364,10 @@ def test_main_writes_english_names_next_to_the_korean_ones(
     talents = json.loads((data / "talents" / "abathur.json").read_text())
     assert talents["talents"]["AbathurPressureConvergence"]["en"] == "Pressure Convergence"
     assert "enus" in talents["source"]
+    # the ids the hotfix diff names changes by (#62) ride along in the same file
+    assert talents["game"]["unit"] == ba.hero_index(HERODATA)["abathur"][1].get(
+        "unitId", "HeroAbathur"
+    )
 
 
 REPO_DATA = Path(__file__).parents[1] / "data"
@@ -472,3 +476,158 @@ def test_every_hero_has_the_universe_of_the_official_heroes_page() -> None:
     assert wrong == {}
     # heroes released after the snapshot are not in it; they keep heroes-data's value
     assert sum(h["slug"].replace("-", "") in by_key for h in heroes) == 90
+
+
+def test_game_ids_name_each_ability_with_its_hotkey_and_the_units_resources() -> None:
+    # 97039 shapes: Fel Claws is three buttons (First, then Second/Third as sub-abilities)
+    herodata = {
+        "MalGanis": {
+            "unitId": "HeroMalGanis",
+            "weapons": [{"nameId": "HeroMalGanisWeapon"}],
+            "abilities": {
+                "basic": [
+                    {
+                        "nameId": "MalGanisFelClawsFirst",
+                        "buttonId": "MalGanisFelClawsFirst",
+                        "abilityType": "Q",
+                    },
+                    {
+                        "nameId": "MalGanisNightRush",
+                        "buttonId": "MalGanisNightRush",
+                        "abilityType": "E",
+                    },
+                ],
+                "heroic": [
+                    {
+                        "nameId": "MalGanisCarrionSwarm",
+                        "buttonId": "MalGanisCarrionSwarm",
+                        "abilityType": "Heroic",
+                    }
+                ],
+                "trait": [
+                    {
+                        "nameId": "MalGanisVampiricTouch",
+                        "buttonId": "MalGanisVampiricTouch",
+                        "abilityType": "Trait",
+                    }
+                ],
+                "mount": [{"nameId": "Mount", "buttonId": "SummonMount", "abilityType": "Z"}],
+            },
+            "subAbilities": [
+                {
+                    "MalGanisFelClawsFirst|MalGanisFelClawsFirst|Q": {
+                        "basic": [
+                            {
+                                "nameId": "MalGanisFelClawsSecond",
+                                "buttonId": "MalGanisFelClawsSecond",
+                                "abilityType": "Q",
+                            }
+                        ]
+                    },
+                    "MalGanisNightRush|MalGanisNightRush|E": {
+                        "basic": [
+                            {
+                                "nameId": "MalGanisNightRushCancel",
+                                "buttonId": "MalGanisNightRushCancel",
+                                "abilityType": "E",
+                            }
+                        ]
+                    },
+                }
+            ],
+        }
+    }
+
+    def strings(names: dict[str, str], life: str, energy: str) -> dict:
+        return {
+            "gamestrings": {
+                "abiltalent": {"name": {f"{k}|{k}|Q|False": v for k, v in names.items()}},
+                "unit": {"lifetype": {"MalGanis": life}, "energytype": {"MalGanis": energy}},
+            }
+        }
+
+    kokr = strings(
+        {
+            "MalGanisFelClawsFirst": "지옥 발톱",
+            "MalGanisFelClawsSecond": "지옥 발톱",
+            "MalGanisNightRush": "밤의 질주",
+            "MalGanisNightRushCancel": "취소",
+            "MalGanisCarrionSwarm": "썩은 고기 떼",
+            "MalGanisVampiricTouch": "흡혈의 손길",
+        },
+        "생명력",
+        "마나",
+    )
+    enus = strings(
+        {
+            "MalGanisFelClawsFirst": "Fel Claws",
+            "MalGanisNightRush": "Night Rush",
+            "MalGanisVampiricTouch": "Vampiric Touch",
+            "MalGanisCarrionSwarm": "Carrion Swarm",
+        },
+        "Health",
+        "Mana",
+    )
+    got = ba.hero_game_ids(herodata, kokr, [{"name": "Mal'Ganis", "slug": "mal-ganis"}], enus)
+    assert got["mal-ganis"] == {
+        "unit": "HeroMalGanis",
+        "weapons": ["HeroMalGanisWeapon"],
+        "life": {"ko": "생명력", "en": "Health"},
+        "energy": {"ko": "마나", "en": "Mana"},
+        "abilities": {
+            # the buttons of one ability share their name: keyed by their common id prefix
+            "MalGanisFelClaws": {"ko": "지옥 발톱", "en": "Fel Claws", "key": "Q"},
+            "MalGanisNightRush": {"ko": "밤의 질주", "en": "Night Rush", "key": "E"},
+            "MalGanisCarrionSwarm": {"ko": "썩은 고기 떼", "en": "Carrion Swarm", "key": "R"},
+            "MalGanisVampiricTouch": {"ko": "흡혈의 손길", "en": "Vampiric Touch", "key": "D"},
+        },
+    }
+
+
+def test_ability_ids_are_the_heros_own_and_never_an_empty_prefix() -> None:
+    # 97039 Muradin: the trait and a talent's replacement ("Stoneform") share the name 재기의 바람;
+    # their common prefix is "" and would claim every changed number of every hero
+    herodata = {
+        "Muradin": {
+            "unitId": "HeroMuradin",
+            "abilities": {
+                "trait": [
+                    {
+                        "nameId": "MuradinSecondWind",
+                        "buttonId": "MuradinSecondWind",
+                        "abilityType": "Trait",
+                    }
+                ],
+                "heroic": [
+                    {
+                        "nameId": "MuradinAvatar",
+                        "buttonId": "MuradinAvatar",
+                        "abilityType": "Heroic",
+                    },
+                    {
+                        "nameId": "MuradinAvatarTwo",
+                        "buttonId": "MuradinAvatarTwo",
+                        "abilityType": "Heroic",
+                    },
+                ],
+            },
+            "subAbilities": [
+                {
+                    "MuradinMasteryPassiveStoneform|MuradinSecondWindStoneformTalent": {
+                        "trait": [
+                            {"nameId": "Stoneform", "buttonId": "Stoneform", "abilityType": "Trait"}
+                        ]
+                    }
+                }
+            ],
+        }
+    }
+    names = {
+        "MuradinSecondWind": "재기의 바람",
+        "Stoneform": "재기의 바람",
+        "MuradinAvatar": "화신",
+        "MuradinAvatarTwo": "화신",
+    }
+    s = {"gamestrings": {"abiltalent": {"name": {f"{k}|{k}|D|False": v for k, v in names.items()}}}}
+    got = ba.hero_game_ids(herodata, s, [{"name": "Muradin", "slug": "muradin"}], s)["muradin"]
+    assert set(got["abilities"]) == {"MuradinSecondWind", "MuradinAvatar"}

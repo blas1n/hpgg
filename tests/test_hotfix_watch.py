@@ -16,7 +16,7 @@ import pytest
 import respx
 
 from collector.cdn import BuildInfo
-from collector.hotfix_watch import HotfixSettings, watch_once
+from collector.hotfix_watch import HotfixSettings, casccdn_lister, watch_once
 
 FIX = Path(__file__).parent / "fixtures" / "hotfix"
 CDN = "http://cdn.test/tpr/Hero-Live-a"
@@ -162,3 +162,24 @@ async def test_a_lost_listing_of_the_previous_build_reseeds_instead_of_guessing(
         ribbit.mock(return_value=httpx.Response(200, text=_versions("2.55.17.97650", "b2" * 16)))
         assert (await watch_once(settings, http, lister, now=NOW)).outcome == "seeded"
     assert not (settings.data_dir / "hotfixes.json").exists()
+
+
+async def test_the_casccdn_lister_returns_its_listing_and_leaves_no_cache(tmp_path: Path) -> None:
+    fake = tmp_path / "casccdn"
+    fake.write_text(
+        '#!/bin/sh\nmkdir -p "$1" && touch "$1/encoding"\nprintf "%s\\t%s\\n" "a.xml" "$2"\n'
+    )
+    fake.chmod(0o755)
+    s = HotfixSettings(work_dir=tmp_path / "work", casccdn=fake)
+    out = await casccdn_lister(s)(BuildInfo("2.57.0.98304", "bc" * 16, "cc" * 16))
+    assert out == f"a.xml\t{'bc' * 16}\n"
+    assert not (tmp_path / "work" / "casc").exists()  # ~150 MB a build: deleted
+
+
+async def test_a_failing_casccdn_is_an_error_not_an_empty_listing(tmp_path: Path) -> None:
+    fake = tmp_path / "casccdn"
+    fake.write_text("#!/bin/sh\necho 'open failed err=2' >&2\nexit 1\n")
+    fake.chmod(0o755)
+    s = HotfixSettings(work_dir=tmp_path / "work", casccdn=fake)
+    with pytest.raises(RuntimeError, match="open failed"):
+        await casccdn_lister(s)(BuildInfo("v", "b", "c"))

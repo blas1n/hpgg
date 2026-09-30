@@ -97,13 +97,14 @@ def test_a_change_belongs_to_the_talent_its_entry_is_named_after() -> None:
     )
     assert got["Chen"] == [
         {
-            "talent": "ChenMasteryKegSmashATouchOfHoney",
+            "kind": "talent",
+            "id": "ChenMasteryKegSmashATouchOfHoney",
             "ko": "꿀 바르기",
             "en": "A Touch of Honey",
             "changes": [{"old": "-0.3", "new": "-0.2"}],  # the same pair once
         }
     ]
-    assert got["Yrel"][0]["talent"] == "YrelVindicationLightOfKarabor"
+    assert got["Yrel"][0]["id"] == "YrelVindicationLightOfKarabor"
     assert got["Yrel"][0]["changes"] == [
         {"old": "0.45", "new": "0.4"},
         {"old": "0.9", "new": "0.8"},
@@ -113,7 +114,7 @@ def test_a_change_belongs_to_the_talent_its_entry_is_named_after() -> None:
 def test_a_change_on_a_shared_effect_belongs_to_the_talent_its_validator_names() -> None:
     # ChromieSandEchoWeaponDamage is the ability; the modifier is gated on the talent's quest
     got = hero_changes([(_xml("97605", "chromie"), _xml("97650", "chromie"))], INDEX)
-    by_talent = {t["talent"]: t["changes"] for t in got["Chromie"]}
+    by_talent = {t["id"]: t["changes"] for t in got["Chromie"]}
     assert by_talent["ChromieSandBlastOnceAgainTheFirstTime"] == [{"old": "-0.55", "new": "-0.5"}]
     assert by_talent["ChromieTimeTrapChronicConditions"] == [
         {"old": "0.2", "new": "0.25"},
@@ -178,7 +179,8 @@ def test_a_talent_named_inside_an_ability_entry_claims_it() -> None:
     assert got == {
         "Gall": [
             {
-                "talent": "GallDoubleTrouble",
+                "kind": "talent",
+                "id": "GallDoubleTrouble",
                 "ko": "이중 난관",
                 "en": "Double Trouble",
                 "changes": [{"old": "0.5", "new": "1"}],
@@ -200,7 +202,7 @@ def test_a_generic_talent_does_not_hide_the_heros_prefix() -> None:
         {"chromie": "Chromie"},
     )
     got = hero_changes([(_xml("97650", "chromie"), _xml("97771", "chromie"))], index)
-    assert [t["talent"] for t in got["Chromie"]] == ["ChromieSandBlastOnceAgainTheFirstTime"]
+    assert [t["id"] for t in got["Chromie"]] == ["ChromieSandBlastOnceAgainTheFirstTime"]
 
 
 def test_records_are_kept_newest_first_and_a_rerun_replaces_its_build(tmp_path: Path) -> None:
@@ -239,3 +241,69 @@ def test_a_number_changed_the_same_way_outside_any_talent_is_the_heros_not_the_t
     changes = numeric_changes(_xml("97771", "malganis"), _xml("98304", "malganis"))
     assert ("MalGanisWeaponDamage", "0.1", "0.15") in _pairs(changes)  # the control: it is there
     assert hero_changes([(_xml("97771", "malganis"), _xml("98304", "malganis"))], index) == {}
+
+
+# --- base stats and abilities (parser 3): checked against the official 2.57 note -------------
+
+REAL = TalentIndex.load(Path(__file__).parent.parent / "data")
+
+
+def _got(name: str) -> list[dict]:
+    got = hero_changes([(_xml("97771", name), _xml("98304", name))], REAL)
+    assert len(got) == 1
+    return next(iter(got.values()))
+
+
+def _item(items: list[dict], kind: str, ko: str | None = None) -> dict:
+    return next(i for i in items if i["kind"] == kind and (ko is None or i["ko"] == ko))
+
+
+def test_a_base_stat_is_named_by_the_games_own_word_once_for_every_form() -> None:
+    # note: "생명력이 1,698에서 1,780으로 증가" — the unit and its dragon form both carry it
+    items = _got("alexstrasza")
+    base = _item(items, "base")
+    assert base["changes"] == [
+        {"old": "1698", "new": "1780", "label": {"ko": "생명력", "en": "Health"}}
+    ]
+    assert _item(items, "talent", "과보호")["changes"] == [{"old": "0.7", "new": "0.5"}]
+    assert [i["kind"] for i in items][0] == "base"  # base first, as the notes do
+
+
+def test_an_ability_is_named_with_its_hotkey() -> None:
+    # note: 밤의 질주 [E] "시전 시간이 0.75초에서 0.625초로 감소"
+    items = _got("malganis")
+    rush = _item(items, "ability", "밤의 질주")
+    assert (rush["key"], rush["changes"]) == ("E", [{"old": "0.75", "new": "0.625"}])
+    # the leech on every damage effect is still nobody's: the trait's number is not shown as
+    # a Fel Claws or talent change
+    claws = next((i for i in items if i["ko"] == "지옥 발톱"), None)
+    assert claws is None or {"old": "0.1", "new": "0.15"} not in claws["changes"]
+    assert not any(i["kind"] == "talent" for i in items)
+
+
+def test_talents_still_win_over_the_ability_their_entry_starts_with() -> None:
+    # GarroshWreckingBallUnrivaledStrengthDamage starts with the ability GarroshWreckingBall
+    items = _got("garrosh")
+    assert _item(items, "talent", "비할 데 없는 힘")["changes"] == [{"old": "1.25", "new": "0.75"}]
+    assert _item(items, "talent", "살상의 기회")["changes"] == [{"old": "0.7", "new": "1"}]
+    assert not any(i["kind"] == "ability" and i["ko"] == "파쇄추" for i in items)
+
+
+def test_weapon_period_is_shown_as_attacks_per_second() -> None:
+    old = (
+        '<Catalog><CUnit id="HeroMalGanis"><LifeMax value="2600"/></CUnit>'
+        '<CWeaponLegacy id="HeroMalGanisWeapon"><DisplayEffect value="MalGanisWeaponDamage"/>'
+        '<Range value="1.3"/><Period value="1.1"/></CWeaponLegacy>'
+        '<CEffectDamage id="MalGanisWeaponDamage"><Amount value="96"/></CEffectDamage></Catalog>'
+    )
+    new = old.replace('"1.1"', '"1"').replace('"96"', '"100"').replace('"1.3"', '"1.5"')
+    got = hero_changes([(old, new)], REAL)["Mal'Ganis"]
+    assert _item(got, "base")["changes"] == [
+        {
+            "old": "1.3",
+            "new": "1.5",
+            "label": {"ko": "일반 공격 사거리", "en": "Basic Attack Range"},
+        },
+        {"old": "0.91", "new": "1", "label": {"ko": "공격 속도", "en": "Attack Speed"}},
+        {"old": "96", "new": "100", "label": {"ko": "일반 공격력", "en": "Basic Attack Damage"}},
+    ]
