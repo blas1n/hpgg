@@ -218,9 +218,6 @@ The same data gives different tiers under a different formula. This site always 
     matchupsSub: (patch: string, date: string, hero: string, wr: string, games: string) =>
       `patch ${patch} · collected ${date} · against ${hero}'s win rate of ${wr} (${plural(games, "game", "games")})`,
     matchupsLater: "Matchups appear after the next scheduled collection (Storm League, every other day)",
-    summaryChange: "Vs the previous patch",
-    summaryChangeValue: (d: string) => `win rate ${d}`,
-    summaryMap: "Best battleground",
     counters: "Hardest to play against",
     countersNote: "win rate gap with them on the enemy team",
     synergies: "Best teammates",
