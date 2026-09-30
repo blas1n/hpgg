@@ -127,3 +127,16 @@ describe("heroBuilds order", () => {
     expect(heroBuilds(file, null, "Illidan", "ko").map((b) => b.games)).toEqual([409, 386, 306]);
   });
 });
+
+describe("heroSummary prevWinRate", () => {
+  it("carries the previous patch's win rate when the hero was ranked there", () => {
+    const s = heroSummary(qm, qmPrev, "Illidan", 200);
+    const prev = qmPrev.rows.find((r) => r.hero === "Illidan" && r.map === "all")!;
+    expect(s.kind === "ranked" && s.prevWinRate).toBe(prev.win_rate);
+  });
+  it("null without a previous patch or when the hero was unranked there", () => {
+    expect(heroSummary(qm, null, "Illidan", 200)).toMatchObject({ prevWinRate: null });
+    const prev: Snapshot = { ...qmPrev, rows: qmPrev.rows.filter((r) => r.hero !== "Illidan") };
+    expect(heroSummary(qm, prev, "Illidan", 200)).toMatchObject({ prevWinRate: null });
+  });
+});

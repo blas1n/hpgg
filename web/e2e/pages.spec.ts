@@ -175,6 +175,31 @@ test("hero detail: no matchups file yet says so instead of an empty list", async
   await expect(page.locator("nav[data-subnav] a[href='#matchups-title']")).toHaveCount(0);
 });
 
+test("hero detail: summary lines under the stats say the numbers, not prose (#37)", async ({ page }) => {
+  await page.goto("./heroes/abathur/");
+  const watch = page.locator("#summary [data-line=watch]");
+  const pair = page.locator("#summary [data-line=pair]");
+  await expect(watch).toContainText("상대하기 어려운 영웅");
+  await expect(watch).toContainText("키히라");
+  await expect(watch).toContainText("-7.5%p");
+  await expect(watch).toContainText("330게임");
+  await expect(watch).toContainText("폭풍 리그");
+  await expect(pair).toContainText("잘 맞는 영웅");
+  await expect(pair).toContainText("사무로");
+  await expect(pair).toContainText("+11.7%p");
+  await watch.getByRole("link", { name: "키히라" }).click();
+  await expect(page).toHaveURL(/\/heroes\/qhira\/$/);
+
+  // no matchups file: the change against the previous patch and the best map only
+  await page.goto("./heroes/illidan/?mode=sl");
+  await expect(page.locator("#summary [data-line]")).toHaveCount(2);
+  await expect(page.locator("#summary [data-line=change]")).toContainText("직전 패치 대비");
+  await expect(page.locator("#summary [data-line=map]")).toContainText("저주받은 골짜기");
+
+  await page.goto("/en/hots/heroes/abathur/");
+  await expect(page.locator("#summary [data-line=watch]")).toContainText("Hardest to play against");
+});
+
 test("hero detail: unknown slug is a 404 page with a way back", async ({ page }) => {
   await page.goto("./heroes/nobody/");
   await expect(page.locator("#meta-line")).toContainText("영웅이 없습니다");
