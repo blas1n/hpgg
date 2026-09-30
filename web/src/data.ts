@@ -192,6 +192,20 @@ export interface PatchGroup {
   ability: { ko: string; en: string | null } | null;
   changes: { ko: string; en: string | null; direction: PatchDirection }[];
 }
+/** data/hotfixes.json — builds shipped without notes, their changed talent numbers (collector/hotfixes.py, #62). */
+export interface HotfixesFile {
+  /** newest build first */
+  builds: Hotfix[];
+}
+export interface Hotfix {
+  build: string;
+  previous: string;
+  /** when the build first appeared on Blizzard's CDN */
+  first_seen: string;
+  parser: number;
+  /** by API hero name */
+  heroes: Record<string, { talent: string; ko: string | null; en: string | null; changes: { old: string; new: string }[] }[]>;
+}
 /** data/matchups/<slug>.json — Storm League, one hero per file, collected every other day (collector/matchups.py). */
 export interface MatchupsFile {
   hero: string;

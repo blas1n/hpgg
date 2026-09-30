@@ -2,13 +2,15 @@ import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
-import type { PatchNotesFile } from "../src/data";
+import type { HotfixesFile, PatchNotesFile } from "../src/data";
 import { PATCH_NOTES_SHOWN, heroPatchNotes } from "../src/lib/patchnotes";
 
 const dataDir = join(dirname(fileURLToPath(import.meta.url)), "e2e-data");
 // the collector's output for the 2026-09-29, 2026-07-21 and 2026-05-12 official notes
 const file = JSON.parse(readFileSync(join(dataDir, "patchnotes.json"), "utf-8")) as PatchNotesFile;
 const REF = "2.55.17.98025";
+// tools/hotfix_diff.py output for 2.55.17.97650, 97771 (both unannounced) and 98025 (no hero data)
+const hotfixes = JSON.parse(readFileSync(join(dataDir, "hotfixes.json"), "utf-8")) as HotfixesFile;
 
 describe("heroPatchNotes", () => {
   it("the hero's notes, newest first, with the official title, link and date", () => {
@@ -62,5 +64,41 @@ describe("heroPatchNotes", () => {
     const one: PatchNotesFile = JSON.parse(JSON.stringify(file));
     one.notes[0]!.build = null;
     expect(heroPatchNotes(one, "Abathur", REF, "ko").notes[0]!.status).toBeNull();
+  });
+
+  it("an unannounced hotfix sits between the notes by date, as the talent and its numbers old → new", () => {
+    const v = heroPatchNotes(file, "Chromie", REF, "ko", hotfixes);
+    // Chromie is in the 2026-07-21 note, not in the 2026-09-29 one
+    expect(v.notes.map((n) => [n.kind, n.id])).toEqual([
+      ["hotfix", "2.55.17.97771"],
+      ["hotfix", "2.55.17.97650"],
+      ["note", "24291432"],
+    ]);
+    const h = v.notes[1]!;
+    expect(h).toMatchObject({ title: "2.55.17.97650", url: null, verdict: null, published: "2026-07-24T17:21:04Z" });
+    expect(h.groups).toEqual([
+      { section: "talents", level: null, ability: "만성적인 현상", changes: [
+        { text: "0.2 → 0.25", direction: "neutral" },
+        { text: "−0.2 → −0.25", direction: "neutral" },
+      ] },
+      { section: "talents", level: null, ability: "다시 처음으로", changes: [{ text: "−0.55 → −0.5", direction: "neutral" }] },
+    ]);
+  });
+
+  it("a hotfix is marked against the reference patch like a note", () => {
+    // 97771 is Chromie's newest change the 98025 stats include
+    expect(heroPatchNotes(file, "Chromie", REF, "ko", hotfixes).notes.map((n) => n.status)).toEqual(["current", null, null]);
+    // per hero: Chen's newest change in the stats is 97650, although Chromie's 97771 is newer
+    expect(heroPatchNotes(file, "Chen", REF, "ko", hotfixes).notes.map((n) => [n.kind, n.status])[0]).toEqual(["hotfix", "current"]);
+  });
+
+  it("another hero's hotfix or a build with no hero changes (98025) takes no mark from the notes", () => {
+    expect(heroPatchNotes(file, "Abathur", REF, "ko", hotfixes).notes.map((n) => n.status)).toEqual(["collecting", "current"]);
+  });
+
+  it("English pages name the talent in English; a hero no hotfix touched sees only notes", () => {
+    const en = heroPatchNotes(file, "Chen", REF, "en", hotfixes).notes.find((n) => n.kind === "hotfix")!;
+    expect(en.groups[0]!.ability).toBe("A Touch of Honey");
+    expect(heroPatchNotes(file, "Abathur", REF, "ko", hotfixes).notes.map((n) => n.kind)).toEqual(["note", "note"]);
   });
 });
