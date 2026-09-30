@@ -204,6 +204,12 @@ async def _collect_party(
     return raw
 
 
+def _write_atomic(path: Path, obj: Any) -> None:
+    tmp = path.with_suffix(".json.tmp")
+    tmp.write_text(json.dumps(obj, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
+    tmp.replace(path)
+
+
 def _carried_regions(
     data_dir: Path, *, patch: str, fresh: dict[str, dict[str, Any]]
 ) -> dict[str, dict[str, Any]]:
@@ -409,13 +415,22 @@ async def _run_stats(c: HPClient, settings: Settings, *, collected_at: str, slee
         party_raw = await _collect_party(
             c, settings, patch=patch, collected_at=collected_at, sleep=sleep, snapshots=snapshots
         )
+        prev_meta = load_meta(settings.data_dir)
+        reference = build_meta(
+            prev_meta, patch=patch, collected_at=collected_at, snapshots=snapshots
+        )["reference_patch"]
+        # regions follow the one reference patch like every page (#14): while the new patch is
+        # thin that is the previous one, whose files the pages read from data/previous/
         region_raw, region_snaps = await _collect_region(
-            c, settings, patch=patch, collected_at=collected_at, sleep=sleep
+            c, settings, patch=reference, collected_at=collected_at, sleep=sleep
         )
         raw_by_key.update(region_raw)
-        snapshots.update(region_snaps)
+        region_previous: dict[str, dict[str, Any]] = {}
+        if reference == patch:
+            snapshots.update(region_snaps)
+        else:
+            region_previous = region_snaps
         snapshots.update(_carried_regions(settings.data_dir, patch=patch, fresh=snapshots))
-        prev_meta = load_meta(settings.data_dir)
         meta = build_meta(prev_meta, patch=patch, collected_at=collected_at, snapshots=snapshots)
         # builds follow the one reference patch, like every page (thin new patch → previous)
         builds_result = await _collect_builds(
@@ -443,6 +458,11 @@ async def _run_stats(c: HPClient, settings: Settings, *, collected_at: str, slee
         prev_meta=prev_meta,
         extra_files=extra,
     )
+    if region_previous:
+        previous = settings.data_dir / "previous"
+        previous.mkdir(parents=True, exist_ok=True)
+        for key, snap in region_previous.items():
+            _write_atomic(previous / f"{key}.json", snap)
     if builds_result is not None:
         day_dir_b = settings.snapshot_out_dir / collected_at[:10]
         _write_gz(day_dir_b / "raw_builds.json.gz", builds_result[0])
@@ -450,7 +470,7 @@ async def _run_stats(c: HPClient, settings: Settings, *, collected_at: str, slee
     day_dir = settings.snapshot_out_dir / collected_at[:10]
     for key, raw in raw_by_key.items():
         _write_gz(day_dir / f"raw_{key}.json.gz", raw)
-        _write_gz(day_dir / f"{key}.json.gz", snapshots[key])
+        _write_gz(day_dir / f"{key}.json.gz", snapshots.get(key) or region_previous[key])
     for key, raw in party_raw.items():
         _write_gz(day_dir / f"raw_{key}.json.gz", raw)
     (day_dir / "meta.json").parent.mkdir(parents=True, exist_ok=True)
