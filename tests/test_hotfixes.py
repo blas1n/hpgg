@@ -221,3 +221,21 @@ def test_records_are_kept_newest_first_and_a_rerun_replaces_its_build(tmp_path: 
     data = json.loads(path.read_text("utf-8"))
     assert [r["build"] for r in data["builds"]] == ["2.55.17.97771", "2.55.17.97650"]
     assert data["builds"][1]["heroes"] == {"Chen": []}
+
+
+def test_a_number_changed_the_same_way_outside_any_talent_is_the_heros_not_the_talents() -> None:
+    # 2.57.0.98304: Vampiric Touch leech 10% → 15% sits on every damage effect, the talents'
+    # too; the talents did not change, the trait did (the page shows talents only)
+    index = TalentIndex(
+        {
+            "mal-ganis": {
+                "MalGanisNecroticEmbraceEchoOfDoom": {"ko": "파멸의 메아리", "en": "x"},
+                "MalGanisNightRushSpreadingPlague": {"ko": "퍼져나가는 역병", "en": "y"},
+                "MalGanisNecroticEmbracePlagueBats": {"ko": "역병 박쥐", "en": "z"},
+            }
+        },
+        {"mal-ganis": "Mal'Ganis"},
+    )
+    changes = numeric_changes(_xml("97771", "malganis"), _xml("98304", "malganis"))
+    assert ("MalGanisWeaponDamage", "0.1", "0.15") in _pairs(changes)  # the control: it is there
+    assert hero_changes([(_xml("97771", "malganis"), _xml("98304", "malganis"))], index) == {}

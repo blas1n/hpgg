@@ -112,6 +112,14 @@ docker build -f deploy/Dockerfile -t hpgg-api:ci .               # the server im
 cd web && npx tsc --noEmit && npm run test:cov && npm run e2e     # E2E_PORT=4391 when another checkout is serving 4173
 ```
 
+## Hotfix watcher (unannounced builds, #62)
+Blizzard ships balance hotfixes without notes (2.55.17.97650: Chen, Gall, Chromie, Yrel; 2.57.0.98304: Auriel). The watcher runs on the Mac mini every 30 minutes: launchd `com.blas1n.hpgg-hotfix` (`tools/hotfix/com.blas1n.hpgg-hotfix.plist`) → `uv run python tools/hotfix_watch.py` in its **own clone `~/Works/hpgg-bot`** (never the dev checkout). Log: `~/Library/Logs/hpgg-hotfix.log`.
+- **Flow** (`collector/hotfix_watch.py`): Ribbit `us.patch.battle.net:1119/hero/versions` → new build? → list it with `tools/hotfix/bin/casccdn` (CascLib, list only, ~150 MB downloaded and deleted) → hero XML whose content hash changed since the last build seen → fetch only those by byte range (`collector/cdn.py`, MD5-checked) → `collector/hotfixes.py` → `data/hotfixes.json` → commit + push to main (deploys). The first run only remembers the build (`data/.tmp/hotfix/state.json`, listings in `listings/`).
+- **What is shown**: a talent's numbers old → new, nothing else. Numbers no talent claims are left out (base stats, abilities, heroes missing from `data/talents`, e.g. Xal'atath before heroes-data ships 2.57). A number changed the same way outside every talent too is the hero's (Mal'Ganis's leech on every damage effect), not the talents'. A build an official note belongs to shows as the note.
+- **Checked against the 2.57 note** (97771 → 98304, 2026-09-30): Garrosh 4/4, Qhira 3/3, Whitemane 2/2, Yrel 4/4 talent numbers match; Blizzard rounds (Yrel Velen's Chosen 0.075 → "8%").
+- **Setup** (done 2026-09-30): `git clone git@github.com:blas1n/hpgg.git ~/Works/hpgg-bot && cd ~/Works/hpgg-bot && uv sync && tools/hotfix/build.sh`, then install the plist (its header). CascLib is pinned in `build.sh`; cmake comes from `uvx`.
+- **Traps**: never extract with CascLib (whole 256 MB archives: 13 GB in the spike). The current CDN config's archives resolve old builds' files; an old CDN config can 404. Old build configs: BlizzTrack `blizztrack.com/api/manifest/hero/seqn?file=versions&page=N` (needs a browser User-Agent).
+
 ## Server (api.hpgg.win)
 HPGG's application backend. Today it serves player search; accounts (#28, Battle.net login) and community (#7) are meant to land here as further feature modules, not as new services.
 

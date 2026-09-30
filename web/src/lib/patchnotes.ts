@@ -70,8 +70,10 @@ export function heroPatchNotes(
       },
     });
   }
-  // a build that changed no hero's numbers (98025, cosmetic) is on no page and takes no mark
-  for (const h of (hotfixes?.builds ?? []).filter((b) => Object.keys(b.heroes).length > 0)) {
+  // a build that changed no hero's numbers (98025, cosmetic) is on no page and takes no mark;
+  // a build an official note belongs to is shown as the note
+  const noted = new Set((file?.notes ?? []).map((n) => n.build));
+  for (const h of (hotfixes?.builds ?? []).filter((b) => Object.keys(b.heroes).length > 0 && !noted.has(b.build))) {
     items.push({
       at: h.first_seen,
       build: h.build,
