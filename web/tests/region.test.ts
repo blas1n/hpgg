@@ -81,10 +81,21 @@ describe("region files", () => {
   it("sample health per region: thin when under half the heroes pass the floor", () => {
     expect(thinSample(meta, "qm_na")).toBe(true);
     expect(thinSample(meta, "qm_kr")).toBe(false);
-    expect(regionSample(meta, "qm", "na")).toEqual({ collectedAt: "2026-10-01T18:30:00Z", heroes: 90, over: 12, thin: true });
-    expect(regionSample(meta, "qm", "eu")).toBeNull(); // not collected yet
+    expect(regionSample(meta, "qm", "na", "current")).toEqual({ collectedAt: "2026-10-01T18:30:00Z", heroes: 90, over: 12, thin: true });
+    expect(regionSample(meta, "qm", "eu", "current")).toBeNull(); // not collected yet
     // the region's own thinness is a warning only; it never picks the patch
     expect(resolvePatch(meta, "auto").patch).toBe("current");
+  });
+  it("a region is looked up on the patch the view shows: previous-patch regions live in meta.previous_modes", () => {
+    const onOld: Meta = {
+      ...meta,
+      reference_patch: "old",
+      previous_modes: { qm_kr: { matches: 1, heroes: 90, heroes_over_200: 30, collected_at: "2026-09-30T13:18:25Z" } },
+    };
+    expect(regionSample(onOld, "qm", "kr", "previous")).toEqual({ collectedAt: "2026-09-30T13:18:25Z", heroes: 90, over: 30, thin: true });
+    expect(regionSample(onOld, "qm", "na", "previous")).toBeNull(); // NA is on the current patch only
+    expect(regionSample(onOld, "qm", "na", "current")).not.toBeNull();
+    expect(regionSample(meta, "qm", "kr", "previous")).toBeNull(); // meta from before previous_modes
   });
 });
 

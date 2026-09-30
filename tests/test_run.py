@@ -269,6 +269,7 @@ async def test_backfill_previous_writes_previous_and_meta_without_touching_lates
     assert (day / "backfill_2.55.17.97650_raw_qm_solo.json.gz").exists()
     meta = json.loads((s.data_dir / "latest" / "meta.json").read_text())
     assert meta["previous_patch"] == "2.55.17.97650" and meta["current_patch"] == "2.55.17.97771"
+    assert sorted(meta["previous_modes"]) == ["qm", "sl", "sl_high", "sl_low"]
     after = {
         p.name: p.read_bytes() for p in (s.data_dir / "latest").iterdir() if p.name != "meta.json"
     }
@@ -406,6 +407,10 @@ async def test_regions_are_collected_for_the_reference_patch_where_the_pages_rea
     assert (prev["patch"], prev["region"]) == ("2.55.17.97650", "NA")
     assert not (s.data_dir / "latest" / "qm_na.json").exists()
     assert (s.snapshot_out_dir / "2026-09-28" / "raw_qm_na.json.gz").exists()
+    # meta says the region exists on the reference patch (the tier page's region menu reads it)
+    meta = json.loads((s.data_dir / "latest" / "meta.json").read_text())
+    assert meta["previous_modes"]["qm_na"]["collected_at"] == "2026-09-28T00:00:00Z"
+    assert "qm_na" not in meta["modes"]
 
 
 @respx.mock
@@ -697,7 +702,7 @@ async def test_backfill_previous_regions_fetches_each_missing_region_once(
     meta = {"current_patch": "2.55.17.97771", "previous_patch": "2.55.17.97650"}
     s.data_dir.joinpath("latest", "meta.json").write_text(json.dumps(meta))
     s.data_dir.joinpath("previous").mkdir()
-    had = {"patch": "2.55.17.97650", "region": "KR", "rows": []}
+    had = {"patch": "2.55.17.97650", "region": "KR", "matches": 1, "rows": []}
     for m in ("qm", "sl"):
         s.data_dir.joinpath("previous", f"{m}_kr.json").write_text(json.dumps(had))
     assert await run_backfill_previous_regions(s, sleep=fake_sleep, now=lambda: "t") == 0
@@ -716,6 +721,10 @@ async def test_backfill_previous_regions_fetches_each_missing_region_once(
         snap = json.loads((s.data_dir / "previous" / f"{key}.json").read_text())
         assert snap["patch"] == "2.55.17.97650" and snap["region"] == key[-2:].upper()
     assert json.loads((s.data_dir / "previous" / "qm_kr.json").read_text()) == had
+    # the pages read which regions exist on the reference patch from meta, not from the files
+    got = json.loads((s.data_dir / "latest" / "meta.json").read_text())["previous_modes"]
+    assert set(got) == {"qm_kr", "sl_kr", "qm_na", "sl_na", "qm_eu", "sl_eu"}
+    assert got["qm_na"]["collected_at"] == "t" and got["qm_na"]["heroes"] > 0
     n = len(respx.calls)
     assert await run_backfill_previous_regions(s, sleep=fake_sleep, now=lambda: "t") == 0
     assert len(respx.calls) == n  # nothing left to fetch

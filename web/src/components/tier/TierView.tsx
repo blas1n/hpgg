@@ -1,7 +1,7 @@
 "use client";
 
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
-import { assetUrl, hotsHref, loadSnapshot, REGIONS, referencePatch, regionSample, shortDate, snapshotKey, type Bracket, type HeroTable, type MapTable, type Meta, type Mode, type Region } from "@/data";
+import { assetUrl, hotsHref, loadSnapshot, REGIONS, referencePatch, regionSample, shortDate, snapshotKey, type Bracket, type HeroTable, type MapTable, type Meta, type Mode, type PatchChoice, type Region } from "@/data";
 import { useLocale, useT } from "@/i18n/client";
 import type { Locale } from "@/i18n/locale";
 import type { Messages } from "@/i18n/messages";
@@ -201,9 +201,9 @@ export function TierView({ meta, heroes, maps, initial }: { meta: Meta; heroes: 
               className={SELECT}
             >
               {REGIONS.map((r) => (
-                <option key={r} value={r} disabled={r !== "all" && !regionSample(meta, mode, r)}>
+                <option key={r} value={r} disabled={r !== "all" && !regionSample(meta, mode, r, patch)}>
                   {t.common.regions[r]}
-                  {r !== "all" && !regionSample(meta, mode, r) ? t.tier.notCollected : ""}
+                  {r !== "all" && !regionSample(meta, mode, r, patch) ? t.tier.notCollected : ""}
                 </option>
               ))}
             </select>
@@ -241,7 +241,7 @@ export function TierView({ meta, heroes, maps, initial }: { meta: Meta; heroes: 
         )}
       </Card>
 
-      {region !== "all" && <RegionNote meta={meta} mode={mode} region={region} />}
+      {region !== "all" && <RegionNote meta={meta} mode={mode} region={region} patch={patch} />}
 
       {/* clip, not hidden: hidden would make the card a scroll container and the sticky column header would stop */}
       <Card as="div" className="overflow-clip">
@@ -322,9 +322,9 @@ export function TierView({ meta, heroes, maps, initial }: { meta: Meta; heroes: 
 
 
 /** Which region, when it was collected (regions rotate one a day), and how thin its sample is. */
-function RegionNote({ meta, mode, region }: { meta: Meta; mode: Mode; region: Exclude<Region, "all"> }) {
+function RegionNote({ meta, mode, region, patch }: { meta: Meta; mode: Mode; region: Exclude<Region, "all">; patch: PatchChoice }) {
   const t = useT();
-  const s = regionSample(meta, mode, region);
+  const s = regionSample(meta, mode, region, patch);
   if (!s) return null;
   return (
     <p
