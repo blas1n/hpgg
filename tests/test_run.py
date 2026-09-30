@@ -42,7 +42,9 @@ def mock_api(
     def stats(request: httpx.Request) -> httpx.Response:
         q = dict(httpx.QueryParams(request.url.query))
         assert q["group_by_map"] == "true"
-        assert q["timeframe_type"] == "minor" and q["timeframe"] == "2.55.17.97771"
+        # regions follow the reference patch (#14): the previous one while the new one is thin
+        allowed = {"2.55.17.97771", "2.55.17.97650"} if q.get("region") else {"2.55.17.97771"}
+        assert q["timeframe_type"] == "minor" and q["timeframe"] in allowed
         if fail_key == "sl_high" and q.get("league_tier") == "5,6":
             return httpx.Response(500, json={"error": {"code": "server_error", "message": "x"}})
         if fail_key == "solo" and q.get("groupsize") == "Solo":
@@ -372,6 +374,38 @@ async def test_builds_are_collected_for_the_reference_patch(
     assert q["timeframe"] == "2.55.17.97650"
     b = json.loads((s.data_dir / "latest" / "builds.json").read_text())
     assert b["patch"] == "2.55.17.97650"
+
+
+@respx.mock
+async def test_regions_are_collected_for_the_reference_patch_where_the_pages_read_it(
+    tmp_path: Path, raw_by_map, patches_payload, fake_sleep
+) -> None:
+    """A thin new patch: the pages show the previous patch, so the region of the day is
+    collected on it and lands in previous/ (latest/ holds the new patch's files)."""
+    mock_api(thin(raw_by_map), patches_payload)
+    s = settings(tmp_path)
+    s.data_dir.joinpath("latest").mkdir(parents=True)
+    healthy = {"matches": 9000, "heroes": 90, "heroes_over_200": 90}
+    old = {
+        "current_patch": "2.55.17.97650",
+        "previous_patch": None,
+        "modes": {"qm": healthy, "sl": healthy},
+    }
+    s.data_dir.joinpath("latest", "meta.json").write_text(json.dumps(old))
+    assert await run(s, sleep=fake_sleep, now=lambda: "2026-09-28T00:00:00Z") == 0
+    calls = [
+        dict(httpx.QueryParams(c.request.url.query))
+        for c in respx.calls
+        if c.request.url.path.endswith("/heroes/stats") and "region" in str(c.request.url)
+    ]
+    assert [(c["game_type"], c["timeframe"]) for c in calls] == [
+        ("qm", "2.55.17.97650"),
+        ("sl", "2.55.17.97650"),
+    ]
+    prev = json.loads((s.data_dir / "previous" / "qm_na.json").read_text())
+    assert (prev["patch"], prev["region"]) == ("2.55.17.97650", "NA")
+    assert not (s.data_dir / "latest" / "qm_na.json").exists()
+    assert (s.snapshot_out_dir / "2026-09-28" / "raw_qm_na.json.gz").exists()
 
 
 @respx.mock
