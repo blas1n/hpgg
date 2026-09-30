@@ -52,7 +52,7 @@ The whole site shows ONE patch: every page, both modes, brackets, regions, the t
 WRc   = WR + (WRsolo − (pooled_solo − 50) − WR) × m / (m + 1000)   party correction (#36), QM + SL overall only
 WRs   = 50 + (WRc − 50) × n / (n + 500)                shrink small samples toward 50
 score = pick% × (WRs − 50) × 3 + ban% × 1              multiplicative; QM has no ban term
-tiers = heroes with n ≥ 200 (and in heroes_ko.json — see below), sorted by score, cut at cumulative 6/24/54/82/94 % → S/A/B/C/D/F
+tiers = heroes with n ≥ `min_games_for_tier` (collector `MIN_GAMES_FOR_TIER`, 50 since 2026-10-01 — owner: tune as samples allow; patch health stays on `PATCH_HEALTH_GAMES` 200) (and in heroes_ko.json — see below), sorted by score, cut at cumulative 6/24/54/82/94 % → S/A/B/C/D/F
         boundary_i = min(N, max(floor(share_i·N), boundary_{i−1}+1))  (monotonic, ≥1 per tier)
 ```
 Why multiplicative: an additive formula ((WRs−50)+0.15·pick+0.15·ban) reproduces HOTS GG and promotes low-win-rate popular heroes (Brightwing 47.6 % WR → A); 45/90 heroes change tier between the two on the 2026-09-28 fixture (DESIGN-2026-09-28.md). **One formula, no name** (owner, 2026-09-29): the formula presets (#2) were removed — the site prints the formula as maths and never under a person's name (the YouTuber video it came from is a reference in the design doc, not the formula's name). `FORMULA` in `web/src/formula.ts`; `e2e/tierlist.spec.ts` checks there is no formula selector. Tier-table filters: mode, role, region, and in Storm League bracket and map. An old `?preset=` link opens the default view and drops the parameter.
@@ -84,7 +84,7 @@ Error responses and 202 job polling are not charged. `group_by_map=true` is rate
 - Owner decision (Basic plan): a rotation — each day ONE region for QM + SL with `group_by_map` (2 calls). Region = `REGIONS[(day − 2026-09-30) mod 3]` → KR, NA, EU, KR, … (`collector/snapshot.py` `region_for_day`, UTC date of the run). Each region is at most 3 days old; the page prints each region's own date (`meta.modes[<key>].collected_at`).
 - Files `data/latest/{qm,sl}_{kr,na,eu}.json` (carry `"region": "KR"` …; global files `"region": null`). The run carries the other regions' files forward while they are for the same patch; on a patch change they move into `previous/` with everything else and are not carried. A failed region call never fails the run (that region keeps its files and comes round in 3 days). `--previous <build>` stays 4 calls (global only) and keeps previous region files of that same build.
 - Region × bracket is not collected: on the tier table the region select disables the bracket select and vice versa, with the reason printed; `?region=kr|na|eu` (a region in the URL wins over `tier=`). Regions exist for both modes; map filtering works inside a region (group_by_map).
-- A region file is a different cohort (`lib/cohort.ts`): no ▲▼ against the global file; a region's thin sample is judged by its own `heroes_over_200` (`#region-note` warns). CN is not collected.
+- A region file is a different cohort (`lib/cohort.ts`): no ▲▼ against the global file; a region's thin sample is judged by its own `heroes_ranked` — heroes over the tier floor (`#region-note` warns). CN is not collected.
 - Hero detail: 지역별 section — the hero's tier/rank/win rate per collected region for the current mode.
 
 ## Operating notes

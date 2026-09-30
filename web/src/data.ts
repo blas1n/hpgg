@@ -20,6 +20,9 @@ export interface Meta {
 export interface ModeSample {
   matches: number;
   heroes: number;
+  /** Heroes over min_games_for_tier: the ones the table tiers. */
+  heroes_ranked: number;
+  /** Heroes over 200 games: the collector's patch-health count (reference patch), not the tier floor. */
   heroes_over_200: number;
   collected_at?: string;
 }
@@ -128,13 +131,13 @@ export const onReference = <T extends { patch: string }>(file: T | null, meta: M
 export function thinSample(meta: Meta, key: string): boolean {
   return thin(meta.modes[key]);
 }
-const thin = (m: ModeSample | undefined): boolean => !!m?.heroes && m.heroes_over_200 / m.heroes < 0.5;
+const thin = (m: ModeSample | undefined): boolean => !!m?.heroes && m.heroes_ranked / m.heroes < 0.5;
 
 /** A region's sample health and collection date on the patch a view shows; null = not collected on that patch yet. */
 export function regionSample(meta: Meta, mode: Mode, region: Exclude<Region, "all">, patch: PatchChoice): { collectedAt: string | null; heroes: number; over: number; thin: boolean } | null {
   const m = (patch === "previous" ? meta.previous_modes : meta.modes)?.[snapshotKey(mode, "all", region)];
   if (!m) return null;
-  return { collectedAt: m.collected_at ?? null, heroes: m.heroes, over: m.heroes_over_200, thin: thin(m) };
+  return { collectedAt: m.collected_at ?? null, heroes: m.heroes, over: m.heroes_ranked, thin: thin(m) };
 }
 
 /** "2026-09-28T04:07:19Z" → "09/28" */

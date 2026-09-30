@@ -62,7 +62,7 @@ describe("every snapshot entry point applies it", () => {
     patch_started_at: "2026-09-29",
     collected_at: "2026-09-29T00:00:00Z",
     min_games_for_tier: 200,
-    modes: { qm: { matches: 1000, heroes: 5, heroes_over_200: 5 } },
+    modes: { qm: { matches: 1000, heroes: 5, heroes_ranked: 5, heroes_over_200: 5 } },
   };
 
   it("pickShown (server pages): both the shown file and the ▲▼ base", () => {

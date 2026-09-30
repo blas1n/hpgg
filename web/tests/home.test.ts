@@ -15,7 +15,7 @@ const maps = json<MapTable>("maps_ko.json");
 // what the pages see: the e2e stats carry a hero without assets (Xal'atath), dropped by lib/known.ts
 const qm = knownOnly(json<Snapshot>("latest/qm.json"), heroes);
 const sl = knownOnly(json<Snapshot>("latest/sl.json"), heroes);
-const ranked = (rows: Row[]) => computeTiers(rows.filter((r) => r.map === "all")).ranked;
+const ranked = (rows: Row[]) => computeTiers(rows.filter((r) => r.map === "all"), 200).ranked;
 
 describe("roleLeaders", () => {
   const leaders = roleLeaders(ranked(qm.rows), heroes);
