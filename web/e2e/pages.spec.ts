@@ -133,13 +133,14 @@ test("hero detail: section tabs stick under the header and land each section jus
 });
 
 test("hero detail: at the bottom of the page the last section's tab is active", async ({ page }) => {
-  await page.setViewportSize({ width: 1280, height: 900 }); // two build columns: the builds title cannot reach the tabs
+  await page.setViewportSize({ width: 1280, height: 900 }); // the last title cannot reach the tabs
   await page.goto("./heroes/illidan/?mode=sl");
   // ?mode=sl is applied after hydration and adds sections: scroll only once the page has its final length
   await expect(page.locator("#brackets [data-bracket]")).toHaveCount(2);
   await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
-  await expect(page.locator("#nav-builds")).toHaveAttribute("aria-current", "location");
-  await expect(page.locator("#nav-brackets")).not.toHaveAttribute("aria-current", "location");
+  // patch changes are the last section (#62): their tab, not builds'
+  await expect(page.locator("#nav-patches")).toHaveAttribute("aria-current", "location");
+  await expect(page.locator("#nav-builds")).not.toHaveAttribute("aria-current", "location");
 });
 
 test("hero detail: counters and synergies from the matchups file, with numbers, links and the rule", async ({ page }) => {
@@ -192,6 +193,12 @@ test("hero detail: patch changes from the official notes, marked against the ref
   await expect(line).toHaveAttribute("data-change", "down");
   await expect(line).toContainText("생명력 감쇠 감소량이 50%에서 40%로 감소했습니다.");
   await expect(page.locator("nav[data-subnav] a[href='#patches-title']")).toBeVisible();
+  // long and not the first thing people look for: the last section, below both desktop columns
+  await expect(page.locator("main h2[id]").last()).toHaveAttribute("id", "patches-title");
+  await expect(page.locator("nav[data-subnav] a").last()).toHaveAttribute("href", "#patches-title");
+  await page.setViewportSize({ width: 1280, height: 900 });
+  const [patchesBox, mapsBox] = [await page.locator("#patches").boundingBox(), await page.locator("#maps").boundingBox()];
+  expect(patchesBox!.width).toBeGreaterThan(mapsBox!.width * 1.5);
 
   await page.goto("./heroes/mal-ganis/");
   await expect(page.locator("#patches [data-note]").first().locator("[data-verdict]")).toHaveText("버프");
