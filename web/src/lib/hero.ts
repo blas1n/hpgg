@@ -13,8 +13,6 @@ export type HeroSummary =
       /** previous rank − rank; null when there is no previous patch or the hero was unranked there. */
       delta: number | null;
       prevRank: number | null;
-      /** win rate on the previous patch where the hero was ranked there, else null. */
-      prevWinRate: number | null;
       hasPrevious: boolean;
       win_rate: number;
       games: number;
@@ -32,15 +30,13 @@ const place = (snap: Snapshot, map: string, hero: string, minGames: number) => {
 export function heroSummary(snap: Snapshot, previous: Snapshot | null, hero: string, minGames: number): HeroSummary {
   const { r, grey } = place(snap, "all", hero, minGames);
   if (r) {
-    const prev = previous ? place(previous, "all", hero, minGames).r : undefined;
-    const pr = prev?.rank ?? null;
+    const pr = previous ? (place(previous, "all", hero, minGames).r?.rank ?? null) : null;
     return {
       kind: "ranked",
       tier: r.tier,
       rank: r.rank,
       delta: pr === null ? null : pr - r.rank,
       prevRank: pr,
-      prevWinRate: prev?.row.win_rate ?? null,
       hasPrevious: previous !== null,
       win_rate: r.row.win_rate,
       games: r.row.games,
