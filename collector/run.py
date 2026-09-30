@@ -204,6 +204,21 @@ async def _collect_party(
     return raw
 
 
+def _region_patch(data_dir: Path, *, reference: str, current: str, day: str) -> str:
+    """The patch today's region is collected on (#14). The pages show the reference patch, so it
+    comes first; while that is the previous patch (final, it never changes) a region already in
+    data/previous/ is not fetched again and the day's calls build the current patch's region, so
+    it is there when the current patch becomes the reference."""
+    if reference == current:
+        return current
+    region = region_for_day(date.fromisoformat(day[:10]))
+    have = all(
+        (_load_json(data_dir / "previous" / f"{m}_{region}.json") or {}).get("patch") == reference
+        for m in ("qm", "sl")
+    )
+    return current if have else reference
+
+
 def _write_atomic(path: Path, obj: Any) -> None:
     tmp = path.with_suffix(".json.tmp")
     tmp.write_text(json.dumps(obj, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
@@ -419,14 +434,15 @@ async def _run_stats(c: HPClient, settings: Settings, *, collected_at: str, slee
         reference = build_meta(
             prev_meta, patch=patch, collected_at=collected_at, snapshots=snapshots
         )["reference_patch"]
-        # regions follow the one reference patch like every page (#14): while the new patch is
-        # thin that is the previous one, whose files the pages read from data/previous/
+        region_patch = _region_patch(
+            settings.data_dir, reference=reference, current=patch, day=collected_at
+        )
         region_raw, region_snaps = await _collect_region(
-            c, settings, patch=reference, collected_at=collected_at, sleep=sleep
+            c, settings, patch=region_patch, collected_at=collected_at, sleep=sleep
         )
         raw_by_key.update(region_raw)
         region_previous: dict[str, dict[str, Any]] = {}
-        if reference == patch:
+        if region_patch == patch:
             snapshots.update(region_snaps)
         else:
             region_previous = region_snaps
