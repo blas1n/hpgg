@@ -37,7 +37,7 @@ SOLO_OF: dict[str, str] = {"qm_solo": "qm", "sl_solo": "sl"}
 # as the sample allows — the win rate is shrunk toward 50 anyway, and a hero never tiered says
 # nothing). The pages read it from meta.min_games_for_tier.
 MIN_GAMES_FOR_TIER = 50
-# Whether a build has a real sample (reference patch, promotion to previous) is judged apart,
+# Whether a patch has a real sample (reference patch, promotion to previous) is judged apart,
 # on heroes over this many games.
 PATCH_HEALTH_GAMES = 200
 
@@ -55,8 +55,8 @@ def _thin(mode: dict[str, Any] | None) -> bool:
 
 
 def healthy(modes: dict[str, Any]) -> bool:
-    """A build with a real sample: recorded and not thin in Quick Match and Storm League. Only
-    such a build becomes the previous patch: a hotfix a day after a patch must not push a month
+    """A patch with a real sample: recorded and not thin in Quick Match and Storm League. Only
+    such a patch becomes the previous patch: a patch replaced within a day must not push a month
     of data out."""
     return all(m in modes and not _thin(modes[m]) for m in REFERENCE_MODES)
 
@@ -93,7 +93,7 @@ def _version_key(v: str) -> tuple[int, ...]:
 
 # HP lists a new build before its stats accept it (its patch list and its filter options are two
 # caches of 10 minutes each): the 2026-09-30 run got 422 invalid_parameters seven minutes after
-# 2.57.0.98304 appeared. A build is only chosen once it has been listed this long.
+# 2.57.0.98304 appeared. A build is only queried once it has been listed this long.
 PATCH_SETTLE = timedelta(hours=1)
 
 
@@ -105,20 +105,40 @@ def _added(p: dict[str, Any]) -> datetime | None:
         return None
 
 
-def choose_patch(patches_payload: dict[str, Any], now: datetime | None = None) -> str:
-    """Newest build (by version tuple) whose globals are queryable and, given `now`, that has been
-    listed for PATCH_SETTLE. One build is one patch: unannounced hotfixes change balance too
-    (2.55.17.97650: seven heroes; 2.55.17.97771: Chromie)."""
-    candidates = [
+def _settled_builds(patches_payload: dict[str, Any], now: datetime | None) -> list[str]:
+    """Every build whose globals are queryable and, given `now`, listed for PATCH_SETTLE."""
+    return [
         p["game_version"]
         for p in patches_payload.get("patches", [])
         if p.get("valid_globals")
         and isinstance(p.get("game_version"), str)
         and (now is None or (added := _added(p)) is None or added <= now - PATCH_SETTLE)
     ]
+
+
+def patch_line(build: str) -> str:
+    """The regular patch (x.y.z) a build or patch id belongs to."""
+    return ".".join(build.split(".")[:3])
+
+
+def choose_patch(patches_payload: dict[str, Any], now: datetime | None = None) -> str:
+    """The regular patch (x.y.z) of the newest settled build. A patch is a regular patch with
+    every hotfix build in it (owner 2026-10-01): the stats are queried over all its builds."""
+    candidates = _settled_builds(patches_payload, now)
     if not candidates:
         raise ValueError("no patch with valid_globals=true in /patches")
-    return str(max(candidates, key=_version_key))
+    return patch_line(max(candidates, key=_version_key))
+
+
+def timeframe_of(patches_payload: dict[str, Any], patch: str, now: datetime | None = None) -> str:
+    """HP `timeframe` for a patch: its settled builds, comma-joined, oldest first (HP sums them).
+    A four-part id is one build (data collected before 2026-10-01) and is its own timeframe."""
+    if patch.count(".") >= 3:
+        return patch
+    builds = [b for b in _settled_builds(patches_payload, now) if patch_line(b) == patch]
+    if not builds:
+        raise ValueError(f"no queryable build of patch {patch} in /patches")
+    return ",".join(sorted(set(builds), key=_version_key))
 
 
 def _rows_of(map_payload: Any) -> list[dict[str, Any]]:
@@ -344,11 +364,12 @@ def build_meta(
 ) -> dict[str, Any]:
     """meta.json: patch ids, when the current patch was first seen, per-mode sample health."""
     today = collected_at[:10]
-    if prev_meta and prev_meta.get("current_patch") == patch:
+    # a build of the patch (meta before 2026-10-01 named builds) is the patch itself
+    if prev_meta and patch_line(str(prev_meta.get("current_patch") or "")) == patch:
         previous_patch = prev_meta.get("previous_patch")
         patch_started_at = prev_meta.get("patch_started_at", today)
     elif prev_meta:
-        # the outgoing build becomes the previous patch only if it had a real sample
+        # the outgoing patch becomes the previous patch only if it had a real sample
         outgoing_ok = healthy(prev_meta.get("modes") or {})
         previous_patch = (
             prev_meta.get("current_patch") if outgoing_ok else prev_meta.get("previous_patch")
@@ -447,7 +468,7 @@ def commit_atomic(
     patch_changed = (
         prev_meta is not None and prev_meta.get("current_patch") != meta["current_patch"]
     )
-    # latest/ moves to previous/ only when build_meta promoted the outgoing build (thin: dropped)
+    # latest/ moves to previous/ only when build_meta promoted the outgoing patch (thin: dropped)
     promoted = patch_changed and meta.get("previous_patch") == (prev_meta or {}).get(
         "current_patch"
     )

@@ -220,3 +220,27 @@ async def test_time_budget_stops_the_loop(tmp_path: Path, fake_sleep: Any) -> No
             clock=clock,
         )
     assert res.written == ["abathur", "alarak"] and res.stopped == "time_budget"
+
+
+@respx.mock
+async def test_collect_asks_hp_for_every_build_of_the_patch(
+    tmp_path: Path, fake_sleep: Any
+) -> None:
+    """Owner 2026-10-01: a patch is a regular patch with its hotfixes; the file says the patch."""
+    s = settings(tmp_path)
+    route = respx.get(f"{BASE}/heroes/matchups").mock(
+        return_value=httpx.Response(200, json=live_raw())
+    )
+    async with client(fake_sleep) as c:
+        await collect_matchups(
+            c,
+            s,
+            heroes=HEROES[:1],
+            patch="2.57.0",
+            timeframe="2.57.0.98285,2.57.0.98304",
+            collected_at=NOW,
+            sleep=fake_sleep,
+        )
+    q = dict(httpx.QueryParams(route.calls[0].request.url.query))
+    assert q["timeframe"] == "2.57.0.98285,2.57.0.98304"
+    assert json.loads((s.data_dir / "matchups" / "abathur.json").read_text())["patch"] == "2.57.0"

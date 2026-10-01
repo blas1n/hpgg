@@ -96,7 +96,8 @@ export function heroPatchNotes(
   let currentTaken = false;
   const statusOf = (build: string | null): PatchStatus => {
     if (!build) return null;
-    if (newer(build, reference)) return "collecting";
+    // a regular patch (x.y.z) holds every build of it: compare the build at the reference's depth
+    if (newer(build.split(".").slice(0, reference.split(".").length).join("."), reference)) return "collecting";
     if (currentTaken) return null;
     currentTaken = true;
     return "current";

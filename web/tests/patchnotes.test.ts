@@ -85,6 +85,13 @@ describe("heroPatchNotes", () => {
     ]);
   });
 
+  it("a regular patch (x.y.z) includes every build of it: none of its notes or hotfixes is collecting", () => {
+    // owner 2026-10-01: the reference patch is a regular patch with its hotfixes
+    expect(heroPatchNotes(file, "Abathur", "2.57.0", "ko").notes.map((n) => n.status)).toEqual(["current", null]);
+    expect(heroPatchNotes(file, "Abathur", "2.55.17", "ko").notes.map((n) => n.status)).toEqual(["collecting", "current"]);
+    expect(heroPatchNotes(file, "Chromie", "2.55.17", "ko", hotfixes).notes.map((n) => n.status)).toEqual(["current", null, null]);
+  });
+
   it("a hotfix is marked against the reference patch like a note", () => {
     // 97771 is Chromie's newest change the 98025 stats include
     expect(heroPatchNotes(file, "Chromie", REF, "ko", hotfixes).notes.map((n) => n.status)).toEqual(["current", null, null]);

@@ -37,8 +37,9 @@ def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(prog="collector", description="hotsmeta daily collector")
     ap.add_argument(
         "--previous",
-        metavar="BUILD",
-        help="one-off: collect this older build into data/previous/ (e.g. 2.55.17.97771)",
+        metavar="PATCH",
+        help="one-off: collect this older patch, every build of it, into data/previous/ "
+        "(e.g. 2.55.17)",
     )
     ap.add_argument(
         "--previous-regions",
