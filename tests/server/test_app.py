@@ -219,3 +219,44 @@ def test_token_and_authorization_never_logged_or_echoed(
     # the tmp dir is named after this test, so drop it before looking for the header name
     assert "authorization" not in everything.replace(str(settings.db_path.parent), "").lower()
     assert TOKEN not in repr(settings)
+
+
+def test_match_list(client: TestClient, fake_hp: FakeHP) -> None:
+    from tests.server.conftest import hp_response
+
+    fake_hp.responder = lambda r: hp_response(
+        "v1_players_matches_200.json"
+        if r.url.path.endswith("/players/matches")
+        else "v1_players_200.json"
+    )
+    r = client.get(URL + "/matches", params={"battletag": "Player11#1011", "region": "KR"})
+    assert r.status_code == 200
+    body = r.json()
+    assert body["source"] == "full" and len(body["matches"]) == 3
+    assert body["matches"][0]["kills"] == 9
+    assert body["stale"] is False and body["fetched_at"].endswith("Z")
+    assert r.headers["cache-control"].startswith("public, max-age=")
+    health = client.get("/healthz").json()["quota"]
+    assert health["player_match_history"]["live_calls_today"] == 1
+
+
+@pytest.mark.parametrize(
+    ("fixture", "status", "code"),
+    [
+        ("v1_players_404.json", 404, "player_not_found"),
+        ("v1_players_403_private.json", 403, "player_private"),
+    ],
+)
+def test_match_list_errors(
+    client: TestClient, fake_hp: FakeHP, fixture: str, status: int, code: str
+) -> None:
+    from tests.server.conftest import hp_response
+
+    fake_hp.responder = lambda r: hp_response(fixture)
+    r = client.get(URL + "/matches", params={"battletag": "Nobody#1234", "region": "KR"})
+    assert r.status_code == status and r.json()["error"]["code"] == code
+
+
+def test_match_list_validates_like_the_profile(client: TestClient, fake_hp: FakeHP) -> None:
+    r = client.get(URL + "/matches", params={"battletag": "Zemill", "region": "KR"})
+    assert r.status_code == 422 and fake_hp.requests == []
