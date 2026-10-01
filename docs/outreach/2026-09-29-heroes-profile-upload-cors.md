@@ -49,7 +49,8 @@ When a reply arrives, record the answer here, then:
 - **Leaderboards:** web uploads (the embed too) may not count; keep pointing people to the desktop uploader (we do).
 - **Attribution (API terms §4):** the footer credit alone was not enough (small grey text, ~4,500 px down the tier list).
   "Data provided by Heroes Profile" with the link must be on the same screen as the data, no smaller than body text, not
-  fine print. → `web/src/components/HpCredit.tsx` on every page, at the top in body text; the footer credit stays.
+  fine print. → `web/src/components/HpCredit.tsx` on every page, in body text; the footer credit stays. Since #77 it sits
+  on the page title's line (`web/src/components/PageHead.tsx`), not on a line of its own above the title.
 
 **Framing, fixed by HP (2026-10-01):** the embed was blank at first — HP's Cloudflare check answered the framed
 `/Upload/Embed` request with 403, and that challenge page sets `X-Frame-Options: SAMEORIGIN`, so Chrome showed
@@ -59,3 +60,37 @@ snippet — if it ever goes blank again, it is this, and it is HP's to fix.
 
 Read with the terms (2026-10-01): §5 also requires polling HP's privacy change feed every 24 h and dropping a player who
 went private within 24 h. Our player cache does not do this yet — issue #74.
+
+
+---
+
+## Our reply (sent by the owner, 2026-10-01)
+
+Thanks for the fix and a report that both of HP's points are live. Sent as written below; nothing was asked for in return.
+
+> The uploader renders on our page now — thanks for turning that around so quickly, and on your own side rather than
+> asking us to work around it.
+>
+> Both of your points are live on hpgg.win:
+>
+> - **The embed** sits in our player search, under "if your record doesn't show up", with `?source=hpgg` and the resize
+>   script from your snippet. No upload code of our own, nothing relayed through our server, and no calls to
+>   `replays/fingerprints`. Our page listens for `upload-complete` and tells people their games are in and to search
+>   again in a few minutes. We still point people to the desktop uploader for leaderboard eligibility, and your widget
+>   links to it too.
+> - **The attribution** has moved out of the footer. "Data provided by Heroes Profile", with the link, now sits on the
+>   page title's line in our normal body text, on every page that shows your data. The footer credit is still there as
+>   well.
+>
+> Thanks again for building the widget instead of just turning down the CORS request — it's a better answer than the one
+> I asked for, and it took the work off our side entirely.
+
+Left out on purpose, so a thank-you did not carry a request:
+
+- **The §5 privacy feed.** We still have to find the endpoint that lists players who went private (issue #74). Look in
+  the v1 docs first; ask HP in a separate mail only if it is not documented.
+
+Still unverified at the time of writing: **no real replay has been uploaded through the embed from our page.** We have
+only seen the widget render, and the completion notice was tested against stubbed messages (`web/e2e/players.spec.ts`).
+The owner has no games on Heroes Profile yet, so uploading their own folder is both the owner action already on the
+STATUS list and the end-to-end test of this integration.
