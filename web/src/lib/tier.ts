@@ -138,6 +138,13 @@ export function tierTable(snap: Snapshot, previous: Snapshot | null, map: string
 }
 
 /** Role filter + display order. Tiers and ranks stay those of the whole table. */
+/** A header click: a new column sorts descending and the same one again flips it. "rank" (the rank and tier
+ *  headers) always goes back to the ranked order, #1 first, so a re-sorted table has an obvious way home. */
+export function nextSort(cur: Pick<TierState, "sort" | "dir">, key: SortKey | "rank"): Pick<TierState, "sort" | "dir"> {
+  if (key === "rank") return { sort: "score", dir: "desc" };
+  return cur.sort === key ? { sort: key, dir: cur.dir === "desc" ? "asc" : "desc" } : { sort: key, dir: "desc" };
+}
+
 export function visibleRows(rows: TierRow[], role: string, sort: SortKey, dir: "desc" | "asc"): TierRow[] {
   const val = (r: TierRow) => (sort === "score" ? r.score : r[sort]);
   return rows.filter((r) => role === "all" || r.hero.role === role).sort((a, b) => (dir === "desc" ? val(b) - val(a) : val(a) - val(b)) || a.rank - b.rank);

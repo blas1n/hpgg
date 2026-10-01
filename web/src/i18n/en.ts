@@ -154,6 +154,7 @@ export const en: Messages = {
     comboNote: "Region data is collected for all leagues together — a region and a league bracket cannot be combined",
     columns: { score: "Score", win_rate: "Win rate", pick: "Pick rate", ban_rate: "Ban rate", games: "Games" },
     tierGroup: (tier: string, n: string) => `Tier ${tier} · ${plural(n, "hero", "heroes")}`,
+    backToRank: "Back to ranked order",
     grey: "Too few games",
     greySub: (min: string) => `under ${min} games · no tier`,
     greyItem: (hero: string, games: string) => `${hero} · ${plural(games, "game", "games")}`,

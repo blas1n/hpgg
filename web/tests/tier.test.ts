@@ -5,7 +5,7 @@ import { dirname, join } from "node:path";
 import { knownOnly } from "../src/lib/known";
 import type { Snapshot } from "../src/formula";
 import type { HeroTable, Meta } from "../src/data";
-import { DEFAULT_TIER_STATE, formatScore, parseTierState, resolvePatch, tierSearch, tierTable, visibleRows, type TierState } from "../src/lib/tier";
+import { DEFAULT_TIER_STATE, formatScore, nextSort, parseTierState, resolvePatch, tierSearch, tierTable, visibleRows, type TierState } from "../src/lib/tier";
 
 const dataDir = join(dirname(fileURLToPath(import.meta.url)), "e2e-data");
 const json = <T>(rel: string): T => JSON.parse(readFileSync(join(dataDir, rel), "utf-8")) as T;
@@ -146,5 +146,21 @@ describe("visibleRows", () => {
     expect(healers.every((r) => r.hero.role === "Healer")).toBe(true);
     expect(healers.find((r) => r.hero.slug === "brightwing")!.tier).toBe("A");
     expect(healers[0]!.rank).toBeGreaterThan(0);
+  });
+});
+
+describe("nextSort", () => {
+  it("a new column sorts descending; the same column again flips the direction", () => {
+    expect(nextSort({ sort: "score", dir: "desc" }, "win_rate")).toEqual({ sort: "win_rate", dir: "desc" });
+    expect(nextSort({ sort: "win_rate", dir: "desc" }, "win_rate")).toEqual({ sort: "win_rate", dir: "asc" });
+    expect(nextSort({ sort: "win_rate", dir: "asc" }, "win_rate")).toEqual({ sort: "win_rate", dir: "desc" });
+  });
+
+  it("rank (the rank and tier headers) always returns to the ranked order, whatever is sorted now", () => {
+    expect(nextSort({ sort: "win_rate", dir: "asc" }, "rank")).toEqual({ sort: "score", dir: "desc" });
+    expect(nextSort({ sort: "games", dir: "desc" }, "rank")).toEqual({ sort: "score", dir: "desc" });
+    // already ranked (even reversed by the score header): back to #1 first, never a flip
+    expect(nextSort({ sort: "score", dir: "asc" }, "rank")).toEqual({ sort: "score", dir: "desc" });
+    expect(nextSort({ sort: "score", dir: "desc" }, "rank")).toEqual({ sort: "score", dir: "desc" });
   });
 });
