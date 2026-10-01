@@ -32,6 +32,19 @@ class Settings(BaseSettings):
     daily_live_budget: int = 1300  # ≈ (10,000 − floor) / 7, so one busy day cannot starve the week
     ip_requests_per_minute: int = 20
 
+    # Match list (`server/players/matches.py`). Full stat lines come from /players/matches, the
+    # small bucket (250/week on Basic): ≈ (250 − floor) / 7 a day. Past that, the MMR history
+    # (10,000/week) gives the games without stat lines, cached shorter so a full list can follow.
+    match_ttl_seconds: int = 6 * 3600
+    basic_match_ttl_seconds: int = 3600
+    match_quota_floor: int = 10
+    match_daily_budget: int = 34
+    mmr_history_quota_floor: int = 200
+    mmr_history_daily_budget: int = 1300
+    # A cold /players/matches query answers 202 and is asked again (polls are not charged).
+    hp_job_poll_seconds: float = 2.0
+    hp_job_wait_seconds: float = 20.0
+
     # HP API terms §5: within 24 h of a player going private, their data must be gone from every
     # surface and cache. The privacy feed (own bucket, 10,080/week) is polled well inside that, and
     # no profile is served or kept longer than 24 h after HP last returned it, feed or no feed.

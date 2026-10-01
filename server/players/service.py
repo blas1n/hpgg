@@ -16,13 +16,13 @@ from __future__ import annotations
 import asyncio
 from collections.abc import Callable
 from dataclasses import dataclass
-from datetime import UTC, datetime, timedelta
 from typing import Any, Literal
 
 import structlog
 
 from server.config import Settings
-from server.players.hp import HPClient, Quota, Upstream
+from server.players import quota
+from server.players.hp import HPClient, Upstream
 from server.players.profile import normalize_player
 from server.players.store import CacheEntry, HPStore, player_key
 
@@ -42,16 +42,6 @@ class Lookup:
     stale: bool = False
     notice: Notice | None = None
     retry_after: float | None = None
-
-
-def _day(ts: float) -> str:
-    return datetime.fromtimestamp(ts, UTC).strftime("%Y-%m-%d")
-
-
-def _until_tomorrow(ts: float) -> float:
-    now = datetime.fromtimestamp(ts, UTC)
-    tomorrow = (now + timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0)
-    return (tomorrow - now).total_seconds()
 
 
 class PlayerService:
@@ -79,17 +69,8 @@ class PlayerService:
         return await asyncio.shield(task)
 
     async def status(self) -> dict[str, Any]:
-        now = self._clock()
-        q = await self._store.quota(ENDPOINT)
-        return {
-            ENDPOINT: {
-                "limit": q.limit if q else None,
-                "remaining": q.remaining if q else None,
-                "reset_at": _iso(q.reset_at) if q else None,
-                "live_calls_today": await self._store.live_calls(_day(now), ENDPOINT),
-                "daily_budget": self._settings.daily_live_budget,
-            }
-        }
+        budget = self._settings.daily_live_budget
+        return {ENDPOINT: await quota.status(self._store, ENDPOINT, budget, self._clock())}
 
     def _from_entry(
         self,
@@ -129,31 +110,26 @@ class PlayerService:
             return Lookup("quota_exceeded", retry_after=retry_after)
         return Lookup("unavailable", retry_after=retry_after)
 
-    async def _blocked_for(self, now: float) -> float | None:
-        """Seconds until live calls may resume, or None when they are allowed now."""
-        q = await self._store.quota(ENDPOINT)
-        if q is not None and q.remaining <= self._settings.quota_floor and q.reset_at > now:
-            return q.reset_at - now
-        used = await self._store.live_calls(_day(now), ENDPOINT)
-        if used >= self._settings.daily_live_budget:
-            return _until_tomorrow(now)
-        return None
-
     async def _refresh(
         self, key: str, battletag: str, region: str, stale: CacheEntry | None
     ) -> Lookup:
         now = self._clock()
-        wait = await self._blocked_for(now)
+        wait = await quota.blocked_for(
+            self._store,
+            ENDPOINT,
+            floor=self._settings.quota_floor,
+            budget=self._settings.daily_live_budget,
+            now=now,
+        )
         if wait is not None:
             log.info("players.live_blocked", retry_after=round(wait))
             return self._degraded(stale, battletag, region, "quota_exceeded", wait)
 
         up = await self._hp.get("/players", {"battletag": battletag, "region": region})
         now = self._clock()
-        if up.quota is not None:
-            await self._store.set_quota(ENDPOINT, up.quota, now)
+        exhausted = await quota.record(self._store, ENDPOINT, up, now)
         if up.status == 200 and isinstance(up.body, dict):
-            await self._store.count_live_call(_day(now), ENDPOINT)
+            await self._store.count_live_call(quota.day(now), ENDPOINT)
             entry = CacheEntry(key, 200, up.body, now, now + self._settings.player_ttl_seconds)
             await self._store.put(entry)
             log.info("players.live", region=region, remaining=_remaining(up))
@@ -163,22 +139,15 @@ class PlayerService:
             await self._store.put(entry)
             return Lookup("not_found", fetched_at=now, source="live")
         if up.status == 403 and up.code == "player_unavailable":
-            await self._store.mark_private(region, battletag, _iso(now))
+            await self._store.mark_private(region, battletag, quota.iso(now))
             log.info("players.private")
             return Lookup("private")
-        if up.status == 429 and up.code == "quota_exceeded":
-            reset = now + (up.retry_after if up.retry_after is not None else 3600.0)
-            limit = up.quota.limit if up.quota else 0
-            await self._store.set_quota(ENDPOINT, Quota(limit, 0, reset), now)
-            log.warning("players.quota_exceeded", retry_after=round(reset - now))
-            return self._degraded(stale, battletag, region, "quota_exceeded", reset - now)
+        if exhausted is not None:
+            log.warning("players.quota_exceeded", retry_after=round(exhausted))
+            return self._degraded(stale, battletag, region, "quota_exceeded", exhausted)
         log.warning("players.upstream_unavailable", status=up.status, code=up.code)
         return self._degraded(stale, battletag, region, "upstream_unavailable", up.retry_after)
 
 
 def _remaining(up: Upstream) -> int | None:
     return up.quota.remaining if up.quota else None
-
-
-def _iso(ts: float) -> str:
-    return datetime.fromtimestamp(ts, UTC).strftime("%Y-%m-%dT%H:%M:%SZ")

@@ -22,6 +22,15 @@ def player_key(region: str, battletag: str) -> str:
     return f"players|{region}|{battletag}"
 
 
+def matches_key(region: str, battletag: str) -> str:
+    """Cache key of one player's normalised match list (`server/players/matches.py`)."""
+    return f"player_matches|{region}|{battletag}"
+
+
+# Every cache key that holds one player's data — a player going private drops them all.
+PLAYER_KEYS = (player_key, matches_key)
+
+
 @dataclass(frozen=True)
 class CacheEntry:
     key: str
@@ -160,6 +169,5 @@ async def _apply(s: AsyncSession, c: PrivacyChange) -> None:
         stmt.on_conflict_do_update(index_elements=["region", "battletag_lc"], set_=values)
     )
     # a visitor may have typed the tag in any letter case, and each spelling is its own key
-    await s.execute(
-        delete(HPCache).where(func.lower(HPCache.key) == player_key(c.region, lc).lower())
-    )
+    keys = [k(c.region, lc).lower() for k in PLAYER_KEYS]
+    await s.execute(delete(HPCache).where(func.lower(HPCache.key).in_(keys)))

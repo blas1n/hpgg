@@ -24,6 +24,7 @@ from server.config import Settings
 from server.db import Database, migrate
 from server.errors import on_validation_error
 from server.players.hp import HPClient
+from server.players.matches import MatchService
 from server.players.privacy import PrivacyFeed
 from server.players.router import router as players_router
 from server.players.service import PlayerService
@@ -55,6 +56,9 @@ def create_app(
         )
         store = HPStore(db)
         app.state.players = PlayerService(hp=hp, store=store, settings=settings, clock=clock)
+        app.state.matches = MatchService(
+            hp=hp, store=store, players=app.state.players, settings=settings, clock=clock
+        )
         app.state.privacy = PrivacyFeed(hp=hp, store=store, settings=settings, clock=clock)
         poller = asyncio.create_task(app.state.privacy.run_forever()) if privacy_poll else None
         app.state.ip_limiter = SlidingWindowLimiter(settings.ip_requests_per_minute, 60.0, clock)
@@ -102,7 +106,7 @@ def create_app(
         feed: PrivacyFeed = request.app.state.privacy
         body: dict[str, Any] = {
             "ok": True,
-            "quota": await service.status(),
+            "quota": {**await service.status(), **await request.app.state.matches.status()},
             "privacy": await feed.status(),
         }
         return JSONResponse(body, headers={"Cache-Control": "no-store"})
