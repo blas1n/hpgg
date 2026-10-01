@@ -228,6 +228,16 @@ def clean_desc(raw: str, lang: str = "ko") -> str:
     return out.replace("{{}}", "").strip()
 
 
+def _ability_names(strings: dict[str, Any]) -> dict[str, str]:
+    """Ability id → name, abilities before talents (heroes-data2); heroes-data had one list."""
+    g = strings["gamestrings"]
+    return (
+        _by_name_id({"gamestrings": {"abiltalent": g["ability"]}}, "name")
+        if "ability" in g
+        else (_by_name_id(strings, "name"))
+    )
+
+
 # abilities the hotfix diff can name (#62); mount, hearth, spray, voice, item actives are not
 _ABILITY_TIERS = {"basic", "heroic", "trait"}
 # Blizzard's patch notes write the heroic as [R] and the trait as [D]
@@ -243,7 +253,7 @@ def hero_game_ids(
     """Per hero slug: the game ids the hotfix diff names a changed number by (#62) — the hero
     unit, its weapons, the life/energy words of the game strings, and each ability by the
     common id prefix of its buttons ("MalGanisFelClaws" for First/Second/Third)."""
-    ko_name, en_name = _by_name_id(kokr, "name"), _by_name_id(enus, "name")
+    ko_name, en_name = _ability_names(kokr), _ability_names(enus)
     ko_unit = kokr["gamestrings"].get("unit", {})
     en_unit = enus["gamestrings"].get("unit", {})
     idx = hero_index(herodata)
@@ -366,10 +376,10 @@ def _v4_strings(strings: dict[str, Any]) -> dict[str, Any]:
     items = strings["items"]
     hero, talent, ability = items.get("hero", {}), items.get("talent", {}), items.get("ability", {})
 
-    def both(field: str) -> dict[str, str]:
-        # talents first: `_by_name_id` keeps the first entry of an id, so a talent sharing its
-        # id with an ability keeps the talent's text
-        return {_v4_key(k): v for d in (talent, ability) for k, v in d.get(field, {}).items()}
+    def both(field: str, first: dict[str, Any], then: dict[str, Any]) -> dict[str, str]:
+        # `_by_name_id` keeps the first entry of an id: an id that is both a talent and an
+        # ability button (Tyrael's TyraelAspectofJustice) is named by the list that comes first
+        return {_v4_key(k): v for d in (first, then) for k, v in d.get(field, {}).items()}
 
     return {
         "gamestrings": {
@@ -380,10 +390,12 @@ def _v4_strings(strings: dict[str, Any]) -> dict[str, Any]:
                 "energytype": hero.get("energyType", {}),
             },
             "abiltalent": {
-                "name": both("name"),
-                "full": both("fullText"),
-                "cooldown": both("cooldownText"),
+                "name": both("name", talent, ability),
+                "full": both("fullText", talent, ability),
+                "cooldown": both("cooldownText", talent, ability),
             },
+            # abilities by their own name (hero_game_ids); v4 had one list for both
+            "ability": {"name": both("name", ability, talent)},
         }
     }
 
@@ -397,13 +409,21 @@ def from_v5(
     (`<id>|<button>|<type>…` — the id first, as v4's keys)."""
     heroes: dict[str, Any] = {}
     for hid, h in herodata["items"].items():
+        # the hero's other units (the three vikings, Medivh's raven, D.Va's pilot…) carry
+        # their own abilities under heroUnits; v4 listed them with the hero's
+        units = [h, *(h.get("heroUnits") or {}).values()]
+        abilities: dict[str, list[dict[str, Any]]] = {}
+        for u in units:
+            for tier, items in _v4_tiers(u.get("abilities") or {}, "abilityId").items():
+                abilities.setdefault(tier, []).extend(items)
         heroes[hid] = {
             **h,
             "talents": _v4_tiers(h.get("talents") or {}, "talentId"),
-            "abilities": _v4_tiers(h.get("abilities") or {}, "abilityId"),
+            "abilities": abilities,
             "subAbilities": [
                 {parent: _v4_tiers(tiers, "abilityId")}
-                for parent, tiers in (h.get("subAbilities") or {}).items()
+                for u in units
+                for parent, tiers in (u.get("subAbilities") or {}).items()
             ],
         }
     return heroes, _v4_strings(kokr), _v4_strings(enus)
@@ -524,19 +544,7 @@ def main() -> None:
     out_dir.mkdir(parents=True, exist_ok=True)
     game = hero_game_ids(herodata, kokr, heroes, enus)
     for hero_slug, table in hero_talent_files(herodata, kokr, heroes, enus).items():
-        ids = game.get(hero_slug)
-        before = out_dir / f"{hero_slug}.json"
-        if ids is not None and before.exists():
-            # an ability id the new game data lacks (heroes-data2 98304 has no basic abilities
-            # for The Lost Vikings) stays: the hotfix diff names changes by these ids
-            old = (json.loads(before.read_text(encoding="utf-8")).get("game") or {}).get(
-                "abilities"
-            ) or {}
-            carried = {k: v for k, v in old.items() if k not in ids["abilities"]}
-            if carried:
-                ids["abilities"] = {**ids["abilities"], **carried}
-                log.warning("assets.abilities_carried", hero=hero_slug, ids=sorted(carried))
-        body = {"source": source, "talents": table, "game": ids}
+        body = {"source": source, "talents": table, "game": game.get(hero_slug)}
         (out_dir / f"{hero_slug}.json").write_text(
             json.dumps(body, ensure_ascii=False, separators=(",", ":")),
             encoding="utf-8",

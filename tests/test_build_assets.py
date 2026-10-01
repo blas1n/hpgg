@@ -649,6 +649,11 @@ def _hd2() -> tuple[dict, dict, dict]:
     )
 
 
+def _matched(entry: str, game: dict) -> bool:
+    """As collector/hotfixes.py names an ability: an id the entry starts with."""
+    return any(entry.startswith(k) for k in game["abilities"])
+
+
 def test_clean_desc_keeps_highlights_that_carry_a_style_name() -> None:
     """v5 markup adds hlt-name to <c>, and the per-level scaling is its own grey highlight."""
     raw = (
@@ -711,11 +716,18 @@ def test_heroes_data2_game_ids_feed_the_hotfix_diff() -> None:
     }
     assert {a["key"] for a in xal["abilities"].values()} >= {"Q", "W", "E", "R", "D"}
     assert xal["life"] == {"ko": "생명력", "en": "Health"}
-    # Abathur's ids are what the hotfix watcher already reads from data/talents/abathur.json
-    today = json.loads(
-        (Path(__file__).parents[1] / "data" / "talents" / "abathur.json").read_text()
-    )["game"]
-    assert game["abathur"] == today
+    # the hotfix diff matches an entry by its longest id prefix: every id heroes-data (v4,
+    # 2.55.16.97039) gave Abathur is still matched (his symbiote's own abilities are added)
+    v4 = [
+        "AbathurEvolveMonstrosity",
+        "AbathurEvolveMonstrosityActiveSymbiote",
+        "AbathurSpawnLocusts",
+        "AbathurSymbiote",
+        "AbathurToxicNest",
+        "AbathurUltimateEvolution",
+    ]
+    assert all(_matched(i, game["abathur"]) for i in v4)
+    assert "AbathurSymbioteStab" in game["abathur"]["abilities"]
 
 
 def test_release_tarball_is_unpacked_into_the_cache_by_file_name(tmp_path: Path) -> None:
@@ -783,30 +795,37 @@ def test_heroes_data2_passive_abilities_keep_their_button_id() -> None:
     assert not any(k.startswith(":") for g in game.values() for k in g["abilities"])
 
 
-def test_main_keeps_ability_ids_the_new_game_data_lacks(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    """heroes-data2 2.57.0.98304 has no basic abilities for The Lost Vikings (Spin To Win…):
-    ids the hotfix diff could name are carried from the previous file, never silently lost."""
-    data, cache = tmp_path / "data", tmp_path / "cache"
-    (data / "latest").mkdir(parents=True)
-    (data / "talents").mkdir()
-    cache.mkdir()
-    table = {"roles": ROLES, "heroes": [{"name": "Abathur"}], "source": {"names": "old"}}
-    (data / "heroes_ko.json").write_text(json.dumps(table))
-    for src, dst in (
-        ("herodata_98304.json", "herodata_98304.json"),
-        ("gamestrings_98304_kokr.json", "kokr_98304.json"),
-        ("gamestrings_98304_enus.json", "enus_98304.json"),
+def test_heroes_data2_abilities_of_the_heros_units_are_its_abilities() -> None:
+    """v5 lists the abilities of a hero's other units under heroUnits: the three vikings'
+    Spin To Win, Jump!… (2.57 talents still upgrade them) and Medivh's raven form."""
+    herodata, kokr, enus = _hd2()
+    heroes = [
+        {"name": "The Lost Vikings", "slug": "the-lost-vikings"},
+        {"name": "Medivh", "slug": "medivh"},
+        {"name": "Tyrael", "slug": "tyrael"},
+    ]
+    game = ba.hero_game_ids(herodata, kokr, heroes, enus)
+    lv = game["the-lost-vikings"]["abilities"]
+    for k in (
+        "LostVikingsSpinToWin",
+        "LostVikingsNorseForce",
+        "LostVikingsPressA",
+        "LostVikingsNordicAttackSquad",
+        "LostVikingsVikingBribery",
     ):
-        (cache / dst).write_bytes((HD2 / src).read_bytes())
-    gone = {"AbathurOldButton": {"ko": "옛 능력", "en": "Old", "key": "Q"}}
-    (data / "talents" / "abathur.json").write_text(
-        json.dumps({"talents": {}, "game": {"abilities": gone}})
-    )
-    argv = ["build_assets", "--build", "2.57.0.98304", "--data", str(data), "--cache", str(cache)]
-    monkeypatch.setattr("sys.argv", [*argv, "--skip-icons"])
-    ba.main()
-    game = json.loads((data / "talents" / "abathur.json").read_text())["game"]
-    assert game["abilities"]["AbathurOldButton"] == gone["AbathurOldButton"]
-    assert "AbathurSymbiote" in game["abilities"]  # the new data's own ids are all there
+        assert k in lv, k
+    assert lv["LostVikingsSpinToWin"] == {"ko": "돌아야 이긴다!", "en": "Spin To Win!", "key": "Q"}
+    # Portal's three ids (Instant, 2, Mastery) share a name → one key, their common prefix
+    assert _matched("MedivhPortalInstant", game["medivh"])
+
+
+def test_an_ability_is_named_by_the_ability_and_a_talent_by_the_talent() -> None:
+    """Tyrael's TyraelAspectofJustice is both a level 20 talent (정의의 화신) and the button
+    of his trait (대천사의 분노): each list takes its own name."""
+    herodata, kokr, enus = _hd2()
+    heroes = [{"name": "Tyrael", "slug": "tyrael"}]
+    talents = ba.hero_talent_files(herodata, kokr, heroes, enus)["tyrael"]
+    assert talents["TyraelAspectofJustice"]["ko"] == "정의의 화신"
+    abilities = ba.hero_game_ids(herodata, kokr, heroes, enus)["tyrael"]["abilities"]
+    # the trait's buttons share a name, so they are one entry by their common id prefix
+    assert abilities["TyraelA"] == {"ko": "대천사의 분노", "en": "Archangel's Wrath", "key": "D"}
