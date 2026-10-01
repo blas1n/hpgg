@@ -13,6 +13,11 @@ from collector.config import Settings
 from collector.run import run, run_backfill_previous_regions
 from tests.conftest import BASE, TOKEN
 
+# fixtures/v1_patches_sample.json: patch 2.55.17 is two queryable builds (98025 is not yet
+# queryable), 2.55.9 one; HP is asked for every build of a patch (owner 2026-10-01)
+CUR_TF = "2.55.17.97650,2.55.17.97771"
+OLD_TF = "2.55.9.90000"
+
 
 def thin(raw_by_map: dict[str, Any]) -> dict[str, Any]:
     """The same payload with every hero far under the tier floor: a new patch's first day."""
@@ -43,7 +48,7 @@ def mock_api(
         q = dict(httpx.QueryParams(request.url.query))
         assert q["group_by_map"] == "true"
         # regions follow the reference patch (#14): the previous one while the new one is thin
-        allowed = {"2.55.17.97771", "2.55.17.97650"} if q.get("region") else {"2.55.17.97771"}
+        allowed = {CUR_TF, OLD_TF} if q.get("region") else {CUR_TF}
         assert q["timeframe_type"] == "minor" and q["timeframe"] in allowed
         if fail_key == "sl_high" and q.get("league_tier") == "5,6":
             return httpx.Response(500, json={"error": {"code": "server_error", "message": "x"}})
@@ -78,9 +83,7 @@ async def test_run_writes_five_files_meta_and_raw_gz(
         "sl_na.json",
     ]
     meta = json.loads((latest / "meta.json").read_text())
-    assert (
-        meta["current_patch"] == "2.55.17.97771" and meta["collected_at"] == "2026-09-28T01:02:03Z"
-    )
+    assert meta["current_patch"] == "2.55.17" and meta["collected_at"] == "2026-09-28T01:02:03Z"
     assert set(meta["modes"]) == {"qm", "sl", "sl_low", "sl_high", "qm_na", "sl_na"}
     # raw responses kept gzipped for the snapshots branch
     day = s.snapshot_out_dir / "2026-09-28"
@@ -152,18 +155,56 @@ async def test_run_puts_the_party_correction_on_qm_and_sl_only(
 
 
 @respx.mock
-async def test_solo_call_failure_leaves_the_views_uncorrected_and_the_run_succeeds(
+async def test_without_the_party_correction_nothing_is_updated(
     tmp_path: Path, raw_by_map, patches_payload, fake_sleep
 ) -> None:
-    mock_api(raw_by_map, patches_payload, fail_key="solo")
+    """Owner 2026-10-01: tiers without the party correction are a trust problem — rather no
+    update. A failed solo call (e.g. quota_exceeded mid-run) keeps yesterday's files and fails
+    the run; no matchups are fetched for it."""
+    mock_api(raw_by_map, patches_payload)
     s = settings(tmp_path)
+    assert await run(s, sleep=fake_sleep, now=lambda: "2026-09-28T00:00:00Z") == 0
+    before = {p.name: p.read_bytes() for p in (s.data_dir / "latest").iterdir()}
+    respx.reset()
+
+    def stats(request: httpx.Request) -> httpx.Response:
+        if dict(httpx.QueryParams(request.url.query)).get("groupsize") == "Solo":
+            return httpx.Response(
+                429, json={"error": {"code": "quota_exceeded", "message": "week"}}
+            )
+        return httpx.Response(200, json=raw_by_map)
+
+    respx.get(f"{BASE}/heroes/stats").mock(side_effect=stats)
+    matchups = respx.get(f"{BASE}/heroes/matchups").mock(return_value=httpx.Response(200))
+    _seed_heroes(s, ["Illidan"])
     with capture_logs() as logs:
-        assert await run(s, sleep=fake_sleep, now=lambda: "2026-09-28T00:00:00Z") == 0
-    qm = json.loads((s.data_dir / "latest" / "qm.json").read_text())
-    assert "party" not in qm and all("tier_win_rate" not in r for r in qm["rows"])
-    assert any(e["event"] == "run.party_skipped" for e in logs)
-    # the region calls still ran after the failed solo calls
-    assert (s.data_dir / "latest" / "qm_na.json").exists()
+        assert await run(s, sleep=fake_sleep, now=lambda: "2026-09-29T00:00:00Z") != 0
+    assert {p.name: p.read_bytes() for p in (s.data_dir / "latest").iterdir()} == before
+    assert any(e["event"] == "run.party_failed" for e in logs)
+    assert matchups.call_count == 0
+
+
+@respx.mock
+async def test_a_backfill_without_the_party_correction_writes_nothing(
+    tmp_path: Path, raw_by_map, patches_payload, fake_sleep
+) -> None:
+    """The previous patch is compared with the current one: it carries the same correction."""
+    from collector.run import run_backfill_previous
+
+    mock_api(raw_by_map, patches_payload)
+    s = settings(tmp_path)
+    assert await run(s, sleep=fake_sleep, now=lambda: "2026-09-28T00:00:00Z") == 0
+    respx.reset()
+
+    def stats(request: httpx.Request) -> httpx.Response:
+        if dict(httpx.QueryParams(request.url.query)).get("groupsize") == "Solo":
+            return httpx.Response(500, json={"error": {"code": "server_error", "message": "x"}})
+        return httpx.Response(200, json=raw_by_map)
+
+    respx.get(f"{BASE}/heroes/stats").mock(side_effect=stats)
+    assert await run_backfill_previous(s, patch="2.55.9", sleep=fake_sleep, now=lambda: "t") == 1
+    assert not (s.data_dir / "previous").exists()
+    assert json.loads((s.data_dir / "latest" / "meta.json").read_text())["previous_patch"] is None
 
 
 @respx.mock
@@ -217,11 +258,42 @@ async def test_run_keeps_previous_patch_data_on_patch_change(
     assert await run(s, sleep=fake_sleep, now=lambda: "2026-10-02T00:00:00Z") == 0
     meta = json.loads((s.data_dir / "latest" / "meta.json").read_text())
     assert (meta["current_patch"], meta["previous_patch"], meta["patch_started_at"]) == (
-        "2.55.18.99000",
-        "2.55.17.97771",
+        "2.55.18",
+        "2.55.17",
         "2026-10-02",
     )
-    assert json.loads((s.data_dir / "previous" / "qm.json").read_text())["patch"] == "2.55.17.97771"
+    assert json.loads((s.data_dir / "previous" / "qm.json").read_text())["patch"] == "2.55.17"
+
+
+@respx.mock
+async def test_a_hotfix_build_joins_the_current_patch(
+    tmp_path: Path, raw_by_map, patches_payload, fake_sleep
+) -> None:
+    """Owner 2026-10-01: a patch is a regular patch with its hotfixes. A new build of the same
+    x.y.z is added to the stats query; nothing moves to previous/, the patch start stays."""
+    mock_api(raw_by_map, patches_payload)
+    s = settings(tmp_path)
+    assert await run(s, sleep=fake_sleep, now=lambda: "2026-09-28T00:00:00Z") == 0
+    respx.reset()
+    hotfix = json.loads(json.dumps(patches_payload))
+    hotfix["patches"].append({"game_version": "2.55.17.98100", "valid_globals": True})
+    respx.get(f"{BASE}/patches").mock(return_value=httpx.Response(200, json=hotfix))
+    seen: set[str] = set()
+
+    def stats(request: httpx.Request) -> httpx.Response:
+        seen.add(dict(httpx.QueryParams(request.url.query))["timeframe"])
+        return httpx.Response(200, json=raw_by_map)
+
+    respx.get(f"{BASE}/heroes/stats").mock(side_effect=stats)
+    assert await run(s, sleep=fake_sleep, now=lambda: "2026-09-30T00:00:00Z") == 0
+    assert seen == {CUR_TF + ",2.55.17.98100"}
+    meta = json.loads((s.data_dir / "latest" / "meta.json").read_text())
+    assert (meta["current_patch"], meta["previous_patch"], meta["patch_started_at"]) == (
+        "2.55.17",
+        None,
+        "2026-09-28",
+    )
+    assert not (s.data_dir / "previous").exists()
 
 
 def test_main_module_exists() -> None:
@@ -246,12 +318,12 @@ async def test_backfill_previous_writes_previous_and_meta_without_touching_lates
     respx.reset()
 
     def stats(request: httpx.Request) -> httpx.Response:
-        assert dict(httpx.QueryParams(request.url.query))["timeframe"] == "2.55.17.97650"
+        assert dict(httpx.QueryParams(request.url.query))["timeframe"] == OLD_TF
         return httpx.Response(200, json=raw_by_map)
 
     respx.get(f"{BASE}/heroes/stats").mock(side_effect=stats)
     code = await run_backfill_previous(
-        s, patch="2.55.17.97650", sleep=fake_sleep, now=lambda: "2026-09-28T01:00:00Z"
+        s, patch="2.55.9", sleep=fake_sleep, now=lambda: "2026-09-28T01:00:00Z"
     )
     assert code == 0
     prev = s.data_dir / "previous"
@@ -261,14 +333,14 @@ async def test_backfill_previous_writes_previous_and_meta_without_touching_lates
         "sl_high.json",
         "sl_low.json",
     ]
-    assert json.loads((prev / "qm.json").read_text())["patch"] == "2.55.17.97650"
+    assert json.loads((prev / "qm.json").read_text())["patch"] == "2.55.9"
     # previous ranks are compared with today's, so the backfill carries the same correction
     assert json.loads((prev / "qm.json").read_text())["party"]["k"] == 1000
     assert "party" not in json.loads((prev / "sl_low.json").read_text())
     day = s.snapshot_out_dir / "2026-09-28"
-    assert (day / "backfill_2.55.17.97650_raw_qm_solo.json.gz").exists()
+    assert (day / "backfill_2.55.9_raw_qm_solo.json.gz").exists()
     meta = json.loads((s.data_dir / "latest" / "meta.json").read_text())
-    assert meta["previous_patch"] == "2.55.17.97650" and meta["current_patch"] == "2.55.17.97771"
+    assert meta["previous_patch"] == "2.55.9" and meta["current_patch"] == "2.55.17"
     assert sorted(meta["previous_modes"]) == ["qm", "sl", "sl_high", "sl_low"]
     after = {
         p.name: p.read_bytes() for p in (s.data_dir / "latest").iterdir() if p.name != "meta.json"
@@ -285,14 +357,13 @@ async def test_backfill_refuses_the_current_patch_and_needs_latest(
     s = settings(tmp_path)
     mock_api(raw_by_map, patches_payload)
     # no latest yet → refuse
-    assert (
-        await run_backfill_previous(s, patch="2.55.17.97650", sleep=fake_sleep, now=lambda: "t")
-        == 2
-    )
+    assert await run_backfill_previous(s, patch="2.55.9", sleep=fake_sleep, now=lambda: "t") == 2
     assert await run(s, sleep=fake_sleep, now=lambda: "2026-09-28T00:00:00Z") == 0
     # same build as current → refuse
+    assert await run_backfill_previous(s, patch="2.55.17", sleep=fake_sleep, now=lambda: "t") == 2
+    # a build of the current patch is the current patch
     assert (
-        await run_backfill_previous(s, patch="2.55.17.97771", sleep=fake_sleep, now=lambda: "t")
+        await run_backfill_previous(s, patch="2.55.17.97650", sleep=fake_sleep, now=lambda: "t")
         == 2
     )
 
@@ -330,13 +401,13 @@ async def test_run_collects_popular_builds_after_stats(
     assert await run(s, sleep=fake_sleep, now=lambda: "2026-09-28T00:00:00Z") == 0
     q = dict(httpx.QueryParams(route.calls[0].request.url.query))
     assert (q["timeframe"], q["game_type"], q["talentbuildtype"], q["total_builds"]) == (
-        "2.55.17.97771",
+        CUR_TF,
         "qm,sl",
         "Popular",
         "5",
     )
     b = json.loads((s.data_dir / "latest" / "builds.json").read_text())
-    assert b["patch"] == "2.55.17.97771" and b["game_type"] == "qm,sl"
+    assert b["patch"] == "2.55.17" and b["game_type"] == "qm,sl"
     assert [x["games"] for x in b["heroes"]["Illidan"]] == [386, 120]
     assert b["heroes"]["Illidan"][0]["win_rate"] == 51.3
     assert [t["level"] for t in b["heroes"]["Illidan"][0]["talents"]] == [1, 4, 7, 10, 13, 16, 20]
@@ -363,18 +434,18 @@ async def test_builds_are_collected_for_the_reference_patch(
     s.data_dir.joinpath("latest").mkdir(parents=True)
     healthy = {"matches": 9000, "heroes": 90, "heroes_over_200": 90}
     old = {
-        "current_patch": "2.55.17.97650",
+        "current_patch": "2.55.9",
         "previous_patch": None,
         "modes": {"qm": healthy, "sl": healthy},
     }
     s.data_dir.joinpath("latest", "meta.json").write_text(json.dumps(old))
     assert await run(s, sleep=fake_sleep, now=lambda: "2026-09-28T00:00:00Z") == 0
     meta = json.loads((s.data_dir / "latest" / "meta.json").read_text())
-    assert (meta["current_patch"], meta["reference_patch"]) == ("2.55.17.97771", "2.55.17.97650")
+    assert (meta["current_patch"], meta["reference_patch"]) == ("2.55.17", "2.55.9")
     q = dict(httpx.QueryParams(route.calls[0].request.url.query))
-    assert q["timeframe"] == "2.55.17.97650"
+    assert q["timeframe"] == OLD_TF
     b = json.loads((s.data_dir / "latest" / "builds.json").read_text())
-    assert b["patch"] == "2.55.17.97650"
+    assert b["patch"] == "2.55.9"
 
 
 @respx.mock
@@ -388,7 +459,7 @@ async def test_regions_are_collected_for_the_reference_patch_where_the_pages_rea
     s.data_dir.joinpath("latest").mkdir(parents=True)
     healthy = {"matches": 9000, "heroes": 90, "heroes_over_200": 90}
     old = {
-        "current_patch": "2.55.17.97650",
+        "current_patch": "2.55.9",
         "previous_patch": None,
         "modes": {"qm": healthy, "sl": healthy},
     }
@@ -400,11 +471,11 @@ async def test_regions_are_collected_for_the_reference_patch_where_the_pages_rea
         if c.request.url.path.endswith("/heroes/stats") and "region" in str(c.request.url)
     ]
     assert [(c["game_type"], c["timeframe"]) for c in calls] == [
-        ("qm", "2.55.17.97650"),
-        ("sl", "2.55.17.97650"),
+        ("qm", OLD_TF),
+        ("sl", OLD_TF),
     ]
     prev = json.loads((s.data_dir / "previous" / "qm_na.json").read_text())
-    assert (prev["patch"], prev["region"]) == ("2.55.17.97650", "NA")
+    assert (prev["patch"], prev["region"]) == ("2.55.9", "NA")
     assert not (s.data_dir / "latest" / "qm_na.json").exists()
     assert (s.snapshot_out_dir / "2026-09-28" / "raw_qm_na.json.gz").exists()
     # meta says the region exists on the reference patch (the tier page's region menu reads it)
@@ -424,7 +495,7 @@ async def test_a_region_already_final_on_the_previous_patch_is_not_fetched_again
     s.data_dir.joinpath("latest").mkdir(parents=True)
     healthy = {"matches": 9000, "heroes": 90, "heroes_over_200": 90}
     old = {
-        "current_patch": "2.55.17.97650",
+        "current_patch": "2.55.9",
         "previous_patch": None,
         "modes": {"qm": healthy, "sl": healthy},
     }
@@ -440,10 +511,10 @@ async def test_a_region_already_final_on_the_previous_patch_is_not_fetched_again
         for c in list(respx.calls)[first:]
         if c.request.url.path.endswith("/heroes/stats") and "region" in str(c.request.url)
     ]
-    assert [c["timeframe"] for c in calls] == ["2.55.17.97771", "2.55.17.97771"]
+    assert [c["timeframe"] for c in calls] == [CUR_TF, CUR_TF]
     assert (s.data_dir / "previous" / "qm_na.json").read_text() == kept
     latest = json.loads((s.data_dir / "latest" / "qm_na.json").read_text())
-    assert latest["patch"] == "2.55.17.97771"
+    assert latest["patch"] == "2.55.17"
 
 
 @respx.mock
@@ -458,7 +529,7 @@ async def test_matchups_are_collected_for_the_reference_patch(
     _seed_heroes(s, ["Abathur"])
     healthy = {"matches": 9000, "heroes": 90, "heroes_over_200": 90}
     old = {
-        "current_patch": "2.55.17.97650",
+        "current_patch": "2.55.9",
         "previous_patch": None,
         "modes": {"qm": healthy, "sl": healthy},
     }
@@ -466,7 +537,7 @@ async def test_matchups_are_collected_for_the_reference_patch(
     s.data_dir.joinpath("latest", "meta.json").write_text(json.dumps(old))
     assert await run(s, sleep=fake_sleep, now=lambda: "2026-09-28T00:00:00Z") == 0
     q = dict(httpx.QueryParams(route.calls[0].request.url.query))
-    assert q["timeframe"] == "2.55.17.97650"  # the reference patch, not the thin new one
+    assert q["timeframe"] == OLD_TF  # the reference patch, not the thin new one
 
 
 @respx.mock
@@ -565,9 +636,9 @@ async def test_run_collects_matchups_for_every_due_hero_after_the_stats(
     ]
     q = dict(httpx.QueryParams(route.calls[0].request.url.query))
     # thin fixture sample but no previous patch to fall back to → the current one
-    assert (q["timeframe"], q["game_type"]) == ("2.55.17.97771", "sl")
+    assert (q["timeframe"], q["game_type"]) == (CUR_TF, "sl")
     m = json.loads((s.data_dir / "matchups" / "illidan.json").read_text())
-    assert (m["patch"], m["collected_at"]) == ("2.55.17.97771", "2026-09-28T00:00:00Z")
+    assert (m["patch"], m["collected_at"]) == ("2.55.17", "2026-09-28T00:00:00Z")
     assert (s.snapshot_out_dir / "2026-09-28" / "matchups.json.gz").exists()
     # 5 between 6 stats calls + 1 before builds, then one gap between the two matchups calls
     assert fake_sleep.calls == [60.0] * 8 + [s.matchups_call_spacing_seconds]
@@ -595,7 +666,7 @@ async def test_matchups_quota_exceeded_keeps_files_and_the_run_still_succeeds(
     s = settings(tmp_path)
     _seed_heroes(s, ["Illidan"])
     (s.data_dir / "matchups").mkdir(parents=True)
-    old = {"patch": "2.55.17.97771", "collected_at": "2026-09-20T00:00:00Z"}
+    old = {"patch": "2.55.17", "collected_at": "2026-09-20T00:00:00Z"}
     (s.data_dir / "matchups" / "illidan.json").write_text(json.dumps(old))
     assert await run(s, sleep=fake_sleep, now=lambda: "2026-09-28T00:00:00Z") == 0
     assert json.loads((s.data_dir / "matchups" / "illidan.json").read_text()) == old
@@ -699,10 +770,10 @@ async def test_backfill_previous_regions_fetches_each_missing_region_once(
     mock_api(raw_by_map, patches_payload)
     s = settings(tmp_path)
     s.data_dir.joinpath("latest").mkdir(parents=True)
-    meta = {"current_patch": "2.55.17.97771", "previous_patch": "2.55.17.97650"}
+    meta = {"current_patch": "2.55.17", "previous_patch": "2.55.9"}
     s.data_dir.joinpath("latest", "meta.json").write_text(json.dumps(meta))
     s.data_dir.joinpath("previous").mkdir()
-    had = {"patch": "2.55.17.97650", "region": "KR", "matches": 1, "rows": []}
+    had = {"patch": "2.55.9", "region": "KR", "matches": 1, "rows": []}
     for m in ("qm", "sl"):
         s.data_dir.joinpath("previous", f"{m}_kr.json").write_text(json.dumps(had))
     assert await run_backfill_previous_regions(s, sleep=fake_sleep, now=lambda: "t") == 0
@@ -712,14 +783,14 @@ async def test_backfill_previous_regions_fetches_each_missing_region_once(
         if c.request.url.path.endswith("/heroes/stats")
     ]
     assert [(c["game_type"], c["region"], c["timeframe"]) for c in calls] == [
-        ("qm", "NA", "2.55.17.97650"),
-        ("sl", "NA", "2.55.17.97650"),
-        ("qm", "EU", "2.55.17.97650"),
-        ("sl", "EU", "2.55.17.97650"),
+        ("qm", "NA", OLD_TF),
+        ("sl", "NA", OLD_TF),
+        ("qm", "EU", OLD_TF),
+        ("sl", "EU", OLD_TF),
     ]
     for key in ("qm_na", "sl_na", "qm_eu", "sl_eu"):
         snap = json.loads((s.data_dir / "previous" / f"{key}.json").read_text())
-        assert snap["patch"] == "2.55.17.97650" and snap["region"] == key[-2:].upper()
+        assert snap["patch"] == "2.55.9" and snap["region"] == key[-2:].upper()
     assert json.loads((s.data_dir / "previous" / "qm_kr.json").read_text()) == had
     # the pages read which regions exist on the reference patch from meta, not from the files
     got = json.loads((s.data_dir / "latest" / "meta.json").read_text())["previous_modes"]

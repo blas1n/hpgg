@@ -17,3 +17,14 @@ Preconditions: `HP_API_TOKEN` in `~/Works/hotsmeta/.env`. Test Data mode costs n
 - [x] First full live run (dispatch 36376346599, 2026-09-28): patch 2.55.17.98025, QM 47,789 matches / 16 maps / 1,440 rows, SL 16,980, sl_low 3,362 (63/90 heroes over 200), sl_mid 13,573 (89/90), sl_high 7,308 (85/90); two calls answered 202 and finished after 2 polls each; data committed by the bot and deployed
 - [x] `qm.json` `map: "all"` Illidan win_rate 50.79 vs web 50.70 (+0.09, four hours of drift); pick rates identical to two decimals for all five spot-checked heroes; across all 90 heroes max |Δ| 0.63, mean +0.01 → the Σgames/10 derivation matches the site
 - [x] `sl_high.json` 7,308 < `sl.json` 16,980. Observation: the three brackets sum to 24,243 > 16,980, so a match is counted in every bracket its players belong to (or overall excludes untiered players) — bracket "matches" is a per-bracket slot normaliser, not a partition. Pick/ban rates within a bracket remain correct; do not add bracket matches together
+
+## Regular patch = x.y.z with its hotfixes (owner 2026-10-01)
+- [x] HP sums a comma-joined build list: `heroes/stats` SL `timeframe=2.57.0.98285,2.57.0.98304` → 91 heroes, ~4,550 matches, 79/91 over 200 (98304 alone: 1,526, 30/91); Xal'atath 789 games vs hotsgg.com "2.57.0" 778 (1 of 70/week)
+- [x] `heroes/matchups` takes the same list (Abathur, SL → 200 with allies/enemies; 1 of 700/week). `talents/builds/all` not probed (2 of 7 left this week) — the first run below is its check
+- [x] Dry run on live `/patches` + live `meta.json` (2026-10-01): `choose_patch` → `2.57.0`, timeframe `2.57.0.98285,2.57.0.98304`, `build_meta` → current/reference `2.57.0`, previous stays `2.55.17.98025`, `patch_started_at` stays 2026-09-29, no rotation
+- [ ] First cron run after merge: log `run.patch patch=2.57.0 builds=2.57.0.98285,2.57.0.98304`; exit 0
+- [ ] `data/latest/meta.json`: `current_patch` and `reference_patch` = `2.57.0`, `previous_patch` = `2.55.17.98025`; `data/previous/qm.json` still `2.55.17.98025`
+- [ ] `data/latest/builds.json` `patch` = `2.57.0` (builds/all accepted the list) — or, if it was refused, the run log names the code
+- [ ] Matchups: files rewritten with `patch` = `2.57.0` (all 90 due: other patch)
+- [ ] Site: tier page says 패치 2.57.0 with no "previous patch" banner; a hero page's 2.57 notes/hotfixes are not marked 수집 중
+- [ ] After the weekly reset (≈ 2026-10-05): `uv run python -m collector --previous 2.55.17` (6 calls) and `--previous-regions` (6) so the previous patch is all of 2.55.17, not only 98025

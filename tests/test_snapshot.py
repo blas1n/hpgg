@@ -19,6 +19,7 @@ from collector.snapshot import (
     previous_modes,
     reference_patch,
     snapshot_to_json,
+    timeframe_of,
 )
 from tests.conftest import FIXTURES
 
@@ -41,9 +42,19 @@ def test_specs_are_the_four_daily_calls() -> None:
     }
 
 
-def test_choose_patch_picks_latest_valid_globals_by_version(patches_payload) -> None:
-    # 98025 is newer but valid_globals=false → skip; 97771 is the newest valid one
-    assert choose_patch(patches_payload) == "2.55.17.97771"
+def test_choose_patch_picks_the_regular_patch_of_the_latest_valid_build(patches_payload) -> None:
+    """Owner 2026-10-01: a patch is a regular patch (x.y.z) with every hotfix build in it."""
+    # 98025 is newer but valid_globals=false → skip; 97771 is the newest valid one, of 2.55.17
+    assert choose_patch(patches_payload) == "2.55.17"
+
+
+def test_timeframe_of_a_regular_patch_lists_its_queryable_builds(patches_payload) -> None:
+    # every valid build of the line, oldest first; 98025 (valid_globals=false) and 2.55.9 left out
+    assert timeframe_of(patches_payload, "2.55.17") == "2.55.17.97650,2.55.17.97771"
+    # a single build (data collected before 2026-10-01) is its own timeframe
+    assert timeframe_of(patches_payload, "2.55.17.98025") == "2.55.17.98025"
+    with pytest.raises(ValueError):
+        timeframe_of(patches_payload, "2.56.0")
 
 
 def test_choose_patch_raises_when_nothing_valid() -> None:
@@ -381,9 +392,21 @@ def test_choose_patch_skips_a_build_added_within_the_last_hour() -> None:
     from datetime import UTC, datetime
 
     at = lambda s: datetime.fromisoformat(s.replace("Z", "+00:00"))  # noqa: E731
-    assert choose_patch(payload, now=at("2026-09-29T22:15:51Z")) == "2.57.0.98285"
-    assert choose_patch(payload, now=at("2026-09-29T23:08:51Z")) == "2.57.0.98304"
-    assert choose_patch(payload) == "2.57.0.98304"  # no clock: every listed build
+    early, settled = at("2026-09-29T22:15:51Z"), at("2026-09-29T23:08:51Z")
+    assert choose_patch(payload, now=early) == "2.57.0"
+    assert timeframe_of(payload, "2.57.0", now=early) == "2.57.0.98285"  # hotfix not yet
+    assert timeframe_of(payload, "2.57.0", now=settled) == "2.57.0.98285,2.57.0.98304"
+    assert timeframe_of(payload, "2.57.0") == "2.57.0.98285,2.57.0.98304"  # no clock: all
+    # a new regular patch whose only build is unsettled: the line before stays the patch
+    payload["patches"].append(
+        {
+            "game_version": "2.57.1.99000",
+            "valid_globals": True,
+            "date_added": "2026-10-20T00:00:00Z",
+        }
+    )
+    assert choose_patch(payload, now=at("2026-10-20T00:30:00Z")) == "2.57.0"
+    assert choose_patch(payload, now=at("2026-10-20T01:00:00Z")) == "2.57.1"
     assert UTC is not None
 
 
@@ -409,3 +432,33 @@ def test_previous_modes_describe_the_previous_patch_files_only(tmp_path: Path) -
     }
     assert previous_modes(tmp_path, None) == {}
     assert previous_modes(tmp_path / "nowhere", "old") == {}
+
+
+def test_a_build_of_the_new_regular_patch_is_never_promoted(tmp_path: Path) -> None:
+    """2026-10-01 switch from builds to regular patches: meta said 2.57.0.98304 (a build of
+    2.57.0). It is part of the new patch, not the patch before it, so the previous patch stays."""
+    m1 = build_meta(
+        {
+            "current_patch": "2.57.0.98304",
+            "previous_patch": "2.55.17.98025",
+            "patch_started_at": "2026-09-29",
+            # even with a real sample: a build of the new patch is the new patch
+            "modes": {m: {"heroes": 1, "heroes_over_200": 1} for m in ("qm", "sl")},
+        },
+        patch="2.57.0",
+        collected_at="2026-10-01T18:20:00Z",
+        snapshots=_healthy("2.57.0"),
+    )
+    assert (m1["current_patch"], m1["previous_patch"], m1["reference_patch"]) == (
+        "2.57.0",
+        "2.55.17.98025",
+        "2.57.0",
+    )
+    assert m1["patch_started_at"] == "2026-09-29"  # the patch did not start today
+    data, tmp = tmp_path / "data", tmp_path / "tmp"
+    old = {"current_patch": "2.57.0.98304", "previous_patch": "2.55.17.98025"}
+    commit_atomic(
+        data_dir=data, tmp_dir=tmp, snapshots=_thin("2.57.0.98304"), meta=old, prev_meta=None
+    )
+    commit_atomic(data_dir=data, tmp_dir=tmp, snapshots=_healthy("2.57.0"), meta=m1, prev_meta=old)
+    assert not (data / "previous" / "qm.json").exists()  # nothing rotated

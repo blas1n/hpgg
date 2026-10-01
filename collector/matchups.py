@@ -134,10 +134,12 @@ async def collect_matchups(
     patch: str,
     collected_at: str,
     sleep: SleepFn,
+    timeframe: str | None = None,
     clock: Callable[[], float] = time.monotonic,
 ) -> MatchupsResult:
     """One call per due hero, spaced, each file replaced on its own. A failure keeps that
-    hero's previous file; quota_exceeded or the time budget stops the loop."""
+    hero's previous file; quota_exceeded or the time budget stops the loop. `timeframe`: the
+    patch's builds (HP sums them), the patch id itself when omitted."""
     out = settings.data_dir / "matchups"
     out.mkdir(parents=True, exist_ok=True)
     today = date.fromisoformat(collected_at[:10])
@@ -158,7 +160,7 @@ async def collect_matchups(
             "hero": name,
             "game_type": MATCHUP_GAME_TYPE,
             "timeframe_type": "minor",
-            "timeframe": patch,
+            "timeframe": timeframe or patch,
             "mode": "json",
         }
         try:

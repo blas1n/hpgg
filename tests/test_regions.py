@@ -140,10 +140,10 @@ async def test_patch_change_moves_region_files_to_previous_and_drops_them_from_l
     assert await run(s, sleep=fake_sleep, now=lambda: "2026-10-01T18:30:00Z") == 0  # NA
     latest = _latest(s)
     assert "qm_kr" not in latest  # another patch: not carried
-    assert latest["qm_na"]["patch"] == "2.55.18.99000"
+    assert latest["qm_na"]["patch"] == "2.55.18"
     assert "qm_kr" not in latest["meta"]["modes"]
     prev = json.loads((s.data_dir / "previous" / "qm_kr.json").read_text())
-    assert prev["patch"] == "2.55.17.97771"
+    assert prev["patch"] == "2.55.17"
 
 
 @respx.mock
@@ -155,11 +155,11 @@ async def test_backfill_keeps_previous_region_files_of_the_same_patch_only(
     assert await run(s, sleep=fake_sleep, now=lambda: "2026-09-30T18:30:00Z") == 0
     prev = s.data_dir / "previous"
     prev.mkdir()
-    (prev / "qm_kr.json").write_text(json.dumps({"patch": "2.55.17.97650", "region": "KR"}))
+    (prev / "qm_kr.json").write_text(json.dumps({"patch": "2.55.9", "region": "KR"}))
     (prev / "sl_na.json").write_text(json.dumps({"patch": "2.55.16.00000", "region": "NA"}))
     respx.get(f"{BASE}/heroes/stats").mock(return_value=httpx.Response(200, json=raw_by_map))
     code = await run_backfill_previous(
-        s, patch="2.55.17.97650", sleep=fake_sleep, now=lambda: "2026-10-01T00:00:00Z"
+        s, patch="2.55.9", sleep=fake_sleep, now=lambda: "2026-10-01T00:00:00Z"
     )
     assert code == 0
     names = sorted(p.name for p in prev.iterdir())

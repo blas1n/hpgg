@@ -33,10 +33,12 @@ from collector.snapshot import (
     load_meta,
     normalize_builds,
     normalize_by_map,
+    patch_line,
     refresh_previous_modes,
     region_for_day,
     region_specs,
     snapshot_to_json,
+    timeframe_of,
 )
 
 BUILDS_GAME_TYPE = "qm,sl"
@@ -48,14 +50,20 @@ def _load_json(path: Path) -> Any:
 
 
 async def _collect_builds(
-    c: HPClient, settings: Settings, *, patch: str, collected_at: str, sleep: SleepFn
+    c: HPClient,
+    settings: Settings,
+    *,
+    patch: str,
+    timeframe: str,
+    collected_at: str,
+    sleep: SleepFn,
 ) -> tuple[Any, dict[str, Any]] | None:
     """One `/heroes/talents/builds/all` call (1 req/min, 7 per week on Basic). Returns None when
     the weekly allowance is spent — the caller keeps yesterday's builds.json in that case."""
     await sleep(settings.map_call_spacing_seconds)
     params = {
         "timeframe_type": "minor",
-        "timeframe": patch,
+        "timeframe": timeframe,
         "game_type": BUILDS_GAME_TYPE,
         "talentbuildtype": "Popular",
         "total_builds": str(BUILDS_TOTAL),
@@ -94,12 +102,14 @@ async def _collect_all(
     settings: Settings,
     *,
     patch: str,
+    timeframe: str,
     collected_at: str,
     sleep: SleepFn,
     specs: tuple[JobSpec, ...] = SPECS,
     after_a_call: bool = False,
 ) -> tuple[dict[str, Any], dict[str, dict[str, Any]]]:
-    """group_by_map calls for one build, 60 s apart → (raw by key, snapshots by key).
+    """group_by_map calls for one patch (`timeframe`: its builds), 60 s apart → (raw by key,
+    snapshots by key).
     `after_a_call`: a group_by_map call was made just before, so wait before the first one too."""
     raw_by_key: dict[str, Any] = {}
     snapshots: dict[str, dict[str, Any]] = {}
@@ -109,7 +119,7 @@ async def _collect_all(
             await sleep(settings.map_call_spacing_seconds)
         params: dict[str, Any] = {
             "timeframe_type": "minor",
-            "timeframe": patch,
+            "timeframe": timeframe,
             "game_type": spec.game_type,
             "group_by_map": "true",
             "mode": "json",
@@ -146,7 +156,13 @@ async def _collect_all(
 
 
 async def _collect_region(
-    c: HPClient, settings: Settings, *, patch: str, collected_at: str, sleep: SleepFn
+    c: HPClient,
+    settings: Settings,
+    *,
+    patch: str,
+    timeframe: str,
+    collected_at: str,
+    sleep: SleepFn,
 ) -> tuple[dict[str, Any], dict[str, dict[str, Any]]]:
     """Today's region (QM + SL). A failure here never fails the run: that region keeps its
     previous files (carried by `_carried_regions`) and comes round again in three days."""
@@ -156,6 +172,7 @@ async def _collect_region(
             c,
             settings,
             patch=patch,
+            timeframe=timeframe,
             collected_at=collected_at,
             sleep=sleep,
             specs=region_specs(region),
@@ -173,18 +190,20 @@ async def _collect_party(
     settings: Settings,
     *,
     patch: str,
+    timeframe: str,
     collected_at: str,
     sleep: SleepFn,
     snapshots: dict[str, dict[str, Any]],
 ) -> dict[str, Any]:
     """Solo-only QM + SL, folded into `snapshots` as the party correction (#36) → raw by key.
-    A failure never fails the run: the views stay uncorrected and the page prints the formula
-    without the correction."""
+    A failure fails the run (owner 2026-10-01): tiers without the correction would be a
+    different ranking under the same name, so yesterday's corrected files stay instead."""
     try:
         raw, solo = await _collect_all(
             c,
             settings,
             patch=patch,
+            timeframe=timeframe,
             collected_at=collected_at,
             sleep=sleep,
             specs=SOLO_SPECS,
@@ -195,11 +214,11 @@ async def _collect_party(
             for key, snap in solo.items()
         }
     except HPError as e:
-        log.warning("run.party_skipped", status=e.status, code=e.code)
-        return {}
+        log.error("run.party_failed", status=e.status, code=e.code)
+        raise
     except ValueError as e:
-        log.warning("run.party_skipped", error=str(e))
-        return {}
+        log.error("run.party_failed", error=str(e))
+        raise
     snapshots.update(corrected)
     for view, snap in corrected.items():
         log.info("run.party", view=view, **snap["party"])
@@ -219,6 +238,11 @@ def _region_patch(data_dir: Path, *, reference: str, current: str, day: str) -> 
         for m in ("qm", "sl")
     )
     return current if have else reference
+
+
+async def _timeframe(c: HPClient, patch: str) -> str:
+    """HP `timeframe` for a patch (its builds) from `/patches` (1,000,000/week)."""
+    return timeframe_of(await c.get_json("/patches"), patch)
 
 
 def _write_atomic(path: Path, obj: Any) -> None:
@@ -297,11 +321,21 @@ async def run_backfill_previous_regions(
     own = client is None
     c = client or _client(settings, sleep)
     try:
+        timeframe = await _timeframe(c, patch)
         _, snapshots = await _collect_all(
-            c, settings, patch=patch, collected_at=collected_at, sleep=sleep, specs=specs
+            c,
+            settings,
+            patch=patch,
+            timeframe=timeframe,
+            collected_at=collected_at,
+            sleep=sleep,
+            specs=specs,
         )
     except HPError as e:
         log.error("run.api_failed", status=e.status, code=e.code, message=e.message)
+        return 1
+    except ValueError as e:
+        log.error("run.bad_payload", error=str(e))
         return 1
     finally:
         if own:
@@ -322,8 +356,9 @@ async def run_backfill_previous(
     now: Callable[[], str] = utc_now_iso,
     client: HPClient | None = None,
 ) -> int:
-    """One-off: collect an older build into data/previous/ so "vs previous patch" deltas exist
-    before the first natural patch change. Exit 2 = refused (no latest yet, or same build)."""
+    """One-off: collect an older patch (x.y.z, every build of it; or one build) into
+    data/previous/ so "vs previous patch" deltas exist before the first natural patch change.
+    Exit 2 = refused (no latest yet, or the current patch)."""
     prev_meta = load_meta(settings.data_dir)
     if prev_meta is None:
         log.error(
@@ -331,18 +366,25 @@ async def run_backfill_previous(
             reason="no data/latest/meta.json yet — run the normal collection first",
         )
         return 2
-    if prev_meta.get("current_patch") == patch:
-        log.error("backfill.refused", reason="that build is the current patch", patch=patch)
+    if patch_line(patch) == patch_line(str(prev_meta.get("current_patch") or "")):
+        log.error("backfill.refused", reason="that is the current patch", patch=patch)
         return 2
     collected_at = now()
     own = client is None
     c = client or _client(settings, sleep)
     try:
+        timeframe = await _timeframe(c, patch)
         raw_by_key, snapshots = await _collect_all(
-            c, settings, patch=patch, collected_at=collected_at, sleep=sleep
+            c, settings, patch=patch, timeframe=timeframe, collected_at=collected_at, sleep=sleep
         )
         party_raw = await _collect_party(
-            c, settings, patch=patch, collected_at=collected_at, sleep=sleep, snapshots=snapshots
+            c,
+            settings,
+            patch=patch,
+            timeframe=timeframe,
+            collected_at=collected_at,
+            sleep=sleep,
+            snapshots=snapshots,
         )
     except HPError as e:
         log.error("run.api_failed", status=e.status, code=e.code, message=e.message)
@@ -457,8 +499,19 @@ async def _run_matchups(
         log.info("matchups.skipped", reason="no heroes_ko.json or meta.json")
         return
     patch = str(meta.get("reference_patch") or meta["current_patch"])  # decided once, in build_meta
+    try:
+        timeframe = await _timeframe(c, patch)
+    except (HPError, ValueError) as e:
+        log.warning("matchups.skipped", reason="no builds for the patch", error=str(e))
+        return
     res = await collect_matchups(
-        c, settings, heroes=heroes, patch=patch, collected_at=collected_at, sleep=sleep
+        c,
+        settings,
+        heroes=heroes,
+        patch=patch,
+        timeframe=timeframe,
+        collected_at=collected_at,
+        sleep=sleep,
     )
     if res.written:
         out = settings.data_dir / "matchups"
@@ -469,15 +522,21 @@ async def _run_matchups(
 async def _run_stats(c: HPClient, settings: Settings, *, collected_at: str, sleep: SleepFn) -> int:
     try:
         patches = await c.get_json("/patches")
-        patch = choose_patch(
-            patches, now=datetime.fromisoformat(collected_at.replace("Z", "+00:00"))
-        )
-        log.info("run.patch", patch=patch, collected_at=collected_at)
+        at = datetime.fromisoformat(collected_at.replace("Z", "+00:00"))
+        patch = choose_patch(patches, now=at)
+        timeframe = timeframe_of(patches, patch, now=at)
+        log.info("run.patch", patch=patch, builds=timeframe, collected_at=collected_at)
         raw_by_key, snapshots = await _collect_all(
-            c, settings, patch=patch, collected_at=collected_at, sleep=sleep
+            c, settings, patch=patch, timeframe=timeframe, collected_at=collected_at, sleep=sleep
         )
         party_raw = await _collect_party(
-            c, settings, patch=patch, collected_at=collected_at, sleep=sleep, snapshots=snapshots
+            c,
+            settings,
+            patch=patch,
+            timeframe=timeframe,
+            collected_at=collected_at,
+            sleep=sleep,
+            snapshots=snapshots,
         )
         prev_meta = load_meta(settings.data_dir)
         reference = build_meta(
@@ -487,7 +546,12 @@ async def _run_stats(c: HPClient, settings: Settings, *, collected_at: str, slee
             settings.data_dir, reference=reference, current=patch, day=collected_at
         )
         region_raw, region_snaps = await _collect_region(
-            c, settings, patch=region_patch, collected_at=collected_at, sleep=sleep
+            c,
+            settings,
+            patch=region_patch,
+            timeframe=timeframe_of(patches, region_patch, now=at),
+            collected_at=collected_at,
+            sleep=sleep,
         )
         raw_by_key.update(region_raw)
         region_previous: dict[str, dict[str, Any]] = {}
@@ -499,7 +563,12 @@ async def _run_stats(c: HPClient, settings: Settings, *, collected_at: str, slee
         meta = build_meta(prev_meta, patch=patch, collected_at=collected_at, snapshots=snapshots)
         # builds follow the one reference patch, like every page (thin new patch → previous)
         builds_result = await _collect_builds(
-            c, settings, patch=meta["reference_patch"], collected_at=collected_at, sleep=sleep
+            c,
+            settings,
+            patch=meta["reference_patch"],
+            timeframe=timeframe_of(patches, meta["reference_patch"], now=at),
+            collected_at=collected_at,
+            sleep=sleep,
         )
     except HPError as e:
         log.error("run.api_failed", status=e.status, code=e.code, message=e.message)
