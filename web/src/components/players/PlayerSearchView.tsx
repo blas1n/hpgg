@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { HP_EMBED_URL, readHpMessage } from "@/lib/hpUpload";
 import type { HeroTable, MapTable } from "@/data";
 import { useLocale, useT } from "@/i18n/client";
 import { fetchPlayer, isRegion, parseBattletag, playersHref, playerView, type PlayerResult, type PlayerView, type Region } from "@/lib/players";
@@ -60,7 +61,7 @@ export function PlayerSearchView({ heroes, maps }: { heroes: HeroTable; maps: Ma
   };
 
   return (
-    <main className="page-x mt-6 space-y-4 pb-10">
+    <main className="page-x mt-2 space-y-4 pb-10">
       <div>
         <h1 className="text-2xl font-extrabold tracking-tight text-fg">{t.players.title}</h1>
         <p className="mt-0.5 text-xs text-muted">{t.players.sub}</p>
@@ -131,7 +132,7 @@ function UploadGuide({ open }: { open: boolean }) {
         <div>
           <h3 className="font-bold text-fg">{g.pastTitle}</h3>
           <p className="mt-0.5">
-            {g.pastBody} {link}
+            {g.pastBody}
           </p>
           <dl className="mt-1.5 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-xs">
             <dt className="font-semibold text-fg">{g.windows}</dt>
@@ -143,11 +144,39 @@ function UploadGuide({ open }: { open: boolean }) {
               <code className="break-all rounded bg-surface-3 px-1.5 py-0.5 text-fg">{g.macPath}</code>
             </dd>
           </dl>
+          <HpUploader />
         </div>
         <p className="text-xs text-muted">{g.leaderboard}</p>
         <p className="text-xs text-muted">{g.after}</p>
       </div>
     </details>
+  );
+}
+
+/** Heroes Profile's own uploader in an iframe (lib/hpUpload.ts): it grows to fit, and when its queue empties we say
+ *  how many games are on Heroes Profile and when to search again. */
+function HpUploader() {
+  const g = useT().players.guide;
+  const [height, setHeight] = useState(520);
+  const [found, setFound] = useState<number | null>(null);
+  useEffect(() => {
+    const on = (e: MessageEvent) => {
+      const m = readHpMessage(e);
+      if (m?.type === "resize") setHeight(m.height);
+      else if (m?.type === "complete") setFound(m.uploaded + m.duplicates);
+    };
+    window.addEventListener("message", on);
+    return () => window.removeEventListener("message", on);
+  }, []);
+  return (
+    <div className="mt-2 space-y-2">
+      <iframe id="hp-uploader" src={HP_EMBED_URL} title={g.uploaderTitle} loading="lazy" className="w-full rounded-lg border-0" style={{ height }} />
+      {found !== null && (
+        <p id="upload-done" role="status" className="rounded-lg border border-primary/40 bg-surface px-3 py-2 text-fg">
+          {g.done(String(found))}
+        </p>
+      )}
+    </div>
   );
 }
 

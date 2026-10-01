@@ -27,7 +27,7 @@ export function HomeView({ models, maps }: { models: Record<Mode, HomeModel>; ma
 
   return (
     <>
-      <main className="page-x mt-6 space-y-6">
+      <main className="page-x mt-2 space-y-6">
         <div className="space-y-2">
           {/* what the site is, for a first visit (#30) */}
           <p id="site-tagline" className="text-center text-[13px] font-semibold text-fg-2">

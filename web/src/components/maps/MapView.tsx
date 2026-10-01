@@ -34,7 +34,7 @@ export function MapView({
   const objective = info ? mapObjective(info, locale) : null;
 
   return (
-    <main className="page-x mt-6 space-y-4 pb-10">
+    <main className="page-x mt-2 space-y-4 pb-10">
       <div id="map-banner" className="relative overflow-hidden rounded-card border border-line bg-surface">
         {map.image && (
           // eslint-disable-next-line @next/next/no-img-element

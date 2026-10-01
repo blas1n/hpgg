@@ -9,6 +9,7 @@ const API = "https://api.hpgg.win/v1/players**";
 
 test.beforeEach(async ({ page }) => {
   await page.route("**/gc.zgo.at/**", (r) => r.abort());
+  await page.route("https://www.heroesprofile.com/Upload/Embed**", (r) => r.fulfill({ status: 200, contentType: "text/html", body: "<p>stub uploader</p>" }));
 });
 
 const json = (route: Route, status: number, body: unknown, headers: Record<string, string> = {}) =>
@@ -138,4 +139,29 @@ test("home: the search box at the top opens 전적 검색 with the query", async
   await page.locator("#home-player-search button[type=submit]").click();
   await expect(page).toHaveURL(/\/ko\/hots\/players\/\?tag=Player12%231012&region=NA$/);
   await expect(page.locator("#player-result")).toHaveAttribute("data-state", "ok");
+});
+
+// Heroes Profile's embeddable uploader replaces CORS (HP 2026-09-29): an iframe with ?source=hpgg; the page listens to
+// its messages (only from https://www.heroesprofile.com) for its height and the end of the queue.
+const WIDGET_STUB = `<!doctype html><p>stub uploader</p><script>
+  parent.postMessage({ type: "heroesprofile:resize", height: 700 }, "*");
+  parent.postMessage({ type: "heroesprofile:upload", file: "a.StormReplay", status: "Success", replayID: 1 }, "*");
+  parent.postMessage({ type: "heroesprofile:upload-complete", uploaded: 2, duplicates: 1, failed: 0 }, "*");
+</script>`;
+
+test("players: the upload guide embeds Heroes Profile's uploader and says when to search again", async ({ page }) => {
+  await page.route("https://www.heroesprofile.com/Upload/Embed**", (r) => r.fulfill({ status: 200, contentType: "text/html", body: WIDGET_STUB }));
+  await page.goto("./players/");
+  // a forged message from our own origin is ignored
+  await page.evaluate(() => window.postMessage({ type: "heroesprofile:upload-complete", uploaded: 99, duplicates: 0, failed: 0 }, "*"));
+  await page.locator("#upload-guide summary").click();
+  const frame = page.locator("#hp-uploader");
+  await expect(frame).toHaveAttribute("src", "https://www.heroesprofile.com/Upload/Embed?source=hpgg");
+  await expect(frame).toHaveAttribute("title", /Heroes Profile/);
+  await expect(frame).toHaveCSS("height", "700px");
+  const done = page.locator("#upload-done");
+  await expect(done).toContainText("3"); // 2 uploaded + 1 already there
+  await expect(done).toContainText("다시 검색");
+  await expect(done).not.toContainText("99");
+  await expect(page.locator("#upload-guide")).toContainText("문서\\Heroes of the Storm\\Accounts"); // the folder to pick stays
 });
