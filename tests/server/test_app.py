@@ -260,3 +260,28 @@ def test_match_list_errors(
 def test_match_list_validates_like_the_profile(client: TestClient, fake_hp: FakeHP) -> None:
     r = client.get(URL + "/matches", params={"battletag": "Zemill", "region": "KR"})
     assert r.status_code == 422 and fake_hp.requests == []
+
+
+def test_replay_in_full(client: TestClient, fake_hp: FakeHP) -> None:
+    from tests.server.conftest import hp_response
+
+    fake_hp.responder = lambda r: hp_response("v1_replay_200.json")
+    r = client.get("/v1/replays/65597227")
+    assert r.status_code == 200
+    body = r.json()
+    assert body["replay"]["map"] == "Hanamura Temple" and len(body["replay"]["teams"]) == 2
+    assert body["fetched_at"].endswith("Z")
+    assert r.headers["cache-control"].startswith("public, max-age=")
+    assert client.get("/healthz").json()["quota"]["replay_data"]["live_calls_today"] == 1
+
+
+@pytest.mark.parametrize("rid", ["abc", "0", "-5", "99999999999"])
+def test_replay_id_is_validated(client: TestClient, fake_hp: FakeHP, rid: str) -> None:
+    assert client.get(f"/v1/replays/{rid}").status_code == 422
+    assert fake_hp.requests == []
+
+
+def test_unknown_replay_is_404(client: TestClient, fake_hp: FakeHP) -> None:
+    fake_hp.responder = lambda r: httpx.Response(404, json={"error": {"code": "not_found"}})
+    r = client.get("/v1/replays/1")
+    assert r.status_code == 404 and r.json()["error"]["code"] == "replay_not_found"

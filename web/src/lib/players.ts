@@ -101,15 +101,10 @@ export interface FetchOptions {
   timeoutMs?: number;
 }
 
-/** GET `path` on our API with the player query; `isT` checks a 200 body before it is trusted. */
-export async function apiGet<T>(
-  path: string,
-  battletag: string,
-  region: Region,
-  isT: (b: unknown) => b is T,
-  opts: FetchOptions = {},
-): Promise<ApiResult<T>> {
-  const url = `${opts.base ?? apiBase()}${path}?${new URLSearchParams({ battletag, region })}`;
+/** GET `path` on our API with `query`; `isT` checks a 200 body before it is trusted. */
+export async function apiGet<T>(path: string, query: Record<string, string>, isT: (b: unknown) => b is T, opts: FetchOptions = {}): Promise<ApiResult<T>> {
+  const qs = new URLSearchParams(query).toString();
+  const url = `${opts.base ?? apiBase()}${path}${qs ? `?${qs}` : ""}`;
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), opts.timeoutMs ?? 12_000);
   let res: Response;
@@ -133,7 +128,7 @@ export async function apiGet<T>(
 }
 
 export const fetchPlayer = (battletag: string, region: Region, opts: FetchOptions = {}): Promise<PlayerResult> =>
-  apiGet("/v1/players", battletag, region, isResponse, opts);
+  apiGet("/v1/players", { battletag, region }, isResponse, opts);
 
 const isResponse = (b: unknown): b is PlayerResponse =>
   typeof b === "object" && b !== null && typeof (b as PlayerResponse).player === "object" && (b as PlayerResponse).player !== null;

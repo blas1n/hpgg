@@ -39,7 +39,7 @@ def _iso(ts: float | None) -> str | None:
     return None if ts is None else datetime.fromtimestamp(ts, UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
-def _rate_limited(request: Request) -> JSONResponse | None:
+def rate_limited(request: Request) -> JSONResponse | None:
     limiter: SlidingWindowLimiter = request.app.state.ip_limiter
     wait = limiter.hit(client_ip(request))
     if wait is None:
@@ -61,7 +61,7 @@ def _failure(outcome: Outcome, retry_after: float | None) -> JSONResponse | None
 
 @router.get("")
 async def get_player(request: Request, q: Annotated[PlayerQuery, Query()]) -> JSONResponse:
-    if (limited := _rate_limited(request)) is not None:
+    if (limited := rate_limited(request)) is not None:
         return limited
     service: PlayerService = request.app.state.players
     r = await service.lookup(q.battletag, q.region.value)
@@ -78,7 +78,7 @@ async def get_player(request: Request, q: Annotated[PlayerQuery, Query()]) -> JS
 
 @router.get("/matches")
 async def get_matches(request: Request, q: Annotated[PlayerQuery, Query()]) -> JSONResponse:
-    if (limited := _rate_limited(request)) is not None:
+    if (limited := rate_limited(request)) is not None:
         return limited
     service: MatchService = request.app.state.matches
     r = await service.lookup(q.battletag, q.region.value)

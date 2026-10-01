@@ -76,7 +76,7 @@ export function PlayerSearchView({ heroes, maps }: { heroes: HeroTable; maps: Ma
       </PageHead>
       <PlayerSearchForm key={formKey} initialTag={query?.tag ?? ""} initialRegion={query?.region ?? "KR"} onSearch={search} className="max-w-xl" />
       <section id="player-result" data-state={state.kind} aria-live="polite" aria-busy={state.kind === "loading"}>
-        <Result state={state} games={games} heroes={heroes} maps={maps} retry={query ? () => void run(query.tag, query.region) : undefined} />
+        <Result state={state} games={games} me={query?.tag ?? ""} heroes={heroes} maps={maps} retry={query ? () => void run(query.tag, query.region) : undefined} />
       </section>
       {/* remounted when a search finds nobody, so it opens then and stays under the visitor's control otherwise */}
       <UploadGuide key={state.kind === "not_found" ? "not-found" : "default"} open={state.kind === "not_found"} />
@@ -84,7 +84,7 @@ export function PlayerSearchView({ heroes, maps }: { heroes: HeroTable; maps: Ma
   );
 }
 
-function Result({ state, games, heroes, maps, retry }: { state: State; games: Games; heroes: HeroTable; maps: MapTable; retry?: () => void }) {
+function Result({ state, games, me, heroes, maps, retry }: { state: State; games: Games; me: string; heroes: HeroTable; maps: MapTable; retry?: () => void }) {
   const t = useT().players;
   const locale = useLocale();
   switch (state.kind) {
@@ -111,7 +111,7 @@ function Result({ state, games, heroes, maps, retry }: { state: State; games: Ga
     case "invalid":
       return <Notice tone="warn" title={t.invalidTitle} body={t.invalidBody} />;
     case "ok":
-      return <Profile v={playerView(state.data, heroes, maps, locale)} games={games} heroes={heroes} maps={maps} />;
+      return <Profile v={playerView(state.data, heroes, maps, locale)} games={games} me={me} heroes={heroes} maps={maps} />;
   }
 }
 
@@ -205,7 +205,7 @@ function Notice({ title, body, tone, retry }: { title: string; body: string; ton
   );
 }
 
-function Profile({ v, games, heroes, maps }: { v: PlayerView; games: Games; heroes: HeroTable; maps: MapTable }) {
+function Profile({ v, games, me, heroes, maps }: { v: PlayerView; games: Games; me: string; heroes: HeroTable; maps: MapTable }) {
   const t = useT().players;
   return (
     <div className="space-y-4">
@@ -255,7 +255,7 @@ function Profile({ v, games, heroes, maps }: { v: PlayerView; games: Games; hero
       <div className="grid gap-4 lg:grid-cols-12">
         {games.kind === "ok" ? (
           <div className="lg:col-span-8">
-            <MatchHistory data={games.data} heroes={heroes} maps={maps} />
+            <MatchHistory data={games.data} heroes={heroes} maps={maps} me={me} />
           </div>
         ) : (
         <Card aria-labelledby="h-matches" className="lg:col-span-7">

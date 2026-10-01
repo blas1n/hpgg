@@ -1,0 +1,200 @@
+{
+ "source": "HeroesToolChest heroes-data 2.55.16.97039 (matchawarddata, gamestrings award/name)",
+ "awards": {
+  "ClutchHealer": {
+   "ko": "회심의 치유사",
+   "en": "Clutch Healer",
+   "icon": "storm_ui_mvp_clutchhealer_blue.png"
+  },
+  "HatTrick": {
+   "ko": "기선 제압자",
+   "en": "Hat Trick",
+   "icon": "storm_ui_mvp_hattrick_blue.png"
+  },
+  "HighestKillStreak": {
+   "ko": "제압자",
+   "en": "Dominator",
+   "icon": "storm_ui_mvp_dominator_blue.png"
+  },
+  "MVP": {
+   "ko": "MVP",
+   "en": "MVP",
+   "icon": "storm_ui_mvp_mvp_gold.png"
+  },
+  "MostAltarDamage": {
+   "ko": "포병",
+   "en": "Cannoneer",
+   "icon": "storm_ui_mvp_cannoneer_blue.png"
+  },
+  "MostCoinsPaid": {
+   "ko": "부자왕",
+   "en": "Moneybags",
+   "icon": "storm_ui_mvp_moneybags_blue.png"
+  },
+  "MostCurseDamageDone": {
+   "ko": "저주의 대가",
+   "en": "Master of the Curse",
+   "icon": "storm_ui_mvp_masterofthecurse_blue.png"
+  },
+  "MostDamageDoneToZerg": {
+   "ko": "저그 학살자",
+   "en": "Zerg Crusher",
+   "icon": "storm_ui_mvp_zergcrusher_blue.png"
+  },
+  "MostDamageTaken": {
+   "ko": "최후의 보루",
+   "en": "Bulwark",
+   "icon": "storm_ui_mvp_bulwark_blue.png"
+  },
+  "MostDamageToMinions": {
+   "ko": "수호자 사냥꾼",
+   "en": "Guardian Slayer",
+   "icon": "storm_ui_mvp_guardianslayer_blue.png"
+  },
+  "MostDamageToPlants": {
+   "ko": "정원의 공포",
+   "en": "Garden Terror",
+   "icon": "storm_ui_mvp_gardenterror_blue.png"
+  },
+  "MostDaredevilEscapes": {
+   "ko": "탈출의 명수",
+   "en": "Daredevil",
+   "icon": "storm_ui_mvp_daredevil_blue.png"
+  },
+  "MostDragonShrinesCaptured": {
+   "ko": "신단의 지배자",
+   "en": "Shriner",
+   "icon": "storm_ui_mvp_shriner_blue.png"
+  },
+  "MostEscapes": {
+   "ko": "생존가",
+   "en": "Escape Artist",
+   "icon": "storm_ui_mvp_escapeartist_blue.png"
+  },
+  "MostGemsTurnedIn": {
+   "ko": "보석광",
+   "en": "Jeweler",
+   "icon": "storm_ui_mvp_jeweler_blue.png"
+  },
+  "MostHealing": {
+   "ko": "전문 치유사",
+   "en": "Main Healer",
+   "icon": "storm_ui_mvp_mainhealer_blue.png"
+  },
+  "MostHeroDamageDone": {
+   "ko": "고통인도자",
+   "en": "Painbringer",
+   "icon": "storm_ui_mvp_painbringer_blue.png"
+  },
+  "MostImmortalDamage": {
+   "ko": "불멸자 사냥꾼",
+   "en": "Immortal Slayer",
+   "icon": "storm_ui_mvp_immortalslayer_blue.png"
+  },
+  "MostInterruptedCageUnlocks": {
+   "ko": "충직한 수호자",
+   "en": "Loyal Defender",
+   "icon": "storm_ui_mvp_loyaldefender_blue.png"
+  },
+  "MostKills": {
+   "ko": "처형자",
+   "en": "Finisher",
+   "icon": "storm_ui_mvp_finisher_blue.png"
+  },
+  "MostMercCampsCaptured": {
+   "ko": "징집관",
+   "en": "Headhunter",
+   "icon": "storm_ui_mvp_headhunter_blue.png"
+  },
+  "MostNukeDamageDone": {
+   "ko": "핵 폭격수",
+   "en": "Da Bomb",
+   "icon": "storm_ui_mvp_dabomb_blue.png"
+  },
+  "MostProtection": {
+   "ko": "보호자",
+   "en": "Protector",
+   "icon": "storm_ui_mvp_protector_blue.png"
+  },
+  "MostRoots": {
+   "ko": "구속자",
+   "en": "Trapper",
+   "icon": "storm_ui_mvp_trapper_blue.png"
+  },
+  "MostSeedsCollected": {
+   "ko": "씨앗 수집가",
+   "en": "Seed Collector",
+   "icon": "storm_ui_mvp_gardenterror_blue.png"
+  },
+  "MostSiegeDamageDone": {
+   "ko": "공성 전문가",
+   "en": "Siege Master",
+   "icon": "storm_ui_mvp_siegemaster_blue.png"
+  },
+  "MostSilences": {
+   "ko": "침묵의 대가",
+   "en": "Silencer",
+   "icon": "storm_ui_mvp_silencer_blue.png"
+  },
+  "MostSkullsCollected": {
+   "ko": "해골 수집가",
+   "en": "Skull Collector",
+   "icon": "storm_ui_mvp_skullcollector_blue.png"
+  },
+  "MostStuns": {
+   "ko": "군중 제어가",
+   "en": "Stunner",
+   "icon": "storm_ui_mvp_stunner_blue.png"
+  },
+  "MostTeamfightDamageTaken": {
+   "ko": "수호자",
+   "en": "Guardian",
+   "icon": "storm_ui_mvp_guardian_blue.png"
+  },
+  "MostTeamfightHealingDone": {
+   "ko": "전투 의무관",
+   "en": "Combat Medic",
+   "icon": "storm_ui_mvp_combatmedic_blue.png"
+  },
+  "MostTeamfightHeroDamageDone": {
+   "ko": "싸움꾼",
+   "en": "Scrapper",
+   "icon": "storm_ui_mvp_scrapper_blue.png"
+  },
+  "MostTimeInTemple": {
+   "ko": "사원의 지배자",
+   "en": "Temple Master",
+   "icon": "storm_ui_mvp_templemaster_blue.png"
+  },
+  "MostTimeOnPoint": {
+   "ko": "거점 수호자",
+   "en": "Point Guard",
+   "icon": "storm_ui_mvp_pointguard_blue.png"
+  },
+  "MostTimePushing": {
+   "ko": "운전수",
+   "en": "Pusher",
+   "icon": "storm_ui_mvp_pusher_blue.png"
+  },
+  "MostVengeancesPerformed": {
+   "ko": "복수자",
+   "en": "Avenger",
+   "icon": "storm_ui_mvp_avenger_blue.png"
+  },
+  "MostXPContribution": {
+   "ko": "숙련자",
+   "en": "Experienced",
+   "icon": "storm_ui_mvp_experienced_blue.png"
+  },
+  "ZeroDeaths": {
+   "ko": "고독한 생존가",
+   "en": "Sole Survivor",
+   "icon": "storm_ui_mvp_solesurvivor_blue.png"
+  },
+  "ZeroOutnumberedDeaths": {
+   "ko": "팀 플레이어",
+   "en": "Team Player",
+   "icon": "storm_ui_mvp_teamplayer_blue.png"
+  }
+ }
+}

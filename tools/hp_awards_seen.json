@@ -1,0 +1,66 @@
+{
+ "1": [
+  "MVP",
+  "storm_ui_mvp_mvp"
+ ],
+ "2": [
+  "Dominator",
+  "storm_ui_mvp_dominator"
+ ],
+ "3": [
+  "Most XP Contribution",
+  "storm_ui_mvp_experienced"
+ ],
+ "4": [
+  "Painbringer",
+  "storm_ui_mvp_painbringer"
+ ],
+ "5": [
+  "Siegemaster",
+  "storm_ui_mvp_siegemaster"
+ ],
+ "6": [
+  "Bulwark",
+  "storm_ui_mvp_avenger"
+ ],
+ "7": [
+  "Main Healer",
+  "storm_ui_mvp_mainhealer"
+ ],
+ "9": [
+  "Headhunter",
+  "storm_ui_mvp_headhunter"
+ ],
+ "13": [
+  "Clutch Healer",
+  "storm_ui_mvp_clutchhealer"
+ ],
+ "20": [
+  "Silencer",
+  "storm_ui_mvp_silencer"
+ ],
+ "21": [
+  "Most Teamfight Damage Taken",
+  "storm_ui_mvp_guardian"
+ ],
+ "23": [
+  "Scrapper",
+  "storm_ui_mvp_scrapper"
+ ],
+ "24": [
+  "Avenger",
+  "storm_ui_mvp_avenger"
+ ],
+ "1003": [
+  "Master of the Curse",
+  "storm_ui_mvp_masterofthecurse"
+ ],
+ "1004": [
+  "Dragonshire Shrines Captured",
+  "storm_ui_mvp_shriner"
+ ],
+ "1009": [
+  "Jeweler",
+  "storm_ui_mvp_jeweler"
+ ]
+}

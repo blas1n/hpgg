@@ -1,9 +1,10 @@
 /** A player's games (전적 검색): API client, the briefing over the newest games and the per-game rows.
  * The API is GET /v1/players/matches (server/players/matches.py): `full` rows carry the stat line and talents
  * (Heroes Profile /players/matches), `basic` rows only hero, map, result and MMR (HP's MMR history). */
-import type { HeroInfo, HeroTable, MapTable, TalentTable } from "../data";
+import type { AwardTable, HeroInfo, HeroTable, MapTable, TalentTable } from "../data";
 import { DEFAULT_LOCALE, type Locale } from "../i18n/locale";
 import { localField } from "../i18n/names";
+import { awardView, type AwardView } from "./awards";
 import { apiGet, modeLabel, relativeDay, type ApiResult, type FetchOptions, type Notice, type Region } from "./players";
 
 /** How many of the newest games the briefing covers. */
@@ -39,6 +40,8 @@ export interface MatchRow {
   time_cc: number | null;
   merc_camps: number | null;
   first_to_ten: boolean | null;
+  /** the game's award key (data/awards.json); absent in answers from before awards were sent */
+  award?: string | null;
   talents: (string | null)[];
 }
 export interface MatchesResponse {
@@ -54,7 +57,7 @@ const isMatches = (b: unknown): b is MatchesResponse => typeof b === "object" &&
 
 export const fetchMatches = (battletag: string, region: Region, opts: FetchOptions = {}): Promise<MatchesResult> =>
   // a cold query waits on Heroes Profile's job (server polls up to 20 s)
-  apiGet("/v1/players/matches", battletag, region, isMatches, {
+  apiGet("/v1/players/matches", { battletag, region }, isMatches, {
     timeoutMs: 30_000,
     ...opts,
   });
@@ -209,6 +212,7 @@ export interface MatchTalent {
 }
 export interface MatchView {
   key: string;
+  replayId: number;
   hero: string;
   slug: string | null;
   portrait?: string;
@@ -238,6 +242,7 @@ export interface MatchView {
     mercCamps: number | null;
   } | null;
   talents: MatchTalent[];
+  award: AwardView | null;
 }
 
 /** `talents` maps a hero slug to its talent file (data/talents/<slug>.json) once loaded; a game whose hero's file is
@@ -249,6 +254,7 @@ export function matchRows(
   talents: Record<string, TalentTable | null>,
   locale: Locale,
   now = new Date(),
+  awards: AwardTable | null = null,
 ): MatchView[] {
   const hero = heroIndex(heroes);
   const mapName = new Map([...maps.maps, ...(maps.aram ?? [])].map((m) => [m.name, m.ko]));
@@ -257,6 +263,7 @@ export function matchRows(
     const table = h ? talents[h.slug] : null;
     return {
       key: `${m.replay_id}-${i}`,
+      replayId: m.replay_id,
       hero: h?.ko ?? m.hero,
       slug: h?.slug ?? null,
       portrait: h?.portrait,
@@ -289,6 +296,7 @@ export function matchRows(
             mercCamps: m.merc_camps,
           }
         : null,
+      award: awardView(m.award ?? null, awards, locale),
       talents: m.talents.length
         ? TALENT_LEVELS.map((level, j) => {
             const id = m.talents[j] ?? null;

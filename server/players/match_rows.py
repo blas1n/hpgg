@@ -12,6 +12,8 @@ import json
 from pathlib import Path
 from typing import Any
 
+# HP award id → the game's award key (data/awards.json), built by tools/build_awards.py.
+HP_AWARDS: dict[str, str] = json.loads((Path(__file__).parent / "hp_awards.json").read_text())
 # HP map ids (GET /maps, 2026-10-01). The MMR history names maps only by id.
 HP_MAPS: dict[int, str] = {
     int(k): v for k, v in json.loads((Path(__file__).parent / "hp_maps.json").read_text()).items()
@@ -96,6 +98,7 @@ def full_rows(body: Any) -> list[dict[str, Any]]:
                 "mmr_change": _num(r.get("player_change")),
                 **{ours: _int(r.get(theirs)) for ours, theirs in STATS.items()},
                 "first_to_ten": r.get("first_to_ten") == 1,
+                "award": HP_AWARDS.get(str(r.get("match_award"))),
                 "talents": [t if isinstance(t, str) else None for t in talents],
             }
         )
@@ -119,6 +122,7 @@ def basic_rows(body: Any, mode: str) -> list[dict[str, Any]]:
                 "mmr_change": _num(r.get("mmr_change")),
                 **dict.fromkeys(STATS),
                 "first_to_ten": None,
+                "award": None,
                 "talents": [],
             }
         )

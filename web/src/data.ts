@@ -115,6 +115,12 @@ export async function loadMatchups(slug: string, patch: string): Promise<Matchup
   return file.patch === patch ? file : null;
 }
 
+/** End-of-match awards by the game's key (data/awards.json, tools/build_awards.py). */
+export interface AwardTable {
+  awards: Record<string, { ko: string; en: string; icon: string }>;
+}
+export const loadAwards = (): Promise<AwardTable> => getJson<AwardTable>("awards.json");
+
 /** A hero's talent names, icons and tooltips (data/talents/<slug>.json), or null when the hero has none. */
 export async function loadTalents(slug: string): Promise<TalentTable | null> {
   const res = await fetch(`${base}talents/${slug}.json`);

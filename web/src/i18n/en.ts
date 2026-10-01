@@ -397,6 +397,17 @@ The same data gives different tiers under a different formula. This site always 
       perfect: "Perfect",
       level: (n: string) => `Level ${n}`,
       talentsAria: (hero: string) => `${hero} talents`,
+      open: "Show game details",
+      close: "Hide game details",
+      winTeam: "Winning team",
+      lossTeam: "Losing team",
+      length: (t: string) => `Game length ${t}`,
+      player: "Player",
+      party: "Same party",
+      award: "Award",
+      replayLoading: "Loading game details…",
+      replayQuota: "Today's game-detail lookups are used up.",
+      replayError: "Game details can't be loaded right now.",
       // in-game score screen (GameStrings ScoreValue/Name, enus, 2.57.0.98304)
       stat: {
         heroDamage: "Hero Damage",
