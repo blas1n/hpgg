@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { PageHead } from "@/components/PageHead";
 import { loadMatchups, type MatchupsFile } from "@/data";
 import { useT } from "@/i18n/client";
 import {
@@ -127,15 +128,12 @@ export function DraftView({
   const choose = (slug: string) => update({ seq: applyPick(seq, slug) });
 
   return (
-    <main className="page-x mt-2 space-y-4 pb-10">
-      <div>
-        <h1 className="text-2xl font-extrabold tracking-tight text-fg">
-          {t.draft.title}
-        </h1>
+    <main className="page-x mt-6 space-y-4 pb-10">
+      <PageHead title={t.draft.title}>
         <p className="num mt-0.5 text-xs text-muted">
           {t.draft.metaLine(patch)}
         </p>
-      </div>
+      </PageHead>
 
       <Card as="div" className="flex flex-wrap items-center gap-2 p-2.5">
         <Segmented

@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { PageHead } from "@/components/PageHead";
 import { HP_EMBED_URL, readHpMessage } from "@/lib/hpUpload";
 import type { HeroTable, MapTable } from "@/data";
 import { useLocale, useT } from "@/i18n/client";
@@ -61,11 +62,10 @@ export function PlayerSearchView({ heroes, maps }: { heroes: HeroTable; maps: Ma
   };
 
   return (
-    <main className="page-x mt-2 space-y-4 pb-10">
-      <div>
-        <h1 className="text-2xl font-extrabold tracking-tight text-fg">{t.players.title}</h1>
+    <main className="page-x mt-6 space-y-4 pb-10">
+      <PageHead title={t.players.title}>
         <p className="mt-0.5 text-xs text-muted">{t.players.sub}</p>
-      </div>
+      </PageHead>
       <PlayerSearchForm key={formKey} initialTag={query?.tag ?? ""} initialRegion={query?.region ?? "KR"} onSearch={search} className="max-w-xl" />
       <section id="player-result" data-state={state.kind} aria-live="polite" aria-busy={state.kind === "loading"}>
         <Result state={state} heroes={heroes} maps={maps} retry={query ? () => void run(query.tag, query.region) : undefined} />

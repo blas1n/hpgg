@@ -12,7 +12,6 @@ import { HomeView } from "@/components/home/HomeView";
 import { MapsView } from "@/components/maps/MapsView";
 import { MapView } from "@/components/maps/MapView";
 import { PlayerSearchView } from "@/components/players/PlayerSearchView";
-import { HpCredit } from "@/components/HpCredit";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 import { TierView } from "@/components/tier/TierView";
@@ -40,7 +39,6 @@ export function HotsShell({ locale, children }: { locale: Locale; children: Reac
   return (
     <>
       <SiteHeader searchIndex={readSearchIndex(locale)} />
-      <HpCredit />
       <div className="min-h-[70vh]">{children}</div>
       <SiteFooter locale={locale} />
     </>

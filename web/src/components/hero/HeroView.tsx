@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { assetUrl, hotsHref, shortDate, type HeroInfo, type Mode } from "@/data";
+import { HpCredit } from "@/components/HpCredit";
 import { useLocale, useT } from "@/i18n/client";
 import { descParts, type BracketRow, type BuildTalentView, type BuildView, type HeroSummary, type MapRow, type RegionRow } from "@/lib/hero";
 import { matchupRule, type MatchupRow, type MatchupsView } from "@/lib/matchups";
@@ -77,8 +78,12 @@ export function HeroView({
 
   return (
     <main className="page-x pb-10">
+      {/* this page opens with the portrait, not a plain title, so the credit (API terms §4) stands on its own line */}
+      <div className="flex justify-end pt-3">
+        <HpCredit />
+      </div>
       <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,36rem)] lg:items-center lg:gap-x-8">
-      <div className="mt-1 flex items-center gap-4">
+      <div className="mt-3 flex items-center gap-4">
         <Portrait src={hero.portrait} size={84} tier={s.kind === "ranked" ? s.tier : undefined} role={hero.role} />
         <div className="min-w-0">
           <h1 className="text-2xl font-extrabold tracking-tight text-fg">{hero.ko}</h1>

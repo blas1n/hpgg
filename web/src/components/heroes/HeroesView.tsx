@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { PageHead } from "@/components/PageHead";
 import { hotsHref, type Mode } from "@/data";
 import { useLocale, useT } from "@/i18n/client";
 import { filterHeroes } from "@/lib/heroes";
@@ -32,13 +33,12 @@ export function HeroesView({ heroes, roles, universes, tiers, patches }: { heroe
   const list = filterHeroes(heroes, role, query, universe);
 
   return (
-    <main className="page-x mt-2 space-y-4 pb-10">
-      <div>
-        <h1 className="text-2xl font-extrabold tracking-tight text-fg">{t.heroes.title}</h1>
+    <main className="page-x mt-6 space-y-4 pb-10">
+      <PageHead title={t.heroes.title}>
         <p id="meta-line" className="num mt-0.5 text-xs text-muted">
           {t.heroes.metaLine(t.common.modes[mode], patches[mode])}
         </p>
-      </div>
+      </PageHead>
 
       <Card as="div" className="flex flex-wrap items-center gap-2 p-2.5">
         <Segmented

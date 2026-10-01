@@ -5,6 +5,7 @@ import { hotsHref, shortDate, type Mode } from "@/data";
 import { useLocale, useT } from "@/i18n/client";
 import type { HomeModel, MapCard, Mover, TopRow } from "@/lib/home";
 import { MapCardLink } from "../MapCardLink";
+import { PageHead } from "@/components/PageHead";
 import { PlayerSearchForm } from "../players/PlayerSearchForm";
 import { Card, CardHeader, cx, MoreLink, Portrait, RankDelta, Segmented } from "../ui";
 
@@ -27,7 +28,7 @@ export function HomeView({ models, maps }: { models: Record<Mode, HomeModel>; ma
 
   return (
     <>
-      <main className="page-x mt-2 space-y-6">
+      <main className="page-x mt-6 space-y-6">
         <div className="space-y-2">
           {/* what the site is, for a first visit (#30) */}
           <p id="site-tagline" className="text-center text-[13px] font-semibold text-fg-2">
@@ -35,25 +36,26 @@ export function HomeView({ models, maps }: { models: Record<Mode, HomeModel>; ma
           </p>
           <PlayerSearchForm id="home-player-search" className="mx-auto max-w-xl" />
         </div>
-        <div className="flex flex-wrap items-end justify-between gap-3">
-          <div>
-            <h1 className="text-2xl font-extrabold tracking-tight text-fg">{t.home.title}</h1>
-            <p id="meta-line" className="num mt-0.5 text-xs text-muted">
-              {t.common.modes[mode]} · {t.common.patch(m.patch)} · {t.common.matches(int(m.matches))} · {t.common.updated(shortDate(m.collectedAt))}
-              {m.fallbackFrom && <span data-fallback> · {t.common.fallbackNote(m.fallbackFrom)}</span>}
-            </p>
-          </div>
-          <Segmented
-            label={t.common.gameMode}
-            idPrefix="mode"
-            value={mode}
-            onChange={change}
-            options={[
-              { value: "qm", label: t.common.modes.qm },
-              { value: "sl", label: t.common.modes.sl },
-            ]}
-          />
-        </div>
+        <PageHead
+          title={t.home.title}
+          aside={
+            <Segmented
+              label={t.common.gameMode}
+              idPrefix="mode"
+              value={mode}
+              onChange={change}
+              options={[
+                { value: "qm", label: t.common.modes.qm },
+                { value: "sl", label: t.common.modes.sl },
+              ]}
+            />
+          }
+        >
+          <p id="meta-line" className="num mt-0.5 text-xs text-muted">
+            {t.common.modes[mode]} · {t.common.patch(m.patch)} · {t.common.matches(int(m.matches))} · {t.common.updated(shortDate(m.collectedAt))}
+            {m.fallbackFrom && <span data-fallback> · {t.common.fallbackNote(m.fallbackFrom)}</span>}
+          </p>
+        </PageHead>
 
         <Card aria-labelledby="h-leaders">
           <CardHeader id="h-leaders" title={t.home.leaders} sub={t.home.leadersSub} action={<MoreLink href={href.tier(mode === "sl" ? "mode=sl" : "")}>{t.home.fullTier}</MoreLink>} />

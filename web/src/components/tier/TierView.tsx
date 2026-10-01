@@ -1,6 +1,7 @@
 "use client";
 
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
+import { PageHead } from "@/components/PageHead";
 import { assetUrl, hotsHref, loadSnapshot, REGIONS, referencePatch, regionSample, shortDate, snapshotKey, type Bracket, type HeroTable, type MapTable, type Meta, type Mode, type PatchChoice, type Region } from "@/data";
 import { useLocale, useT } from "@/i18n/client";
 import type { Locale } from "@/i18n/locale";
@@ -137,13 +138,12 @@ export function TierView({ meta, heroes, maps, initial }: { meta: Meta; heroes: 
   const sortBy = (key: SortKey) => update(sort === key ? { dir: dir === "desc" ? "asc" : "desc" } : { sort: key, dir: "desc" });
 
   return (
-    <main className="page-x mt-2 space-y-4 pb-10">
-      <div>
-        <h1 className="text-2xl font-extrabold tracking-tight text-fg">{t.tier.title}</h1>
+    <main className="page-x mt-6 space-y-4 pb-10">
+      <PageHead title={t.tier.title}>
         <p id="meta-line" className="num mt-0.5 text-xs text-muted">
           {metaLine}
         </p>
-      </div>
+      </PageHead>
 
       {mapInfo && (
         <div id="map-hero" className="relative overflow-hidden rounded-card border border-line bg-surface">
