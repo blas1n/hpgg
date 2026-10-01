@@ -37,7 +37,7 @@ Start every session here. Operating guide and architecture: `docs/HANDOFF.md`. B
 3. `gh run list --event schedule -L 3`: the 03:20 run is green. A failed run opens a `collector failed` issue by itself.
 4. **Quota around 10-03 / 10-04**: Heroes/Stats had 21 left on 09-30 evening and a run uses 8 — the 10-03 and 10-04 runs are expected to fail with `quota_exceeded` (the site keeps the previous day); the window rolls on 10-05. Do not spend stats calls by hand before 10-05. Builds may be skipped a day or two (`run.builds_skipped`).
 5. `meta.json`: `reference_patch` stays 2.55.17.98025 until 2.57.0.98304 has half the heroes over 200 games in both QM and SL; then it switches by itself. All six regions of 98025 are in `previous/`; the daily region call now builds 98304's regions for when it becomes the reference.
-6. When 98304 is the reference, Xal'atath stays hidden until HeroesToolChest heroes-data ships a 2.57 build → `uv run python tools/build_assets.py --build <that build>` and commit (#6).
+6. Xal'atath is on the site since 2026-10-01 (heroes-data2 2.57.0.98304; HANDOFF "New hero"). Her stats show once 2.57.0 is the reference patch (the first run after #84).
 7. Tier floor 50 is a first setting (owner: "계속 조율하자"): look at how many heroes are grey per view and tune `MIN_GAMES_FOR_TIER`.
 
 ## Open threads

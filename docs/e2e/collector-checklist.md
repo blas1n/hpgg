@@ -28,3 +28,10 @@ Preconditions: `HP_API_TOKEN` in `~/Works/hotsmeta/.env`. Test Data mode costs n
 - [ ] Matchups: files rewritten with `patch` = `2.57.0` (all 90 due: other patch)
 - [ ] Site: tier page says 패치 2.57.0 with no "previous patch" banner; a hero page's 2.57 notes/hotfixes are not marked 수집 중
 - [ ] After the weekly reset (≈ 2026-10-05): `uv run python -m collector --previous 2.55.17` (6 calls) and `--previous-regions` (6) so the previous patch is all of 2.55.17, not only 98025
+
+## Hero assets from heroes-data2 (2026-10-01)
+- [x] `uv run python tools/build_assets.py --build 2.57.0.98304`: 91 heroes (Xal'atath added; no other row changed), 1,931 talents, 991 icons, 0 missing
+- [x] Existing talent files: 0 talents removed, 1 added (Abathur), 2 names now the talent's own (Tyrael 정의의 화신, Lunara 뜀박질), 73/1,918 descriptions changed (2.57 balance text)
+- [x] Hotfix ids (`game`): every ability id of the 2.55.16.97039 files still matched by a key (prefix, as `collector/hotfixes.py`), 23 added (heroUnits: vikings' basics, Medivh's raven, Abathur's symbiote…), extra weapon ids for 8 heroes; nothing carried over
+- [x] Built site: `/ko/hots/heroes/xal-atath/` renders (잘아타스, portrait loads, no page errors, no broken images); 영웅 list shows her
+- [ ] After 2.57.0 is the reference: her tier row, stats and talent builds show on the hero page

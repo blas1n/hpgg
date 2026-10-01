@@ -957,6 +957,17 @@
 "franchise": "Warcraft"
 },
 {
+"name": "Xal'atath",
+"slug": "xal-atath",
+"ko": "잘아타스",
+"en": "Xal'atath",
+"role": "Ranged Assassin",
+"role_ko": "원거리 암살자",
+"short_name": "xalatath",
+"portrait": "img/heroes/xal-atath.png",
+"franchise": "Warcraft"
+},
+{
 "name": "Xul",
 "slug": "xul",
 "ko": "줄",
@@ -1024,7 +1035,7 @@
 }
 ],
 "source": {
-"names": "HeroesToolChest/heroes-data gamestrings kokr + enus (build 97039, MIT)",
+"names": "HeroesToolChest/heroes-data2 gamestrings kokr + enus (build 98304, MIT)",
 "portraits": "HeroesToolChest/heroes-images heroportraits draft (MIT), resized to 96px"
 }
 }
