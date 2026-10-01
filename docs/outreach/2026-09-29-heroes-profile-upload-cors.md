@@ -1,6 +1,6 @@
 # Heroes Profile: uploading replays from hpgg.win (email, sent 2026-09-29)
 
-Sent by the owner to **ZEMILL@heroesprofile.com** (the address on https://www.heroesprofile.com/Contact), not as a public GitHub Discussion. The request is a one-to-one ask about one site's access, and it touches abuse limits, so a public board was the wrong venue. Replies come to the owner's mail (contact@hpgg.win only forwards). **Status: waiting for a reply.** Do not build uploading from our site until HP answers.
+Sent by the owner to **ZEMILL@heroesprofile.com** (the address on https://www.heroesprofile.com/Contact), not as a public GitHub Discussion. The request is a one-to-one ask about one site's access, and it touches abuse limits, so a public board was the wrong venue. Replies come to the owner's mail (contact@hpgg.win only forwards). **Status: answered 2026-09-29 by Zemill (reply below); done in the PR that embeds the widget.**
 
 Background facts (from HP's open-source site and uploader, 2026-09-29):
 - Routes: `POST /api/external/v1/upload/heroesprofile/{source}` and `GET /api/external/v1/replays/fingerprints/{fp}`. Both are keyless (`routes/api-external.php`; uploader `Uploader.cs`).
@@ -34,3 +34,22 @@ When a reply arrives, record the answer here, then:
 - **CORS allowed:** upload straight from the player page with `source=hpgg`. Check for duplicates with the fingerprint route first.
 - **Relay OK:** add a server upload route. The single-IP limits apply to all our users together.
 - **Neither:** keep the guide (PR #35) and link out.
+
+---
+
+## Reply (Zemill, 2026-09-29) and what we did
+
+- **No CORS — use the embeddable uploader instead.** An iframe of `https://www.heroesprofile.com/Upload/Embed?source=hpgg`
+  (docs and snippet: https://www.heroesprofile.com/Upload/Widget). Replays go from the visitor's browser to HP under their
+  own IP. The widget posts `heroesprofile:resize` (height), `heroesprofile:upload` (per replay) and
+  `heroesprofile:upload-complete` (`uploaded`, `duplicates`, `failed`); check the origin. → `web/src/lib/hpUpload.ts`,
+  the uploader sits in the 전적 검색 upload guide under "past games" and says when to search again.
+- **Do not call `replays/fingerprints` from our site** (desktop uploader only). **Do not relay uploads through our server**
+  (one IP's limits, wrong address recorded). Neither is built.
+- **Leaderboards:** web uploads (the embed too) may not count; keep pointing people to the desktop uploader (we do).
+- **Attribution (API terms §4):** the footer credit alone was not enough (small grey text, ~4,500 px down the tier list).
+  "Data provided by Heroes Profile" with the link must be on the same screen as the data, no smaller than body text, not
+  fine print. → `web/src/components/HpCredit.tsx` on every page, at the top in body text; the footer credit stays.
+
+Read with the terms (2026-10-01): §5 also requires polling HP's privacy change feed every 24 h and dropping a player who
+went private within 24 h. Our player cache does not do this yet — issue #74.

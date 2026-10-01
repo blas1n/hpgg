@@ -32,7 +32,7 @@ export function HeroesView({ heroes, roles, universes, tiers, patches }: { heroe
   const list = filterHeroes(heroes, role, query, universe);
 
   return (
-    <main className="page-x mt-6 space-y-4 pb-10">
+    <main className="page-x mt-2 space-y-4 pb-10">
       <div>
         <h1 className="text-2xl font-extrabold tracking-tight text-fg">{t.heroes.title}</h1>
         <p id="meta-line" className="num mt-0.5 text-xs text-muted">

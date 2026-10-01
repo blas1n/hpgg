@@ -78,7 +78,7 @@ export function HeroView({
   return (
     <main className="page-x pb-10">
       <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,36rem)] lg:items-center lg:gap-x-8">
-      <div className="mt-5 flex items-center gap-4">
+      <div className="mt-1 flex items-center gap-4">
         <Portrait src={hero.portrait} size={84} tier={s.kind === "ranked" ? s.tier : undefined} role={hero.role} />
         <div className="min-w-0">
           <h1 className="text-2xl font-extrabold tracking-tight text-fg">{hero.ko}</h1>

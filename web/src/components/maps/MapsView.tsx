@@ -9,7 +9,7 @@ import { MapCardLink } from "../MapCardLink";
 export function MapsView({ cards, patch, matches, collectedAt, fallbackFrom }: { cards: MapCard[]; patch: string; matches: number; collectedAt: string; fallbackFrom: string | null }) {
   const t = useT();
   return (
-    <main className="page-x mt-6 space-y-4 pb-10">
+    <main className="page-x mt-2 space-y-4 pb-10">
       <div>
         <h1 className="text-2xl font-extrabold tracking-tight text-fg">{t.maps.title}</h1>
         <p id="meta-line" className="num mt-0.5 text-xs text-muted">

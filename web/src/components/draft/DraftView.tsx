@@ -127,7 +127,7 @@ export function DraftView({
   const choose = (slug: string) => update({ seq: applyPick(seq, slug) });
 
   return (
-    <main className="page-x mt-6 space-y-4 pb-10">
+    <main className="page-x mt-2 space-y-4 pb-10">
       <div>
         <h1 className="text-2xl font-extrabold tracking-tight text-fg">
           {t.draft.title}
