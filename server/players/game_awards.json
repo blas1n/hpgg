@@ -1,0 +1,158 @@
+{
+ "ClutchHealer": {
+  "en": "Clutch Healer",
+  "icon": "storm_ui_mvp_clutchhealer"
+ },
+ "HatTrick": {
+  "en": "Hat Trick",
+  "icon": "storm_ui_mvp_hattrick"
+ },
+ "HighestKillStreak": {
+  "en": "Dominator",
+  "icon": "storm_ui_mvp_dominator"
+ },
+ "MVP": {
+  "en": "MVP",
+  "icon": "storm_ui_mvp_mvp"
+ },
+ "MostAltarDamage": {
+  "en": "Cannoneer",
+  "icon": "storm_ui_mvp_cannoneer"
+ },
+ "MostCoinsPaid": {
+  "en": "Moneybags",
+  "icon": "storm_ui_mvp_moneybags"
+ },
+ "MostCurseDamageDone": {
+  "en": "Master of the Curse",
+  "icon": "storm_ui_mvp_masterofthecurse"
+ },
+ "MostDamageDoneToZerg": {
+  "en": "Zerg Crusher",
+  "icon": "storm_ui_mvp_zergcrusher"
+ },
+ "MostDamageTaken": {
+  "en": "Bulwark",
+  "icon": "storm_ui_mvp_bulwark"
+ },
+ "MostDamageToMinions": {
+  "en": "Guardian Slayer",
+  "icon": "storm_ui_mvp_guardianslayer"
+ },
+ "MostDamageToPlants": {
+  "en": "Garden Terror",
+  "icon": "storm_ui_mvp_gardenterror"
+ },
+ "MostDaredevilEscapes": {
+  "en": "Daredevil",
+  "icon": "storm_ui_mvp_daredevil"
+ },
+ "MostDragonShrinesCaptured": {
+  "en": "Shriner",
+  "icon": "storm_ui_mvp_shriner"
+ },
+ "MostEscapes": {
+  "en": "Escape Artist",
+  "icon": "storm_ui_mvp_escapeartist"
+ },
+ "MostGemsTurnedIn": {
+  "en": "Jeweler",
+  "icon": "storm_ui_mvp_jeweler"
+ },
+ "MostHealing": {
+  "en": "Main Healer",
+  "icon": "storm_ui_mvp_mainhealer"
+ },
+ "MostHeroDamageDone": {
+  "en": "Painbringer",
+  "icon": "storm_ui_mvp_painbringer"
+ },
+ "MostImmortalDamage": {
+  "en": "Immortal Slayer",
+  "icon": "storm_ui_mvp_immortalslayer"
+ },
+ "MostInterruptedCageUnlocks": {
+  "en": "Loyal Defender",
+  "icon": "storm_ui_mvp_loyaldefender"
+ },
+ "MostKills": {
+  "en": "Finisher",
+  "icon": "storm_ui_mvp_finisher"
+ },
+ "MostMercCampsCaptured": {
+  "en": "Headhunter",
+  "icon": "storm_ui_mvp_headhunter"
+ },
+ "MostNukeDamageDone": {
+  "en": "Da Bomb",
+  "icon": "storm_ui_mvp_dabomb"
+ },
+ "MostProtection": {
+  "en": "Protector",
+  "icon": "storm_ui_mvp_protector"
+ },
+ "MostRoots": {
+  "en": "Trapper",
+  "icon": "storm_ui_mvp_trapper"
+ },
+ "MostSeedsCollected": {
+  "en": "Seed Collector",
+  "icon": "storm_ui_mvp_gardenterror"
+ },
+ "MostSiegeDamageDone": {
+  "en": "Siege Master",
+  "icon": "storm_ui_mvp_siegemaster"
+ },
+ "MostSilences": {
+  "en": "Silencer",
+  "icon": "storm_ui_mvp_silencer"
+ },
+ "MostSkullsCollected": {
+  "en": "Skull Collector",
+  "icon": "storm_ui_mvp_skullcollector"
+ },
+ "MostStuns": {
+  "en": "Stunner",
+  "icon": "storm_ui_mvp_stunner"
+ },
+ "MostTeamfightDamageTaken": {
+  "en": "Guardian",
+  "icon": "storm_ui_mvp_guardian"
+ },
+ "MostTeamfightHealingDone": {
+  "en": "Combat Medic",
+  "icon": "storm_ui_mvp_combatmedic"
+ },
+ "MostTeamfightHeroDamageDone": {
+  "en": "Scrapper",
+  "icon": "storm_ui_mvp_scrapper"
+ },
+ "MostTimeInTemple": {
+  "en": "Temple Master",
+  "icon": "storm_ui_mvp_templemaster"
+ },
+ "MostTimeOnPoint": {
+  "en": "Point Guard",
+  "icon": "storm_ui_mvp_pointguard"
+ },
+ "MostTimePushing": {
+  "en": "Pusher",
+  "icon": "storm_ui_mvp_pusher"
+ },
+ "MostVengeancesPerformed": {
+  "en": "Avenger",
+  "icon": "storm_ui_mvp_avenger"
+ },
+ "MostXPContribution": {
+  "en": "Experienced",
+  "icon": "storm_ui_mvp_experienced"
+ },
+ "ZeroDeaths": {
+  "en": "Sole Survivor",
+  "icon": "storm_ui_mvp_solesurvivor"
+ },
+ "ZeroOutnumberedDeaths": {
+  "en": "Team Player",
+  "icon": "storm_ui_mvp_teamplayer"
+ }
+}

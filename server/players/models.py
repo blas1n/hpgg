@@ -61,3 +61,14 @@ class HPFeedCursor(Base):
     since: Mapped[str | None] = mapped_column(String, nullable=True)
     after_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
     last_ok_at: Mapped[float] = mapped_column(Float)
+
+
+class HPAwardMap(Base):
+    """An HP award id the server resolved from a /replay answer (server/players/awards.py)."""
+
+    __tablename__ = "hp_award_map"
+
+    award_id: Mapped[str] = mapped_column(String, primary_key=True)
+    award_key: Mapped[str] = mapped_column(String)
+    title: Mapped[str] = mapped_column(String)
+    learned_at: Mapped[float] = mapped_column(Float)

@@ -18,8 +18,9 @@ import structlog
 
 from server.config import Settings
 from server.players import quota
+from server.players.awards import AwardBook, award_parts
 from server.players.hp import HPClient
-from server.players.match_rows import HP_AWARDS, TALENT_LEVELS
+from server.players.match_rows import TALENT_LEVELS
 from server.players.service import Outcome
 from server.players.store import CacheEntry, HPStore
 
@@ -27,7 +28,7 @@ log = structlog.get_logger(__name__)
 
 BUCKET = "replay_data"
 # Bump when the normalised game changes shape: cached games in another format are fetched again.
-REPLAY_VERSION = 1
+REPLAY_VERSION = 2  # 2 = HP's award id/title/icon kept, named when served
 REGIONS = {1: "NA", 2: "EU", 3: "KR", 5: "CN"}
 MODES = {
     "Quick Match": "qm",
@@ -81,16 +82,6 @@ def _num(x: Any) -> float | None:
     return round(float(x), 2) if isinstance(x, int | float) and not isinstance(x, bool) else None
 
 
-def _award(a: Any) -> str | None:
-    if not isinstance(a, dict):
-        return None
-    key = HP_AWARDS.get(str(a.get("award_id")))
-    if key is None:
-        # add it to tools/hp_awards_seen.json and rerun tools/build_awards.py
-        log.warning("replays.award_unknown", award_id=a.get("award_id"), title=a.get("title"))
-    return key
-
-
 def _player(p: dict[str, Any]) -> dict[str, Any] | None:
     hero = _d(p.get("hero"))
     if not hero.get("name"):
@@ -103,7 +94,13 @@ def _player(p: dict[str, Any]) -> dict[str, Any] | None:
         "short_name": hero.get("short_name"),
         "role": hero.get("new_role"),
         "party": p.get("party") if isinstance(p.get("party"), str) else None,
-        "award": _award(p.get("match_award")),
+        **dict(
+            zip(
+                ("award_id", "award_title", "award_icon"),
+                award_parts(p.get("match_award")),
+                strict=True,
+            )
+        ),
         "mmr": _int(p.get("player_mmr")),
         "mmr_change": _num(p.get("player_change")),
         **{ours: _int(score.get(theirs)) for ours, theirs in SCORE.items()},
@@ -138,6 +135,7 @@ class ReplayService:
         self._settings = settings
         self._clock = clock
         self._inflight: dict[int, asyncio.Task[ReplayLookup]] = {}
+        self._awards = AwardBook(store, clock)
 
     async def lookup(self, replay_id: int) -> ReplayLookup:
         entry = await self._store.get(replay_key(replay_id))
@@ -169,6 +167,8 @@ class ReplayService:
         if up.status == 200 and isinstance(up.body, dict):
             await self._store.count_live_call(quota.day(now), BUCKET)
             game = normalize_replay(replay_id, up.body)
+            for p in (p for t in game["teams"] for p in t["players"] if p["award_id"]):
+                await self._awards.learn(p["award_id"], p["award_title"], p["award_icon"])
             entry = CacheEntry(replay_key(replay_id), 200, game, now, now + s.stale_max_seconds)
             await self._store.put(entry)
             return await self._shown(entry)
@@ -183,6 +183,7 @@ class ReplayService:
         """The cached game without the players who went private since."""
         game = _d(e.body)
         region = game.get("region")
+        awards = await self._awards.table()
         teams = []
         for t in game.get("teams") or []:
             kept = []
@@ -190,6 +191,7 @@ class ReplayService:
                 tag = _d(p).get("battletag")
                 if region and tag and await self._store.is_private(region, tag):
                     continue
-                kept.append(p)
+                rest = {k: v for k, v in _d(p).items() if not k.startswith("award_")}
+                kept.append({**rest, "award": awards.get(_d(p).get("award_id") or "")})
             teams.append({**_d(t), "players": kept})
         return ReplayLookup("ok", replay={**game, "teams": teams}, fetched_at=e.fetched_at)

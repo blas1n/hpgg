@@ -113,10 +113,10 @@ async def test_upstream_trouble_is_unavailable(svc: ReplayService, fake_hp: Fake
     assert (await svc.lookup(RID)).outcome == "unavailable"
 
 
-def test_match_rows_carry_the_award_by_game_key() -> None:
+def test_match_rows_keep_hps_award_id_to_be_named_when_served() -> None:
     rows = full_rows(recorded("v1_players_matches_200.json")["body"])
-    assert rows[0]["award"] == "MVP"  # HP match_award "1"
-    assert rows[1]["award"] is None
+    assert rows[0]["award_id"] == "1"  # MVP, named by server/players/awards.py when served
+    assert rows[1]["award_id"] is None
 
 
 def test_the_replay_budget_fits_the_weekly_bucket() -> None:

@@ -12,7 +12,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from server.db import Database
 from server.players.hp import Quota
-from server.players.models import HPCache, HPDailyUsage, HPFeedCursor, HPPrivatePlayer, HPQuota
+from server.players.models import (
+    HPAwardMap,
+    HPCache,
+    HPDailyUsage,
+    HPFeedCursor,
+    HPPrivatePlayer,
+    HPQuota,
+)
 
 PRIVACY_FEED = "player_privacy_changes"  # HP bucket name, also the cursor's row
 
@@ -152,6 +159,24 @@ class HPStore:
         async with self._db.session.begin() as s:
             result = await s.execute(delete(HPCache).where(HPCache.fetched_at < ts))
         return int(result.rowcount or 0)  # type: ignore[attr-defined]
+
+    # --- awards HP names by an id the shipped table lacks (server/players/awards.py) ---
+
+    async def learned_award(self, award_id: str) -> str | None:
+        async with self._db.session() as s:
+            row = await s.get(HPAwardMap, award_id)
+        return None if row is None else row.award_key
+
+    async def learned_awards(self) -> dict[str, str]:
+        async with self._db.session() as s:
+            rows = (await s.execute(select(HPAwardMap))).scalars().all()
+        return {r.award_id: r.award_key for r in rows}
+
+    async def learn_award(self, award_id: str, key: str, title: str, now: float) -> None:
+        values = {"award_id": award_id, "award_key": key, "title": title, "learned_at": now}
+        stmt = insert(HPAwardMap).values(**values).on_conflict_do_nothing()
+        async with self._db.session.begin() as s:
+            await s.execute(stmt)
 
 
 async def _apply(s: AsyncSession, c: PrivacyChange) -> None:

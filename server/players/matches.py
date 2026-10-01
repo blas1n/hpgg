@@ -25,6 +25,7 @@ import structlog
 
 from server.config import Settings
 from server.players import quota
+from server.players.awards import AwardBook
 from server.players.hp import HPClient, Upstream
 from server.players.match_rows import ROWS_VERSION, basic_rows, full_rows
 from server.players.service import Notice, Outcome, PlayerService
@@ -65,6 +66,7 @@ class MatchService:
         self._settings = settings
         self._clock = clock
         self._sleep = sleep
+        self._awards = AwardBook(store, clock)
         self._inflight: dict[str, asyncio.Task[MatchLookup]] = {}
 
     async def lookup(self, battletag: str, region: str) -> MatchLookup:
@@ -74,13 +76,16 @@ class MatchService:
         entry = await self._store.get(key)
         current = entry is not None and _d(entry.body).get("v") == ROWS_VERSION
         if entry is not None and current and entry.expires_at > self._clock():
-            return _from_entry(entry)
+            return await self._serve(entry)
         task = self._inflight.get(key)
         if task is None:
             task = asyncio.create_task(self._refresh(key, battletag, region, entry))
             self._inflight[key] = task
             task.add_done_callback(lambda _t: self._inflight.pop(key, None))
         return await asyncio.shield(task)
+
+    async def _serve(self, e: CacheEntry, *, notice: Notice | None = None) -> MatchLookup:
+        return _from_entry(e, await self._awards.table(), notice=notice)
 
     async def status(self) -> dict[str, Any]:
         now, s = self._clock(), self._settings
@@ -121,7 +126,7 @@ class MatchService:
             and self._clock() - cached.fetched_at <= s.stale_max_seconds
         )
         if stale_full and cached is not None:
-            return _from_entry(cached, notice=notice)
+            return await self._serve(cached, notice=notice)
         return await self._basic(key, battletag, region, cached)
 
     async def _basic(
@@ -143,7 +148,7 @@ class MatchService:
             now=now,
         )
         if wait is not None:
-            return self._degraded(cached, "quota_exceeded", wait)
+            return await self._degraded(cached, "quota_exceeded", wait)
         params = {"battletag": battletag, "region": region, "game_type": mode}
         up = await self._hp.get("/players/mmr/history", params)
         now = self._clock()
@@ -155,9 +160,9 @@ class MatchService:
         if up.status == 403 and up.code == "player_unavailable":
             return await self._private(region, battletag, now)
         if exhausted is not None:
-            return self._degraded(cached, "quota_exceeded", exhausted)
+            return await self._degraded(cached, "quota_exceeded", exhausted)
         log.warning("matches.basic_unavailable", status=up.status, code=up.code)
-        return self._degraded(cached, "upstream_unavailable", up.retry_after)
+        return await self._degraded(cached, "upstream_unavailable", up.retry_after)
 
     async def _ready(self, path: str, params: dict[str, str]) -> Upstream:
         """GET, asking again while HP answers 202 (job pending), up to the wait limit."""
@@ -179,14 +184,14 @@ class MatchService:
         entry = CacheEntry(key, 200, body, now, now + ttl)
         await self._store.put(entry)
         log.info("matches.live", source=source, games=len(rows))
-        return _from_entry(entry)
+        return await self._serve(entry)
 
     async def _private(self, region: str, battletag: str, now: float) -> MatchLookup:
         await self._store.mark_private(region, battletag, quota.iso(now))
         log.info("matches.private")
         return MatchLookup("private")
 
-    def _degraded(
+    async def _degraded(
         self, cached: CacheEntry | None, notice: Notice, retry_after: float | None
     ) -> MatchLookup:
         if (
@@ -194,7 +199,7 @@ class MatchService:
             and cached.status == 200
             and self._clock() - cached.fetched_at <= self._settings.stale_max_seconds
         ):
-            return _from_entry(cached, notice=notice)
+            return await self._serve(cached, notice=notice)
         if notice == "quota_exceeded":
             return MatchLookup("quota_exceeded", retry_after=retry_after)
         return MatchLookup("unavailable", retry_after=retry_after)
@@ -204,18 +209,29 @@ def _d(x: Any) -> dict[str, Any]:
     return x if isinstance(x, dict) else {}
 
 
-def _from_entry(e: CacheEntry, *, notice: Notice | None = None) -> MatchLookup:
+def _from_entry(
+    e: CacheEntry, awards: dict[str, str], *, notice: Notice | None = None
+) -> MatchLookup:
     body = _d(e.body)
     source: Source = "full" if body.get("source") == "full" else "basic"
     rows = body.get("matches")
     return MatchLookup(
         "ok",
         source=source,
-        matches=rows if isinstance(rows, list) else [],
+        matches=[_named(m, awards) for m in rows] if isinstance(rows, list) else [],
         fetched_at=e.fetched_at,
         stale=notice is not None,
         notice=notice,
     )
+
+
+def _named(m: Any, awards: dict[str, str]) -> Any:
+    """A row with HP's award id swapped for the game's award key (lists cached at ROWS_VERSION 2
+    already carry `award`)."""
+    if not isinstance(m, dict) or "award_id" not in m:
+        return m
+    rest = {k: v for k, v in m.items() if k != "award_id"}
+    return {**rest, "award": awards.get(m["award_id"]) if m["award_id"] else None}
 
 
 def _main_mode(profile: dict[str, Any]) -> str | None:
