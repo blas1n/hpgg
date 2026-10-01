@@ -51,5 +51,11 @@ When a reply arrives, record the answer here, then:
   "Data provided by Heroes Profile" with the link must be on the same screen as the data, no smaller than body text, not
   fine print. → `web/src/components/HpCredit.tsx` on every page, at the top in body text; the footer credit stays.
 
+**Framing, fixed by HP (2026-10-01):** the embed was blank at first — HP's Cloudflare check answered the framed
+`/Upload/Embed` request with 403, and that challenge page sets `X-Frame-Options: SAMEORIGIN`, so Chrome showed
+"www.heroesprofile.com refused to connect". It only shows from another origin, which is why HP's own demo page looked
+fine. HP changed it on their side the same day; the uploader now renders on hpgg.win. Our side is the documented
+snippet — if it ever goes blank again, it is this, and it is HP's to fix.
+
 Read with the terms (2026-10-01): §5 also requires polling HP's privacy change feed every 24 h and dropping a player who
 went private within 24 h. Our player cache does not do this yet — issue #74.
