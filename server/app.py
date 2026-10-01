@@ -7,6 +7,7 @@ Adding a feature (accounts, community): a package under `server/` with its route
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import time
 from collections.abc import AsyncIterator, Awaitable, Callable
 from contextlib import asynccontextmanager
@@ -23,6 +24,7 @@ from server.config import Settings
 from server.db import Database, migrate
 from server.errors import on_validation_error
 from server.players.hp import HPClient
+from server.players.privacy import PrivacyFeed
 from server.players.router import router as players_router
 from server.players.service import PlayerService
 from server.players.store import HPStore
@@ -36,7 +38,10 @@ def create_app(
     *,
     hp_transport: httpx.AsyncBaseTransport | None = None,
     clock: Callable[[], float] = time.time,
+    privacy_poll: bool = True,
 ) -> FastAPI:
+    """`privacy_poll=False` is for tests only: the feed poll is a licence condition (terms §5)."""
+
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         await asyncio.to_thread(migrate, settings.db_path)
@@ -48,12 +53,19 @@ def create_app(
             http=http,
             clock=clock,
         )
-        app.state.players = PlayerService(hp=hp, store=HPStore(db), settings=settings, clock=clock)
+        store = HPStore(db)
+        app.state.players = PlayerService(hp=hp, store=store, settings=settings, clock=clock)
+        app.state.privacy = PrivacyFeed(hp=hp, store=store, settings=settings, clock=clock)
+        poller = asyncio.create_task(app.state.privacy.run_forever()) if privacy_poll else None
         app.state.ip_limiter = SlidingWindowLimiter(settings.ip_requests_per_minute, 60.0, clock)
         log.info("server.started", db=str(settings.db_path), origins=settings.cors_origins)
         try:
             yield
         finally:
+            if poller is not None:
+                poller.cancel()
+                with contextlib.suppress(asyncio.CancelledError):
+                    await poller
             await hp.aclose()
             await db.dispose()
 
@@ -87,7 +99,12 @@ def create_app(
     @app.get("/healthz")
     async def healthz(request: Request) -> JSONResponse:
         service: PlayerService = request.app.state.players
-        body: dict[str, Any] = {"ok": True, "quota": await service.status()}
+        feed: PrivacyFeed = request.app.state.privacy
+        body: dict[str, Any] = {
+            "ok": True,
+            "quota": await service.status(),
+            "privacy": await feed.status(),
+        }
         return JSONResponse(body, headers={"Cache-Control": "no-store"})
 
     app.include_router(players_router)

@@ -339,6 +339,8 @@ The same data gives different tiers under a different formula. This site always 
       done: (n: string) => `${n} games are on Heroes Profile. Processing takes a few minutes and a "not found" answer is kept for 10 minutes, so search again in about 10 minutes.`,
       link: "Heroes Profile upload page",
     },
+    privateTitle: "This profile is private",
+    privateBody: "This player has set their Heroes Profile profile to private.",
     quotaTitle: "Today's lookup limit is reached",
     quotaBody: "Today's limit for new lookups is used up. Players already looked up stay available; try new players again tomorrow.",
     rateTitle: "Try again in a moment",

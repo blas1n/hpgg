@@ -86,6 +86,7 @@ export interface PlayerResponse {
 export type PlayerResult =
   | { kind: "ok"; data: PlayerResponse }
   | { kind: "not_found" }
+  | { kind: "private" } // the player hid their Heroes Profile profile (HP API terms §5)
   | { kind: "quota"; retryAfter: number | null }
   | { kind: "rate_limited"; retryAfter: number | null }
   | { kind: "invalid" }
@@ -116,6 +117,7 @@ export async function fetchPlayer(battletag: string, region: Region, opts: Fetch
   const retryAfter = Number(res.headers.get("retry-after")) || null;
   if (res.ok) return isResponse(body) ? { kind: "ok", data: body } : { kind: "error" };
   if (res.status === 404) return { kind: "not_found" };
+  if (res.status === 403 && code === "player_private") return { kind: "private" };
   if (res.status === 422) return { kind: "invalid" };
   if (res.status === 429) return code === "quota_exceeded" ? { kind: "quota", retryAfter } : { kind: "rate_limited", retryAfter };
   return { kind: "error" };

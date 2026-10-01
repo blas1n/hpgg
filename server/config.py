@@ -32,4 +32,10 @@ class Settings(BaseSettings):
     daily_live_budget: int = 1300  # ≈ (10,000 − floor) / 7, so one busy day cannot starve the week
     ip_requests_per_minute: int = 20
 
+    # HP API terms §5: within 24 h of a player going private, their data must be gone from every
+    # surface and cache. The privacy feed (own bucket, 10,080/week) is polled well inside that, and
+    # no profile is served or kept longer than 24 h after HP last returned it, feed or no feed.
+    privacy_poll_seconds: int = 3600
+    stale_max_seconds: int = 24 * 3600
+
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")

@@ -40,3 +40,24 @@ class HPDailyUsage(Base):
     day: Mapped[str] = mapped_column(String, primary_key=True)
     endpoint: Mapped[str] = mapped_column(String, primary_key=True)
     live_calls: Mapped[int] = mapped_column(Integer)
+
+
+class HPPrivatePlayer(Base):
+    """A player HP's privacy feed (or a 403 player_unavailable) reports private. Never served."""
+
+    __tablename__ = "hp_private_player"
+
+    region: Mapped[str] = mapped_column(String, primary_key=True)
+    battletag_lc: Mapped[str] = mapped_column(String, primary_key=True)  # lower-cased
+    changed_at: Mapped[str] = mapped_column(String)
+
+
+class HPFeedCursor(Base):
+    """Where the next privacy-feed poll starts, and when a poll last went through."""
+
+    __tablename__ = "hp_feed_cursor"
+
+    feed: Mapped[str] = mapped_column(String, primary_key=True)
+    since: Mapped[str | None] = mapped_column(String, nullable=True)
+    after_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    last_ok_at: Mapped[float] = mapped_column(Float)

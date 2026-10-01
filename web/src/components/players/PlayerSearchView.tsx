@@ -94,6 +94,8 @@ function Result({ state, heroes, maps, retry }: { state: State; heroes: HeroTabl
       return <Notice tone="warn" title={t.errorTitle} body={t.errorBody} retry={retry} />;
     case "not_found":
       return <Notice title={t.notFoundTitle} body={t.notFoundBody} />;
+    case "private":
+      return <Notice title={t.privateTitle} body={t.privateBody} />;
     case "quota":
       return <Notice tone="warn" title={t.quotaTitle} body={t.quotaBody} />;
     case "rate_limited":

@@ -3,7 +3,12 @@
 Quota guard, in order: HP's own reading (stop at `quota_floor` left in the rolling week, or after
 a 429 quota_exceeded until its Retry-After), then our daily budget (live calls per UTC day), so a
 single busy day cannot spend the whole week. When live calls are off, a cached profile is still
-served — marked stale with the reason — and a player we have never seen gets `quota_exceeded`.
+served — marked stale with the reason, and never once HP returned it more than `stale_max_seconds`
+ago — and a player we have never seen gets `quota_exceeded`.
+
+Privacy (HP API terms §5): a player the privacy feed (`server/players/privacy.py`) or HP itself
+(403 `player_unavailable`) reports private is answered `private` — from no cache, and without
+asking HP again — and their cached answers are deleted.
 """
 
 from __future__ import annotations
@@ -19,12 +24,12 @@ import structlog
 from server.config import Settings
 from server.players.hp import HPClient, Quota, Upstream
 from server.players.profile import normalize_player
-from server.players.store import CacheEntry, HPStore
+from server.players.store import CacheEntry, HPStore, player_key
 
 log = structlog.get_logger(__name__)
 
 ENDPOINT = "players"  # HP bucket name: Player, 10,000/week on Basic
-Outcome = Literal["ok", "not_found", "quota_exceeded", "unavailable"]
+Outcome = Literal["ok", "not_found", "private", "quota_exceeded", "unavailable"]
 Notice = Literal["quota_exceeded", "upstream_unavailable"]
 
 
@@ -60,7 +65,9 @@ class PlayerService:
         self._inflight: dict[str, asyncio.Task[Lookup]] = {}
 
     async def lookup(self, battletag: str, region: str) -> Lookup:
-        key = f"{ENDPOINT}|{region}|{battletag}"
+        if await self._store.is_private(region, battletag):
+            return Lookup("private")
+        key = player_key(region, battletag)
         entry = await self._store.get(key)
         if entry is not None and entry.expires_at > self._clock():
             return self._from_entry(entry, battletag, region, source="cache")
@@ -113,7 +120,10 @@ class PlayerService:
         notice: Notice,
         retry_after: float | None,
     ) -> Lookup:
-        if stale is not None and stale.status == 200:
+        too_old = stale is not None and (
+            self._clock() - stale.fetched_at > self._settings.stale_max_seconds
+        )
+        if stale is not None and stale.status == 200 and not too_old:
             return self._from_entry(stale, battletag, region, source="cache", notice=notice)
         if notice == "quota_exceeded":
             return Lookup("quota_exceeded", retry_after=retry_after)
@@ -152,6 +162,10 @@ class PlayerService:
             entry = CacheEntry(key, 404, None, now, now + self._settings.not_found_ttl_seconds)
             await self._store.put(entry)
             return Lookup("not_found", fetched_at=now, source="live")
+        if up.status == 403 and up.code == "player_unavailable":
+            await self._store.mark_private(region, battletag, _iso(now))
+            log.info("players.private")
+            return Lookup("private")
         if up.status == 429 and up.code == "quota_exceeded":
             reset = now + (up.retry_after if up.retry_after is not None else 3600.0)
             limit = up.quota.limit if up.quota else 0
