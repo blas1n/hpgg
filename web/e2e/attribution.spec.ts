@@ -35,3 +35,62 @@ for (const path of PAGES) {
     });
   }
 }
+
+// Owner 2026-10-01: the credit used to sit alone ABOVE the page title, which read as a line slapped under the header.
+// It now belongs to the title: on the title's line where that row has room, otherwise on the line directly under it
+// (a long title, or the home page's mode toggle holding the right of the row at phone width). Never above the title,
+// and never separated from it by other content.
+const TITLED = [
+  { path: "./", title: "오늘의 메타" },
+  { path: "./tier/", title: "영웅 티어" },
+  { path: "./heroes/", title: "영웅" },
+  { path: "./maps/", title: "전장" },
+  { path: "./draft/", title: "밴픽 시뮬레이터" },
+  { path: "./players/", title: "전적 검색" },
+];
+
+for (const { path, title } of TITLED) {
+  test(`credit belongs to the title on ${path}`, async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.goto(path);
+    await expect(page.locator("h1")).toHaveText(title);
+    let h1 = (await page.locator("h1").boundingBox())!;
+    let credit = (await page.locator("#hp-attribution").boundingBox())!;
+    // desktop: the row has room, so the credit sits on the title's line, to its right
+    expect(credit.y).toBeLessThan(h1.y + h1.height);
+    expect(credit.x).toBeGreaterThan(h1.x + h1.width);
+
+    await page.setViewportSize({ width: 390, height: 844 });
+    h1 = (await page.locator("h1").boundingBox())!;
+    credit = (await page.locator("#hp-attribution").boundingBox())!;
+    // phone: the title's line or the one directly under it — never above the title
+    expect(credit.y).toBeGreaterThanOrEqual(h1.y);
+    expect(credit.y).toBeLessThan(h1.y + h1.height + 28);
+  });
+}
+
+test("home: nothing of the page's own content comes between the heading and its credit", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("./");
+  const credit = (await page.locator("#hp-attribution").boundingBox())!;
+  const meta = (await page.locator("#meta-line").boundingBox())!;
+  expect(credit.y).toBeLessThan(meta.y);
+  expect(credit.x).toBeLessThan((await page.locator("h1").boundingBox())!.x + 2); // left-aligned with its heading
+});
+
+test("the credit never breaks mid-phrase", async ({ page }) => {
+  for (const width of [320, 390, 1280]) {
+    await page.setViewportSize({ width, height: 800 });
+    await page.goto("./tier/");
+    expect(await page.locator("#hp-attribution").evaluate((el) => el.getClientRects().length)).toBe(1);
+  }
+});
+
+test("the title is the first thing on the page, and the credit costs it no vertical room", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.goto("./tier/");
+  const header = (await page.locator("header").boundingBox())!;
+  const h1 = (await page.locator("h1").boundingBox())!;
+  expect(h1.y - (header.y + header.height)).toBeLessThanOrEqual(28); // the title opens the page; nothing sits in the gap
+  expect((await page.locator("#hp-attribution").boundingBox())!.y).toBeGreaterThanOrEqual(h1.y - 2);
+});

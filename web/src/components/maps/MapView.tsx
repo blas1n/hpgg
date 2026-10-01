@@ -1,6 +1,7 @@
 "use client";
 
 import { assetUrl, hotsHref, shortDate, type MapTable } from "@/data";
+import { HpCredit } from "@/components/HpCredit";
 import { useLocale, useT } from "@/i18n/client";
 import { DEFAULT_LOCALE } from "@/i18n/locale";
 import { mapObjective, type MapDetail, type MapInfo } from "@/lib/maps";
@@ -34,7 +35,11 @@ export function MapView({
   const objective = info ? mapObjective(info, locale) : null;
 
   return (
-    <main className="page-x mt-2 space-y-4 pb-10">
+    <main className="page-x mt-3 space-y-4 pb-10">
+      {/* the title is drawn into the banner below, so the credit (API terms §4) stands on its own line */}
+      <div className="flex justify-end">
+        <HpCredit />
+      </div>
       <div id="map-banner" className="relative overflow-hidden rounded-card border border-line bg-surface">
         {map.image && (
           // eslint-disable-next-line @next/next/no-img-element
