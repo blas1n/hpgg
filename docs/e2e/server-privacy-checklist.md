@@ -11,8 +11,8 @@ Web part: `web/e2e/players.spec.ts` "a private profile says so" (Playwright). Un
 - [x] No battletag is written to the log by the poller
 
 ## After deploy (api.hpgg.win)
-- [ ] `docker --context colima logs hpgg-api | grep privacy.polled` — one line at start, then one an hour
-- [ ] `curl -s https://api.hpgg.win/healthz` → `privacy.last_ok_at` within the last hour
-- [ ] `curl -s "https://api.hpgg.win/v1/players?battletag=Player13%231013&region=EU"` → 403 `player_private`
-- [ ] https://hpgg.win/ko/hots/players/?tag=Player13%231013&region=EU shows "비공개 프로필입니다"
-- [ ] The cached rows older than 24 h are gone: `purged=` on the first poll after deploy
+- [x] `docker --context colima logs hpgg-api | grep privacy.polled` — one line at start (2026-10-01 06:23 UTC, `changes=662`, migration 0001 → 0002 applied); [ ] then one an hour
+- [x] `curl -s https://api.hpgg.win/healthz` → `privacy.last_ok_at` within the last hour — 06:23:18Z, feed `remaining` 10,077
+- [x] `curl -s "https://api.hpgg.win/v1/players?battletag=Player13%231013&region=EU"` → 403 `player_private`
+- [x] https://hpgg.win/ko/hots/players/?tag=Player13%231013&region=EU shows "비공개 프로필입니다" (`data-state=private`, deploy of 919e70f)
+- [x] The cached rows older than 24 h are gone: `purged=5` on the first poll after deploy
