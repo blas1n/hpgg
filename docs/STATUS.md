@@ -24,6 +24,8 @@ Start every session here. Operating guide and architecture: `docs/HANDOFF.md`. B
 - **Why only 5 games**: HP `/players` returns the newest 5 (`matchData`); every uploaded game was on HP (owner: 39 QM games). Not an upload problem.
 - Server `GET /v1/players/matches` (#82): up to 100 games with HP's stat line, talents and MMR from `/players/matches` — **250/week on Basic** (owner chose to stay on Basic): 34 a day, cached 6 h; past that the MMR history (10,000/week) gives results and MMR only, and the page says so.
 - Page: 최근 20경기 briefing (record ring, KDA, per-game averages, most played heroes, roles), MMR line of the main mode with hover readout, a card per game (result, mode, time, MMR change, hero + level, K/D/A, 영웅 피해 / 공성 피해 / 치유·방지 or 받은 피해 / 경험치 기여, seven talent icons), 20 at a time. Stat labels are the game's own score-screen strings (GameStrings `ScoreValue/Name`, 2.57.0.98304, read from Blizzard's CDN with the hotfix tools).
+- Award ids HP adds are learned by the server from opened games (no manual step; owner 2026-10-01).
+- Later, recorded in #88 (owner: not now): per-hero stats for one player, players met often, MMR line per mode — all from data the page already has (HP's per-player hero/friend endpoints are 25/week).
 - Then (#86): award badges (MVP in gold) on each game, and ▾ opens the game in full — both teams, BattleTags linking to their search, K/D/A, damage, healing, taken, XP, awards, parties, talents (wide screens). `/replay/{id}`, 1,000/week, 135 a day.
 
 ## Checked 2026-09-30 morning
