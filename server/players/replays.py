@@ -26,6 +26,8 @@ from server.players.store import CacheEntry, HPStore
 log = structlog.get_logger(__name__)
 
 BUCKET = "replay_data"
+# Bump when the normalised game changes shape: cached games in another format are fetched again.
+REPLAY_VERSION = 1
 REGIONS = {1: "NA", 2: "EU", 3: "KR", 5: "CN"}
 MODES = {
     "Quick Match": "qm",
@@ -116,6 +118,7 @@ def normalize_replay(replay_id: int, body: dict[str, Any]) -> dict[str, Any]:
         rows = [_player(_d(p)) for p in (side if isinstance(side, list) else [])]
         teams.append({"team": i, "win": winner == i, "players": [r for r in rows if r]})
     return {
+        "v": REPLAY_VERSION,
         "replay_id": replay_id,
         "date": body.get("game_date"),
         "mode": MODES.get(str(body.get("game_type")), body.get("game_type")),
@@ -138,7 +141,8 @@ class ReplayService:
 
     async def lookup(self, replay_id: int) -> ReplayLookup:
         entry = await self._store.get(replay_key(replay_id))
-        if entry is not None and entry.expires_at > self._clock():
+        current = entry is not None and _d(entry.body).get("v") == REPLAY_VERSION
+        if entry is not None and current and entry.expires_at > self._clock():
             return await self._shown(entry)
         task = self._inflight.get(replay_id)
         if task is None:

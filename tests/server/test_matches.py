@@ -246,3 +246,16 @@ def test_the_full_budget_fits_the_weekly_bucket() -> None:
     s = Settings(hp_api_token="x", _env_file=None)  # type: ignore[arg-type, call-arg]
     assert s.match_daily_budget * 7 + s.match_quota_floor <= 250
     assert s.match_ttl_seconds <= s.stale_max_seconds
+
+
+async def test_a_list_cached_by_an_older_row_format_is_refreshed(
+    svc: MatchService, fake_hp: FakeHP, db: Database, clock: Clock
+) -> None:
+    # rows normalised before a field existed (award, 2026-10-01) must not be served as fresh
+    old = {"source": "full", "matches": [{"replay_id": 1, "hero": "Alarak", "win": True}]}
+    key = matches_key(REGION, TAG)
+    await HPStore(db).put(CacheEntry(key, 200, old, clock.now, clock.now + 3600))
+    fake_hp.responder = route()
+    r = await svc.lookup(TAG, REGION)
+    assert len(calls(fake_hp, "/players/matches")) == 1
+    assert r.matches[0]["award"] == "MVP"
