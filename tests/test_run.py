@@ -155,18 +155,56 @@ async def test_run_puts_the_party_correction_on_qm_and_sl_only(
 
 
 @respx.mock
-async def test_solo_call_failure_leaves_the_views_uncorrected_and_the_run_succeeds(
+async def test_without_the_party_correction_nothing_is_updated(
     tmp_path: Path, raw_by_map, patches_payload, fake_sleep
 ) -> None:
-    mock_api(raw_by_map, patches_payload, fail_key="solo")
+    """Owner 2026-10-01: tiers without the party correction are a trust problem — rather no
+    update. A failed solo call (e.g. quota_exceeded mid-run) keeps yesterday's files and fails
+    the run; no matchups are fetched for it."""
+    mock_api(raw_by_map, patches_payload)
     s = settings(tmp_path)
+    assert await run(s, sleep=fake_sleep, now=lambda: "2026-09-28T00:00:00Z") == 0
+    before = {p.name: p.read_bytes() for p in (s.data_dir / "latest").iterdir()}
+    respx.reset()
+
+    def stats(request: httpx.Request) -> httpx.Response:
+        if dict(httpx.QueryParams(request.url.query)).get("groupsize") == "Solo":
+            return httpx.Response(
+                429, json={"error": {"code": "quota_exceeded", "message": "week"}}
+            )
+        return httpx.Response(200, json=raw_by_map)
+
+    respx.get(f"{BASE}/heroes/stats").mock(side_effect=stats)
+    matchups = respx.get(f"{BASE}/heroes/matchups").mock(return_value=httpx.Response(200))
+    _seed_heroes(s, ["Illidan"])
     with capture_logs() as logs:
-        assert await run(s, sleep=fake_sleep, now=lambda: "2026-09-28T00:00:00Z") == 0
-    qm = json.loads((s.data_dir / "latest" / "qm.json").read_text())
-    assert "party" not in qm and all("tier_win_rate" not in r for r in qm["rows"])
-    assert any(e["event"] == "run.party_skipped" for e in logs)
-    # the region calls still ran after the failed solo calls
-    assert (s.data_dir / "latest" / "qm_na.json").exists()
+        assert await run(s, sleep=fake_sleep, now=lambda: "2026-09-29T00:00:00Z") != 0
+    assert {p.name: p.read_bytes() for p in (s.data_dir / "latest").iterdir()} == before
+    assert any(e["event"] == "run.party_failed" for e in logs)
+    assert matchups.call_count == 0
+
+
+@respx.mock
+async def test_a_backfill_without_the_party_correction_writes_nothing(
+    tmp_path: Path, raw_by_map, patches_payload, fake_sleep
+) -> None:
+    """The previous patch is compared with the current one: it carries the same correction."""
+    from collector.run import run_backfill_previous
+
+    mock_api(raw_by_map, patches_payload)
+    s = settings(tmp_path)
+    assert await run(s, sleep=fake_sleep, now=lambda: "2026-09-28T00:00:00Z") == 0
+    respx.reset()
+
+    def stats(request: httpx.Request) -> httpx.Response:
+        if dict(httpx.QueryParams(request.url.query)).get("groupsize") == "Solo":
+            return httpx.Response(500, json={"error": {"code": "server_error", "message": "x"}})
+        return httpx.Response(200, json=raw_by_map)
+
+    respx.get(f"{BASE}/heroes/stats").mock(side_effect=stats)
+    assert await run_backfill_previous(s, patch="2.55.9", sleep=fake_sleep, now=lambda: "t") == 1
+    assert not (s.data_dir / "previous").exists()
+    assert json.loads((s.data_dir / "latest" / "meta.json").read_text())["previous_patch"] is None
 
 
 @respx.mock

@@ -196,8 +196,8 @@ async def _collect_party(
     snapshots: dict[str, dict[str, Any]],
 ) -> dict[str, Any]:
     """Solo-only QM + SL, folded into `snapshots` as the party correction (#36) → raw by key.
-    A failure never fails the run: the views stay uncorrected and the page prints the formula
-    without the correction."""
+    A failure fails the run (owner 2026-10-01): tiers without the correction would be a
+    different ranking under the same name, so yesterday's corrected files stay instead."""
     try:
         raw, solo = await _collect_all(
             c,
@@ -214,11 +214,11 @@ async def _collect_party(
             for key, snap in solo.items()
         }
     except HPError as e:
-        log.warning("run.party_skipped", status=e.status, code=e.code)
-        return {}
+        log.error("run.party_failed", status=e.status, code=e.code)
+        raise
     except ValueError as e:
-        log.warning("run.party_skipped", error=str(e))
-        return {}
+        log.error("run.party_failed", error=str(e))
+        raise
     snapshots.update(corrected)
     for view, snap in corrected.items():
         log.info("run.party", view=view, **snap["party"])
