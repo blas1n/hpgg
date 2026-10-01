@@ -5,6 +5,7 @@ import { expect, test, type Page, type Route } from "@playwright/test";
 
 // 전적 검색 against a mocked API (the real one is https://api.hpgg.win, our server in server/).
 const fixture = JSON.parse(readFileSync(join(dirname(fileURLToPath(import.meta.url)), "../tests/fixtures/api_player_zemill.json"), "utf-8"));
+const games = JSON.parse(readFileSync(join(dirname(fileURLToPath(import.meta.url)), "../tests/fixtures/api_matches_blas1n.json"), "utf-8"));
 const API = "https://api.hpgg.win/v1/players**";
 
 test.beforeEach(async ({ page }) => {
@@ -60,7 +61,8 @@ test("players: a shared link runs the search on load", async ({ page }) => {
   const seen = await mockApi(page, (route) => json(route, 200, fixture));
   await page.goto("./players/?tag=Player12%231012&region=NA");
   await expect(page.locator("#player-result")).toHaveAttribute("data-state", "ok");
-  expect(seen).toHaveLength(1);
+  // one profile call and one game-list call
+  expect(seen.map((u) => u.pathname).sort()).toEqual(["/v1/players", "/v1/players/matches"]);
   await expect(page.locator("#player-search-tag")).toHaveValue("Player12#1012");
   await expect(page.locator("#player-search-region")).toHaveValue("NA");
 });
@@ -173,4 +175,55 @@ test("players: the upload guide embeds Heroes Profile's uploader and says when t
   await expect(done).toContainText("다시 검색");
   await expect(done).not.toContainText("99");
   await expect(page.locator("#upload-guide")).toContainText("문서\\Heroes of the Storm\\Accounts"); // the folder to pick stays
+});
+
+const withGames = (body: unknown) => (route: Route, url: URL) => json(route, 200, url.pathname.endsWith("/matches") ? body : fixture);
+
+test("players: the newest 20 games — briefing, MMR line, stat lines and talents; more on request", async ({ page }) => {
+  await mockApi(page, withGames(games));
+  await page.goto("./players/?tag=Player11%231011&region=KR");
+  await expect(page.locator("#player-games")).toHaveAttribute("data-source", "full");
+  await expect(page.locator("#brief-record")).toHaveText("9승 11패");
+  await expect(page.locator("#brief-kda")).toContainText("4.17");
+  await expect(page.locator("#brief-avg")).toContainText("영웅 피해");
+  await expect(page.locator("#brief-heroes li").first()).toContainText("알라라크");
+  await expect(page.locator('#brief-roles [data-role="Melee Assassin"]')).toContainText("10");
+  await expect(page.locator("#brief-mmr circle")).toHaveCount(25);
+  const first = page.locator("#player-matches > li").first();
+  await expect(page.locator("#player-matches > li")).toHaveCount(20);
+  await expect(first).toHaveAttribute("data-result", "win");
+  await expect(first.locator("[data-kda]")).toContainText("9 / 1 / 25");
+  await expect(first.locator("[data-stats]")).toContainText("72,367");
+  await expect(first.locator("[data-mmr]")).toHaveText("+43.1");
+  await expect(first.locator("[data-talents] li")).toHaveCount(7);
+  await page.locator("#games-more").click();
+  await expect(page.locator("#player-matches > li")).toHaveCount(25);
+  await expect(page.locator("#games-more")).toHaveCount(0);
+});
+
+test("players: hovering the MMR line reads out that game", async ({ page }) => {
+  await mockApi(page, withGames(games));
+  await page.goto("./players/?tag=Player11%231011&region=KR");
+  const chart = page.locator("#brief-mmr svg");
+  const box = (await chart.boundingBox())!;
+  await chart.hover({ position: { x: box.width - 3, y: box.height / 2 } }); // the newest game sits at the right end
+  await expect(page.locator('#brief-mmr [role="status"]')).toContainText("2342");
+});
+
+test("players: past the detailed budget the games come without stat lines, and the page says so", async ({ page }) => {
+  const basic = { ...games, source: "basic", matches: games.matches.map((m: Record<string, unknown>) => ({ ...m, kills: null, deaths: null, assists: null, talents: [] })) };
+  await mockApi(page, withGames(basic));
+  await page.goto("./players/?tag=Player11%231011&region=KR");
+  await expect(page.locator("#games-basic")).toContainText("승패와 MMR만");
+  await expect(page.locator("#brief-kda")).toHaveCount(0);
+  await expect(page.locator("#player-matches > li").first().locator("[data-kda]")).toHaveCount(0);
+  await expect(page.locator("#brief-mmr circle")).toHaveCount(25);
+});
+
+test("players: when the game list fails, the profile's five newest games stay", async ({ page }) => {
+  await mockApi(page, (route, url) => (url.pathname.endsWith("/matches") ? json(route, 503, { error: { code: "upstream_unavailable" } }) : json(route, 200, fixture)));
+  await page.goto("./players/?tag=Player12%231012&region=NA");
+  await expect(page.locator("#player-result")).toHaveAttribute("data-state", "ok");
+  await expect(page.locator("#player-games")).toHaveCount(0);
+  await expect(page.locator("#player-matches li")).toHaveCount(5);
 });

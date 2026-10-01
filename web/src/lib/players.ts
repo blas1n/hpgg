@@ -83,8 +83,9 @@ export interface PlayerResponse {
   notice: Notice | null;
 }
 
-export type PlayerResult =
-  | { kind: "ok"; data: PlayerResponse }
+/** What an API call came to. `ok` carries the answer; the rest are the server's error codes (server/errors.py). */
+export type ApiResult<T> =
+  | { kind: "ok"; data: T }
   | { kind: "not_found" }
   | { kind: "private" } // the player hid their Heroes Profile profile (HP API terms §5)
   | { kind: "quota"; retryAfter: number | null }
@@ -92,6 +93,7 @@ export type PlayerResult =
   | { kind: "invalid" }
   | { kind: "error" } // the API answered but Heroes Profile did not
   | { kind: "offline" }; // no API answer at all (not deployed yet, down, or timed out)
+export type PlayerResult = ApiResult<PlayerResponse>;
 
 export interface FetchOptions {
   base?: string;
@@ -99,8 +101,15 @@ export interface FetchOptions {
   timeoutMs?: number;
 }
 
-export async function fetchPlayer(battletag: string, region: Region, opts: FetchOptions = {}): Promise<PlayerResult> {
-  const url = `${opts.base ?? apiBase()}/v1/players?${new URLSearchParams({ battletag, region })}`;
+/** GET `path` on our API with the player query; `isT` checks a 200 body before it is trusted. */
+export async function apiGet<T>(
+  path: string,
+  battletag: string,
+  region: Region,
+  isT: (b: unknown) => b is T,
+  opts: FetchOptions = {},
+): Promise<ApiResult<T>> {
+  const url = `${opts.base ?? apiBase()}${path}?${new URLSearchParams({ battletag, region })}`;
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), opts.timeoutMs ?? 12_000);
   let res: Response;
@@ -115,13 +124,16 @@ export async function fetchPlayer(battletag: string, region: Region, opts: Fetch
   }
   const code = (body as { error?: { code?: string } } | null)?.error?.code;
   const retryAfter = Number(res.headers.get("retry-after")) || null;
-  if (res.ok) return isResponse(body) ? { kind: "ok", data: body } : { kind: "error" };
+  if (res.ok) return isT(body) ? { kind: "ok", data: body } : { kind: "error" };
   if (res.status === 404) return { kind: "not_found" };
   if (res.status === 403 && code === "player_private") return { kind: "private" };
   if (res.status === 422) return { kind: "invalid" };
   if (res.status === 429) return code === "quota_exceeded" ? { kind: "quota", retryAfter } : { kind: "rate_limited", retryAfter };
   return { kind: "error" };
 }
+
+export const fetchPlayer = (battletag: string, region: Region, opts: FetchOptions = {}): Promise<PlayerResult> =>
+  apiGet("/v1/players", battletag, region, isResponse, opts);
 
 const isResponse = (b: unknown): b is PlayerResponse =>
   typeof b === "object" && b !== null && typeof (b as PlayerResponse).player === "object" && (b as PlayerResponse).player !== null;

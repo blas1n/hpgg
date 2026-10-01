@@ -115,6 +115,12 @@ export async function loadMatchups(slug: string, patch: string): Promise<Matchup
   return file.patch === patch ? file : null;
 }
 
+/** A hero's talent names, icons and tooltips (data/talents/<slug>.json), or null when the hero has none. */
+export async function loadTalents(slug: string): Promise<TalentTable | null> {
+  const res = await fetch(`${base}talents/${slug}.json`);
+  return res.ok ? ((await res.json()) as TalentTable) : null;
+}
+
 /** Which patch directory the site shows: meta.reference_patch, decided once by the collector. */
 export function referencePatch(meta: Meta): PatchChoice {
   return meta.previous_patch && meta.reference_patch === meta.previous_patch ? "previous" : "current";
