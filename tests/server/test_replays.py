@@ -122,3 +122,15 @@ def test_match_rows_carry_the_award_by_game_key() -> None:
 def test_the_replay_budget_fits_the_weekly_bucket() -> None:
     s = Settings(hp_api_token="x", _env_file=None)  # type: ignore[arg-type, call-arg]
     assert s.replay_daily_budget * 7 + s.replay_quota_floor <= 1000
+
+
+async def test_a_game_cached_by_an_older_format_is_refreshed(
+    svc: ReplayService, fake_hp: FakeHP, db: Database, clock: Clock
+) -> None:
+    from server.players.replays import replay_key
+    from server.players.store import CacheEntry
+
+    old = {"replay_id": RID, "teams": []}
+    await HPStore(db).put(CacheEntry(replay_key(RID), 200, old, clock.now, clock.now + 3600))
+    r = await svc.lookup(RID)
+    assert len(fake_hp.requests) == 1 and r.replay is not None and len(r.replay["teams"]) == 2

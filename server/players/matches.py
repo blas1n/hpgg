@@ -26,7 +26,7 @@ import structlog
 from server.config import Settings
 from server.players import quota
 from server.players.hp import HPClient, Upstream
-from server.players.match_rows import basic_rows, full_rows
+from server.players.match_rows import ROWS_VERSION, basic_rows, full_rows
 from server.players.service import Notice, Outcome, PlayerService
 from server.players.store import CacheEntry, HPStore, matches_key
 
@@ -72,7 +72,8 @@ class MatchService:
             return MatchLookup("private")
         key = matches_key(region, battletag)
         entry = await self._store.get(key)
-        if entry is not None and entry.expires_at > self._clock():
+        current = entry is not None and _d(entry.body).get("v") == ROWS_VERSION
+        if entry is not None and current and entry.expires_at > self._clock():
             return _from_entry(entry)
         task = self._inflight.get(key)
         if task is None:
@@ -174,7 +175,8 @@ class MatchService:
     async def _keep(
         self, key: str, source: Source, rows: list[dict[str, Any]], now: float, ttl: int
     ) -> MatchLookup:
-        entry = CacheEntry(key, 200, {"source": source, "matches": rows}, now, now + ttl)
+        body = {"v": ROWS_VERSION, "source": source, "matches": rows}
+        entry = CacheEntry(key, 200, body, now, now + ttl)
         await self._store.put(entry)
         log.info("matches.live", source=source, games=len(rows))
         return _from_entry(entry)

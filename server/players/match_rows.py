@@ -12,6 +12,9 @@ import json
 from pathlib import Path
 from typing import Any
 
+# Bump when a row gains, loses or changes a field: cached lists in another format are refreshed
+# (served only as stale while HP cannot be asked). 2 = `award` (2026-10-01).
+ROWS_VERSION = 2
 # HP award id → the game's award key (data/awards.json), built by tools/build_awards.py.
 HP_AWARDS: dict[str, str] = json.loads((Path(__file__).parent / "hp_awards.json").read_text())
 # HP map ids (GET /maps, 2026-10-01). The MMR history names maps only by id.
