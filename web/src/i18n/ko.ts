@@ -159,6 +159,7 @@ export const ko = {
     comboNote: "지역별 데이터는 전체 구간만 수집합니다 — 지역과 리그 구간은 함께 고를 수 없습니다",
     columns: { score: "점수", win_rate: "승률", pick: "픽률", ban_rate: "밴률", games: "표본수" },
     tierGroup: (tier: string, n: string) => `${tier} 티어 · ${n}명`,
+    backToRank: "순위 순으로 되돌리기",
     grey: "표본 부족",
     greySub: (min: string) => `${min}게임 미만 · 티어 없음`,
     greyItem: (hero: string, games: string) => `${hero} · ${games}게임`,

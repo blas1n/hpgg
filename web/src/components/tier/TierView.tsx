@@ -8,7 +8,7 @@ import type { Locale } from "@/i18n/locale";
 import type { Messages } from "@/i18n/messages";
 import { formulaDetail, formulaLine, FORMULA, type Party, type Snapshot } from "@/formula";
 import { bracketMatches, regionMatches } from "@/lib/shown";
-import { DEFAULT_TIER_STATE, formatScore, parseTierState, resolvePatch, tierSearch, tierTable, visibleRows, type SortKey, type TierRow, type TierState, type TierTable } from "@/lib/tier";
+import { DEFAULT_TIER_STATE, formatScore, nextSort, parseTierState, resolvePatch, tierSearch, tierTable, visibleRows, type SortKey, type TierRow, type TierState, type TierTable } from "@/lib/tier";
 import { Card, cx, Portrait, SELECT, Segmented, TierBadge, wrTone } from "../ui";
 
 const pct = (n: number) => `${n.toFixed(1)}%`;
@@ -135,7 +135,13 @@ export function TierView({ meta, heroes, maps, initial }: { meta: Meta; heroes: 
         t.common.updated(shortDate(table.collectedAt)),
       ].join(" · ");
 
-  const sortBy = (key: SortKey) => update(sort === key ? { dir: dir === "desc" ? "asc" : "desc" } : { sort: key, dir: "desc" });
+  const sortBy = (key: SortKey | "rank") => update(nextSort(state, key));
+  // the rank and tier headers lead back to the ranked order once another column re-sorted the table
+  const rankButton = (label: string) => (
+    <button type="button" onClick={() => sortBy("rank")} title={groups ? undefined : t.tier.backToRank} className={cx("whitespace-nowrap transition-colors hover:text-fg", groups && "text-fg")}>
+      {label}
+    </button>
+  );
 
   return (
     <main className="page-x mt-6 space-y-4 pb-10">
@@ -249,10 +255,10 @@ export function TierView({ meta, heroes, maps, initial }: { meta: Meta; heroes: 
           <thead>
             <tr className="text-xs text-muted [&>th]:sticky [&>th]:top-[var(--header-h)] [&>th]:z-10 [&>th]:bg-surface [&>th]:shadow-[0_1px_0_var(--color-line)]">
               <th data-col="rank" className="w-11 py-2.5 pl-3 text-left font-semibold sm:w-24 sm:pl-4">
-                {t.common.rank}
+                {rankButton(t.common.rank)}
               </th>
               <th data-col="tier" className={cx(WIDE, "w-12 py-2.5 text-center font-semibold")}>
-                <span>{t.common.tier}</span>
+                <span>{rankButton(t.common.tier)}</span>
               </th>
               <th data-col="hero" className="py-2.5 pl-1 text-left font-semibold lg:w-64">
                 {t.common.hero}

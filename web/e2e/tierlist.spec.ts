@@ -44,6 +44,27 @@ test("sorting by pick rate reorders rows and is reflected in the URL; tiers stay
   await expect(page).toHaveURL(/dir=asc/);
 });
 
+test("the rank and tier headers return a re-sorted table to the ranked order", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 900 }); // the tier column is from 640px
+  for (const col of ["rank", "tier"]) {
+    await page.goto("./tier/?sort=win_rate&dir=asc");
+    await expect(page.locator('th[data-sort="win_rate"]')).toHaveAttribute("aria-sort", "ascending");
+    await page.locator(`th[data-col="${col}"] button`).click();
+    await expect(page).not.toHaveURL(/sort=|dir=/);
+    await expect(page.locator('th[data-sort="score"]')).toHaveAttribute("aria-sort", "descending");
+    await expect(page.locator("#rows tr[data-hero]").first()).toHaveAttribute("data-hero", "qhira");
+    await expect(page.locator("#rows tr[data-tier-group]").first()).toBeVisible(); // tier dividers are back
+  }
+});
+
+test("the rank header is a button on a phone too (the tier column is folded there)", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 800 });
+  await page.goto("./tier/?sort=pick");
+  await page.locator('th[data-col="rank"] button').click();
+  await expect(page).not.toHaveURL(/sort=/);
+  await expect(page.locator("#rows tr[data-hero]").first()).toHaveAttribute("data-hero", "qhira");
+});
+
 test("role filter hides other roles but keeps tiers (computed on everyone)", async ({ page }) => {
   await page.goto("./tier/");
   await page.locator("#roles button", { hasText: "치유사" }).click();
