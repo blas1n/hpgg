@@ -344,6 +344,8 @@ export const ko = {
       done: (n: string) => `${n}판이 Heroes Profile에 있습니다. 처리에 몇 분 걸리고 찾지 못한 결과는 10분 동안 저장되니, 10분쯤 뒤 다시 검색하세요.`,
       link: "Heroes Profile 업로드 페이지",
     },
+    privateTitle: "비공개 프로필입니다",
+    privateBody: "이 플레이어는 Heroes Profile에서 프로필을 비공개로 설정했습니다.",
     quotaTitle: "오늘 조회 한도 초과",
     quotaBody: "오늘 새로 조회할 수 있는 한도를 모두 썼습니다. 이미 조회된 플레이어는 계속 볼 수 있고, 새 플레이어는 내일 다시 시도해 주세요.",
     rateTitle: "잠시 후 다시 시도하세요",

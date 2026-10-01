@@ -72,6 +72,8 @@ describe("fetchPlayer", () => {
 
   it.each([
     [404, { error: { code: "player_not_found" } }, {}, "not_found"],
+    [403, { error: { code: "player_private" } }, {}, "private"],
+    [403, { error: { code: "forbidden" } }, {}, "error"],
     [429, { error: { code: "quota_exceeded" } }, { "retry-after": "3600" }, "quota"],
     [429, { error: { code: "rate_limited" } }, { "retry-after": "12" }, "rate_limited"],
     [422, { error: { code: "invalid_parameters" } }, {}, "invalid"],

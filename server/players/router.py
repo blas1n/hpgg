@@ -49,6 +49,8 @@ async def get_player(request: Request, q: Annotated[PlayerQuery, Query()]) -> JS
     r = await service.lookup(q.battletag, q.region.value)
     if r.outcome == "not_found":
         return error(404, "player_not_found", "해당 지역에서 플레이어를 찾지 못했습니다.")
+    if r.outcome == "private":
+        return error(403, "player_private", "비공개 프로필입니다.")
     if r.outcome == "quota_exceeded":
         return error(429, "quota_exceeded", "오늘 조회 한도를 모두 썼습니다.", r.retry_after)
     if r.outcome == "unavailable":

@@ -104,6 +104,15 @@ test("players: unknown player and upstream trouble", async ({ page }) => {
   await expect(page.getByRole("button", { name: "다시 시도" })).toBeVisible();
 });
 
+test("players: a private profile says so and shows nothing of the player", async ({ page }) => {
+  await mockApi(page, (route) => json(route, 403, { error: { code: "player_private" } }));
+  await page.goto("./players/?tag=Player13%231013&region=EU");
+  await expect(page.locator("#player-result")).toHaveAttribute("data-state", "private");
+  await expect(page.locator("#player-result")).toContainText("비공개");
+  await expect(page.locator("#player-matches")).toHaveCount(0);
+  await expect(page.locator("#upload-guide")).not.toHaveAttribute("open", ""); // uploading would not help
+});
+
 test("players: how records get here is explained up front; not found opens the upload guide", async ({ page }) => {
   await mockApi(page, (route) => json(route, 404, { error: { code: "player_not_found" } }));
   await page.goto("./players/");

@@ -1,17 +1,25 @@
-"""Repository over the hp_* tables (cache entries, quota readings, daily live-call counts)."""
+"""Repository over the hp_* tables (cache, quota readings, daily live-call counts, privacy)."""
 
 from __future__ import annotations
 
 import json
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, Literal
 
-from sqlalchemy import select
+from sqlalchemy import delete, func, select
 from sqlalchemy.dialects.sqlite import insert
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from server.db import Database
 from server.players.hp import Quota
-from server.players.models import HPCache, HPDailyUsage, HPQuota
+from server.players.models import HPCache, HPDailyUsage, HPFeedCursor, HPPrivatePlayer, HPQuota
+
+PRIVACY_FEED = "player_privacy_changes"  # HP bucket name, also the cursor's row
+
+
+def player_key(region: str, battletag: str) -> str:
+    """Cache key of one /players answer. Region is our code (KR, NA, EU, CN)."""
+    return f"players|{region}|{battletag}"
 
 
 @dataclass(frozen=True)
@@ -21,6 +29,21 @@ class CacheEntry:
     body: Any
     fetched_at: float
     expires_at: float
+
+
+@dataclass(frozen=True)
+class PrivacyChange:
+    region: str  # our code (KR, NA, EU, CN)
+    battletag: str
+    state: Literal["private", "public"]
+    changed_at: str
+
+
+@dataclass(frozen=True)
+class FeedCursor:
+    since: str | None
+    after_id: int | None
+    last_ok_at: float
 
 
 class HPStore:
@@ -83,3 +106,60 @@ class HPStore:
         )
         async with self._db.session.begin() as s:
             await s.execute(stmt)
+
+    # --- privacy (HP API terms §5) ---
+
+    async def is_private(self, region: str, battletag: str) -> bool:
+        async with self._db.session() as s:
+            row = await s.get(HPPrivatePlayer, (region, battletag.lower()))
+        return row is not None
+
+    async def mark_private(self, region: str, battletag: str, changed_at: str) -> None:
+        """Remember the player as private and drop every cached answer about them."""
+        async with self._db.session.begin() as s:
+            await _apply(s, PrivacyChange(region, battletag, "private", changed_at))
+
+    async def apply_privacy_page(self, changes: list[PrivacyChange], cursor: FeedCursor) -> None:
+        """One feed page and the cursor after it, in one transaction: a crash re-reads the page."""
+        async with self._db.session.begin() as s:
+            for c in changes:
+                await _apply(s, c)
+            values = {
+                "feed": PRIVACY_FEED,
+                "since": cursor.since,
+                "after_id": cursor.after_id,
+                "last_ok_at": cursor.last_ok_at,
+            }
+            stmt = insert(HPFeedCursor).values(**values)
+            await s.execute(stmt.on_conflict_do_update(index_elements=["feed"], set_=values))
+
+    async def feed_cursor(self) -> FeedCursor | None:
+        async with self._db.session() as s:
+            row = await s.get(HPFeedCursor, PRIVACY_FEED)
+        return None if row is None else FeedCursor(row.since, row.after_id, row.last_ok_at)
+
+    async def purge_fetched_before(self, ts: float) -> int:
+        """Drop cached answers HP returned before `ts`; returns how many."""
+        async with self._db.session.begin() as s:
+            result = await s.execute(delete(HPCache).where(HPCache.fetched_at < ts))
+        return int(result.rowcount or 0)  # type: ignore[attr-defined]
+
+
+async def _apply(s: AsyncSession, c: PrivacyChange) -> None:
+    lc = c.battletag.lower()
+    if c.state == "public":
+        await s.execute(
+            delete(HPPrivatePlayer).where(
+                HPPrivatePlayer.region == c.region, HPPrivatePlayer.battletag_lc == lc
+            )
+        )
+        return
+    values = {"region": c.region, "battletag_lc": lc, "changed_at": c.changed_at}
+    stmt = insert(HPPrivatePlayer).values(**values)
+    await s.execute(
+        stmt.on_conflict_do_update(index_elements=["region", "battletag_lc"], set_=values)
+    )
+    # a visitor may have typed the tag in any letter case, and each spelling is its own key
+    await s.execute(
+        delete(HPCache).where(func.lower(HPCache.key) == player_key(c.region, lc).lower())
+    )

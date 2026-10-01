@@ -231,3 +231,32 @@ def test_not_found_is_retried_soon_after_an_upload() -> None:
     from server.config import Settings
 
     assert Settings(hp_api_token="x").not_found_ttl_seconds <= 600
+
+
+async def test_hp_refusing_a_private_player_drops_the_cached_profile(
+    svc: PlayerService, fake_hp: FakeHP, clock: Clock, settings: Settings, db: Database
+) -> None:
+    # HP answers 403 player_unavailable for a private profile (recorded 2026-10-01); it is not
+    # an outage, so the old profile must not be served as stale (API terms §5).
+    await svc.lookup(TAG, REGION)
+    clock.now += settings.player_ttl_seconds + 1
+    fake_hp.responder = lambda r: hp_response("v1_players_403_private.json")
+    r = await svc.lookup(TAG, REGION)
+    assert r.outcome == "private" and r.profile is None
+    store = HPStore(db)
+    assert await store.get(f"players|{REGION}|{TAG}") is None
+    assert await store.is_private(REGION, TAG)
+    await svc.lookup(TAG, REGION)
+    assert len(fake_hp.requests) == 2  # not asked again while private
+
+
+async def test_a_stale_profile_is_never_served_past_the_stale_limit(
+    svc: PlayerService, fake_hp: FakeHP, clock: Clock, settings: Settings
+) -> None:
+    await svc.lookup(TAG, REGION)
+    clock.now += settings.stale_max_seconds + 1
+    fake_hp.responder = lambda r: quota_429()
+    assert (await svc.lookup(TAG, REGION)).outcome == "quota_exceeded"
+    fake_hp.responder = lambda r: httpx.Response(500, json={"error": {"code": "server_error"}})
+    clock.now += 7201
+    assert (await svc.lookup(TAG, REGION)).outcome == "unavailable"

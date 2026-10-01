@@ -18,14 +18,14 @@ Start every session here. Operating guide and architecture: `docs/HANDOFF.md`. B
 - Region menu said "수집 전" for every region on the reference patch although all six were backfilled (#71): the menu read `meta.modes` (current patch only). Fixed with `meta.previous_modes` (#72). Live: KR, NA, EU selectable on 2.55.17.98025.
 - Tier floor 200 → 50 (#73): KR Storm League tiered 20 → 76 of 90, KR QM 67 → 90.
 - Heroes Profile answered the upload mail (Zemill, 2026-09-29; record in `docs/outreach/2026-09-29-heroes-profile-upload-cors.md`): use their iframe widget, not CORS; no `replays/fingerprints`, no server relay; attribution on the first screen in body text. Both done (#75). The widget was blank at first (HP's Cloudflare check answered the framed request with 403, and that page sets `X-Frame-Options: SAMEORIGIN`); HP fixed it on their side the same day and the owner confirmed the uploader renders on hpgg.win. Nothing on our side changed — the embed is the documented snippet.
-- Found in HP's API terms §5: player data must follow HP's privacy feed (drop a player who went private within 24 h). Our player cache does not → **#74**.
+- Found in HP's API terms §5: player data must follow HP's privacy feed (drop a player who went private within 24 h). Our player cache did not → **#74**, done the same day: the server polls the feed hourly, private players get 403 `player_private` ("비공개 프로필입니다") and their cache rows are deleted; nothing cached is served or kept past 24 h. Also fixed: HP's `403 player_unavailable` for a private player used to read as an outage and serve the stale copy.
 
 ## Checked 2026-09-30 morning
 - 03:20 run **failed** (422): hotfix 2.57.0.98304 was listed seven minutes before HP's stats accepted it. Fixed in #55 (1-hour settle; only a healthy build becomes the previous patch; a patch is one build). Dispatched again at 08:40: collect + deploy green.
 - Now: current 2.57.0.98304 (122 QM matches), previous and **reference 2.55.17.98025**; the thin 2.57.0.98285 was dropped, not promoted. Solo calls ran (`run.party` ×2). 90 matchups files and the builds are on 2.55.17.98025; 밴픽 shows allies/enemies terms, hero pages show 상성 and builds. Region of the day: EU (2.57 only, so region views say "no data" until 2.57 is the reference).
 
 ## First thing to check next session
-1. **#74 privacy feed** (API terms §5) is a licence condition — do it first among the issues.
+1. **Privacy feed (#74)** is live after deploy: walk the "After deploy" half of `docs/e2e/server-privacy-checklist.md`, then `curl -s https://api.hpgg.win/healthz` → `privacy.last_ok_at` within the last hour on every later check.
 2. Hotfix watcher: `tail ~/Library/Logs/hpgg-hotfix.log` shows `outcome=unchanged` every 30 minutes (or `recorded` + a `data: hotfix <build>` commit on main after a new build).
 3. `gh run list --event schedule -L 3`: the 03:20 run is green. A failed run opens a `collector failed` issue by itself.
 4. **Quota around 10-03 / 10-04**: Heroes/Stats had 21 left on 09-30 evening and a run uses 8 — the 10-03 and 10-04 runs are expected to fail with `quota_exceeded` (the site keeps the previous day); the window rolls on 10-05. Do not spend stats calls by hand before 10-05. Builds may be skipped a day or two (`run.builds_skipped`).
@@ -35,7 +35,7 @@ Start every session here. Operating guide and architecture: `docs/HANDOFF.md`. B
 
 ## Open threads
 - **Heroes Profile upload**: answered, built and acknowledged (#75 · #77, reply sent 10-01) — HP's widget only; see `docs/outreach/2026-09-29-heroes-profile-upload-cors.md` for what HP asked us not to do and what is still unverified (no real replay has gone through the embed yet).
-- **Issues**: #74 player cache vs HP privacy feed (terms §5, licence condition) · #37 hero summary sentences (review only; template sentences from numbers, playstyle via HP `Replay/Data` sampling; two of its three sentences need the matchups data) · #28 accounts with Battle.net login (needs the owner's Battle.net developer client ID/secret; no feature uses accounts until #7) · #7 community (on hold until traffic).
+- **Issues**: #37 hero summary sentences (review only; template sentences from numbers, playstyle via HP `Replay/Data` sampling; two of its three sentences need the matchups data) · #28 accounts with Battle.net login (needs the owner's Battle.net developer client ID/secret; no feature uses accounts until #7) · #7 community (on hold until traffic).
 - **Decided against** (owner, 2026-09-29): replay viewer, tier-list maker (hots-scrap has them), herossearch's meta map / map meta heroes (the tier table covers it), time-of-day analysis. Tier C/D colours equal to brand accent/primary: fine as is.
 - **References**: hots.herossearch.com (own replay uploads, ~158k; party-corrected WR, ban/pick recommendation, prose hero cards) · sin0nis.github.io/hots-scrap (extracts game data itself — has 2.57 talents — but its repo has no licence, so don't copy its data; HeroesToolChest's HeroesDataParser (MIT) on a game install would do the same).
 

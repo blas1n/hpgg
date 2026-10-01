@@ -20,7 +20,8 @@ OK = {"battletag": "Player12#1012", "region": "NA"}
 
 @pytest.fixture
 def client(settings: Settings, fake_hp: FakeHP, clock: Clock) -> Iterator[TestClient]:
-    app = create_app(settings, hp_transport=fake_hp.transport, clock=clock)
+    # the privacy poller has its own test below; here it would add feed calls to fake_hp.requests
+    app = create_app(settings, hp_transport=fake_hp.transport, clock=clock, privacy_poll=False)
     with TestClient(app) as c:
         yield c
 
@@ -99,6 +100,55 @@ def test_upstream_unavailable_is_503(client: TestClient, fake_hp: FakeHP) -> Non
     r = client.get(URL, params=OK)
     assert r.status_code == 503
     assert r.json()["error"]["code"] == "upstream_unavailable"
+
+
+def test_private_player_is_403_player_private(client: TestClient, fake_hp: FakeHP) -> None:
+    from tests.server.conftest import hp_response
+
+    fake_hp.responder = lambda r: hp_response("v1_players_403_private.json")
+    r = client.get(URL, params={"battletag": "Player13#1013", "region": "EU"})
+    assert r.status_code == 403
+    assert r.json()["error"]["code"] == "player_private"
+    assert "no-store" in r.headers["cache-control"]
+
+
+def test_the_app_polls_the_privacy_feed_by_default(
+    settings: Settings, fake_hp: FakeHP, clock: Clock
+) -> None:
+    import time
+
+    from tests.server.conftest import hp_response
+
+    def answer(request: httpx.Request) -> httpx.Response:
+        if request.url.path.endswith("/players/privacy/changes"):
+            return httpx.Response(
+                200,
+                json={
+                    "changes": [
+                        {
+                            "battletag": "Player13#1013",
+                            "region": 2,
+                            "state": "private",
+                            "changed_at": "2026-10-01T00:00:00+00:00",
+                        }
+                    ],
+                    "next_since": "2026-10-01T00:00:00+00:00",
+                    "next_after_id": 1,
+                    "has_more": False,
+                },
+            )
+        return hp_response("v1_players_200.json")
+
+    fake_hp.responder = answer
+    with TestClient(create_app(settings, hp_transport=fake_hp.transport, clock=clock)) as c:
+        deadline = time.monotonic() + 5
+        while c.get("/healthz").json()["privacy"]["last_ok_at"] is None:
+            assert time.monotonic() < deadline, "the feed was never polled"
+            time.sleep(0.02)
+        r = c.get(URL, params={"battletag": "Player13#1013", "region": "EU"})
+        assert r.status_code == 403
+    players = [q for q in fake_hp.requests if q.url.path.endswith("/players")]
+    assert players == []
 
 
 def test_per_ip_rate_limit_uses_cf_connecting_ip(client: TestClient, settings: Settings) -> None:
