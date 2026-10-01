@@ -1,5 +1,5 @@
 # HPGG API on the Mac mini. autodeploy runs:
-#   docker-compose -p hpgg -f <WORK>/deploy/docker-compose.yml up -d --build --force-recreate
+#   docker-compose -p hpgg-api -f <WORK>/deploy/docker-compose.yml up -d --build --force-recreate
 # Public: cloudflared ingress api.hpgg.win → http://127.0.0.1:8800 (loopback only here).
 services:
   api:

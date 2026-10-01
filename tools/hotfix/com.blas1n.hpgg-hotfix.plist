@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<!-- Hotfix watcher (#62). Runs from the bot's own clone ~/Works/hpgg-bot, never the dev checkout.
+<!-- Hotfix watcher (#62). Runs from the bot's own clone ~/Works/hpgg/bot, never main/ (the deploy worktree) or a dev worktree.
      Install: cp tools/hotfix/com.blas1n.hpgg-hotfix.plist ~/Library/LaunchAgents/ &&
               launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.blas1n.hpgg-hotfix.plist -->
 <plist version="1.0">
@@ -16,7 +16,7 @@
         <string>tools/hotfix_watch.py</string>
     </array>
     <key>WorkingDirectory</key>
-    <string>/Users/blasin/Works/hpgg-bot</string>
+    <string>/Users/blasin/Works/hpgg/bot</string>
     <key>StartInterval</key>
     <integer>1800</integer>
     <key>RunAtLoad</key>
