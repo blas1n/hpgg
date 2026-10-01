@@ -1,6 +1,8 @@
 """Regenerate localisation tables and images from HeroesToolChest (MIT) game data.
 
-  uv run python tools/build_assets.py --build 2.55.16.97039
+  uv run python tools/build_assets.py --build 2.57.0.98304
+
+Game data: a heroes-data2 release (HeroesDataParser v5, read through `from_v5`).
 
 Writes: data/heroes_ko.json (every hero already listed or in data/latest/, when the game data has
 it; Korean and English names), data/img/heroes/<slug>.png (missing portraits),
@@ -20,6 +22,7 @@ import json
 import os
 import re
 import subprocess
+import tarfile
 import unicodedata
 from pathlib import Path
 from typing import Any
@@ -27,7 +30,12 @@ from urllib.request import urlopen
 
 import structlog
 
-RAW_DATA = "https://raw.githubusercontent.com/HeroesToolChest/heroes-data/master/heroesdata"
+# heroes-data stopped at 2.55.16.97039 (archived 2026-07); heroes-data2 has the newer builds,
+# as full JSON only in each release's tarball (the repo tree holds patches)
+RELEASE = (
+    "https://github.com/HeroesToolChest/heroes-data2/releases/download/"
+    "v{build}/heroes-data-no-maps-{build}.tar.gz"
+)
 RAW_IMG = "https://raw.githubusercontent.com/HeroesToolChest/heroes-images/master/heroesimages"
 log = structlog.get_logger(__name__)
 
@@ -208,7 +216,9 @@ def clean_desc(raw: str, lang: str = "ko") -> str:
     )
     s = re.sub(r"<n\s*/>|</n>", "\n", s)
     s = re.sub(r"<img[^>]*/?>", "", s)
-    s = re.sub(r'<c val="[^"]*">(.*?)</c>', r"{{\1}}", s)
+    s = re.sub(r'<c val="[^"]*"[^>]*>(.*?)</c>', r"{{\1}}", s)
+    # heroes-data2 prints the per-level scaling as its own highlight: one value, as before
+    s = re.sub(r"\}\}\{\{(\s?\()", r"\1", s)
     s = re.sub(r"<s [^>]*>(.*?)</s>", r"\1", s)
     out = ""
     for part in re.split(r'(<lang rule="jongsung">[^<]*</lang>)', s):
@@ -331,6 +341,74 @@ def hero_talent_files(
     return files
 
 
+_PASSIVE = ":PASSIVE:"
+
+
+def _v4_id(x: dict[str, Any], id_key: str) -> str | None:
+    """v5 names a passive ability `:PASSIVE:` and keeps its own id in buttonId."""
+    i = x.get(id_key)
+    return x.get("buttonId") if i == _PASSIVE else i
+
+
+def _v4_tiers(tiers: dict[str, Any], id_key: str) -> dict[str, list[dict[str, Any]]]:
+    return {
+        tier.lower(): [{**x, "nameId": _v4_id(x, id_key)} for x in items if _v4_id(x, id_key)]
+        for tier, items in tiers.items()
+    }
+
+
+def _v4_key(link_id: str) -> str:
+    """`:PASSIVE:|AlarakSadism|Trait` → `AlarakSadism|Trait`: the id first, as heroes-data."""
+    return link_id.split("|", 1)[1] if link_id.startswith(_PASSIVE + "|") else link_id
+
+
+def _v4_strings(strings: dict[str, Any]) -> dict[str, Any]:
+    items = strings["items"]
+    hero, talent, ability = items.get("hero", {}), items.get("talent", {}), items.get("ability", {})
+
+    def both(field: str) -> dict[str, str]:
+        # talents first: `_by_name_id` keeps the first entry of an id, so a talent sharing its
+        # id with an ability keeps the talent's text
+        return {_v4_key(k): v for d in (talent, ability) for k, v in d.get(field, {}).items()}
+
+    return {
+        "gamestrings": {
+            "unit": {
+                "name": hero.get("name", {}),
+                "expandedrole": hero.get("expandedRole", {}),
+                "lifetype": hero.get("lifeType", {}),
+                "energytype": hero.get("energyType", {}),
+            },
+            "abiltalent": {
+                "name": both("name"),
+                "full": both("fullText"),
+                "cooldown": both("cooldownText"),
+            },
+        }
+    }
+
+
+def from_v5(
+    herodata: dict[str, Any], kokr: dict[str, Any], enus: dict[str, Any]
+) -> tuple[dict[str, Any], dict[str, Any], dict[str, Any]]:
+    """heroes-data2 (HeroesDataParser v5) → the heroes-data (v4) shapes the functions above read.
+    v5 wraps heroes and strings in {meta, items}, names a talent `talentId` and an ability
+    `abilityId` (v4: `nameId`), capitalises tiers, and keys strings by `linkId`
+    (`<id>|<button>|<type>…` — the id first, as v4's keys)."""
+    heroes: dict[str, Any] = {}
+    for hid, h in herodata["items"].items():
+        heroes[hid] = {
+            **h,
+            "talents": _v4_tiers(h.get("talents") or {}, "talentId"),
+            "abilities": _v4_tiers(h.get("abilities") or {}, "abilityId"),
+            "subAbilities": [
+                {parent: _v4_tiers(tiers, "abilityId")}
+                for parent, tiers in (h.get("subAbilities") or {}).items()
+            ],
+        }
+    return heroes, _v4_strings(kokr), _v4_strings(enus)
+
+
 def fetch(url: str, dest: Path) -> bool:
     dest.parent.mkdir(parents=True, exist_ok=True)
     try:
@@ -341,6 +419,27 @@ def fetch(url: str, dest: Path) -> bool:
         return False
 
 
+def unpack_release(tar: Path, b: str, cache: Path) -> None:
+    """The release tarball's hero data and kokr/enus strings → cache/{herodata,kokr,enus}_<b>.json
+    (found by file name: the archive carries the CI runner's path)."""
+    want = {
+        f"herodata_{b}.json": f"herodata_{b}.json",
+        f"gamestrings_{b}_kokr.json": f"kokr_{b}.json",
+        f"gamestrings_{b}_enus.json": f"enus_{b}.json",
+    }
+    cache.mkdir(parents=True, exist_ok=True)
+    with tarfile.open(tar, "r:gz") as t:
+        for m in t.getmembers():
+            name = Path(m.name).name
+            if m.isfile() and name in want:
+                f = t.extractfile(m)
+                if f is not None:
+                    (cache / want[name]).write_bytes(f.read())
+    missing = [n for n in want.values() if not (cache / n).exists()]
+    if missing:
+        raise SystemExit(f"release {tar.name} lacks {missing}")
+
+
 def resize(src: Path, dst: Path, px: int) -> None:
     subprocess.run(
         ["sips", "-Z", str(px), str(src), "--out", str(dst)], capture_output=True, check=False
@@ -349,7 +448,7 @@ def resize(src: Path, dst: Path, px: int) -> None:
 
 def main() -> None:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--build", required=True, help="heroes-data build folder, e.g. 2.55.16.97039")
+    ap.add_argument("--build", required=True, help="heroes-data2 release, e.g. 2.57.0.98304")
     ap.add_argument("--data", default="data")
     ap.add_argument("--cache", default=".cache/htc")
     ap.add_argument("--skip-icons", action="store_true", help="tables only, no image downloads")
@@ -360,16 +459,17 @@ def main() -> None:
     herodata_p = cache / f"herodata_{b}.json"
     kokr_p = cache / f"kokr_{b}.json"
     enus_p = cache / f"enus_{b}.json"
-    for p, url in (
-        (herodata_p, f"{RAW_DATA}/{args.build}/data/herodata_{b}_localized.json"),
-        (kokr_p, f"{RAW_DATA}/{args.build}/gamestrings/gamestrings_{b}_kokr.json"),
-        (enus_p, f"{RAW_DATA}/{args.build}/gamestrings/gamestrings_{b}_enus.json"),
-    ):
-        if not p.exists() and not fetch(url, p):
+    if not all(p.exists() for p in (herodata_p, kokr_p, enus_p)):
+        url = RELEASE.format(build=args.build)
+        tar = cache / f"heroes-data-{args.build}.tar.gz"
+        if not tar.exists() and not fetch(url, tar):
             raise SystemExit(f"download failed: {url}")
+        unpack_release(tar, b, cache)
     herodata = json.loads(herodata_p.read_text(encoding="utf-8"))
     kokr = json.loads(kokr_p.read_text(encoding="utf-8"))
     enus = json.loads(enus_p.read_text(encoding="utf-8"))
+    if "items" in herodata:  # heroes-data2 (v5); a heroes-data (v4) cache is read as it is
+        herodata, kokr, enus = from_v5(herodata, kokr, enus)
 
     # talents
     talents = talent_table(herodata, kokr)
@@ -403,7 +503,7 @@ def main() -> None:
     role_en = role_names(kokr, enus)
     table["roles"] = [r | {"en": role_en.get(r["ko"], r["name"])} for r in table["roles"]]
     table["source"]["names"] = (
-        f"HeroesToolChest/heroes-data gamestrings kokr + enus (build {b}, MIT)"
+        f"HeroesToolChest/heroes-data2 gamestrings kokr + enus (build {b}, MIT)"
     )
     table_p.write_text(json.dumps(table, ensure_ascii=False, indent=0), encoding="utf-8")
     idx = hero_index(herodata)
@@ -418,13 +518,25 @@ def main() -> None:
             continue
         resize(tmp, dst, 96)
     source = (
-        f"HeroesToolChest heroes-data {args.build} (gamestrings kokr, enus) + heroes-images, MIT"
+        f"HeroesToolChest heroes-data2 {args.build} (gamestrings kokr, enus) + heroes-images, MIT"
     )
     out_dir = data / "talents"
     out_dir.mkdir(parents=True, exist_ok=True)
     game = hero_game_ids(herodata, kokr, heroes, enus)
     for hero_slug, table in hero_talent_files(herodata, kokr, heroes, enus).items():
-        body = {"source": source, "talents": table, "game": game.get(hero_slug)}
+        ids = game.get(hero_slug)
+        before = out_dir / f"{hero_slug}.json"
+        if ids is not None and before.exists():
+            # an ability id the new game data lacks (heroes-data2 98304 has no basic abilities
+            # for The Lost Vikings) stays: the hotfix diff names changes by these ids
+            old = (json.loads(before.read_text(encoding="utf-8")).get("game") or {}).get(
+                "abilities"
+            ) or {}
+            carried = {k: v for k, v in old.items() if k not in ids["abilities"]}
+            if carried:
+                ids["abilities"] = {**ids["abilities"], **carried}
+                log.warning("assets.abilities_carried", hero=hero_slug, ids=sorted(carried))
+        body = {"source": source, "talents": table, "game": ids}
         (out_dir / f"{hero_slug}.json").write_text(
             json.dumps(body, ensure_ascii=False, separators=(",", ":")),
             encoding="utf-8",

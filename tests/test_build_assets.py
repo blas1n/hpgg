@@ -631,3 +631,182 @@ def test_ability_ids_are_the_heros_own_and_never_an_empty_prefix() -> None:
     s = {"gamestrings": {"abiltalent": {"name": {f"{k}|{k}|D|False": v for k, v in names.items()}}}}
     got = ba.hero_game_ids(herodata, s, [{"name": "Muradin", "slug": "muradin"}], s)["muradin"]
     assert set(got["abilities"]) == {"MuradinSecondWind", "MuradinAvatar"}
+
+
+# --- heroes-data2 (HeroesDataParser v5) ------------------------------------------------------
+# heroes-data stopped at 2.55.16.97039 (archived 2026-07); heroes-data2 has 2.57 and Xal'atath.
+# tests/fixtures/heroes-data2-98304: the 2.57.0.98304 release trimmed to Xal'atath and Abathur.
+
+HD2 = Path(__file__).parent / "fixtures" / "heroes-data2-98304"
+
+
+def _hd2() -> tuple[dict, dict, dict]:
+    load = lambda n: json.loads((HD2 / n).read_text(encoding="utf-8"))  # noqa: E731
+    return ba.from_v5(
+        load("herodata_98304.json"),
+        load("gamestrings_98304_kokr.json"),
+        load("gamestrings_98304_enus.json"),
+    )
+
+
+def test_clean_desc_keeps_highlights_that_carry_a_style_name() -> None:
+    """v5 markup adds hlt-name to <c>, and the per-level scaling is its own grey highlight."""
+    raw = (
+        '<c val="bfd4fd" hlt-name="#TooltipNumbers">60</c>'
+        '<c val="a7a7a7" hlt-name="#ColorGray">~~0.04~~</c>의 피해'
+    )
+    assert ba.clean_desc(raw) == "{{60(레벨당 +4%)}}의 피해"
+    assert ba.clean_desc(raw.replace("의 피해", " damage"), "en") == (
+        "{{60 (+4% per level)}} damage"
+    )
+
+
+def test_heroes_data2_gives_xalatath_her_row() -> None:
+    herodata, kokr, enus = _hd2()
+    rows, missing = ba.hero_rows(herodata, kokr, {"Xal'atath", "Abathur"}, ROLES, enus)
+    assert missing == []
+    xal = next(r for r in rows if r["name"] == "Xal'atath")
+    assert xal == {
+        "name": "Xal'atath",
+        "slug": "xal-atath",
+        "ko": "잘아타스",
+        "en": "Xal'atath",
+        "role": "Ranged Assassin",
+        "role_ko": "원거리 암살자",
+        "short_name": "xalatath",
+        "portrait": "img/heroes/xal-atath.png",
+        "franchise": "Warcraft",
+    }
+    assert ba.portrait_file(herodata["Xalatath"]) == "storm_ui_glues_draft_portrait_xalatath.png"
+
+
+def test_heroes_data2_talents_are_keyed_like_heroes_profile() -> None:
+    herodata, kokr, enus = _hd2()
+    heroes = [{"name": "Xal'atath", "slug": "xal-atath"}, {"name": "Abathur", "slug": "abathur"}]
+    files = ba.hero_talent_files(herodata, kokr, heroes, enus)
+    xal = files["xal-atath"]
+    assert len(xal) == 22  # the 22 talent_name Heroes Profile lists for her
+    adept = xal["XalatathVoidAdept"]
+    assert (adept["ko"], adept["en"]) == ("공허의 달인", "Void Adept")
+    assert adept["icon"] == "storm_ui_icon_xalatath_q_shadowmark.png"
+    assert adept["desc"].startswith("{{퀘스트:}}") and "<" not in adept["desc"]
+    # every Abathur talent the site has today is still there, under the same key
+    today = json.loads(
+        (Path(__file__).parents[1] / "data" / "talents" / "abathur.json").read_text()
+    )["talents"]
+    assert set(today) <= set(files["abathur"])
+    assert all(files["abathur"][k]["ko"] == v["ko"] for k, v in today.items())
+
+
+def test_heroes_data2_game_ids_feed_the_hotfix_diff() -> None:
+    herodata, kokr, enus = _hd2()
+    heroes = [{"name": "Xal'atath", "slug": "xal-atath"}, {"name": "Abathur", "slug": "abathur"}]
+    game = ba.hero_game_ids(herodata, kokr, heroes, enus)
+    xal = game["xal-atath"]
+    assert xal["unit"] == "HeroXalatath" and xal["weapons"] == ["XalatathHeroWeapon"]
+    assert xal["abilities"]["XalatathShadowMark"] == {
+        "ko": "그림자 표식",
+        "en": "Shadow Mark",
+        "key": "Q",
+    }
+    assert {a["key"] for a in xal["abilities"].values()} >= {"Q", "W", "E", "R", "D"}
+    assert xal["life"] == {"ko": "생명력", "en": "Health"}
+    # Abathur's ids are what the hotfix watcher already reads from data/talents/abathur.json
+    today = json.loads(
+        (Path(__file__).parents[1] / "data" / "talents" / "abathur.json").read_text()
+    )["game"]
+    assert game["abathur"] == today
+
+
+def test_release_tarball_is_unpacked_into_the_cache_by_file_name(tmp_path: Path) -> None:
+    """heroes-data2 keeps full JSON only in release assets, under a CI path prefix."""
+    import tarfile
+
+    tar = tmp_path / "r.tar.gz"
+    prefix = "home/runner/work/heroes-data2/heroes-data2/output/heroes_2.57.0.98304"
+    with tarfile.open(tar, "w:gz") as t:
+        for name, sub in (
+            ("herodata_98304.json", "data"),
+            ("gamestrings_98304_kokr.json", "gamestrings"),
+            ("gamestrings_98304_enus.json", "gamestrings"),
+        ):
+            t.add(HD2 / name, arcname=f"{prefix}/{sub}/{name}")
+    cache = tmp_path / "cache"
+    ba.unpack_release(tar, "98304", cache)
+    assert sorted(p.name for p in cache.iterdir()) == [
+        "enus_98304.json",
+        "herodata_98304.json",
+        "kokr_98304.json",
+    ]
+    assert (cache / "kokr_98304.json").read_bytes() == (
+        HD2 / "gamestrings_98304_kokr.json"
+    ).read_bytes()
+
+
+def test_main_reads_a_heroes_data2_build(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    data, cache = tmp_path / "data", tmp_path / "cache"
+    (data / "latest").mkdir(parents=True)
+    cache.mkdir()
+    table = {"roles": ROLES, "heroes": [{"name": "Abathur"}], "source": {"names": "old"}}
+    (data / "heroes_ko.json").write_text(json.dumps(table))
+    rows = [{"hero": "Abathur", "map": "all"}, {"hero": "Xal'atath", "map": "all"}]
+    (data / "latest" / "qm.json").write_text(json.dumps({"rows": rows}))
+    for src, dst in (
+        ("herodata_98304.json", "herodata_98304.json"),
+        ("gamestrings_98304_kokr.json", "kokr_98304.json"),
+        ("gamestrings_98304_enus.json", "enus_98304.json"),
+    ):
+        (cache / dst).write_bytes((HD2 / src).read_bytes())
+    argv = ["build_assets", "--build", "2.57.0.98304", "--data", str(data), "--cache", str(cache)]
+    monkeypatch.setattr("sys.argv", [*argv, "--skip-icons"])
+    ba.main()
+    out = json.loads((data / "heroes_ko.json").read_text())
+    assert [h["name"] for h in out["heroes"]] == ["Abathur", "Xal'atath"]
+    assert "heroes-data2" in out["source"]["names"]
+    body = json.loads((data / "talents" / "xal-atath.json").read_text())
+    assert len(body["talents"]) == 22 and "heroes-data2 2.57.0.98304" in body["source"]
+    assert body["game"]["unit"] == "HeroXalatath"
+
+
+def test_heroes_data2_passive_abilities_keep_their_button_id() -> None:
+    """v5 names a passive ability `:PASSIVE:` and keeps its id in buttonId (heroes-data had it
+    as nameId): Alarak's trait must stay what the hotfix diff matches."""
+    herodata, kokr, enus = _hd2()
+    heroes = [{"name": "Alarak", "slug": "alarak"}, {"name": "Fenix", "slug": "fenix"}]
+    game = ba.hero_game_ids(herodata, kokr, heroes, enus)
+    assert game["alarak"]["abilities"]["AlarakSadism"] == {
+        "ko": "가학성",
+        "en": "Sadism",
+        "key": "D",
+    }
+    assert game["fenix"]["abilities"]["FenixShieldCapacitor"]["key"] == "D"
+    assert not any(k.startswith(":") for g in game.values() for k in g["abilities"])
+
+
+def test_main_keeps_ability_ids_the_new_game_data_lacks(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """heroes-data2 2.57.0.98304 has no basic abilities for The Lost Vikings (Spin To Win…):
+    ids the hotfix diff could name are carried from the previous file, never silently lost."""
+    data, cache = tmp_path / "data", tmp_path / "cache"
+    (data / "latest").mkdir(parents=True)
+    (data / "talents").mkdir()
+    cache.mkdir()
+    table = {"roles": ROLES, "heroes": [{"name": "Abathur"}], "source": {"names": "old"}}
+    (data / "heroes_ko.json").write_text(json.dumps(table))
+    for src, dst in (
+        ("herodata_98304.json", "herodata_98304.json"),
+        ("gamestrings_98304_kokr.json", "kokr_98304.json"),
+        ("gamestrings_98304_enus.json", "enus_98304.json"),
+    ):
+        (cache / dst).write_bytes((HD2 / src).read_bytes())
+    gone = {"AbathurOldButton": {"ko": "옛 능력", "en": "Old", "key": "Q"}}
+    (data / "talents" / "abathur.json").write_text(
+        json.dumps({"talents": {}, "game": {"abilities": gone}})
+    )
+    argv = ["build_assets", "--build", "2.57.0.98304", "--data", str(data), "--cache", str(cache)]
+    monkeypatch.setattr("sys.argv", [*argv, "--skip-icons"])
+    ba.main()
+    game = json.loads((data / "talents" / "abathur.json").read_text())["game"]
+    assert game["abilities"]["AbathurOldButton"] == gone["AbathurOldButton"]
+    assert "AbathurSymbiote" in game["abilities"]  # the new data's own ids are all there
