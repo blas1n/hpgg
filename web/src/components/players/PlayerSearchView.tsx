@@ -7,9 +7,12 @@ import type { HeroTable, MapTable } from "@/data";
 import { useLocale, useT } from "@/i18n/client";
 import { fetchPlayer, isRegion, parseBattletag, playersHref, playerView, type PlayerResult, type PlayerView, type Region } from "@/lib/players";
 import { Card, CardHeader, cx, Portrait } from "../ui";
+import { fetchMatches, type MatchesResult } from "@/lib/matches";
+import { MatchHistory } from "./MatchHistory";
 import { PlayerSearchForm } from "./PlayerSearchForm";
 
 type State = { kind: "idle" } | { kind: "loading"; tag: string } | PlayerResult;
+type Games = { kind: "loading" } | MatchesResult;
 
 const pct = (n: number | null) => (n === null ? "–" : `${n.toFixed(1)}%`);
 const int = (n: number) => n.toLocaleString("ko-KR");
@@ -29,13 +32,18 @@ export function PlayerSearchView({ heroes, maps }: { heroes: HeroTable; maps: Ma
   const t = useT();
   const locale = useLocale();
   const [state, setState] = useState<State>({ kind: "idle" });
+  const [games, setGames] = useState<Games>({ kind: "loading" });
   const [query, setQuery] = useState<{ tag: string; region: Region } | null>(null);
   const [formKey, setFormKey] = useState(0);
 
   const run = useCallback(async (tag: string, region: Region) => {
     setQuery({ tag, region });
     setState({ kind: "loading", tag });
+    setGames({ kind: "loading" });
+    // the match list is a second call so the profile is not held up by Heroes Profile's job queue
+    const matches = fetchMatches(tag, region).then(setGames);
     setState(await fetchPlayer(tag, region));
+    await matches;
   }, []);
 
   useEffect(() => {
@@ -68,7 +76,7 @@ export function PlayerSearchView({ heroes, maps }: { heroes: HeroTable; maps: Ma
       </PageHead>
       <PlayerSearchForm key={formKey} initialTag={query?.tag ?? ""} initialRegion={query?.region ?? "KR"} onSearch={search} className="max-w-xl" />
       <section id="player-result" data-state={state.kind} aria-live="polite" aria-busy={state.kind === "loading"}>
-        <Result state={state} heroes={heroes} maps={maps} retry={query ? () => void run(query.tag, query.region) : undefined} />
+        <Result state={state} games={games} heroes={heroes} maps={maps} retry={query ? () => void run(query.tag, query.region) : undefined} />
       </section>
       {/* remounted when a search finds nobody, so it opens then and stays under the visitor's control otherwise */}
       <UploadGuide key={state.kind === "not_found" ? "not-found" : "default"} open={state.kind === "not_found"} />
@@ -76,7 +84,7 @@ export function PlayerSearchView({ heroes, maps }: { heroes: HeroTable; maps: Ma
   );
 }
 
-function Result({ state, heroes, maps, retry }: { state: State; heroes: HeroTable; maps: MapTable; retry?: () => void }) {
+function Result({ state, games, heroes, maps, retry }: { state: State; games: Games; heroes: HeroTable; maps: MapTable; retry?: () => void }) {
   const t = useT().players;
   const locale = useLocale();
   switch (state.kind) {
@@ -103,7 +111,7 @@ function Result({ state, heroes, maps, retry }: { state: State; heroes: HeroTabl
     case "invalid":
       return <Notice tone="warn" title={t.invalidTitle} body={t.invalidBody} />;
     case "ok":
-      return <Profile v={playerView(state.data, heroes, maps, locale)} />;
+      return <Profile v={playerView(state.data, heroes, maps, locale)} games={games} heroes={heroes} maps={maps} />;
   }
 }
 
@@ -197,7 +205,7 @@ function Notice({ title, body, tone, retry }: { title: string; body: string; ton
   );
 }
 
-function Profile({ v }: { v: PlayerView }) {
+function Profile({ v, games, heroes, maps }: { v: PlayerView; games: Games; heroes: HeroTable; maps: MapTable }) {
   const t = useT().players;
   return (
     <div className="space-y-4">
@@ -245,8 +253,14 @@ function Profile({ v }: { v: PlayerView }) {
       </Card>
 
       <div className="grid gap-4 lg:grid-cols-12">
+        {games.kind === "ok" ? (
+          <div className="lg:col-span-8">
+            <MatchHistory data={games.data} heroes={heroes} maps={maps} />
+          </div>
+        ) : (
         <Card aria-labelledby="h-matches" className="lg:col-span-7">
           <CardHeader id="h-matches" title={t.matchesTitle} sub={t.matchesSub(String(v.matches.length), String(v.recent.wins), String(v.recent.losses))} />
+          {games.kind === "loading" && <p id="games-loading" className="border-b border-line px-4 py-2 text-2xs text-muted">{t.games.loading}</p>}
           <ul id="player-matches" className="divide-y divide-line">
             {v.matches.map((m) => (
               <li key={m.key} data-result={m.win ? "win" : "loss"} className={cx("flex items-center gap-3 border-l-2 px-4 py-2.5", m.win ? "border-l-pos" : "border-l-neg")}>
@@ -269,8 +283,9 @@ function Profile({ v }: { v: PlayerView }) {
             {!v.matches.length && <li className="px-4 py-3 text-sm text-muted">{t.noMatches}</li>}
           </ul>
         </Card>
+        )}
 
-        <div className="space-y-4 lg:col-span-5">
+        <div className={cx("space-y-4", games.kind === "ok" ? "lg:col-span-4" : "lg:col-span-5")}>
           <Card aria-labelledby="h-heroes">
             <CardHeader id="h-heroes" title={t.heroesTitle} />
             <ul id="player-heroes" className="divide-y divide-line">
