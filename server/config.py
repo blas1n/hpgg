@@ -41,6 +41,10 @@ class Settings(BaseSettings):
     match_daily_budget: int = 34
     mmr_history_quota_floor: int = 200
     mmr_history_daily_budget: int = 1300
+    # One game in full (`server/players/replays.py`): /replay/{id}, 1,000/week on Basic. A game
+    # never changes, but it names ten players, so it is kept no longer than stale_max_seconds.
+    replay_quota_floor: int = 50
+    replay_daily_budget: int = 135
     # A cold /players/matches query answers 202 and is asked again (polls are not charged).
     hp_job_poll_seconds: float = 2.0
     hp_job_wait_seconds: float = 20.0

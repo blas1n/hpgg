@@ -1,0 +1,18 @@
+{
+ "1": "MVP",
+ "2": "HighestKillStreak",
+ "3": "MostXPContribution",
+ "4": "MostHeroDamageDone",
+ "5": "MostSiegeDamageDone",
+ "6": "MostDamageTaken",
+ "7": "MostHealing",
+ "9": "MostMercCampsCaptured",
+ "13": "ClutchHealer",
+ "20": "MostSilences",
+ "21": "MostTeamfightDamageTaken",
+ "23": "MostTeamfightHeroDamageDone",
+ "24": "MostVengeancesPerformed",
+ "1003": "MostCurseDamageDone",
+ "1004": "MostDragonShrinesCaptured",
+ "1009": "MostGemsTurnedIn"
+}

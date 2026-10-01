@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
-import type { HeroTable, MapTable, TalentTable } from "../src/data";
+import type { AwardTable, HeroTable, MapTable, TalentTable } from "../src/data";
 import { localizeHeroes, localizeMaps } from "../src/i18n/names";
 import { BRIEFING_GAMES, briefing, fetchMatches, matchRows, type MatchesResponse } from "../src/lib/matches";
 
@@ -113,6 +113,15 @@ describe("matchRows", () => {
     expect(t[0]).toMatchObject({ name: "압도적인 힘", icon: "storm_ui_icon_alarak_discordstrike.png" });
     expect(t[1]!.icon).toBeUndefined(); // not in the stub table: no icon, never a broken image
     expect(rows[1]!.talents[0]!.name).toBeNull(); // Leoric's talents not loaded
+  });
+
+  it("names the end-of-match award once the award table is loaded", () => {
+    const awards = json<AwardTable>("e2e-data/awards.json");
+    const withAward = { ...full.matches[0]!, award: "MVP" };
+    const [m] = matchRows([withAward, full.matches[1]!], heroes, maps, {}, "ko", new Date(), awards);
+    expect(m!.award).toMatchObject({ name: "MVP", mvp: true });
+    expect(matchRows([withAward], heroes, maps, {}, "ko")[0]!.award).toBeNull(); // table not loaded yet
+    expect(matchRows([full.matches[1]!], heroes, maps, {}, "ko", new Date(), awards)[0]!.award).toBeNull();
   });
 
   it("a perfect game's KDA is the takedowns, not infinity", () => {

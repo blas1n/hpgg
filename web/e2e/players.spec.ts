@@ -6,6 +6,7 @@ import { expect, test, type Page, type Route } from "@playwright/test";
 // 전적 검색 against a mocked API (the real one is https://api.hpgg.win, our server in server/).
 const fixture = JSON.parse(readFileSync(join(dirname(fileURLToPath(import.meta.url)), "../tests/fixtures/api_player_zemill.json"), "utf-8"));
 const games = JSON.parse(readFileSync(join(dirname(fileURLToPath(import.meta.url)), "../tests/fixtures/api_matches_blas1n.json"), "utf-8"));
+const replay = JSON.parse(readFileSync(join(dirname(fileURLToPath(import.meta.url)), "../tests/fixtures/api_replay_65597227.json"), "utf-8"));
 const API = "https://api.hpgg.win/v1/players**";
 
 test.beforeEach(async ({ page }) => {
@@ -226,4 +227,45 @@ test("players: when the game list fails, the profile's five newest games stay", 
   await expect(page.locator("#player-result")).toHaveAttribute("data-state", "ok");
   await expect(page.locator("#player-games")).toHaveCount(0);
   await expect(page.locator("#player-matches li")).toHaveCount(5);
+});
+
+test("players: a game card shows its award and opens both teams in full", async ({ page }) => {
+  await mockApi(page, withGames(games));
+  const asked: string[] = [];
+  await page.route("https://api.hpgg.win/v1/replays/**", (route) => {
+    asked.push(new URL(route.request().url()).pathname);
+    return json(route, 200, replay);
+  });
+  await page.goto("./players/?tag=Player11%231011&region=KR");
+  const first = page.locator("#player-matches > li").first();
+  await expect(first.locator('[data-award="MVP"]')).toContainText("MVP");
+  await expect(page.locator("#player-matches > li").nth(1).locator("[data-award]")).toHaveCount(0);
+  expect(asked).toEqual([]); // nothing is fetched until a game is opened
+  const toggle = first.locator("[data-toggle]");
+  await expect(toggle).toHaveAttribute("aria-expanded", "false");
+  await toggle.click();
+  await expect(toggle).toHaveAttribute("aria-expanded", "true");
+  const panel = first.locator("[data-replay]");
+  await expect(panel.locator("table")).toHaveCount(2);
+  await expect(panel.locator("table").first()).toHaveAttribute("data-team", "win");
+  await expect(panel).toContainText("경기 시간 20:15");
+  const me = panel.locator("tr[data-me]");
+  await expect(me).toHaveCount(1);
+  await expect(me).toContainText("Player11");
+  await expect(me.locator('[data-award="MVP"]')).toHaveCount(1);
+  await expect(panel.locator('[data-award="MostDamageTaken"]')).toHaveCount(1);
+  await expect(panel.locator("[data-party]")).toHaveCount(2);
+  await expect(panel.locator('a[href*="tag=Tusk%2331987&region=KR"]')).toHaveCount(1);
+  expect(asked).toEqual(["/v1/replays/65597227"]);
+  await toggle.click();
+  await expect(first.locator("[data-replay]")).toHaveCount(0);
+});
+
+test("players: a game that cannot be opened says why", async ({ page }) => {
+  await mockApi(page, withGames(games));
+  await page.route("https://api.hpgg.win/v1/replays/**", (route) => json(route, 429, { error: { code: "quota_exceeded" } }));
+  await page.goto("./players/?tag=Player11%231011&region=KR");
+  const first = page.locator("#player-matches > li").first();
+  await first.locator("[data-toggle]").click();
+  await expect(first).toContainText("경기 상세 조회 한도");
 });

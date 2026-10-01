@@ -26,6 +26,8 @@ from server.errors import on_validation_error
 from server.players.hp import HPClient
 from server.players.matches import MatchService
 from server.players.privacy import PrivacyFeed
+from server.players.replay_router import router as replays_router
+from server.players.replays import ReplayService
 from server.players.router import router as players_router
 from server.players.service import PlayerService
 from server.players.store import HPStore
@@ -59,6 +61,7 @@ def create_app(
         app.state.matches = MatchService(
             hp=hp, store=store, players=app.state.players, settings=settings, clock=clock
         )
+        app.state.replays = ReplayService(hp=hp, store=store, settings=settings, clock=clock)
         app.state.privacy = PrivacyFeed(hp=hp, store=store, settings=settings, clock=clock)
         poller = asyncio.create_task(app.state.privacy.run_forever()) if privacy_poll else None
         app.state.ip_limiter = SlidingWindowLimiter(settings.ip_requests_per_minute, 60.0, clock)
@@ -106,10 +109,15 @@ def create_app(
         feed: PrivacyFeed = request.app.state.privacy
         body: dict[str, Any] = {
             "ok": True,
-            "quota": {**await service.status(), **await request.app.state.matches.status()},
+            "quota": {
+                **await service.status(),
+                **await request.app.state.matches.status(),
+                **await request.app.state.replays.status(),
+            },
             "privacy": await feed.status(),
         }
         return JSONResponse(body, headers={"Cache-Control": "no-store"})
 
     app.include_router(players_router)
+    app.include_router(replays_router)
     return app

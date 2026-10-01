@@ -403,6 +403,17 @@ export const ko = {
       perfect: "퍼펙트",
       level: (n: string) => `${n}레벨`,
       talentsAria: (hero: string) => `${hero} 특성`,
+      open: "경기 상세 보기",
+      close: "경기 상세 닫기",
+      winTeam: "승리 팀",
+      lossTeam: "패배 팀",
+      length: (t: string) => `경기 시간 ${t}`,
+      player: "플레이어",
+      party: "같은 파티",
+      award: "수상",
+      replayLoading: "경기 상세를 불러오는 중…",
+      replayQuota: "오늘 경기 상세 조회 한도를 모두 썼습니다.",
+      replayError: "경기 상세를 지금 불러올 수 없습니다.",
       // in-game score screen (GameStrings ScoreValue/Name, kokr, 2.57.0.98304)
       stat: {
         heroDamage: "영웅 피해",

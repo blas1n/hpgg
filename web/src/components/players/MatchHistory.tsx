@@ -1,29 +1,46 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { assetUrl, loadTalents, type HeroTable, type MapTable, type TalentTable } from "@/data";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { assetUrl, loadAwards, loadTalents, type AwardTable, type HeroTable, type MapTable, type TalentTable } from "@/data";
 import { useLocale, useT } from "@/i18n/client";
-import { briefing, matchRows, type Briefing, type MatchesResponse, type MatchView } from "@/lib/matches";
+import type { AwardView } from "@/lib/awards";
+import { briefing, matchRows, type Briefing, type MatchesResponse, type MatchTalent, type MatchView } from "@/lib/matches";
+import { fetchReplay, replayView, type ReplayResponse } from "@/lib/replays";
 import { Card, CardHeader, cx, Portrait } from "../ui";
 
 const PAGE = 20;
+const PARTY = ["bg-secondary", "bg-accent", "bg-primary", "bg-warn-fg"];
 const int = (n: number) => Math.round(n).toLocaleString("ko-KR");
 const kda = (n: number | null) => (n === null ? "–" : n.toFixed(2));
 const wrClass = (wr: number | null) => (wr === null ? "text-muted" : wr >= 50 ? "text-pos" : "text-neg");
 const pct = (n: number | null) => (n === null ? "–" : `${n.toFixed(0)}%`);
 
 /** 전적 검색 below the profile: the briefing over the newest games, the MMR line, and every loaded game. */
-export function MatchHistory({ data, heroes, maps }: { data: MatchesResponse; heroes: HeroTable; maps: MapTable }) {
+export function MatchHistory({ data, heroes, maps, me }: { data: MatchesResponse; heroes: HeroTable; maps: MapTable; me: string }) {
   const locale = useLocale();
   const t = useT().players.games;
   const [shown, setShown] = useState(PAGE);
   const [talents, setTalents] = useState<Record<string, TalentTable | null>>({});
+  const [opened, setOpened] = useState<string[]>([]); // heroes of opened games, for their talents
+  const [awards, setAwards] = useState<AwardTable | null>(null);
   const b = useMemo(() => briefing(data.matches, heroes, locale), [data, heroes, locale]);
-  const rows = useMemo(() => matchRows(data.matches, heroes, maps, talents, locale), [data, heroes, maps, talents, locale]);
+  const rows = useMemo(() => matchRows(data.matches, heroes, maps, talents, locale, new Date(), awards), [data, heroes, maps, talents, locale, awards]);
+
+  useEffect(() => {
+    let live = true;
+    loadAwards()
+      .then((a) => live && setAwards(a))
+      .catch(() => {}); // no badges, the rest of the page stands
+    return () => {
+      live = false;
+    };
+  }, []);
 
   // talent names and icons, one file per hero on screen, fetched once
   const visible = rows.slice(0, shown);
-  const wanted = [...new Set(visible.filter((m) => m.talents.length && m.slug).map((m) => m.slug!))].filter((s) => !(s in talents)).join(",");
+  const onScreen = [...visible.filter((m) => m.talents.length && m.slug).map((m) => m.slug!), ...opened];
+  const wanted = [...new Set(onScreen)].filter((s) => !(s in talents)).join(",");
+  const need = useCallback((slugs: string[]) => setOpened((prev) => [...new Set([...prev, ...slugs])]), []);
   useEffect(() => {
     if (!wanted) return;
     let live = true;
@@ -47,7 +64,7 @@ export function MatchHistory({ data, heroes, maps }: { data: MatchesResponse; he
         <CardHeader id="h-games" title={t.listTitle} sub={t.listSub(String(rows.length))} />
         <ul id="player-matches" className="divide-y divide-line">
           {visible.map((m) => (
-            <MatchItem key={m.key} m={m} />
+            <MatchItem key={m.key} m={m} me={me} heroes={heroes} awards={awards} talents={talents} need={need} />
           ))}
         </ul>
         {rows.length > shown && (
@@ -260,13 +277,30 @@ function MmrChart({ b }: { b: Briefing }) {
   );
 }
 
-function MatchItem({ m }: { m: MatchView }) {
+function MatchItem({
+  m,
+  me,
+  heroes,
+  awards,
+  talents,
+  need,
+}: {
+  m: MatchView;
+  me: string;
+  heroes: HeroTable;
+  awards: AwardTable | null;
+  talents: Record<string, TalentTable | null>;
+  need: (slugs: string[]) => void;
+}) {
   const t = useT().players;
   const g = t.games;
+  const [open, setOpen] = useState(false);
+  const panel = `game-${m.key}`;
   const tone = m.win === null ? "border-l-line" : m.win ? "border-l-pos" : "border-l-neg";
   return (
     <li
       data-result={m.win ? "win" : "loss"}
+      data-open={open || undefined}
       className={cx(
         "grid grid-cols-[4.5rem_minmax(0,1fr)] gap-x-3 gap-y-2 border-l-4 px-3 py-3 sm:grid-cols-[4.5rem_minmax(0,1fr)_auto]",
         tone,
@@ -324,29 +358,211 @@ function MatchItem({ m }: { m: MatchView }) {
         </dl>
       )}
 
-      {m.talents.length > 0 && (
-        <ol data-talents aria-label={g.talentsAria(m.hero)} className="col-span-2 flex gap-1 sm:col-start-2 sm:col-span-2">
-          {m.talents.map((tl) => (
-            <li key={tl.level} title={tl.name ? `${tl.level} · ${tl.name}` : String(tl.level)}>
-              {tl.icon ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={assetUrl(`img/talents/${tl.icon}`)}
-                  alt={tl.name ?? ""}
-                  width={26}
-                  height={26}
-                  loading="lazy"
-                  className="size-[26px] rounded border border-line bg-surface-3"
-                />
-              ) : (
-                <span className="num flex size-[26px] items-center justify-center rounded border border-line bg-surface-3 text-[10px] text-muted">
-                  {tl.level}
-                </span>
-              )}
-            </li>
-          ))}
-        </ol>
+      <div className="col-span-2 flex flex-wrap items-center gap-2 sm:col-span-2 sm:col-start-2">
+        {m.talents.length > 0 && <Talents list={m.talents} label={g.talentsAria(m.hero)} size={26} />}
+        {m.award && <AwardBadge a={m.award} />}
+        <button
+          type="button"
+          data-toggle
+          aria-expanded={open}
+          aria-controls={panel}
+          aria-label={open ? g.close : g.open}
+          title={open ? g.close : g.open}
+          onClick={() => setOpen((o) => !o)}
+          className="ml-auto flex size-8 items-center justify-center rounded-md border border-line text-fg-2 hover:border-primary hover:text-fg"
+        >
+          <span aria-hidden className={cx("inline-block transition-transform", open && "rotate-180")}>
+            ▾
+          </span>
+        </button>
+      </div>
+
+      {open && (
+        <div id={panel} className="col-span-full">
+          <ReplayPanel id={m.replayId} me={me} heroes={heroes} awards={awards} talents={talents} need={need} />
+        </div>
       )}
     </li>
+  );
+}
+
+function Talents({ list, label, size }: { list: MatchTalent[]; label: string; size: number }) {
+  return (
+    <ol data-talents aria-label={label} className="flex gap-1">
+      {list.map((tl) => (
+        <li key={tl.level} title={tl.name ? `${tl.level} · ${tl.name}` : String(tl.level)}>
+          {tl.icon ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={assetUrl(`img/talents/${tl.icon}`)}
+              alt={tl.name ?? ""}
+              width={size}
+              height={size}
+              loading="lazy"
+              className="rounded border border-line bg-surface-3"
+              style={{ width: size, height: size }}
+            />
+          ) : (
+            <span
+              className="num flex items-center justify-center rounded border border-line bg-surface-3 text-[10px] text-muted"
+              style={{ width: size, height: size }}
+            >
+              {tl.level}
+            </span>
+          )}
+        </li>
+      ))}
+    </ol>
+  );
+}
+
+/** An end-of-match award with the game's icon; MVP stands out in gold as in the game. */
+function AwardBadge({ a, compact }: { a: AwardView; compact?: boolean }) {
+  const g = useT().players.games;
+  return (
+    <span
+      data-award={a.key}
+      title={`${g.award}: ${a.name}`}
+      className={cx(
+        "inline-flex items-center gap-1 rounded-full border py-0.5 pr-2 pl-0.5 text-2xs font-semibold",
+        a.mvp ? "border-warn-line bg-warn-bg text-warn-fg" : "border-line bg-surface-2 text-fg-2",
+        compact && "pr-0.5",
+      )}
+    >
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={assetUrl(`img/awards/${a.icon}`)} alt="" width={20} height={20} loading="lazy" className="size-5" />
+      {compact ? <span className="sr-only">{a.name}</span> : a.name}
+    </span>
+  );
+}
+
+type ReplayState = { kind: "loading" } | Awaited<ReturnType<typeof fetchReplay>>;
+
+/** Both teams of one game (GET /v1/replays/<id>), fetched when the card is opened. */
+function ReplayPanel({
+  id,
+  me,
+  heroes,
+  awards,
+  talents,
+  need,
+}: {
+  id: number;
+  me: string;
+  heroes: HeroTable;
+  awards: AwardTable | null;
+  talents: Record<string, TalentTable | null>;
+  need: (slugs: string[]) => void;
+}) {
+  const locale = useLocale();
+  const g = useT().players.games;
+  const [state, setState] = useState<ReplayState>({ kind: "loading" });
+  useEffect(() => {
+    let live = true;
+    void fetchReplay(id).then((r) => live && setState(r));
+    return () => {
+      live = false;
+    };
+  }, [id]);
+  const data: ReplayResponse | null = state.kind === "ok" ? state.data : null;
+  const v = useMemo(() => (data ? replayView(data.replay, heroes, awards, talents, locale, me) : null), [data, heroes, awards, talents, locale, me]);
+  const slugs = v
+    ? v.teams
+        .flatMap((t) => t.players.map((p) => p.slug ?? ""))
+        .filter(Boolean)
+        .join(",")
+    : "";
+  useEffect(() => {
+    if (slugs) need(slugs.split(","));
+  }, [slugs, need]);
+
+  if (state.kind === "loading") return <p className="py-2 text-2xs text-muted">{g.replayLoading}</p>;
+  if (!v) return <p className="py-2 text-2xs text-warn-fg">{state.kind === "quota" ? g.replayQuota : g.replayError}</p>;
+  return (
+    <div data-replay className="space-y-3 rounded-lg border border-line bg-surface p-2">
+      <p className="num px-1 text-2xs text-muted">{g.length(v.length)}</p>
+      {v.teams.map((team, i) => (
+        <table key={i} data-team={team.win ? "win" : "loss"} className="num w-full text-2xs">
+          <caption className={cx("px-1 pb-1 text-left text-xs font-bold", team.win ? "text-pos" : "text-neg")}>{team.win ? g.winTeam : g.lossTeam}</caption>
+          <thead className="text-muted">
+            <tr className="border-b border-line">
+              <th scope="col" className="px-1 py-1 text-left font-semibold">
+                {g.player}
+              </th>
+              <th scope="col" className="px-1 py-1 text-right font-semibold">
+                {g.kda}
+              </th>
+              <th scope="col" className="px-1 py-1 text-right font-semibold">
+                {g.stat.heroDamage}
+              </th>
+              <th scope="col" className="hidden px-1 py-1 text-right font-semibold sm:table-cell">
+                {g.stat.siegeDamage}
+              </th>
+              <th scope="col" className="hidden px-1 py-1 text-right font-semibold md:table-cell">
+                {g.stat.healing}
+              </th>
+              <th scope="col" className="hidden px-1 py-1 text-right font-semibold md:table-cell">
+                {g.stat.damageTaken}
+              </th>
+              <th scope="col" className="hidden px-1 py-1 text-right font-semibold sm:table-cell">
+                {g.stat.experience}
+              </th>
+              <th scope="col" className="hidden px-1 py-1 text-left font-semibold xl:table-cell">
+                <span className="sr-only">{g.talentsAria("")}</span>
+              </th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-line">
+            {team.players.map((p) => (
+              <tr key={p.key} data-me={p.me || undefined} className={cx(p.me && "bg-primary/10")}>
+                <th scope="row" className="px-1 py-1.5 text-left font-normal">
+                  <span className="flex min-w-0 items-center gap-2">
+                    <span className="relative shrink-0">
+                      <Portrait src={p.portrait} size={28} role={p.role} />
+                      {p.party !== null && (
+                        <span
+                          title={g.party}
+                          data-party={p.party}
+                          className={cx("absolute -top-1 -left-1 size-2.5 rounded-full border border-surface", PARTY[p.party % PARTY.length])}
+                        />
+                      )}
+                    </span>
+                    <span className="min-w-0">
+                      {p.href ? (
+                        <a href={p.href} className={cx("block truncate font-semibold hover:underline", p.me ? "text-primary" : "text-fg")}>
+                          {p.name}
+                          <span className="text-muted">{p.tag}</span>
+                        </a>
+                      ) : (
+                        <span className="block truncate font-semibold text-fg">{p.name}</span>
+                      )}
+                      <span className="block truncate text-muted">{p.hero}</span>
+                    </span>
+                    {p.award && <AwardBadge a={p.award} compact />}
+                  </span>
+                </th>
+                <td className="px-1 py-1.5 text-right whitespace-nowrap text-fg">
+                  {p.kda ? (
+                    <>
+                      {p.kda.kills}/<span className="text-neg">{p.kda.deaths}</span>/{p.kda.assists}
+                    </>
+                  ) : (
+                    "–"
+                  )}
+                </td>
+                <td className="px-1 py-1.5 text-right text-fg">{p.heroDamage === null ? "–" : int(p.heroDamage)}</td>
+                <td className="hidden px-1 py-1.5 text-right text-fg-2 sm:table-cell">{p.siegeDamage === null ? "–" : int(p.siegeDamage)}</td>
+                <td className="hidden px-1 py-1.5 text-right text-fg-2 md:table-cell">{p.healing ? int(p.healing) : "–"}</td>
+                <td className="hidden px-1 py-1.5 text-right text-fg-2 md:table-cell">{p.damageTaken === null ? "–" : int(p.damageTaken)}</td>
+                <td className="hidden px-1 py-1.5 text-right text-fg-2 sm:table-cell">{p.experience === null ? "–" : int(p.experience)}</td>
+                <td className="hidden px-1 py-1.5 xl:table-cell">
+                  <Talents list={p.talents} label={g.talentsAria(p.hero)} size={20} />
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      ))}
+    </div>
   );
 }
