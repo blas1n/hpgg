@@ -25,8 +25,9 @@ jobs:
     # cron / manual only — a push just rebuilds and deploys what is already in data/
     if: github.event_name != 'push'
     runs-on: ubuntu-latest
-    # stats ~7 min + matchups (≤ 25 min budget, + at most one in-flight job poll of ≤ 15 min)
-    timeout-minutes: 60
+    # stats ~25 min (24 calls at 1 a minute) + builds + matchups (≤ 25 min budget, + at most one
+    # in-flight job poll of ≤ 15 min)
+    timeout-minutes: 90
     outputs:
       day: ${{ steps.run.outputs.day }}
     steps:
@@ -38,7 +39,7 @@ jobs:
           ssh-key: ${{ secrets.DATA_DEPLOY_KEY }}
       - uses: astral-sh/setup-uv@v5
       - run: uv sync --frozen --no-dev
-      - name: Collect (4 stats + 2 region (KR→NA→EU) + 1 builds call, ~7 min at 1 req/min; then Storm League matchups for heroes due, every other day)
+      - name: Collect (QM, SL, 브실골플, 다마그 × KR/NA/EU + solo twins = 24 stats calls, ~25 min at 1 req/min; 1 builds call; then Storm League matchups for heroes due, every other day)
         id: run
         env:
           HP_API_TOKEN: ${{ secrets.HP_API_TOKEN }}

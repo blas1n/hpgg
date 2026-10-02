@@ -10,7 +10,7 @@ import respx
 from structlog.testing import capture_logs
 
 from collector.config import Settings
-from collector.run import run, run_backfill_previous_regions
+from collector.run import run
 from tests.conftest import BASE, TOKEN
 
 # fixtures/v1_patches_sample.json: patch 2.55.17 is two queryable builds (98025 is not yet
@@ -72,42 +72,26 @@ async def test_run_writes_five_files_meta_and_raw_gz(
     code = await run(s, sleep=fake_sleep, now=lambda: "2026-09-28T01:02:03Z")
     assert code == 0
     latest = s.data_dir / "latest"
-    assert sorted(p.name for p in latest.iterdir()) == [
-        "builds.json",
-        "meta.json",
-        "qm.json",
-        "qm_na.json",  # 2026-09-28 is an NA day in the region rotation
-        "sl.json",
-        "sl_high.json",
-        "sl_low.json",
-        "sl_na.json",
+    views = [
+        f"{m}{r}" for m in ("qm", "sl", "sl_low", "sl_high") for r in ("", "_kr", "_na", "_eu")
     ]
+    assert sorted(p.name for p in latest.iterdir()) == sorted(
+        ["builds.json", "meta.json", *(f"{v}.json" for v in views)]
+    )
     meta = json.loads((latest / "meta.json").read_text())
     assert meta["current_patch"] == "2.55.17" and meta["collected_at"] == "2026-09-28T01:02:03Z"
-    assert set(meta["modes"]) == {"qm", "sl", "sl_low", "sl_high", "qm_na", "sl_na"}
+    assert set(meta["modes"]) == set(views)
     # raw responses kept gzipped for the snapshots branch
     day = s.snapshot_out_dir / "2026-09-28"
-    assert sorted(p.name for p in day.iterdir()) == [
-        "builds.json.gz",
-        "meta.json",
-        "qm.json.gz",
-        "qm_na.json.gz",
-        "raw_builds.json.gz",
-        "raw_qm.json.gz",
-        "raw_qm_na.json.gz",
-        "raw_qm_solo.json.gz",
-        "raw_sl.json.gz",
-        "raw_sl_high.json.gz",
-        "raw_sl_low.json.gz",
-        "raw_sl_na.json.gz",
-        "raw_sl_solo.json.gz",
-        "sl.json.gz",
-        "sl_high.json.gz",
-        "sl_low.json.gz",
-        "sl_na.json.gz",
-    ]
-    # 60 s spacing between the eight group_by_map calls → 7 waits, + 1 before builds/all
-    assert fake_sleep.calls == [60.0] * 8
+    cells = [v for v in views if v.count("_") and v.rsplit("_", 1)[1] in {"kr", "na", "eu"}]
+    assert sorted(p.name for p in day.iterdir()) == sorted(
+        ["builds.json.gz", "meta.json", "raw_builds.json.gz"]
+        + [f"{v}.json.gz" for v in views]
+        + [f"raw_{c}.json.gz" for c in cells]
+        + [f"raw_{c}_solo.json.gz" for c in cells]
+    )
+    # 60 s spacing between the 24 group_by_map calls → 23 waits, + 1 before builds/all
+    assert fake_sleep.calls == [60.0] * 24
 
 
 @respx.mock
@@ -121,37 +105,14 @@ async def test_run_passes_league_tier_and_game_type_per_spec(
         for c in respx.calls
         if c.request.url.path.endswith("/heroes/stats")
     ]
+    cells = [
+        (g, lt, r)
+        for r in ("KR", "NA", "EU")
+        for g, lt in (("qm", None), ("sl", None), ("sl", "1,2,3,4"), ("sl", "5,6"))
+    ]
     assert [
         (c["game_type"], c.get("league_tier"), c.get("region"), c.get("groupsize")) for c in calls
-    ] == [
-        ("qm", None, None, None),
-        ("sl", None, None, None),
-        ("sl", "1,2,3,4", None, None),
-        ("sl", "5,6", None, None),
-        ("qm", None, None, "Solo"),
-        ("sl", None, None, "Solo"),
-        ("qm", None, "NA", None),
-        ("sl", None, "NA", None),
-    ]
-
-
-@respx.mock
-async def test_run_puts_the_party_correction_on_qm_and_sl_only(
-    tmp_path: Path, raw_by_map, patches_payload, fake_sleep
-) -> None:
-    mock_api(raw_by_map, patches_payload)
-    s = settings(tmp_path)
-    assert await run(s, sleep=fake_sleep, now=lambda: "2026-09-28T00:00:00Z") == 0
-    latest = s.data_dir / "latest"
-    for key in ("qm", "sl"):
-        snap = json.loads((latest / f"{key}.json").read_text())
-        assert snap["party"]["k"] == 1000
-        all_rows = [r for r in snap["rows"] if r["map"] == "all"]
-        assert all_rows and all("tier_win_rate" in r for r in all_rows)
-    for key in ("sl_low", "sl_high", "qm_na", "sl_na"):
-        snap = json.loads((latest / f"{key}.json").read_text())
-        assert "party" not in snap
-        assert all("tier_win_rate" not in r for r in snap["rows"])
+    ] == [(*x, None) for x in cells] + [(*x, "Solo") for x in cells]
 
 
 @respx.mock
@@ -327,21 +288,19 @@ async def test_backfill_previous_writes_previous_and_meta_without_touching_lates
     )
     assert code == 0
     prev = s.data_dir / "previous"
-    assert sorted(p.name for p in prev.iterdir()) == [
-        "qm.json",
-        "sl.json",
-        "sl_high.json",
-        "sl_low.json",
+    views = [
+        f"{m}{r}" for m in ("qm", "sl", "sl_low", "sl_high") for r in ("", "_kr", "_na", "_eu")
     ]
+    assert sorted(p.name for p in prev.iterdir()) == sorted(f"{v}.json" for v in views)
     assert json.loads((prev / "qm.json").read_text())["patch"] == "2.55.9"
     # previous ranks are compared with today's, so the backfill carries the same correction
     assert json.loads((prev / "qm.json").read_text())["party"]["k"] == 1000
-    assert "party" not in json.loads((prev / "sl_low.json").read_text())
+    assert json.loads((prev / "sl_low_kr.json").read_text())["party"]["k"] == 1000  # every view
     day = s.snapshot_out_dir / "2026-09-28"
-    assert (day / "backfill_2.55.9_raw_qm_solo.json.gz").exists()
+    assert (day / "backfill_2.55.9_raw_qm_kr_solo.json.gz").exists()
     meta = json.loads((s.data_dir / "latest" / "meta.json").read_text())
     assert meta["previous_patch"] == "2.55.9" and meta["current_patch"] == "2.55.17"
-    assert sorted(meta["previous_modes"]) == ["qm", "sl", "sl_high", "sl_low"]
+    assert sorted(meta["previous_modes"]) == sorted(views)
     after = {
         p.name: p.read_bytes() for p in (s.data_dir / "latest").iterdir() if p.name != "meta.json"
     }
@@ -417,7 +376,7 @@ async def test_run_collects_popular_builds_after_stats(
         "title": "Unending Hatred",
     }
     assert b["heroes"]["Nova"] == []
-    assert fake_sleep.calls == [60.0] * 8  # 7 between 4 stats + 2 solo + 2 region, 1 before builds
+    assert fake_sleep.calls == [60.0] * 24  # 23 between the 24 stats calls, 1 before builds
     assert (s.snapshot_out_dir / "2026-09-28" / "raw_builds.json.gz").exists()
 
 
@@ -446,75 +405,6 @@ async def test_builds_are_collected_for_the_reference_patch(
     assert q["timeframe"] == OLD_TF
     b = json.loads((s.data_dir / "latest" / "builds.json").read_text())
     assert b["patch"] == "2.55.9"
-
-
-@respx.mock
-async def test_regions_are_collected_for_the_reference_patch_where_the_pages_read_it(
-    tmp_path: Path, raw_by_map, patches_payload, fake_sleep
-) -> None:
-    """A thin new patch: the pages show the previous patch, so the region of the day is
-    collected on it and lands in previous/ (latest/ holds the new patch's files)."""
-    mock_api(thin(raw_by_map), patches_payload)
-    s = settings(tmp_path)
-    s.data_dir.joinpath("latest").mkdir(parents=True)
-    healthy = {"matches": 9000, "heroes": 90, "heroes_over_200": 90}
-    old = {
-        "current_patch": "2.55.9",
-        "previous_patch": None,
-        "modes": {"qm": healthy, "sl": healthy},
-    }
-    s.data_dir.joinpath("latest", "meta.json").write_text(json.dumps(old))
-    assert await run(s, sleep=fake_sleep, now=lambda: "2026-09-28T00:00:00Z") == 0
-    calls = [
-        dict(httpx.QueryParams(c.request.url.query))
-        for c in respx.calls
-        if c.request.url.path.endswith("/heroes/stats") and "region" in str(c.request.url)
-    ]
-    assert [(c["game_type"], c["timeframe"]) for c in calls] == [
-        ("qm", OLD_TF),
-        ("sl", OLD_TF),
-    ]
-    prev = json.loads((s.data_dir / "previous" / "qm_na.json").read_text())
-    assert (prev["patch"], prev["region"]) == ("2.55.9", "NA")
-    assert not (s.data_dir / "latest" / "qm_na.json").exists()
-    assert (s.snapshot_out_dir / "2026-09-28" / "raw_qm_na.json.gz").exists()
-    # meta says the region exists on the reference patch (the tier page's region menu reads it)
-    meta = json.loads((s.data_dir / "latest" / "meta.json").read_text())
-    assert meta["previous_modes"]["qm_na"]["collected_at"] == "2026-09-28T00:00:00Z"
-    assert "qm_na" not in meta["modes"]
-
-
-@respx.mock
-async def test_a_region_already_final_on_the_previous_patch_is_not_fetched_again(
-    tmp_path: Path, raw_by_map, patches_payload, fake_sleep
-) -> None:
-    """A finished patch does not change: once today's region is in previous/, the day's two
-    calls build the new patch's region, ready for when the new patch becomes the reference."""
-    mock_api(thin(raw_by_map), patches_payload)
-    s = settings(tmp_path)
-    s.data_dir.joinpath("latest").mkdir(parents=True)
-    healthy = {"matches": 9000, "heroes": 90, "heroes_over_200": 90}
-    old = {
-        "current_patch": "2.55.9",
-        "previous_patch": None,
-        "modes": {"qm": healthy, "sl": healthy},
-    }
-    s.data_dir.joinpath("latest", "meta.json").write_text(json.dumps(old))
-    # the first run fills previous/ (the region on the reference patch)
-    assert await run(s, sleep=fake_sleep, now=lambda: "2026-09-28T00:00:00Z") == 0
-    kept = (s.data_dir / "previous" / "qm_na.json").read_text()
-    first = len(respx.calls)
-    # three days later NA comes round again: previous/ has it, so the new patch is collected
-    assert await run(s, sleep=fake_sleep, now=lambda: "2026-10-01T00:00:00Z") == 0
-    calls = [
-        dict(httpx.QueryParams(c.request.url.query))
-        for c in list(respx.calls)[first:]
-        if c.request.url.path.endswith("/heroes/stats") and "region" in str(c.request.url)
-    ]
-    assert [c["timeframe"] for c in calls] == [CUR_TF, CUR_TF]
-    assert (s.data_dir / "previous" / "qm_na.json").read_text() == kept
-    latest = json.loads((s.data_dir / "latest" / "qm_na.json").read_text())
-    assert latest["patch"] == "2.55.17"
 
 
 @respx.mock
@@ -641,7 +531,7 @@ async def test_run_collects_matchups_for_every_due_hero_after_the_stats(
     assert (m["patch"], m["collected_at"]) == ("2.55.17", "2026-09-28T00:00:00Z")
     assert (s.snapshot_out_dir / "2026-09-28" / "matchups.json.gz").exists()
     # 5 between 6 stats calls + 1 before builds, then one gap between the two matchups calls
-    assert fake_sleep.calls == [60.0] * 8 + [s.matchups_call_spacing_seconds]
+    assert fake_sleep.calls == [60.0] * 24 + [s.matchups_call_spacing_seconds]
     # next day: nothing is due (every other day) → no calls, files untouched
     respx.reset()
     mock_api(raw_by_map, patches_payload)
@@ -762,54 +652,12 @@ async def test_patch_notes_follow_blizzards_redirect_to_the_slugged_article(
 
 
 @respx.mock
-async def test_backfill_previous_regions_fetches_each_missing_region_once(
-    tmp_path: Path, raw_by_map, patches_payload, fake_sleep
-) -> None:
-    """A finished patch's regions in one go (owner 2026-09-30): 3 regions × QM/SL into
-    previous/, a region already there is skipped, and the current patch is refused."""
-    mock_api(raw_by_map, patches_payload)
-    s = settings(tmp_path)
-    s.data_dir.joinpath("latest").mkdir(parents=True)
-    meta = {"current_patch": "2.55.17", "previous_patch": "2.55.9"}
-    s.data_dir.joinpath("latest", "meta.json").write_text(json.dumps(meta))
-    s.data_dir.joinpath("previous").mkdir()
-    had = {"patch": "2.55.9", "region": "KR", "matches": 1, "rows": []}
-    for m in ("qm", "sl"):
-        s.data_dir.joinpath("previous", f"{m}_kr.json").write_text(json.dumps(had))
-    assert await run_backfill_previous_regions(s, sleep=fake_sleep, now=lambda: "t") == 0
-    calls = [
-        dict(httpx.QueryParams(c.request.url.query))
-        for c in respx.calls
-        if c.request.url.path.endswith("/heroes/stats")
-    ]
-    assert [(c["game_type"], c["region"], c["timeframe"]) for c in calls] == [
-        ("qm", "NA", OLD_TF),
-        ("sl", "NA", OLD_TF),
-        ("qm", "EU", OLD_TF),
-        ("sl", "EU", OLD_TF),
-    ]
-    for key in ("qm_na", "sl_na", "qm_eu", "sl_eu"):
-        snap = json.loads((s.data_dir / "previous" / f"{key}.json").read_text())
-        assert snap["patch"] == "2.55.9" and snap["region"] == key[-2:].upper()
-    assert json.loads((s.data_dir / "previous" / "qm_kr.json").read_text()) == had
-    # the pages read which regions exist on the reference patch from meta, not from the files
-    got = json.loads((s.data_dir / "latest" / "meta.json").read_text())["previous_modes"]
-    assert set(got) == {"qm_kr", "sl_kr", "qm_na", "sl_na", "qm_eu", "sl_eu"}
-    assert got["qm_na"]["collected_at"] == "t" and got["qm_na"]["heroes"] > 0
-    n = len(respx.calls)
-    assert await run_backfill_previous_regions(s, sleep=fake_sleep, now=lambda: "t") == 0
-    assert len(respx.calls) == n  # nothing left to fetch
-    s.data_dir.joinpath("latest", "meta.json").write_text(json.dumps({"current_patch": "x"}))
-    assert await run_backfill_previous_regions(s, sleep=fake_sleep, now=lambda: "t") == 2
-
-
-@respx.mock
 async def test_only_collects_the_views_it_names(
     tmp_path: Path, raw_by_map, patches_payload, fake_sleep
 ) -> None:
-    """Recovery with what is left of the week (2026-10-02: 4 Heroes/Stats calls): QM and SL
-    with their party correction, no brackets, no region. The pages show those views on the
-    patch and say "no data" for the others."""
+    """Recovery with what is left of the week: QM and SL in every region with their party
+    correction (12 Heroes/Stats calls), no brackets. The pages show those views on the patch
+    and say "no data" for the others."""
     mock_api(raw_by_map, patches_payload)
     s = settings(tmp_path)
     assert (
@@ -823,13 +671,12 @@ async def test_only_collects_the_views_it_names(
     assert [
         (c["game_type"], c.get("league_tier"), c.get("region"), c.get("groupsize")) for c in calls
     ] == [
-        ("qm", None, None, None),
-        ("sl", None, None, None),
-        ("qm", None, None, "Solo"),
-        ("sl", None, None, "Solo"),
+        (g, None, r, gs) for gs in (None, "Solo") for r in ("KR", "NA", "EU") for g in ("qm", "sl")
     ]
     meta = json.loads((s.data_dir / "latest" / "meta.json").read_text())
-    assert set(meta["modes"]) == {"qm", "sl"}
+    assert set(meta["modes"]) == {
+        f"{m}{r}" for m in ("qm", "sl") for r in ("", "_kr", "_na", "_eu")
+    }
     assert "party" in json.loads((s.data_dir / "latest" / "qm.json").read_text())
 
 

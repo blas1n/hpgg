@@ -7,7 +7,7 @@ import gzip
 import json
 import shutil
 from collections.abc import Callable
-from datetime import UTC, date, datetime
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -21,12 +21,11 @@ from collector.models import JobSpec
 from collector.party import apply_party_correction
 from collector.patchnotes import collect_patchnotes
 from collector.snapshot import (
+    CELL_SOLO_SPECS,
+    CELL_SPECS,
     REFERENCE_MODES,
-    REGION_KEYS,
-    REGIONS,
-    SOLO_OF,
-    SOLO_SPECS,
     SPECS,
+    VIEWS,
     build_meta,
     choose_patch,
     commit_atomic,
@@ -36,9 +35,8 @@ from collector.snapshot import (
     normalize_by_map,
     patch_line,
     refresh_previous_modes,
-    region_for_day,
-    region_specs,
     snapshot_to_json,
+    sum_regions,
     timeframe_of,
 )
 
@@ -156,7 +154,7 @@ async def _collect_all(
     return raw_by_key, snapshots
 
 
-async def _collect_region(
+async def _collect_cube(
     c: HPClient,
     settings: Settings,
     *,
@@ -164,81 +162,59 @@ async def _collect_region(
     timeframe: str,
     collected_at: str,
     sleep: SleepFn,
+    views: tuple[str, ...] = VIEWS,
 ) -> tuple[dict[str, Any], dict[str, dict[str, Any]]]:
-    """Today's region (QM + SL). A failure here never fails the run: that region keeps its
-    previous files (carried by `_carried_regions`) and comes round again in three days."""
-    region = region_for_day(date.fromisoformat(collected_at[:10]))
+    """Every view in every region (CELL_SPECS), then each one's solo twin; every view gets the
+    party correction, and the whole of each view is the sum of its regions (corrected with the
+    summed solo games) → (raw by key, snapshots by key). Any failure raises: a whole without
+    one region, or a view without its correction, would be a different number under the same
+    name (owner 2026-10-01 / 10-02), so the caller keeps yesterday's files."""
+    cells = tuple(spec for spec in CELL_SPECS if _view_of(spec.key) in views)
+    solos = tuple(spec for spec in CELL_SOLO_SPECS if _view_of(spec.key[: -len("_solo")]) in views)
+    raw, parts = await _collect_all(
+        c,
+        settings,
+        patch=patch,
+        timeframe=timeframe,
+        collected_at=collected_at,
+        sleep=sleep,
+        specs=cells,
+    )
     try:
-        return await _collect_all(
+        solo_raw, solo = await _collect_all(
             c,
             settings,
             patch=patch,
             timeframe=timeframe,
             collected_at=collected_at,
             sleep=sleep,
-            specs=region_specs(region),
+            specs=solos,
             after_a_call=True,
         )
-    except HPError as e:
-        log.warning("run.region_skipped", region=region, status=e.status, code=e.code)
-    except ValueError as e:
-        log.warning("run.region_skipped", region=region, error=str(e))
-    return {}, {}
-
-
-async def _collect_party(
-    c: HPClient,
-    settings: Settings,
-    *,
-    patch: str,
-    timeframe: str,
-    collected_at: str,
-    sleep: SleepFn,
-    snapshots: dict[str, dict[str, Any]],
-) -> dict[str, Any]:
-    """Solo-only QM + SL, folded into `snapshots` as the party correction (#36) → raw by key.
-    A failure fails the run (owner 2026-10-01): tiers without the correction would be a
-    different ranking under the same name, so yesterday's corrected files stay instead."""
-    try:
-        raw, solo = await _collect_all(
-            c,
-            settings,
-            patch=patch,
-            timeframe=timeframe,
-            collected_at=collected_at,
-            sleep=sleep,
-            specs=SOLO_SPECS,
-            after_a_call=True,
-        )
-        corrected = {
-            SOLO_OF[key]: apply_party_correction(snapshots[SOLO_OF[key]], snap)
-            for key, snap in solo.items()
+        out: dict[str, dict[str, Any]] = {
+            key: apply_party_correction(snap, solo[f"{key}_solo"]) for key, snap in parts.items()
         }
+        for view in views:
+            keys = [spec.key for spec in cells if _view_of(spec.key) == view]
+            whole = sum_regions([parts[k] for k in keys], key=view, collected_at=collected_at)
+            whole_solo = sum_regions(
+                [solo[f"{k}_solo"] for k in keys], key=f"{view}_solo", collected_at=collected_at
+            )
+            out[view] = apply_party_correction(whole, whole_solo)
     except HPError as e:
         log.error("run.party_failed", status=e.status, code=e.code)
         raise
     except ValueError as e:
         log.error("run.party_failed", error=str(e))
         raise
-    snapshots.update(corrected)
-    for view, snap in corrected.items():
-        log.info("run.party", view=view, **snap["party"])
-    return raw
+    for view in views:
+        log.info("run.party", view=view, **out[view]["party"])
+    return {**raw, **solo_raw}, out
 
 
-def _region_patch(data_dir: Path, *, reference: str, current: str, day: str) -> str:
-    """The patch today's region is collected on (#14). The pages show the reference patch, so it
-    comes first; while that is the previous patch (final, it never changes) a region already in
-    data/previous/ is not fetched again and the day's calls build the current patch's region, so
-    it is there when the current patch becomes the reference."""
-    if reference == current:
-        return current
-    region = region_for_day(date.fromisoformat(day[:10]))
-    have = all(
-        (_load_json(data_dir / "previous" / f"{m}_{region}.json") or {}).get("patch") == reference
-        for m in ("qm", "sl")
-    )
-    return current if have else reference
+def _view_of(cell_key: str) -> str:
+    """`sl_low_kr` → `sl_low`."""
+    return cell_key.rsplit("_", 1)[0]
 
 
 async def _timeframe(c: HPClient, patch: str) -> str:
@@ -250,21 +226,6 @@ def _write_atomic(path: Path, obj: Any) -> None:
     tmp = path.with_suffix(".json.tmp")
     tmp.write_text(json.dumps(obj, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
     tmp.replace(path)
-
-
-def _carried_regions(
-    data_dir: Path, *, patch: str, fresh: dict[str, dict[str, Any]]
-) -> dict[str, dict[str, Any]]:
-    """The other regions' files from data/latest, while they are for the same patch. On a patch
-    change they are not carried: commit_atomic moves them into previous/ with the rest."""
-    carried: dict[str, dict[str, Any]] = {}
-    for key in REGION_KEYS:
-        if key in fresh:
-            continue
-        old = _load_json(data_dir / "latest" / f"{key}.json")
-        if isinstance(old, dict) and old.get("patch") == patch:
-            carried[key] = old
-    return carried
 
 
 def _warn_heroes_without_assets(
@@ -293,62 +254,6 @@ def _client(settings: Settings, sleep: SleepFn) -> HPClient:
     )
 
 
-async def run_backfill_previous_regions(
-    settings: Settings,
-    *,
-    sleep: SleepFn = asyncio.sleep,
-    now: Callable[[], str] = utc_now_iso,
-    client: HPClient | None = None,
-) -> int:
-    """One-off: every region (QM + SL) of the previous patch still missing in data/previous/.
-    A finished patch never changes, so each is fetched once (owner 2026-09-30: 6 calls rather
-    than three days of the daily rotation). Exit 2 = refused (no previous patch)."""
-    meta = load_meta(settings.data_dir)
-    patch = (meta or {}).get("previous_patch")
-    if not patch:
-        log.error("backfill_regions.refused", reason="no previous patch in data/latest/meta.json")
-        return 2
-    previous = settings.data_dir / "previous"
-    specs = tuple(
-        spec
-        for region, _ in REGIONS
-        for spec in region_specs(region)
-        if (_load_json(previous / f"{spec.key}.json") or {}).get("patch") != patch
-    )
-    if not specs:
-        log.info("backfill_regions.nothing_to_do", patch=patch)
-        return 0
-    collected_at = now()
-    own = client is None
-    c = client or _client(settings, sleep)
-    try:
-        timeframe = await _timeframe(c, patch)
-        _, snapshots = await _collect_all(
-            c,
-            settings,
-            patch=patch,
-            timeframe=timeframe,
-            collected_at=collected_at,
-            sleep=sleep,
-            specs=specs,
-        )
-    except HPError as e:
-        log.error("run.api_failed", status=e.status, code=e.code, message=e.message)
-        return 1
-    except ValueError as e:
-        log.error("run.bad_payload", error=str(e))
-        return 1
-    finally:
-        if own:
-            await c.__aexit__(None, None, None)
-    previous.mkdir(parents=True, exist_ok=True)
-    for key, snap in snapshots.items():
-        _write_atomic(previous / f"{key}.json", snap)
-    refresh_previous_modes(settings.data_dir)
-    log.info("backfill_regions.done", patch=patch, views=sorted(snapshots))
-    return 0
-
-
 async def run_backfill_previous(
     settings: Settings,
     *,
@@ -375,17 +280,8 @@ async def run_backfill_previous(
     c = client or _client(settings, sleep)
     try:
         timeframe = await _timeframe(c, patch)
-        raw_by_key, snapshots = await _collect_all(
+        raw_by_key, snapshots = await _collect_cube(
             c, settings, patch=patch, timeframe=timeframe, collected_at=collected_at, sleep=sleep
-        )
-        party_raw = await _collect_party(
-            c,
-            settings,
-            patch=patch,
-            timeframe=timeframe,
-            collected_at=collected_at,
-            sleep=sleep,
-            snapshots=snapshots,
         )
     except HPError as e:
         log.error("run.api_failed", status=e.status, code=e.code, message=e.message)
@@ -406,11 +302,6 @@ async def run_backfill_previous(
             json.dumps(snap, ensure_ascii=False, separators=(",", ":")), encoding="utf-8"
         )
     previous = settings.data_dir / "previous"
-    # region files are not backfilled (4 calls stay 4); keep the ones that are for this build
-    for key in REGION_KEYS:
-        kept = _load_json(previous / f"{key}.json")
-        if isinstance(kept, dict) and kept.get("patch") == patch:
-            shutil.copy2(previous / f"{key}.json", stage / f"{key}.json")
     old = settings.tmp_dir / "old_previous"
     if old.exists():
         shutil.rmtree(old)
@@ -427,9 +318,8 @@ async def run_backfill_previous(
     day_dir = settings.snapshot_out_dir / collected_at[:10]
     for key, raw in raw_by_key.items():
         _write_gz(day_dir / f"backfill_{patch}_raw_{key}.json.gz", raw)
-        _write_gz(day_dir / f"backfill_{patch}_{key}.json.gz", snapshots[key])
-    for key, raw in party_raw.items():
-        _write_gz(day_dir / f"backfill_{patch}_raw_{key}.json.gz", raw)
+        if key in snapshots:
+            _write_gz(day_dir / f"backfill_{patch}_{key}.json.gz", snapshots[key])
     log.info("backfill.done", patch=patch, modes=sorted(snapshots))
     return 0
 
@@ -443,21 +333,19 @@ async def run(
     only: tuple[str, ...] | None = None,
 ) -> int:
     """Returns a process exit code. Never raises for API failures; never logs the token.
-    `only`: the global views to collect (keys of SPECS, QM and SL among them — they decide the
-    patch), no region; for a recovery run on what is left of the week's quota."""
-    specs = SPECS
+    `only`: the views to collect (keys of SPECS, QM and SL among them — they decide the patch),
+    each in every region; for a recovery run on what is left of the week's quota."""
+    views = VIEWS
     if only is not None:
-        if not set(REFERENCE_MODES) <= set(only) <= {spec.key for spec in SPECS}:
+        if not set(REFERENCE_MODES) <= set(only) <= set(views):
             log.error("run.refused", reason="--only takes qm and sl, and sl_low / sl_high")
             return 2
-        specs = tuple(spec for spec in SPECS if spec.key in only)
+        views = tuple(v for v in views if v in only)
     collected_at = now()
     own_client = client is None
     c = client or _client(settings, sleep)
     try:
-        code = await _run_stats(
-            c, settings, collected_at=collected_at, sleep=sleep, specs=specs, regions=only is None
-        )
+        code = await _run_stats(c, settings, collected_at=collected_at, sleep=sleep, views=views)
         if code == 0:
             await _run_matchups(c, settings, collected_at=collected_at, sleep=sleep)
         # Blizzard's notes do not depend on HP: collected even when the stats failed
@@ -537,8 +425,7 @@ async def _run_stats(
     *,
     collected_at: str,
     sleep: SleepFn,
-    specs: tuple[JobSpec, ...] = SPECS,
-    regions: bool = True,
+    views: tuple[str, ...] = VIEWS,
 ) -> int:
     try:
         patches = await c.get_json("/patches")
@@ -546,50 +433,16 @@ async def _run_stats(
         patch = choose_patch(patches, now=at)
         timeframe = timeframe_of(patches, patch, now=at)
         log.info("run.patch", patch=patch, builds=timeframe, collected_at=collected_at)
-        raw_by_key, snapshots = await _collect_all(
+        raw_by_key, snapshots = await _collect_cube(
             c,
             settings,
             patch=patch,
             timeframe=timeframe,
             collected_at=collected_at,
             sleep=sleep,
-            specs=specs,
-        )
-        party_raw = await _collect_party(
-            c,
-            settings,
-            patch=patch,
-            timeframe=timeframe,
-            collected_at=collected_at,
-            sleep=sleep,
-            snapshots=snapshots,
+            views=views,
         )
         prev_meta = load_meta(settings.data_dir)
-        reference = build_meta(
-            prev_meta, patch=patch, collected_at=collected_at, snapshots=snapshots
-        )["reference_patch"]
-        region_patch = _region_patch(
-            settings.data_dir, reference=reference, current=patch, day=collected_at
-        )
-        region_raw, region_snaps = (
-            await _collect_region(
-                c,
-                settings,
-                patch=region_patch,
-                timeframe=timeframe_of(patches, region_patch, now=at),
-                collected_at=collected_at,
-                sleep=sleep,
-            )
-            if regions
-            else ({}, {})
-        )
-        raw_by_key.update(region_raw)
-        region_previous: dict[str, dict[str, Any]] = {}
-        if region_patch == patch:
-            snapshots.update(region_snaps)
-        else:
-            region_previous = region_snaps
-        snapshots.update(_carried_regions(settings.data_dir, patch=patch, fresh=snapshots))
         meta = build_meta(prev_meta, patch=patch, collected_at=collected_at, snapshots=snapshots)
         # builds follow the one reference patch, like every page (thin new patch → previous)
         builds_result = await _collect_builds(
@@ -622,11 +475,6 @@ async def _run_stats(
         prev_meta=prev_meta,
         extra_files=extra,
     )
-    if region_previous:
-        previous = settings.data_dir / "previous"
-        previous.mkdir(parents=True, exist_ok=True)
-        for key, snap in region_previous.items():
-            _write_atomic(previous / f"{key}.json", snap)
     refresh_previous_modes(settings.data_dir)
     if builds_result is not None:
         day_dir_b = settings.snapshot_out_dir / collected_at[:10]
@@ -635,9 +483,10 @@ async def _run_stats(
     day_dir = settings.snapshot_out_dir / collected_at[:10]
     for key, raw in raw_by_key.items():
         _write_gz(day_dir / f"raw_{key}.json.gz", raw)
-        _write_gz(day_dir / f"{key}.json.gz", snapshots.get(key) or region_previous[key])
-    for key, raw in party_raw.items():
-        _write_gz(day_dir / f"raw_{key}.json.gz", raw)
+        if key in snapshots:
+            _write_gz(day_dir / f"{key}.json.gz", snapshots[key])
+    for view in views:
+        _write_gz(day_dir / f"{view}.json.gz", snapshots[view])
     (day_dir / "meta.json").parent.mkdir(parents=True, exist_ok=True)
     (day_dir / "meta.json").write_text(json.dumps(meta, ensure_ascii=False), encoding="utf-8")
     _warn_heroes_without_assets(settings.data_dir, snapshots, extra.get("builds.json"))

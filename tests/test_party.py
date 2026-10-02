@@ -66,10 +66,29 @@ def test_hero_without_solo_games_keeps_its_own_win_rate(
     assert cho["tier_win_rate"] == cho["win_rate"]
 
 
-def test_per_map_rows_are_not_corrected(base: dict[str, Any], solo: dict[str, Any]) -> None:
+def test_per_map_rows_are_corrected_by_that_maps_solo_games(base: dict[str, Any]) -> None:
+    """Owner 2026-10-02: the correction is part of the formula, so every view carries it — a
+    map's rows by that map's solo games and its own pooled solo rate."""
+    solo = _snap(
+        [
+            _row("Garrosh", 400, 800),
+            _row("Nova", 360, 800),
+            _row("Garrosh", 40, 80, map_name="Cursed Hollow"),
+            _row("Nova", 36, 80, map_name="Cursed Hollow"),  # map pool 76/160 = 47.5 %
+        ]
+    )
     out = apply_party_correction(base, solo)
-    per_map = [r for r in out["rows"] if r["map"] != "all"]
-    assert per_map and all("tier_win_rate" not in r for r in per_map)
+    ch = next(r for r in out["rows"] if r["map"] == "Cursed Hollow")
+    # Garrosh on the map: 60 %, centred solo 50 + 2.5 = 52.5, weight 80/1080
+    assert ch["tier_win_rate"] == pytest.approx(60 - 7.5 * 80 / 1080, abs=1e-4)
+
+
+def test_a_map_without_solo_games_keeps_its_own_win_rate(
+    base: dict[str, Any], solo: dict[str, Any]
+) -> None:
+    out = apply_party_correction(base, solo)
+    ch = next(r for r in out["rows"] if r["map"] == "Cursed Hollow")
+    assert ch["tier_win_rate"] == ch["win_rate"]
 
 
 def test_party_block_carries_what_the_page_prints(

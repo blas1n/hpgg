@@ -10,7 +10,7 @@ import sys
 import structlog
 
 from collector.config import Settings
-from collector.run import run, run_backfill_previous, run_backfill_previous_regions
+from collector.run import run, run_backfill_previous
 
 
 def configure_logging(level: str) -> None:
@@ -39,24 +39,17 @@ def main(argv: list[str] | None = None) -> int:
         "--previous",
         metavar="PATCH",
         help="one-off: collect this older patch, every build of it, into data/previous/ "
-        "(e.g. 2.55.17)",
-    )
-    ap.add_argument(
-        "--previous-regions",
-        action="store_true",
-        help="one-off: every region of the previous patch missing in data/previous/ (≤ 6 calls)",
+        "(e.g. 2.55.17; the whole cube, 24 calls)",
     )
     ap.add_argument(
         "--only",
         metavar="VIEWS",
-        help="recovery: only these global views, no region (qm,sl[,sl_low,sl_high]); "
-        "qm,sl with the party correction is 4 Heroes/Stats calls",
+        help="recovery: only these views (qm,sl[,sl_low,sl_high]), each in every region; "
+        "qm,sl with the party correction is 12 Heroes/Stats calls",
     )
     args = ap.parse_args(argv)
     settings = Settings()  # type: ignore[call-arg]  # hp_api_token comes from env/.env
     configure_logging(settings.log_level)
-    if args.previous_regions:
-        return asyncio.run(run_backfill_previous_regions(settings))
     if args.previous:
         return asyncio.run(run_backfill_previous(settings, patch=args.previous))
     if args.only:
