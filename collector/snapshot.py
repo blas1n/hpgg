@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import shutil
+from collections.abc import Iterable
 from dataclasses import asdict
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -175,6 +176,17 @@ def _row_to_stat(row: dict[str, Any], map_name: str) -> HeroStat | None:
     )
 
 
+def match_count(games_per_hero: Iterable[int], game_type: str | None) -> float:
+    """Matches behind a set of hero rows: Σ games / 10 for a 10-player game, but never fewer
+    than one hero played — a hero is in a Storm League match at most once (draft), in Quick
+    Match at most twice (a mirror). A bracket view counts only its own players, so a match
+    can contribute fewer than ten rows (KR 다마그 2026-10-02: 6 games → 0.6 → "0 매치",
+    pick 166 %)."""
+    games = list(games_per_hero)
+    per_match = 2 if game_type == "qm" else 1
+    return max(sum(games) / 10, max(games, default=0) / per_match)
+
+
 def derive_all(per_map: list[HeroStat], matches: float) -> list[HeroStat]:
     """Sum the per-map rows into one `map="all"` row per hero. pick/ban/popularity are
     recomputed against the derived match count (Σgames / 10 for a 10-player game)."""
@@ -231,7 +243,7 @@ def normalize_by_map(
             game_type=game_type,
             league_tier=league_tier,
             collected_at=collected_at,
-            matches=int(sum(r.games for r in flat) / 10),
+            matches=int(match_count((r.games for r in flat), game_type)),
             rows=flat,
         )
     payload = (
@@ -257,8 +269,10 @@ def normalize_by_map(
                 per_map.append(stat)
     if not per_map:
         raise ValueError("group_by_map payload had no hero rows")
-    total_games = sum(r.games for r in per_map)
-    matches_f = total_games / 10
+    hero_games: dict[str, int] = {}
+    for r in per_map:
+        hero_games[r.hero] = hero_games.get(r.hero, 0) + r.games
+    matches_f = match_count(hero_games.values(), game_type)
     rows = derive_all(per_map, matches_f) + per_map
     return ModeSnapshot(
         patch=patch,
@@ -287,10 +301,12 @@ def sum_regions(parts: list[dict[str, Any]], *, key: str, collected_at: str) -> 
             for f in a:
                 a[f] += int(r.get(f) or 0)
     matches = sum(int(p.get("matches") or 0) for p in parts)
-    map_matches: dict[str, float] = {}
+    map_games: dict[str, list[int]] = {}
     for (_, m), a in acc.items():
         if m != "all":
-            map_matches[m] = map_matches.get(m, 0) + a["games"] / 10
+            map_games.setdefault(m, []).append(a["games"])
+    game_type = parts[0].get("game_type")
+    map_matches = {m: match_count(g, game_type) for m, g in map_games.items()}
     rows: list[HeroStat] = []
     for (hero, m), a in acc.items():
         n = matches if m == "all" else map_matches.get(m, 0)

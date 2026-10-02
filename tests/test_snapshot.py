@@ -80,11 +80,12 @@ def test_normalize_keeps_per_map_rows_and_derives_all(raw_by_map) -> None:
     ill = rows[("all", "Illidan")]
     assert (ill.wins, ill.losses, ill.games, ill.bans) == (160, 140, 300, 30)
     assert ill.win_rate == pytest.approx(160 / 300 * 100, abs=0.01)
-    # matches = Σgames/10 over all heroes & maps: (100+100+5)+(200+200) = 605 → 60.5 → 60 (int)
-    assert snap.matches == 60
-    assert ill.pick == pytest.approx(300 / 60.5 * 100, abs=0.5)
-    assert ill.ban_rate == pytest.approx(30 / 60.5 * 100, abs=0.5)
-    assert ill.popularity == pytest.approx((300 + 30) / 60.5 * 100, abs=0.5)
+    # matches = Σgames/10 over all heroes & maps = 60.5, but Illidan alone played 300 and a
+    # hero is in a Storm League match once → 300 (a three-hero toy payload)
+    assert snap.matches == 300
+    assert ill.pick == pytest.approx(100.0)
+    assert ill.ban_rate == pytest.approx(10.0)
+    assert ill.popularity == pytest.approx(110.0)
     assert ill.ci is None  # not derivable from the API; frontend uses Wilson
     assert snap.patch == "2.55.17.97771" and snap.key == "sl"
 
@@ -109,7 +110,7 @@ def test_normalize_flat_payload_becomes_all_rows_only() -> None:
     )
     assert {r.map for r in snap.rows} == {"all"}
     assert {r.hero: r.games for r in snap.rows} == {"Qhira": 100, "Nova": 50}
-    assert snap.matches == 15
+    assert snap.matches == 50  # Σ/10 = 15, but Qhira's 100 games need 50 Quick Match games
 
 
 def test_normalize_derives_ban_count_from_ban_rate_when_live_rows_lack_bans() -> None:
@@ -134,6 +135,11 @@ def test_normalize_derives_ban_count_from_ban_rate_when_live_rows_lack_bans() ->
                     "ban_rate": 0,
                     "pick_rate": 50.0,
                 },
+                # eight more, so the map is ten heroes deep like a real one: 10,000 games
+                *(
+                    {"name": f"H{i}", "wins": 500, "losses": 500, "games_played": 1000}
+                    for i in range(8)
+                ),
             ],
         }
     }
@@ -141,9 +147,9 @@ def test_normalize_derives_ban_count_from_ban_rate_when_live_rows_lack_bans() ->
         raw, key="sl", game_type="sl", league_tier=None, patch="p", collected_at="t"
     )
     rows = {(r.map, r.hero): r for r in snap.rows}
-    # map matches = 2000/10 = 200 → Qhira bans = 40% × 200 = 80
-    assert rows[("Cursed Hollow", "Qhira")].bans == 80
-    assert rows[("all", "Qhira")].bans == 80 and rows[("all", "Qhira")].ban_rate == pytest.approx(
+    # map matches = 10000/10 = 1000 → Qhira bans = 40% × 1000 = 400
+    assert rows[("Cursed Hollow", "Qhira")].bans == 400
+    assert rows[("all", "Qhira")].bans == 400 and rows[("all", "Qhira")].ban_rate == pytest.approx(
         40.0
     )
     assert rows[("all", "Nova")].bans == 0
@@ -541,8 +547,10 @@ def test_the_whole_is_the_sum_of_the_regions() -> None:
     assert nova["ban_rate"] == pytest.approx(3 / 30 * 100, abs=1e-4)
     assert nova["popularity"] == pytest.approx(23 / 30 * 100, abs=1e-4)
     assert nova["ci"] is None  # a region's interval is not the whole's
-    hana = by[("Nova", "Hanamura")]  # a map's matches: Σ games on it / 10 = 2
-    assert (hana["games"], hana["pick"]) == (20, 1000.0)
+    # a map's matches: Σ games on it / 10 = 2, but never fewer than one hero played there
+    # (a hero is in a Storm League match once): 20 → pick 100 %, not 1000 %
+    hana = by[("Nova", "Hanamura")]
+    assert (hana["games"], hana["pick"]) == (20, 100.0)
     assert by[("Ana", "Alterac")]["games"] == 10  # a hero or map in one region only
 
 
@@ -558,3 +566,44 @@ def test_views_are_the_keys_of_the_specs() -> None:
     from collector.snapshot import VIEWS
 
     assert tuple(s.key for s in SPECS) == VIEWS
+
+
+def test_a_bracket_view_never_has_fewer_matches_than_one_hero_played() -> None:
+    """KR 다마그 on 2026-10-02: six heroes with one game each. Σ games / 10 = 0.6 → "0 매치"
+    and a pick rate of 166 %. A hero is in a Storm League match at most once (draft), so a
+    hero's games are a floor for the matches; in Quick Match a mirror is possible (twice)."""
+    rows = [{"name": h, "wins": 1, "losses": 0, "games_played": 1} for h in "ABCDEF"]
+    sl = normalize_by_map(
+        {"Sky Temple": {"data": rows}},
+        key="sl_high",
+        game_type="sl",
+        league_tier=(5, 6),
+        patch="p",
+        collected_at="t",
+    )
+    assert sl.matches == 1
+    assert max(r.pick for r in sl.rows if r.map == "all") == pytest.approx(100.0)
+
+    qm_rows = [{"name": "A", "wins": 3, "losses": 1, "games_played": 4}]
+    qm = normalize_by_map(
+        {"Sky Temple": {"data": qm_rows}},
+        key="qm",
+        game_type="qm",
+        league_tier=None,
+        patch="p",
+        collected_at="t",
+    )
+    assert qm.matches == 2  # 4 games, at most 2 per match
+
+
+def test_a_full_view_keeps_games_over_ten() -> None:
+    rows = [{"name": h, "wins": 5, "losses": 5, "games_played": 10} for h in "ABCDEFGHIJ"]
+    snap = normalize_by_map(
+        {"Sky Temple": {"data": rows}},
+        key="sl",
+        game_type="sl",
+        league_tier=None,
+        patch="p",
+        collected_at="t",
+    )
+    assert snap.matches == 10
