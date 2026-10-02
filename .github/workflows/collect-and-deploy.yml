@@ -21,11 +21,8 @@ concurrency:
   group: collect-and-deploy
   cancel-in-progress: false
 
-permissions:
-  contents: write
-  pages: write
-  id-token: write
-  issues: write
+permissions: {}
+# Nothing by default; each job asks for what it needs. Actions are pinned to a commit (a tag can be moved).
 
 jobs:
   gate:
@@ -33,10 +30,12 @@ jobs:
     # the week's Heroes/Stats quota (210) is never spent twice in a night. A plain manual dispatch always collects.
     if: github.event_name == 'schedule' || inputs.if_stale
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     outputs:
       fresh: ${{ steps.check.outputs.fresh }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           fetch-depth: 1
           sparse-checkout: |
@@ -55,16 +54,18 @@ jobs:
     # stats ~25 min (24 calls at 1 a minute) + builds + matchups (≤ 25 min budget, + at most one
     # in-flight job poll of ≤ 15 min)
     timeout-minutes: 90
+    permissions:
+      contents: read
+      issues: write
     outputs:
       day: ${{ steps.run.outputs.day }}
     steps:
-      - uses: actions/checkout@v4
+      # no deploy key here: this job runs third-party code (setup-uv, PyPI packages); the push is the `publish` job's
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           fetch-depth: 1
-          # main takes no direct push (ruleset `main`, 2026-10-01); this deploy key is its one
-          # bypass, so the data commit and the snapshot push go over SSH with it
-          ssh-key: ${{ secrets.DATA_DEPLOY_KEY }}
-      - uses: astral-sh/setup-uv@v5
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@d4b2f3b6ecc6e67c4457f6d3e41ec42d3d0fcb86 # v5
       - run: uv sync --frozen --no-dev
       - name: Collect (QM, SL, 브실골플, 다마그 × KR/NA/EU + solo twins = 24 stats calls, ~25 min at 1 req/min; 1 builds call; then Storm League matchups for heroes due, every other day)
         id: run
@@ -78,7 +79,7 @@ jobs:
       # data went with the runner (the week's quota could not pay for it again)
       - name: Keep the collected data as an artifact
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: collected-data
           path: |
@@ -90,6 +91,39 @@ jobs:
           include-hidden-files: true
           if-no-files-found: ignore
           retention-days: 14
+      - name: Open an issue when the collector fails
+        if: failure()
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7
+        with:
+          script: |
+            await github.rest.issues.create({
+              owner: context.repo.owner, repo: context.repo.repo,
+              title: `collector failed ${new Date().toISOString().slice(0,10)}`,
+              body: `Run: ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`,
+              labels: ["collector"],
+            });
+
+  publish:
+    needs: [collect]
+    # The one job holding DATA_DEPLOY_KEY (main takes no direct push, ruleset `main` 2026-10-01; deploy keys are its
+    # bypass, and a push to main is deployed on the Mac mini). Only GitHub's own actions and git run here — no
+    # package installs, nothing third-party — so nothing else ever sees the key.
+    if: needs.collect.result == 'success'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 1
+          ssh-key: ${{ secrets.DATA_DEPLOY_KEY }}
+      # the collect job's data/ exactly: a file the collector removed is removed here too
+      - run: rm -rf data/latest data/previous data/matchups data/patchnotes.json
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: collected-data
+          path: data
       - name: Commit data/latest (+ previous, matchups, patch notes) to main
         run: |
           git config user.name "hotsmeta-bot"
@@ -104,52 +138,54 @@ jobs:
       - name: Archive raw + normalised snapshots to the orphan `snapshots` branch
         run: |
           set -e
-          DAY="${{ steps.run.outputs.day }}"
+          DAY="${{ needs.collect.outputs.day }}"
           git fetch origin snapshots:snapshots || { echo "create the orphan branch once: git checkout --orphan snapshots && git commit --allow-empty -m init && git push origin snapshots"; exit 1; }
           git worktree add ../snap snapshots
           mkdir -p "../snap/snapshots/$DAY"
           cp -r "data/.snapshot_out/$DAY/." "../snap/snapshots/$DAY/"
           cd ../snap && git add snapshots && git commit -m "snapshot $DAY" && git push origin snapshots
-      - name: Open an issue when the collector fails
+      - name: Open an issue when the push fails (the data is in the run's collected-data artifact)
         if: failure()
-        uses: actions/github-script@v7
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh issue create --repo "$GITHUB_REPOSITORY" --label collector \
+            --title "collector push failed $(date -u +%F)" \
+            --body "Run: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID - the data is in its collected-data artifact; commit it through a PR."
+
+  build:
+    needs: [collect, publish]
+    # after a successful collect and publish, or when nothing was collected (push to main, or a fresh gate).
+    # npm packages run here, so this job can publish nothing: it only hands the site to `deploy`.
+    if: always() && (needs.collect.result == 'success' || needs.collect.result == 'skipped') && (needs.publish.result == 'success' || needs.publish.result == 'skipped')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
-          script: |
-            await github.rest.issues.create({
-              owner: context.repo.owner, repo: context.repo.repo,
-              title: `collector failed ${new Date().toISOString().slice(0,10)}`,
-              body: `Run: ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`,
-              labels: ["collector"],
-            });
+          ref: main
+          fetch-depth: 1
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+      - name: Build web
+        run: cd web && npm ci && npm run build
+      - uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa # v3
+        with:
+          path: web/dist
 
   deploy:
-    needs: [collect]
-    # run after a successful collect, or on push (collect is skipped then)
-    if: always() && (needs.collect.result == 'success' || needs.collect.result == 'skipped')
+    needs: [build]
+    # GitHub's deploy action only: the one step with the right to publish the site
     runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: main
-          fetch-depth: 1
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-      - name: Build web (skipped until web/ exists)
-        run: |
-          if [ -f web/package.json ]; then
-            cd web && npm ci && npm run build
-          else
-            echo "web/ not present yet — publishing a placeholder + data/ (if any)"
-            mkdir -p web/dist
-            [ -d data ] && cp -r data web/dist/ || true
-            printf '<!doctype html><meta charset="utf-8"><title>hpgg.win</title><p>준비 중 — 히오스 티어표</p>' > web/dist/index.html
-          fi
-      - uses: actions/upload-pages-artifact@v3
-        with:
-          path: web/dist
       - id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e # v4

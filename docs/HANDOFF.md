@@ -26,10 +26,13 @@ GitHub Actions (that dispatch, cron 05:20 KST as fallback, plain workflow_dispat
       atomic swap → data/latest/{qm,sl,sl_low,sl_high}{,_kr,_na,_eu}.json + builds, meta (+ data/previous/ on patch change)
       ≤90× GET /v1/heroes/matchups?hero=…   → data/matchups/<slug>.json, SL, heroes due only   (2 s apart, ≤25 min)
       raw + normalised gz → data/.snapshot_out/<day>/ → committed to the `snapshots` branch
-    git commit data/ → git pull --rebase --autostash → push
-  deploy job (always)
-    cd web && npm ci && npm run build   (sync ../data → public/, tsc, next build → web/dist)
-    upload web/dist → GitHub Pages
+    upload data/ as the run artifact collected-data (no deploy key in this job: it runs setup-uv and PyPI packages)
+  publish job (after a good collect): the only job with DATA_DEPLOY_KEY — GitHub's checkout + download-artifact and git,
+    nothing else: commit data/ → git pull --rebase --autostash → push; snapshots branch
+  build job (npm ci + build, contents: read only) → deploy job (deploy-pages only: pages/id-token write)
+  Every action is pinned to a commit; tests/test_workflows.py fails on a tag, on the key in another job, or on a
+  package-running job with write rights (a push to main is deployed on the Mac mini).
+    build: cd web && npm ci && npm run build   (sync ../data → public/, tsc, next build, prune switched-off features → web/dist)
 ```
 Frontend (`web/`, Next.js App Router, static export to `web/dist`):
 - Routes — one tree for every language, `app/[locale]/` (the root layout: `<html lang={locale}>`, `generateStaticParams` = `LOCALES`, `dynamicParams = false`): `hots/page.tsx` 홈 · `hots/tier/` 영웅 티어 · `hots/heroes/` 영웅 · `hots/heroes/[slug]/` 영웅 상세 (one static page per hero, unknown slug → 404) · `hots/maps/` 전장 · `hots/maps/[slug]/` 전장 상세 (one static page per map; map cards link here) · `page.tsx` (`/<locale>/` → `/<locale>/hots/`) · `app/global-not-found.tsx` (the 404 in every language; `experimental.globalNotFound` in `next.config.ts`, since the root layout sits under `[locale]`). The route files only read the locale from the URL and call `src/routes/pages.tsx`; `tests/routes.test.ts` fails on any language-named directory, route group or locale literal under `app/`.
