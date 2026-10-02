@@ -46,11 +46,15 @@ def _iso(ts: float | None) -> str | None:
 
 
 def rate_limited(request: Request) -> JSONResponse | None:
-    limiter: SlidingWindowLimiter = request.app.state.ip_limiter
-    wait = limiter.hit(client_ip(request))
-    if wait is None:
-        return None
-    return error(429, "rate_limited", "요청이 너무 잦습니다. 잠시 후 다시 시도하세요.", wait)
+    ip = client_ip(request)
+    minute: SlidingWindowLimiter = request.app.state.ip_limiter
+    if (wait := minute.hit(ip)) is not None:
+        return error(429, "rate_limited", "요청이 너무 잦습니다. 잠시 후 다시 시도하세요.", wait)
+    day: SlidingWindowLimiter = request.app.state.ip_day_limiter
+    if (wait := day.hit(ip)) is not None:
+        msg = "오늘 이 주소의 조회가 너무 많습니다. 내일 다시 시도하세요."
+        return error(429, "rate_limited", msg, wait)
+    return None
 
 
 def _failure(outcome: Outcome, retry_after: float | None) -> JSONResponse | None:

@@ -204,7 +204,7 @@ browser (hpgg.win/ko/hots/players/?tag=Name%231234&region=KR)
 
 **Deploy / operate** (host `bsserver`, Docker context `colima`):
 - autodeploy (`~/Works/_infra/scripts/autodeploy.sh`, every 2 min) rebuilds on a new `origin/main`: `docker-compose -p hpgg-api -f <WORK>/deploy/docker-compose.yml up -d --build --force-recreate` (project name stays `hpgg-api`, the old deploy dir: autodeploy maps `hpgg` → `hpgg-api` so the running container is not recreated under a new project). The image copies only `pyproject.toml`, `uv.lock` and `server/`, so the daily data commits rebuild from cache and just recreate the container (a few seconds; the cache survives on the volume, the per-IP limiter resets).
-- Manual restart: `docker --context colima restart hpgg-api`; health: `curl -s http://127.0.0.1:8800/healthz` on the host, `https://api.hpgg.win/healthz` outside.
+- Manual restart: `docker --context colima restart hpgg-api`; health: `curl -s http://127.0.0.1:8800/healthz` on the host (the full report); `https://api.hpgg.win/healthz` outside says only `{"ok":true}` (2026-10-02). Per address: 20 requests a minute and 500 a day (`ip_requests_per_day`).
 - Logs: `docker --context colima logs -f hpgg-api` — JSON lines (structlog + uvicorn), json-file driver capped at 5×10 MB.
 - Data: `docker --context colima volume inspect hpgg-api-data`; do not open the live SQLite from the host (copy it out first).
 - Local run: `HP_API_TOKEN=… CORS_ORIGINS='["http://localhost:5173"]' uv run python -m server` (DB in `data/.tmp/`), then `NEXT_PUBLIC_API_BASE=http://localhost:8000 npm run dev` in `web/`.

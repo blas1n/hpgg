@@ -71,6 +71,7 @@ def settings(tmp_path: Path) -> Settings:
         db_path=tmp_path / "hpgg.sqlite",
         cors_origins=["https://hpgg.win", "http://localhost:5173"],
         ip_requests_per_minute=5,
+        ip_requests_per_day=12,
         daily_live_budget=100,
         quota_floor=10,
         _env_file=None,  # type: ignore[call-arg]

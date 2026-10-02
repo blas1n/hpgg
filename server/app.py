@@ -67,6 +67,9 @@ def create_app(
         app.state.privacy = PrivacyFeed(hp=hp, store=store, settings=settings, clock=clock)
         poller = asyncio.create_task(app.state.privacy.run_forever()) if privacy_poll else None
         app.state.ip_limiter = SlidingWindowLimiter(settings.ip_requests_per_minute, 60.0, clock)
+        app.state.ip_day_limiter = SlidingWindowLimiter(
+            settings.ip_requests_per_day, 86_400.0, clock
+        )
         log.info("server.started", db=str(settings.db_path), origins=settings.cors_origins)
         try:
             yield
@@ -107,6 +110,10 @@ def create_app(
 
     @app.get("/healthz")
     async def healthz(request: Request) -> JSONResponse:
+        # Through the tunnel (Cloudflare always sets CF-Connecting-IP): alive, nothing more. The
+        # quota report is for the Mac mini itself: curl http://127.0.0.1:8800/healthz
+        if "cf-connecting-ip" in request.headers:
+            return JSONResponse({"ok": True}, headers={"Cache-Control": "no-store"})
         service: PlayerService = request.app.state.players
         feed: PrivacyFeed = request.app.state.privacy
         body: dict[str, Any] = {

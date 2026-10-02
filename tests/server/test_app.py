@@ -171,6 +171,33 @@ def test_rate_limit_window_slides(client: TestClient, settings: Settings, clock:
     assert client.get(URL, params=OK, headers=a).status_code == 200
 
 
+def test_one_address_cannot_spend_the_day(
+    client: TestClient, settings: Settings, clock: Clock
+) -> None:
+    """20 a minute is 28,800 a day: one address could spend the whole daily player budget
+    (3,500) in three hours. A daily cap per address stops that (security review 2026-10-02)."""
+    a = {"CF-Connecting-IP": "203.0.113.9"}
+    for _ in range(settings.ip_requests_per_day):
+        assert client.get(URL, params=OK, headers=a).status_code == 200
+        clock.now += 61  # never the per-minute limit
+    r = client.get(URL, params=OK, headers=a)
+    assert r.status_code == 429
+    assert r.json()["error"]["code"] == "rate_limited"
+    assert int(r.headers["retry-after"]) > 3600
+    assert client.get(URL, params=OK, headers={"CF-Connecting-IP": "198.51.100.2"}).is_success
+    clock.now += 86_400
+    assert client.get(URL, params=OK, headers=a).status_code == 200
+
+
+def test_healthz_through_the_tunnel_says_only_ok(client: TestClient) -> None:
+    """The public /healthz showed every bucket's remaining quota; the full report is for the
+    Mac mini itself (curl http://127.0.0.1:8800/healthz). Cloudflare always sets the header."""
+    public = client.get("/healthz", headers={"CF-Connecting-IP": "203.0.113.10"})
+    assert public.status_code == 200
+    assert public.json() == {"ok": True}
+    assert "quota" in client.get("/healthz").json()
+
+
 def test_cors_allowlist(client: TestClient) -> None:
     ok = client.get(URL, params=OK, headers={"Origin": "https://hpgg.win"})
     assert ok.headers["access-control-allow-origin"] == "https://hpgg.win"
