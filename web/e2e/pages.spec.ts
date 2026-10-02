@@ -144,6 +144,24 @@ test("hero detail: the 지역 × 구간 grid says 표본 부족 under the floor 
   await expect(page.locator('#grid [data-cell="kr-all"] [data-sample]')).toHaveCount(0); // ranked: tier and win rate
 });
 
+test("hero detail: 전장별 승률 under the floor has no bar and comes after the solid maps", async ({ page }) => {
+  // e2e data: Illidan has 88 Storm League games in NA — every map is under the floor (200); KR is healthy
+  await page.goto("./heroes/illidan/?mode=sl&region=na");
+  await expect(page.locator("#hero-region")).toHaveValue("na");
+  const rows = page.locator("[data-map]");
+  await expect(rows.first()).toBeVisible();
+  const n = await rows.count();
+  await expect(page.locator("[data-map][data-thin]")).toHaveCount(n);
+  await expect(page.locator("[data-map] i")).toHaveCount(0); // no bar
+  await expect(rows.first()).toContainText("표본 부족");
+  // the order: every solid map before every thin one
+  await page.goto("./heroes/illidan/?mode=sl&region=kr");
+  await expect(page.locator("#hero-region")).toHaveValue("kr");
+  const thin = await page.locator("[data-map]").evaluateAll((els) => els.map((e) => e.hasAttribute("data-thin")));
+  expect(thin.length).toBeGreaterThan(0);
+  expect(thin).toEqual([...thin].sort((a, b) => Number(a) - Number(b)));
+});
+
 test("hero detail: at the bottom of the page the last section's tab is active", async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 900 }); // the last title cannot reach the tabs
   await page.goto("./heroes/illidan/?mode=sl");

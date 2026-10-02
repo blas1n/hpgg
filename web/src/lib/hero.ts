@@ -55,20 +55,23 @@ export interface MapRow {
   name: string;
   ko: string;
   image?: string;
-  win_rate: number;
+  win_rate: number | null; // null = no game on this map in the view
   pick: number;
   games: number;
-  thin: boolean;
+  thin: boolean; // games < the tier floor: the win rate is not a finding
 }
 
-/** This hero on every map the snapshot has, best win rate first. */
+/** This hero on every map the snapshot has (0 games where the hero did not play it): maps over the floor first, best
+ *  win rate first; then the thin ones by games, so one lucky game never leads the list (owner 10-02, KR views). */
 export function mapRows(snap: Snapshot, hero: string, maps: MapTable, minGames: number): MapRow[] {
+  const inView = new Set(snap.rows.map((r) => r.map));
   return maps.maps
-    .flatMap((m) => {
+    .flatMap((m): MapRow[] => {
       const row = snap.rows.find((x) => x.map === m.name && x.hero === hero);
-      return row ? [{ slug: m.slug, name: m.name, ko: m.ko, image: m.image, win_rate: row.win_rate, pick: row.pick, games: row.games, thin: row.games < minGames }] : [];
+      if (row) return [{ slug: m.slug, name: m.name, ko: m.ko, image: m.image, win_rate: row.win_rate, pick: row.pick, games: row.games, thin: row.games < minGames }];
+      return inView.has(m.name) ? [{ slug: m.slug, name: m.name, ko: m.ko, image: m.image, win_rate: null, pick: 0, games: 0, thin: true }] : [];
     })
-    .sort((a, b) => b.win_rate - a.win_rate);
+    .sort((a, b) => Number(a.thin) - Number(b.thin) || (a.thin ? b.games - a.games : (b.win_rate ?? 0) - (a.win_rate ?? 0)));
 }
 
 export interface GridCell {
