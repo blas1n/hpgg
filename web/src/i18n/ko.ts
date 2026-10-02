@@ -212,6 +212,7 @@ export const ko = {
     wholeOnly: "전체 지역·구간 기준",
     buildsTitle: "인기 특성 빌드",
     buildsSub: (patch: string) => `빠른 대전 + 폭풍 리그 합산 · 패치 ${patch} · 많이 쓴 순`,
+    gridUncollected: "수집 전",
     noData: "데이터 없음",
     noDataSub: "이 모드에 표본이 없습니다",
     thinTier: (games: string, min: string) => `표본 부족 (${games}게임 < ${min})`,

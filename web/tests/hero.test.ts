@@ -44,10 +44,12 @@ describe("heroSummary", () => {
     expect(s.kind === "ranked" && s.hasPrevious).toBe(true);
   });
 
-  it("below the sample floor: grey with its games; absent: none", () => {
+  it("below the sample floor: grey with its games; no game in a collected view: grey with 0 games", () => {
     const thin: Snapshot = { ...qm, rows: qm.rows.map((r) => (r.hero === "Illidan" && r.map === "all" ? { ...r, games: 120 } : r)) };
     expect(heroSummary(thin, null, "Illidan", 200)).toMatchObject({ kind: "grey", games: 120 });
-    expect(heroSummary(qm, null, "Nobody", 200)).toEqual({ kind: "none" });
+    // KR 다마그 10-02: the file exists, the hero did not play in it — a thin sample, not "no data"
+    const without: Snapshot = { ...qm, rows: qm.rows.filter((r) => r.hero !== "Illidan") };
+    expect(heroSummary(without, null, "Illidan", 200)).toEqual({ kind: "grey", win_rate: null, games: 0, pick: 0 });
   });
 });
 
@@ -75,10 +77,21 @@ describe("heroGrid", () => {
     expect(g.rows.map((r) => r.region)).toEqual(["all", "kr", "na", "eu"]);
     const all = g.rows[0]!.cells;
     expect(all.map((c) => c.bracket)).toEqual(["all", "low", "high"]);
-    expect(all[0]).toMatchObject({ bracket: "all", tier: "A" });
+    expect(all[0]).toMatchObject({ bracket: "all", tier: "A", sample: "ranked" });
     expect(all[0]!.games).toBeGreaterThan(200);
-    expect(all[2]).toEqual({ bracket: "high", tier: null, rank: null, n: 0, win_rate: null, games: 0 });
+    expect(all[2]).toEqual({ bracket: "high", tier: null, rank: null, n: 0, win_rate: null, games: 0, sample: "uncollected" });
     expect(g.rows[2]!.cells[0]!.win_rate).toBeNull();
+  });
+  it("a cell under the floor is thin and one without a game is zero, apart from one not collected (owner 10-02)", () => {
+    const thin: Snapshot = { ...sl, rows: sl.rows.map((r) => (r.hero === "Illidan" && r.map === "all" ? { ...r, games: 28 } : r)) };
+    const without: Snapshot = { ...sl, rows: sl.rows.filter((r) => r.hero !== "Illidan") };
+    const none = { all: null, low: null, high: null };
+    const g = heroGrid("sl", { all: { all: sl, low: sl, high: sl }, kr: { all: thin, low: without, high: null }, na: none, eu: none }, "Illidan", 200);
+    const kr = g.rows[1]!.cells;
+    expect(kr[0]).toMatchObject({ sample: "thin", tier: null, games: 28 });
+    expect(kr[0]!.win_rate).not.toBeNull();
+    expect(kr[1]).toMatchObject({ sample: "zero", tier: null, games: 0, win_rate: null });
+    expect(kr[2]).toMatchObject({ sample: "uncollected" });
   });
   it("quick match: regions only", () => {
     const cells = { all: { all: qm, low: null, high: null }, kr: { all: qm, low: null, high: null }, na: { all: null, low: null, high: null }, eu: { all: null, low: null, high: null } };
