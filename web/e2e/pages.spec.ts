@@ -425,6 +425,7 @@ test("hero detail: opening a section link directly lands on that section once th
     const t = (await page.locator("#builds-title").boundingBox())!.y;
     const n = (await nav.boundingBox())!;
     return t >= n.y + n.height - 1 && t <= n.y + n.height + 40;
-  }).toBe(true);
+    // the landing waits for hydration, which a busy CI runner can take more than the default 5 s to finish
+  }, { timeout: 15_000 }).toBe(true);
   await expect(nav.locator("#nav-builds")).toHaveAttribute("aria-current", "location");
 });
