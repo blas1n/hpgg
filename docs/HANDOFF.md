@@ -73,9 +73,9 @@ Why multiplicative: an additive formula ((WRs−50)+0.15·pick+0.15·ban) reprod
 | Hero/Matchups | 2,100 | 90 every other day (315/week; a patch change adds one early round → ≤ 450) |
 | Patches, Heroes, Maps | 1,000,000 | 1 |
 | Player/Privacy/Changes (server) | 10,080 | 24 (hourly poll, #74) |
-| Player/Match/History (server) | **250** | ≤ 34 (full match lists; `MATCH_DAILY_BUDGET`, floor 10) |
-| Player/MMR History (server) | 10,000 | ≤ 1,300 (match lists once the 250 are spent) |
-| Replay/Data (server) | 1,000 | ≤ 135 (a game opened on 전적 검색; floor 50) |
+| Player/Match/History (server) | 500 | ≤ 70 (full match lists; `MATCH_DAILY_BUDGET`, floor 10) |
+| Player/MMR History (server) | 25,000 | ≤ 3,500 (match lists once the full-list budget is spent) |
+| Replay/Data (server) | 25,000 | ≤ 3,500 (a game opened on 전적 검색; floor 50) |
 | Player/Hero/All (server) | 500 | ≤ 68 (영웅별 통계, one per player and mode, only once the section is in view; `HERO_STATS_DAILY_BUDGET`, floor 20) |
 Error responses and 202 job polling are not charged. `group_by_map=true` is rate-limited to 1 request/minute, hence the 60 s spacing (the stats part of a run takes ~7 minutes). `/heroes/matchups` without `group_by_map` answers `X-RateLimit-Limit: 60` (per minute, measured 2026-09-29) → 2 s spacing. Every charged answer carries `X-HP-Quota-Remaining`/`-Limit`, logged as `hp.quota`. `quota_exceeded` is never waited out (its Retry-After is the weekly reset, ~6 days). A manual `workflow_dispatch` costs a full day's calls — do not run it casually; the builds/all budget has no slack.
 
