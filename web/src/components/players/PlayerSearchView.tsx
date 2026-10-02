@@ -8,6 +8,7 @@ import { useLocale, useT } from "@/i18n/client";
 import { fetchPlayer, isRegion, parseBattletag, playersHref, playerView, type PlayerResult, type PlayerView, type Region } from "@/lib/players";
 import { Card, CardHeader, cx, Portrait } from "../ui";
 import { fetchMatches, type MatchesResult } from "@/lib/matches";
+import { HeroStats } from "./HeroStats";
 import { MatchHistory } from "./MatchHistory";
 import { PlayerSearchForm } from "./PlayerSearchForm";
 
@@ -76,7 +77,7 @@ export function PlayerSearchView({ heroes, maps }: { heroes: HeroTable; maps: Ma
       </PageHead>
       <PlayerSearchForm key={formKey} initialTag={query?.tag ?? ""} initialRegion={query?.region ?? "KR"} onSearch={search} className="max-w-xl" />
       <section id="player-result" data-state={state.kind} aria-live="polite" aria-busy={state.kind === "loading"}>
-        <Result state={state} games={games} me={query?.tag ?? ""} heroes={heroes} maps={maps} retry={query ? () => void run(query.tag, query.region) : undefined} />
+        <Result state={state} games={games} me={query?.tag ?? ""} region={query?.region ?? "KR"} heroes={heroes} maps={maps} retry={query ? () => void run(query.tag, query.region) : undefined} />
       </section>
       {/* remounted when a search finds nobody, so it opens then and stays under the visitor's control otherwise */}
       <UploadGuide key={state.kind === "not_found" ? "not-found" : "default"} open={state.kind === "not_found"} />
@@ -84,7 +85,7 @@ export function PlayerSearchView({ heroes, maps }: { heroes: HeroTable; maps: Ma
   );
 }
 
-function Result({ state, games, me, heroes, maps, retry }: { state: State; games: Games; me: string; heroes: HeroTable; maps: MapTable; retry?: () => void }) {
+function Result({ state, games, me, region, heroes, maps, retry }: { state: State; games: Games; me: string; region: Region; heroes: HeroTable; maps: MapTable; retry?: () => void }) {
   const t = useT().players;
   const locale = useLocale();
   switch (state.kind) {
@@ -111,7 +112,7 @@ function Result({ state, games, me, heroes, maps, retry }: { state: State; games
     case "invalid":
       return <Notice tone="warn" title={t.invalidTitle} body={t.invalidBody} />;
     case "ok":
-      return <Profile v={playerView(state.data, heroes, maps, locale)} games={games} me={me} heroes={heroes} maps={maps} />;
+      return <Profile v={playerView(state.data, heroes, maps, locale)} games={games} me={me} region={region} heroes={heroes} maps={maps} />;
   }
 }
 
@@ -205,7 +206,7 @@ function Notice({ title, body, tone, retry }: { title: string; body: string; ton
   );
 }
 
-function Profile({ v, games, me, heroes, maps }: { v: PlayerView; games: Games; me: string; heroes: HeroTable; maps: MapTable }) {
+function Profile({ v, games, me, region, heroes, maps }: { v: PlayerView; games: Games; me: string; region: Region; heroes: HeroTable; maps: MapTable }) {
   const t = useT().players;
   return (
     <div className="space-y-4">
@@ -328,6 +329,8 @@ function Profile({ v, games, me, heroes, maps }: { v: PlayerView; games: Games; 
           )}
         </div>
       </div>
+
+      <HeroStats key={`${me}|${region}`} tag={me} region={region} heroes={heroes} />
     </div>
   );
 }
