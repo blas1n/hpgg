@@ -6,7 +6,6 @@ import type { Snapshot } from "../src/formula";
 import { regionSample, snapshotKey, thinSample, type HeroTable, type Meta } from "../src/data";
 import { messages } from "../src/i18n/messages";
 import { sameCohort } from "../src/lib/cohort";
-import { regionRows } from "../src/lib/hero";
 import { pickShown, regionMatches } from "../src/lib/shown";
 import { DEFAULT_TIER_STATE, parseTierState, resolvePatch, tierSearch } from "../src/lib/tier";
 
@@ -30,12 +29,14 @@ describe("region labels and keys", () => {
     expect(messages.ko.common.regions).toEqual({ all: "전체 지역", kr: "아시아 (KR)", na: "아메리카 (NA)", eu: "유럽 (EU)" });
     expect(messages.en.common.regions).toEqual({ all: "All regions", kr: "Asia (KR)", na: "Americas (NA)", eu: "Europe (EU)" });
   });
-  it("region files are {mode}_{region}; a region never combines with a bracket", () => {
+  it("files are {view}_{region}: a region combines with a bracket (owner 2026-10-02); QM has no bracket", () => {
     expect(snapshotKey("qm", "all", "kr")).toBe("qm_kr");
     expect(snapshotKey("sl", "all", "eu")).toBe("sl_eu");
     expect(snapshotKey("sl", "low", "all")).toBe("sl_low");
     expect(snapshotKey("sl", "low")).toBe("sl_low");
-    expect(() => snapshotKey("sl", "low", "kr")).toThrow();
+    expect(snapshotKey("sl", "low", "kr")).toBe("sl_low_kr");
+    expect(snapshotKey("sl", "high", "na")).toBe("sl_high_na");
+    expect(snapshotKey("qm", "low", "kr")).toBe("qm_kr");
   });
 });
 
@@ -52,8 +53,12 @@ describe("tier URL state", () => {
     expect(parseTierState("?region=cn").region).toBe("all");
     expect(parseTierState("?region=KR").region).toBe("all");
   });
-  it("region + bracket is not collected: a region in the URL wins and the bracket is dropped", () => {
-    expect(parseTierState("?mode=sl&tier=high&region=eu")).toMatchObject({ region: "eu", bracket: "all" });
+  it("region and bracket together: both stay, in the URL and back", () => {
+    const s = parseTierState("?mode=sl&tier=low&region=kr");
+    expect(s).toMatchObject({ mode: "sl", region: "kr", bracket: "low" });
+    expect(tierSearch(s)).toBe("mode=sl&region=kr&tier=low");
+    // QM has no bracket
+    expect(parseTierState("?tier=low&region=kr")).toMatchObject({ mode: "qm", region: "kr", bracket: "all" });
   });
 });
 
@@ -103,13 +108,3 @@ describe("region files", () => {
   });
 });
 
-describe("regionRows (hero detail)", () => {
-  const dataDir = join(dirname(fileURLToPath(import.meta.url)), "e2e-data");
-  const qmKr = JSON.parse(readFileSync(join(dataDir, "latest/qm_kr.json"), "utf-8")) as Snapshot;
-  it("one row per collected region with its tier, win rate, games and date", () => {
-    const rows = regionRows([{ key: "kr", snap: qmKr }, { key: "na", snap: null }], "Illidan", 200);
-    expect(rows).toHaveLength(1);
-    expect(rows[0]).toMatchObject({ key: "kr", collectedAt: qmKr.collected_at });
-    expect(rows[0]!.games).toBeGreaterThan(0);
-  });
-});

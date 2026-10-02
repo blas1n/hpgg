@@ -78,20 +78,18 @@ export type Bracket = "all" | "low" | "high";
  *  (owner, 2026-09-29): league_tier 1-4 / 5-6; grandmasters are inside master.
  *  What each bracket means in league tiers (1 bronze … 6 master). A file whose league_tier differs is another cohort. */
 export const BRACKET_TIERS: Record<Bracket, number[] | null> = { all: null, low: [1, 2, 3, 4], high: [5, 6] };
+export const BRACKETS: Bracket[] = ["all", "low", "high"];
 /** Snapshot file key for a mode + bracket (brackets exist for Storm League only). */
-/** Regions (#14): one region is collected a day for QM + SL (KR → NA → EU), so each region is up to three days old.
- *  The in-game Asia server is HP's `KR`; CN is a separate server and not collected. */
+/** Regions (#14): every view in every region, daily (owner 2026-10-02); the whole is their sum (CN closed in 2023).
+ *  The in-game Asia server is HP's `KR`. */
 export type Region = "all" | "kr" | "na" | "eu";
 export const REGIONS: Region[] = ["all", "kr", "na", "eu"];
 /** The `region` a file carries (HP's code); null = every region. */
 export const REGION_CODE: Record<Region, string | null> = { all: null, kr: "KR", na: "NA", eu: "EU" };
-/** Snapshot file key for a mode + bracket (brackets exist for Storm League only) or a region. Region × bracket is not collected. */
+/** Snapshot file key for a mode + bracket (Storm League only; QM ignores it) + region: `sl_low_kr`, `qm_na`, `sl`. */
 export function snapshotKey(mode: Mode, bracket: Bracket, region: Region = "all"): string {
-  if (region !== "all") {
-    if (bracket !== "all") throw new Error("region × bracket is not collected");
-    return `${mode}_${region}`;
-  }
-  return mode === "sl" && bracket !== "all" ? `sl_${bracket}` : mode;
+  const view = mode === "sl" && bracket !== "all" ? `sl_${bracket}` : mode;
+  return region === "all" ? view : `${view}_${region}`;
 }
 export type PatchChoice = "current" | "previous";
 
@@ -146,8 +144,8 @@ export function thinSample(meta: Meta, key: string): boolean {
 const thin = (m: ModeSample | undefined): boolean => !!m?.heroes && m.heroes_ranked / m.heroes < 0.5;
 
 /** A region's sample health and collection date on the patch a view shows; null = not collected on that patch yet. */
-export function regionSample(meta: Meta, mode: Mode, region: Exclude<Region, "all">, patch: PatchChoice): { collectedAt: string | null; heroes: number; over: number; thin: boolean } | null {
-  const m = (patch === "previous" ? meta.previous_modes : meta.modes)?.[snapshotKey(mode, "all", region)];
+export function regionSample(meta: Meta, mode: Mode, region: Region, patch: PatchChoice, bracket: Bracket = "all"): { collectedAt: string | null; heroes: number; over: number; thin: boolean } | null {
+  const m = (patch === "previous" ? meta.previous_modes : meta.modes)?.[snapshotKey(mode, bracket, region)];
   if (!m) return null;
   return { collectedAt: m.collected_at ?? null, heroes: m.heroes, over: m.heroes_ranked, thin: thin(m) };
 }

@@ -6,6 +6,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { DraftView } from "@/components/draft/DraftView";
+import type { Snapshot } from "@/formula";
 import { HeroView, type HeroModeModel } from "@/components/hero/HeroView";
 import { HeroesView } from "@/components/heroes/HeroesView";
 import { HomeView } from "@/components/home/HomeView";
@@ -15,11 +16,11 @@ import { PlayerSearchView } from "@/components/players/PlayerSearchView";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 import { TierView } from "@/components/tier/TierView";
-import { referencePatchId, type Mode } from "@/data";
+import { BRACKETS, REGIONS, referencePatchId, snapshotKey, type Bracket, type Mode, type Region } from "@/data";
 import { alternates, DEFAULT_LOCALE, type Locale } from "@/i18n/locale";
 import { messages } from "@/i18n/messages";
 import { draftHeroes } from "@/lib/draft";
-import { bracketRows, heroBuilds, heroSummary, mapRows, regionRows } from "@/lib/hero";
+import { heroBuilds, heroGrid, heroSummary, mapRows } from "@/lib/hero";
 import { homeModel, mapCards } from "@/lib/home";
 import { mapDetail } from "@/lib/maps";
 import { matchupsView } from "@/lib/matchups";
@@ -127,16 +128,26 @@ export async function HeroPage({ locale, params }: { locale: Locale } & Params) 
   const meta = readMeta();
   const maps = readMaps(locale);
   const min = meta.min_games_for_tier;
+  // every region × bracket of the mode (owner 2026-10-02: the page filters by both, like the tier table)
   const model = (mode: Mode): HeroModeModel => {
-    const { snap, previous, fallback } = readShown(mode)!;
+    const { snap, fallback } = readShown(mode)!;
+    const brackets: Bracket[] = mode === "sl" ? BRACKETS : ["all"];
+    const cells: HeroModeModel["cells"] = {};
+    const grid = {} as Record<Region, Record<Bracket, Snapshot | null>>;
+    for (const r of REGIONS) {
+      grid[r] = { all: null, low: null, high: null };
+      for (const b of brackets) {
+        const s = readShown(mode, b, r);
+        grid[r][b] = s?.snap ?? null;
+        cells[snapshotKey(mode, b, r)] = s ? { summary: heroSummary(s.snap, s.previous, hero.name, min), maps: mapRows(s.snap, hero.name, maps, min) } : null;
+      }
+    }
     return {
       patch: snap.patch,
       collectedAt: snap.collected_at,
       fallbackFrom: fallback ? meta.current_patch : null,
-      summary: heroSummary(snap, previous, hero.name, min),
-      maps: mapRows(snap, hero.name, maps, min),
-      regions: regionRows((["kr", "na", "eu"] as const).map((r) => ({ key: r, snap: readShown(mode, "all", r)?.snap ?? null })), hero.name, min),
-      brackets: mode === "sl" ? bracketRows([{ key: "low", snap: readShown("sl", "low")?.snap ?? null }, { key: "high", snap: readShown("sl", "high")?.snap ?? null }], hero.name, min) : [],
+      cells,
+      grid: heroGrid(mode, grid, hero.name, min),
     };
   };
   const builds = readBuilds();

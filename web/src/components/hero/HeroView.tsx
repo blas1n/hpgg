@@ -2,10 +2,10 @@
 
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { assetUrl, hotsHref, shortDate, type HeroInfo, type Mode } from "@/data";
+import { assetUrl, BRACKETS, hotsHref, REGIONS, shortDate, snapshotKey, type Bracket, type HeroInfo, type Mode, type Region } from "@/data";
 import { HpCredit } from "@/components/HpCredit";
 import { useLocale, useT } from "@/i18n/client";
-import { descParts, type BracketRow, type BuildTalentView, type BuildView, type HeroSummary, type MapRow, type RegionRow } from "@/lib/hero";
+import { descParts, type BuildTalentView, type BuildView, type GridRow, type HeroSummary, type MapRow } from "@/lib/hero";
 import { matchupRule, type MatchupRow, type MatchupsView } from "@/lib/matchups";
 import type { HeroPatchNotes, PatchNoteView } from "@/lib/patchnotes";
 import { Card, cx, Portrait, Segmented, TierBadge, wrTone } from "../ui";
@@ -18,12 +18,13 @@ export interface HeroModeModel {
   collectedAt: string;
   /** The thin current patch when this model is the previous one (lib/shown.ts). */
   fallbackFrom: string | null;
-  summary: HeroSummary;
-  maps: MapRow[];
-  brackets: BracketRow[]; // Storm League only
-  /** Collected regions for this mode (each with its own date: regions rotate one a day). */
-  regions: RegionRow[];
+  /** Per region × bracket (`snapshotKey`; QM has no bracket): the stat cards and map rows; null = no file for it. */
+  cells: Record<string, { summary: HeroSummary; maps: MapRow[] } | null>;
+  /** 지역 × 구간: this hero in every cell of the mode. */
+  grid: { brackets: Bracket[]; rows: GridRow[] };
 }
+
+const FILTER = "h-9 rounded-lg border border-line bg-surface px-2 text-[13px] text-fg";
 
 // section titles land just below the header + sticky tabs
 const SECTION = "scroll-mt-[calc(var(--header-h)+48px)] mb-2.5 mt-6 text-base font-extrabold text-fg";
@@ -48,28 +49,48 @@ export function HeroView({
   minGames: number;
 }) {
   const t = useT();
-  const [mode, setMode] = useState<Mode>("qm");
+  // ?mode=sl&region=kr&tier=low — the tier table's names, so a view reads the same on both pages
+  const [view, setView] = useState<{ mode: Mode; region: Region; bracket: Bracket }>({ mode: "qm", region: "all", bracket: "all" });
   useEffect(() => {
-    if (new URLSearchParams(location.search).get("mode") !== "sl") return;
-    setMode("sl");
+    const q = new URLSearchParams(location.search);
+    const mode: Mode = q.get("mode") === "sl" ? "sl" : "qm";
+    const r = q.get("region") as Region | null;
+    const b = q.get("tier") as Bracket | null;
+    const next = {
+      mode,
+      region: r && REGIONS.includes(r) ? r : "all",
+      bracket: mode === "sl" && b && BRACKETS.includes(b) ? b : "all",
+    } as const;
+    if (next.mode === "qm" && next.region === "all") return;
+    setView(next);
     // a shared …?mode=sl#builds-title link: the Storm League sections above the target appear after the browser jumped
     const id = location.hash.slice(1);
     if (id) requestAnimationFrame(() => document.getElementById(id)?.scrollIntoView({ behavior: "instant" }));
   }, []);
-  const change = (m: Mode) => {
-    setMode(m);
-    history.replaceState(null, "", location.pathname + (m === "sl" ? "?mode=sl" : "") + location.hash);
+  const change = (patch: Partial<typeof view>) => {
+    const next = { ...view, ...patch };
+    if (next.mode === "qm") next.bracket = "all";
+    setView(next);
+    const q = new URLSearchParams();
+    if (next.mode === "sl") q.set("mode", "sl");
+    if (next.region !== "all") q.set("region", next.region);
+    if (next.bracket !== "all") q.set("tier", next.bracket);
+    const qs = q.toString();
+    history.replaceState(null, "", location.pathname + (qs ? `?${qs}` : "") + location.hash);
   };
+  const { mode, region, bracket } = view;
   const m = models[mode];
-  const s = m.summary;
   const sl = mode === "sl";
+  const cell = m.cells[snapshotKey(mode, bracket, region)] ?? null;
+  const s: HeroSummary = cell?.summary ?? { kind: "none" };
+  const filtered = region !== "all" || bracket !== "all";
+  const viewLabel = [region !== "all" && t.common.regions[region], bracket !== "all" && t.common.brackets[bracket]].filter(Boolean).join(" · ");
 
   const tab = t.hero.sections;
   const sections = [
     { id: "top", label: tab.top },
     { id: "maps-title", label: tab.maps },
-    ...(sl && m.brackets.length ? [{ id: "brackets-title", label: tab.brackets, nav: "nav-brackets" }] : []),
-    ...(m.regions.length ? [{ id: "regions-title", label: tab.regions, nav: "nav-regions" }] : []),
+    { id: "grid-title", label: tab.grid, nav: "nav-grid" },
     ...(matchups ? [{ id: "matchups-title", label: tab.matchups, nav: "nav-matchups" }] : []),
     ...(builds.length ? [{ id: "builds-title", label: tab.builds, nav: "nav-builds" }] : []),
     // long and not what people come for first: last, below both columns
@@ -92,7 +113,8 @@ export function HeroView({
             {[hero.name !== hero.ko && hero.name, hero.role_ko].filter(Boolean).join(" · ")}
           </p>
           <p id="meta-line" className="num mt-0.5 text-xs text-muted">
-            {t.common.modes[mode]} · {t.common.patch(m.patch)} · {t.common.updated(shortDate(m.collectedAt))}
+            {t.common.modes[mode]}
+            {filtered && <span data-view> · {viewLabel}</span>} · {t.common.patch(m.patch)} · {t.common.updated(shortDate(m.collectedAt))}
             {m.fallbackFrom && <span data-fallback> · {t.common.fallbackNote(m.fallbackFrom)}</span>}
           </p>
         </div>
@@ -103,16 +125,40 @@ export function HeroView({
           label={t.common.gameMode}
           idPrefix="mode"
           value={mode}
-          onChange={change}
+          onChange={(v) => change({ mode: v })}
           options={[
             { value: "qm", label: t.common.modes.qm },
             { value: "sl", label: t.common.modes.sl },
           ]}
         />
+        <div className="mt-2 flex flex-wrap gap-1.5">
+          <label>
+            <span className="sr-only">{t.common.region}</span>
+            <select id="hero-region" value={region} onChange={(e) => change({ region: e.target.value as Region })} className={FILTER}>
+              {REGIONS.map((r) => (
+                <option key={r} value={r}>
+                  {t.common.regions[r]}
+                </option>
+              ))}
+            </select>
+          </label>
+          {sl && (
+            <label>
+              <span className="sr-only">{t.tier.bracket}</span>
+              <select id="hero-bracket" value={bracket} onChange={(e) => change({ bracket: e.target.value as Bracket })} className={FILTER}>
+                {BRACKETS.map((b) => (
+                  <option key={b} value={b}>
+                    {t.common.brackets[b]}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
+        </div>
       </div>
 
       <div id="stats" className="mt-4 grid grid-cols-3 gap-2 lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:mt-5">
-        <StatCards s={s} sl={sl} minGames={minGames} />
+        {cell ? <StatCards s={s} sl={sl} minGames={minGames} /> : <p id="no-cell" className="col-span-3 rounded-lg border border-line bg-surface px-3 py-4 text-center text-[13px] text-muted">{t.hero.noCell}</p>}
       </div>
       </div>
 
@@ -125,62 +171,17 @@ export function HeroView({
         {t.hero.mapsTitle(t.common.modes[mode])}
       </h2>
       <div id="maps">
-        <MapRows rows={m.maps} />
+        <MapRows rows={cell?.maps ?? []} />
       </div>
       </section>
       <section>
 
-      {sl && m.brackets.length > 0 && (
-        <>
-          <h2 id="brackets-title" className={SECTION}>
-            {t.hero.bracketsTitle}
-          </h2>
-          <div id="brackets" className="flex flex-col gap-1.5">
-            {m.brackets.map((b) => (
-              <div key={b.key} data-bracket={b.key} className="grid grid-cols-[28px_1fr_auto] items-center gap-3 rounded-lg border border-line bg-surface px-3 py-2">
-                {b.tier ? <TierBadge tier={b.tier} size="lg" /> : <span className="text-center text-muted">–</span>}
-                <span className="min-w-0">
-                  <span className="block text-[13px] font-semibold text-fg">{t.common.brackets[b.key]}</span>
-                  <span className="num block text-2xs text-muted">
-                    {b.rank ? `#${b.rank} / ${b.n}` : t.common.thin} · {t.common.games(int(b.games))}
-                  </span>
-                </span>
-                <span className="num text-right">
-                  <span className={cx("block text-[13px] font-bold", wrTone(b.win_rate))}>{pct(b.win_rate)}</span>
-                  <span className="block text-2xs text-muted">{t.hero.pickBan(pct(b.pick), pct(b.ban_rate))}</span>
-                </span>
-              </div>
-            ))}
-          </div>
-        </>
-      )}
+      <h2 id="grid-title" className={SECTION}>
+        {t.hero.gridTitle(t.common.modes[mode])} <span className="text-xs font-normal text-muted">{t.hero.gridSub}</span>
+      </h2>
+      <Grid grid={m.grid} region={region} bracket={bracket} onPick={(r, b) => change({ region: r, bracket: b })} />
 
-      {m.regions.length > 0 && (
-        <>
-          <h2 id="regions-title" className={SECTION}>
-            {t.hero.regionsTitle(t.common.modes[mode])} <span className="text-xs font-normal text-muted">{t.hero.regionsSub}</span>
-          </h2>
-          <div id="regions" className="flex flex-col gap-1.5">
-            {m.regions.map((r) => (
-              <div key={r.key} data-region={r.key} className="grid grid-cols-[28px_1fr_auto] items-center gap-3 rounded-lg border border-line bg-surface px-3 py-2">
-                {r.tier ? <TierBadge tier={r.tier} size="lg" /> : <span className="text-center text-muted">–</span>}
-                <span className="min-w-0">
-                  <span className="block text-[13px] font-semibold text-fg">{t.common.regions[r.key]}</span>
-                  <span className="num block text-2xs text-muted">
-                    {r.rank ? `#${r.rank} / ${r.n}` : t.common.thin} · {t.common.games(int(r.games))} · {t.common.collected(shortDate(r.collectedAt))}
-                  </span>
-                </span>
-                <span className="num text-right">
-                  <span className={cx("block text-[13px] font-bold", wrTone(r.win_rate))}>{pct(r.win_rate)}</span>
-                  <span className="block text-2xs text-muted">{t.hero.pickShort(pct(r.pick))}</span>
-                </span>
-              </div>
-            ))}
-          </div>
-        </>
-      )}
-
-      <Matchups hero={hero} v={matchups} />
+      <Matchups hero={hero} v={matchups} wholeOnly={filtered} />
 
       {builds.length > 0 && (
         <>
@@ -188,6 +189,7 @@ export function HeroView({
             {t.hero.buildsTitle}{" "}
             <span id="builds-sub" className="text-xs font-normal text-muted">
               {t.hero.buildsSub(buildsPatch ?? "")}
+              {filtered && ` · ${t.hero.wholeOnly}`}
             </span>
           </h2>
           <Builds builds={builds} />
@@ -284,6 +286,54 @@ function Stat({ id, k, v, sub, subTone = "text-muted", delta, title }: { id?: st
         {sub || " "}
       </div>
     </Card>
+  );
+}
+
+/** 지역 × 구간: one row per region, one column per bracket (QM: one column); a cell switches the view above to it. */
+function Grid({ grid, region, bracket, onPick }: { grid: HeroModeModel["grid"]; region: Region; bracket: Bracket; onPick: (r: Region, b: Bracket) => void }) {
+  const t = useT();
+  return (
+    <div id="grid" className="overflow-hidden rounded-card border border-line bg-surface">
+      <div className="grid text-2xs text-muted" style={{ gridTemplateColumns: `minmax(4.5rem,auto) repeat(${grid.brackets.length}, minmax(0,1fr))` }}>
+        <span className="px-2.5 py-1.5" />
+        {grid.brackets.map((b) => (
+          <span key={b} className="px-2 py-1.5 text-center">
+            {t.common.brackets[b]}
+          </span>
+        ))}
+        {grid.rows.map((row) => (
+          <div key={row.region} className="contents">
+            <span className="flex items-center border-t border-line px-2.5 py-2 text-[13px] font-semibold text-fg">{t.common.regions[row.region]}</span>
+            {row.cells.map((c) => {
+              const on = row.region === region && c.bracket === bracket;
+              return (
+                <button
+                  key={c.bracket}
+                  type="button"
+                  data-cell={`${row.region}-${c.bracket}`}
+                  aria-pressed={on}
+                  aria-label={t.hero.gridAria(t.common.regions[row.region], t.common.brackets[c.bracket])}
+                  onClick={() => onPick(row.region, c.bracket)}
+                  className={cx("flex flex-wrap items-center justify-center gap-x-1.5 gap-y-0.5 border-t border-l border-line px-1.5 py-2", on ? "bg-surface-3" : "hover:bg-surface-2")}
+                >
+                  {c.win_rate === null ? (
+                    <span className="text-muted">–</span>
+                  ) : (
+                    <>
+                      {c.tier && <TierBadge tier={c.tier} />}
+                      <span className="num whitespace-nowrap text-left">
+                        <span className={cx("block text-[13px] font-semibold leading-4", wrTone(c.win_rate))}>{pct(c.win_rate)}</span>
+                        <span className="block text-2xs leading-4 text-muted">{t.common.games(int(c.games))}</span>
+                      </span>
+                    </>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }
 
@@ -403,7 +453,7 @@ function PatchNote({ n }: { n: PatchNoteView }) {
 }
 
 /** 상성 — Storm League only (the draft mode), whatever the mode toggle says; numbers only, no per-pair prose. */
-function Matchups({ hero, v }: { hero: HeroInfo; v: MatchupsView | null }) {
+function Matchups({ hero, v, wholeOnly }: { hero: HeroInfo; v: MatchupsView | null; wholeOnly: boolean }) {
   const t = useT();
   const locale = useLocale();
   return (
@@ -413,6 +463,7 @@ function Matchups({ hero, v }: { hero: HeroInfo; v: MatchupsView | null }) {
         {v && (
           <span id="matchups-sub" className="num text-xs font-normal text-muted">
             {t.hero.matchupsSub(v.patch, shortDate(v.collectedAt), hero.ko, pct(v.win_rate), int(v.games))}
+            {wholeOnly && ` · ${t.hero.wholeOnly}`}
           </span>
         )}
       </h2>

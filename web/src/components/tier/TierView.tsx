@@ -2,7 +2,7 @@
 
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { PageHead } from "@/components/PageHead";
-import { assetUrl, hotsHref, loadSnapshot, REGIONS, referencePatch, regionSample, shortDate, snapshotKey, type Bracket, type HeroTable, type MapTable, type Meta, type Mode, type PatchChoice, type Region } from "@/data";
+import { assetUrl, BRACKETS, hotsHref, loadSnapshot, REGIONS, referencePatch, regionSample, shortDate, snapshotKey, type Bracket, type HeroTable, type MapTable, type Meta, type Mode, type PatchChoice, type Region } from "@/data";
 import { useLocale, useT } from "@/i18n/client";
 import type { Locale } from "@/i18n/locale";
 import type { Messages } from "@/i18n/messages";
@@ -23,7 +23,6 @@ const COLUMNS: { key: SortKey; sl?: true; wide?: true }[] = [{ key: "score" }, {
 // display:none cell the spanning row would add phantom columns that squeeze the hero column.
 const WIDE = "max-sm:w-0 max-sm:p-0 max-sm:*:hidden";
 const LG = "max-lg:w-0 max-lg:p-0 max-lg:*:hidden";
-const BRACKETS: Bracket[] = ["all", "low", "high"];
 
 type Loaded = Record<string, Snapshot | null>; // "latest/qm", "previous/sl_low", … ; null = not published
 
@@ -79,9 +78,9 @@ export function TierView({ meta, heroes, maps, initial }: { meta: Meta; heroes: 
         const [d, f] = k.split("/") as ["latest" | "previous", string];
         const shown = k === curKey; // the file this view shows (the other one only feeds ▲▼)
         try {
-          // a region is published only once it has been collected (meta lists it); don't ask for a file that isn't there
-          if (region !== "all" && shown && d === "latest" && !meta.modes[f]) {
-            setError(t.tier.regionNotCollected(t.common.regions[region]));
+          // a view is published only once it has been collected (meta lists it); don't ask for a file that isn't there
+          if (f !== mode && shown && d === "latest" && !meta.modes[f]) {
+            setError(t.tier.regionNotCollected(viewLabel(t, region, sl ? bracket : "all")));
             return [k, null] as const;
           }
           const s = await loadSnapshot(f, d === "previous" ? "previous" : "current", heroes);
@@ -201,15 +200,13 @@ export function TierView({ meta, heroes, maps, initial }: { meta: Meta; heroes: 
             <select
               id="region"
               value={region}
-              disabled={sl && bracket !== "all"}
-              title={sl && bracket !== "all" ? t.tier.comboNote : undefined}
-              onChange={(e) => update({ region: e.target.value as Region, bracket: "all", patch: "auto" })}
+              onChange={(e) => update({ region: e.target.value as Region, patch: "auto" })}
               className={SELECT}
             >
               {REGIONS.map((r) => (
-                <option key={r} value={r} disabled={r !== "all" && !regionSample(meta, mode, r, patch)}>
+                <option key={r} value={r} disabled={r !== "all" && !regionSample(meta, mode, r, patch, sl ? bracket : "all")}>
                   {t.common.regions[r]}
-                  {r !== "all" && !regionSample(meta, mode, r, patch) ? t.tier.notCollected : ""}
+                  {r !== "all" && !regionSample(meta, mode, r, patch, sl ? bracket : "all") ? t.tier.notCollected : ""}
                 </option>
               ))}
             </select>
@@ -218,7 +215,7 @@ export function TierView({ meta, heroes, maps, initial }: { meta: Meta; heroes: 
             <>
             <label id="bracket-wrap" className="flex-1 sm:flex-none">
               <span className="sr-only">{t.tier.bracket}</span>
-              <select id="bracket" value={bracket} disabled={region !== "all"} title={region !== "all" ? t.tier.comboNote : undefined} onChange={(e) => update({ bracket: e.target.value as Bracket })} className={SELECT}>
+              <select id="bracket" value={bracket} onChange={(e) => update({ bracket: e.target.value as Bracket })} className={SELECT}>
                 {BRACKETS.map((b) => (
                   <option key={b} value={b}>
                     {t.common.brackets[b]}
@@ -240,14 +237,9 @@ export function TierView({ meta, heroes, maps, initial }: { meta: Meta; heroes: 
             </>
           )}
         </div>
-        {sl && (region !== "all" || bracket !== "all") && (
-          <p id="combo-note" className="w-full text-2xs text-muted">
-            {t.tier.comboNote}
-          </p>
-        )}
       </Card>
 
-      {region !== "all" && <RegionNote meta={meta} mode={mode} region={region} patch={patch} />}
+      {(region !== "all" || (sl && bracket !== "all")) && <RegionNote meta={meta} mode={mode} region={region} bracket={sl ? bracket : "all"} patch={patch} />}
 
       {/* clip, not hidden: hidden would make the card a scroll container and the sticky column header would stop */}
       <Card as="div" className="overflow-clip">
@@ -327,10 +319,15 @@ export function TierView({ meta, heroes, maps, initial }: { meta: Meta; heroes: 
 }
 
 
-/** Which region, when it was collected (regions rotate one a day), and how thin its sample is. */
-function RegionNote({ meta, mode, region, patch }: { meta: Meta; mode: Mode; region: Exclude<Region, "all">; patch: PatchChoice }) {
+/** "아시아 (KR) · 브론즈 – 플래티넘": the region and/or bracket a view is, in the page language. */
+function viewLabel(t: ReturnType<typeof useT>, region: Region, bracket: Bracket): string {
+  return [region !== "all" && t.common.regions[region], bracket !== "all" && t.common.brackets[bracket]].filter(Boolean).join(" · ");
+}
+
+/** A region or bracket view: which one, when it was collected, and how thin its sample is. */
+function RegionNote({ meta, mode, region, bracket, patch }: { meta: Meta; mode: Mode; region: Region; bracket: Bracket; patch: PatchChoice }) {
   const t = useT();
-  const s = regionSample(meta, mode, region, patch);
+  const s = regionSample(meta, mode, region, patch, bracket);
   if (!s) return null;
   return (
     <p
@@ -339,7 +336,7 @@ function RegionNote({ meta, mode, region, patch }: { meta: Meta; mode: Mode; reg
       className={cx("num rounded-lg border px-3 py-2 text-[13px]", s.thin ? "border-warn-line bg-warn-bg text-warn-fg" : "border-line bg-surface text-fg-2")}
     >
       {t.tier.regionNote(
-        t.common.regions[region],
+        viewLabel(t, region, bracket),
         s.collectedAt ? t.tier.collectedOn(shortDate(s.collectedAt)) : t.tier.collectedUnknown,
         String(meta.min_games_for_tier),
         String(s.over),

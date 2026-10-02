@@ -5,7 +5,7 @@ import { dirname, join } from "node:path";
 import { knownOnly } from "../src/lib/known";
 import type { Snapshot } from "../src/formula";
 import type { BuildsFile, HeroTable, MapTable, TalentTable } from "../src/data";
-import { BUILD_MIN_GAMES, bracketRows, descParts, heroBuilds, heroSummary, mapRows } from "../src/lib/hero";
+import { BUILD_MIN_GAMES, descParts, heroBuilds, heroGrid, heroSummary, mapRows } from "../src/lib/hero";
 
 const dataDir = join(dirname(fileURLToPath(import.meta.url)), "e2e-data");
 const json = <T>(rel: string): T => JSON.parse(readFileSync(join(dataDir, rel), "utf-8")) as T;
@@ -62,12 +62,29 @@ describe("mapRows", () => {
   });
 });
 
-describe("bracketRows", () => {
-  it("one row per published bracket with its tier and rank; missing files are skipped", () => {
-    const rows = bracketRows([{ key: "low", snap: sl }, { key: "high", snap: null }], "Illidan", 200);
-    expect(rows).toHaveLength(1);
-    expect(rows[0]).toMatchObject({ key: "low", tier: "A" });
-    expect(rows[0]!.rank).toBeGreaterThan(0);
+describe("heroGrid", () => {
+  it("the hero in every region × bracket the mode has, with tier and rank where ranked; a missing file is an empty cell", () => {
+    const cells = {
+      all: { all: sl, low: sl, high: null },
+      kr: { all: sl, low: null, high: null },
+      na: { all: null, low: null, high: null },
+      eu: { all: null, low: null, high: null },
+    };
+    const g = heroGrid("sl", cells, "Illidan", 200);
+    expect(g.brackets).toEqual(["all", "low", "high"]);
+    expect(g.rows.map((r) => r.region)).toEqual(["all", "kr", "na", "eu"]);
+    const all = g.rows[0]!.cells;
+    expect(all.map((c) => c.bracket)).toEqual(["all", "low", "high"]);
+    expect(all[0]).toMatchObject({ bracket: "all", tier: "A" });
+    expect(all[0]!.games).toBeGreaterThan(200);
+    expect(all[2]).toEqual({ bracket: "high", tier: null, rank: null, n: 0, win_rate: null, games: 0 });
+    expect(g.rows[2]!.cells[0]!.win_rate).toBeNull();
+  });
+  it("quick match: regions only", () => {
+    const cells = { all: { all: qm, low: null, high: null }, kr: { all: qm, low: null, high: null }, na: { all: null, low: null, high: null }, eu: { all: null, low: null, high: null } };
+    const g = heroGrid("qm", cells, "Illidan", 200);
+    expect(g.brackets).toEqual(["all"]);
+    expect(g.rows.every((r) => r.cells.length === 1)).toBe(true);
   });
 });
 
