@@ -176,7 +176,9 @@ class HPClient:
         wait = _retry_after(resp, self._poll_default)
         started = self._clock()
         polls = 0
-        log.info("hp.job_started", path=path, retry_after=wait)
+        # the job URL is logged: polling is free, so a result lost after the run (2026-10-02:
+        # with its runner) can be fetched again while HP keeps it
+        log.info("hp.job_started", path=path, job=job_url, retry_after=wait)
         while True:
             await self._sleep(wait)
             polls += 1
