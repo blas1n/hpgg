@@ -178,7 +178,9 @@ jobs:
 
   deploy:
     needs: [build]
-    # GitHub's deploy action only: the one step with the right to publish the site
+    # GitHub's deploy action only: the one step with the right to publish the site. always(): build's own needs are
+    # skipped on a push or a fresh gate, and GitHub skips a job after a skipped one unless told otherwise
+    if: always() && needs.build.result == 'success'
     runs-on: ubuntu-latest
     permissions:
       pages: write
