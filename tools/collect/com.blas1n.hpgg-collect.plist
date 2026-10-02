@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!-- Dawn dispatch of the daily collection: 03:20 KST (the Mac mini's clock is Asia/Seoul).
+     GitHub's own cron started ~4 h late every night (2026-09-29 → 10-01), so the site's "매일 새벽 갱신" was not
+     true; the workflow's cron is now the 05:20 KST fallback. `if_stale=true` makes the run stop at its gate when
+     data/latest was collected in the last 12 h, so the two never both spend the Heroes/Stats quota.
+     Uses the owner's gh login (~/.config/gh/hosts.yml).
+     Install: cp tools/collect/com.blas1n.hpgg-collect.plist ~/Library/LaunchAgents/ &&
+              launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.blas1n.hpgg-collect.plist
+     Check:   launchctl print gui/$(id -u)/com.blas1n.hpgg-collect · tail ~/Library/Logs/hpgg-collect.log -->
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.blas1n.hpgg-collect</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>/bin/sh</string>
+        <string>-c</string>
+        <string>date -u +%FT%TZ; /opt/homebrew/bin/gh workflow run collect-and-deploy.yml --repo blas1n/hpgg --ref main -f if_stale=true</string>
+    </array>
+    <key>StartCalendarInterval</key>
+    <dict>
+        <key>Hour</key>
+        <integer>3</integer>
+        <key>Minute</key>
+        <integer>20</integer>
+    </dict>
+    <key>StandardOutPath</key>
+    <string>/Users/blasin/Library/Logs/hpgg-collect.log</string>
+    <key>StandardErrorPath</key>
+    <string>/Users/blasin/Library/Logs/hpgg-collect.log</string>
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PATH</key>
+        <string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin</string>
+    </dict>
+</dict>
+</plist>
