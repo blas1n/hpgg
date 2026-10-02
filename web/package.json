@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "node --experimental-strip-types --disable-warning=ExperimentalWarning scripts/sync-data.mjs && next dev -p 5173",
-    "build": "node --experimental-strip-types --disable-warning=ExperimentalWarning scripts/sync-data.mjs && tsc --noEmit && next build",
+    "build": "node --experimental-strip-types --disable-warning=ExperimentalWarning scripts/sync-data.mjs && tsc --noEmit && next build && node --experimental-strip-types --disable-warning=ExperimentalWarning scripts/prune-dist.mjs",
     "preview": "vite preview --port 4173 --strictPort",
     "test": "vitest run",
     "test:cov": "vitest run --coverage",
