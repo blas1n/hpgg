@@ -61,11 +61,22 @@ export function HeroView({
       region: r && REGIONS.includes(r) ? r : "all",
       bracket: mode === "sl" && b && BRACKETS.includes(b) ? b : "all",
     } as const;
-    if (next.mode === "qm" && next.region === "all") return;
-    setView(next);
-    // a shared …?mode=sl#builds-title link: the Storm League sections above the target appear after the browser jumped
+    if (next.mode !== "qm" || next.region !== "all") setView(next);
+    // a shared …#builds-title link lands on its section ourselves, once drawn and again once the fonts are in: the
+    // browser jumps before the page settles (another view's sections, the font swap) and its own correction can come
+    // seconds later on a slow phone. Not after the visitor has scrolled.
     const id = location.hash.slice(1);
-    if (id) requestAnimationFrame(() => document.getElementById(id)?.scrollIntoView({ behavior: "instant" }));
+    if (!id) return;
+    let moved = false;
+    const stop = () => (moved = true);
+    const land = () => !moved && document.getElementById(id)?.scrollIntoView({ behavior: "instant" });
+    const opts = { passive: true, once: true } as const;
+    for (const e of ["wheel", "touchstart", "keydown"] as const) addEventListener(e, stop, opts);
+    requestAnimationFrame(land);
+    void document.fonts?.ready.then(() => requestAnimationFrame(land));
+    return () => {
+      for (const e of ["wheel", "touchstart", "keydown"] as const) removeEventListener(e, stop);
+    };
   }, []);
   const change = (patch: Partial<typeof view>) => {
     const next = { ...view, ...patch };
