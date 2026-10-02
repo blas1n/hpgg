@@ -62,3 +62,12 @@ def test_the_jobs_that_run_packages_cannot_publish_or_push() -> None:
             perms = job.get("permissions", {})
             assert perms.get("contents") == "read", name
             assert "pages" not in perms and "id-token" not in perms, name
+
+
+def test_deploy_runs_whenever_build_succeeded() -> None:
+    """2026-10-02: deploy had no `if` and needs only build, whose own needs (collect, publish)
+    are skipped on a push or a fresh gate; GitHub then skips deploy too — the site stayed on
+    the old build. Every job after a possibly skipped one needs an explicit always()."""
+    jobs = _jobs(Path(__file__).parent.parent / ".github/workflows/collect-and-deploy.yml")
+    cond = jobs["deploy"].get("if", "")
+    assert "always()" in cond and "needs.build.result == 'success'" in cond
