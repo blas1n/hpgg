@@ -64,6 +64,27 @@ describe("mapRows", () => {
   });
 });
 
+describe("mapRows in a thin view (owner 10-02: KR, 표본 부족 and 0판)", () => {
+  const cursed = sl.rows.find((r) => r.hero === "Illidan" && r.map === "Cursed Hollow")!;
+  const other = sl.rows.find((r) => r.hero !== "Illidan" && r.map === "Cursed Hollow")!;
+  const snap: Snapshot = {
+    ...sl,
+    rows: [
+      { ...cursed, games: 300, wins: 150, win_rate: 50 },
+      { ...cursed, map: "Towers of Doom", games: 1, wins: 1, win_rate: 100 }, // one game, 100 %
+      { ...other, map: "Sky Temple", games: 4 }, // a map of this view where Illidan has no game
+    ],
+  };
+  const rows = mapRows(snap, "Illidan", maps, 200);
+  it("a map under the floor never leads the list on a lucky game: solid maps first, then thin ones by games", () => {
+    expect(rows.map((r) => r.slug)).toEqual(["cursed-hollow", "towers-of-doom", "sky-temple"]);
+    expect(rows.map((r) => r.thin)).toEqual([false, true, true]);
+  });
+  it("a map of the view where the hero has no game is listed with 0 games and no win rate", () => {
+    expect(rows[2]).toMatchObject({ slug: "sky-temple", games: 0, win_rate: null, thin: true });
+  });
+});
+
 describe("heroGrid", () => {
   it("the hero in every region × bracket the mode has, with tier and rank where ranked; a missing file is an empty cell", () => {
     const cells = {

@@ -361,14 +361,16 @@ function MapRows({ rows }: { rows: MapRow[] }) {
   const t = useT();
   if (!rows.length) return <p className="rounded-lg border border-line bg-surface px-3 py-4 text-center text-[13px] text-muted">{t.hero.noMaps}</p>;
   // bar length = distance from 50%, scaled to this hero's widest gap (at least 5%p)
-  const span = Math.max(5, ...rows.map((r) => Math.abs(r.win_rate - 50)));
+  const span = Math.max(5, ...rows.flatMap((r) => (r.thin || r.win_rate === null ? [] : [Math.abs(r.win_rate - 50)])));
   return (
     <div className="divide-y divide-line overflow-hidden rounded-card border border-line bg-surface">
       {rows.map((r) => {
-    const up = r.win_rate >= 50;
+    // under the floor: no bar and a muted rate, like the grid (a lucky game is not a finding)
+    const solid = !r.thin && r.win_rate !== null;
+    const up = (r.win_rate ?? 50) >= 50;
     // not a link: the per-map tier table is a different view (owner, 2026-09-28)
     return (
-      <div key={r.slug} data-map={r.slug} className="grid grid-cols-[44px_1fr_auto] items-center gap-3 px-2.5 py-1">
+      <div key={r.slug} data-map={r.slug} data-thin={r.thin || undefined} className="grid grid-cols-[44px_1fr_auto] items-center gap-3 px-2.5 py-1">
         {r.image ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={assetUrl(r.image)} alt="" loading="lazy" className="h-[26px] w-11 rounded object-cover" />
@@ -382,11 +384,11 @@ function MapRows({ rows }: { rows: MapRow[] }) {
             {r.thin && ` · ${t.common.thin}`}
           </span>
           <span className="mt-1 block h-[3px] overflow-hidden rounded-full bg-surface-3">
-            <i className={cx("block h-full rounded-full", up ? "bg-pos" : "bg-neg")} style={{ width: `${Math.min(100, (Math.abs(r.win_rate - 50) / span) * 100)}%` }} />
+            {solid && <i className={cx("block h-full rounded-full", up ? "bg-pos" : "bg-neg")} style={{ width: `${Math.min(100, (Math.abs(r.win_rate! - 50) / span) * 100)}%` }} />}
           </span>
         </span>
         <span className="num text-right">
-          <span className={cx("block text-[13px] font-semibold leading-4", wrTone(r.win_rate))}>{pct(r.win_rate)}</span>
+          <span data-wr className={cx("block text-[13px] leading-4", solid ? cx("font-semibold", wrTone(r.win_rate!)) : "text-muted")}>{r.win_rate === null ? "–" : pct(r.win_rate)}</span>
           <span className="block text-2xs leading-4 text-muted">{t.hero.pickShort(pct(r.pick))}</span>
         </span>
       </div>
