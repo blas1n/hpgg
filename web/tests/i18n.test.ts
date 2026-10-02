@@ -190,3 +190,11 @@ describe("names in the page language", () => {
     expect(m.aram?.find((x) => x.name === "Silver City")!.ko).toBe("Silver City");
   });
 });
+
+describe("search and link-preview descriptions", () => {
+  // "공식 공개" in a link preview reads as "official release"; the site is not official. Say 계산식 (formula).
+  it("names the formula 계산식 in Korean", () => {
+    expect(messages.ko.meta.hotsDescription).toContain("계산식 공개");
+    expect(messages.ko.meta.tierDescription).toContain("계산식 공개");
+  });
+});

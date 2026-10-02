@@ -9,7 +9,7 @@ export const rootMetadata = (locale: Locale): Metadata => ({
   title: { default: messages[locale].site.title, template: "%s | HPGG" },
   description: messages[locale].site.description,
   icons: { icon: "/img/brand/icon-sm.png", apple: "/img/brand/icon.png" },
-  openGraph: { siteName: "hpgg.win", locale: messages[locale].lang.og, type: "website", images: ["/img/brand/logo-h.png"] },
+  openGraph: { siteName: "hpgg.win", locale: messages[locale].lang.og, type: "website", images: [`/img/brand/og-${locale}.png`] }, // 1200×630, scripts/og-card.mjs
 });
 
 export const rootViewport: Viewport = { themeColor: "#0e1118", colorScheme: "dark" };
