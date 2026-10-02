@@ -84,7 +84,7 @@ test("heroes: the universe filter keeps only that universe's heroes, lands in th
   await expect(page.locator('#grid a[data-hero="raynor"]')).toBeVisible();
 });
 
-test("hero detail: three stat cards, per-map rows (not links) in SL, brackets, no vote", async ({ page }) => {
+test("hero detail: three stat cards, per-map rows (not links) in SL, region × bracket grid, no vote", async ({ page }) => {
   await page.goto("./heroes/illidan/");
   await expect(page.locator("h1")).toHaveText("일리단");
   const cards = page.locator("#stats > div");
@@ -107,9 +107,9 @@ test("hero detail: three stat cards, per-map rows (not links) in SL, brackets, n
   await expect(page.locator("#maps [data-map]")).toHaveCount(1); // fixture SL has one real map (Cursed Hollow)
   await expect(page.locator('#maps [data-map="cursed-hollow"]')).toContainText("저주받은 골짜기");
   await expect(page.locator("#maps a")).toHaveCount(0); // map rows do not navigate
-  await expect(page.locator("#brackets")).toBeVisible();
-  await expect(page.locator("#brackets [data-bracket]")).toHaveCount(2); // 브실골플 / 다마그
-  await expect(page.locator("main button:not([id^=mode-]):not([data-talent])")).toHaveCount(0); // no vote buttons: only the mode toggle and talent icons are buttons
+  await expect(page.locator("#grid [data-cell]")).toHaveCount(12); // 4 regions × (전체, 브실골플, 다마그)
+  // no vote buttons: only the mode toggle, the grid cells and talent icons are buttons
+  await expect(page.locator("main button:not([id^=mode-]):not([data-talent]):not([data-cell])")).toHaveCount(0);
 });
 
 test("hero detail: section tabs stick under the header and land each section just below them", async ({ page }) => {
@@ -135,8 +135,8 @@ test("hero detail: section tabs stick under the header and land each section jus
 test("hero detail: at the bottom of the page the last section's tab is active", async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 900 }); // the last title cannot reach the tabs
   await page.goto("./heroes/illidan/?mode=sl");
-  // ?mode=sl is applied after hydration and adds sections: scroll only once the page has its final length
-  await expect(page.locator("#brackets [data-bracket]")).toHaveCount(2);
+  // ?mode=sl is applied after hydration and changes the page: scroll only once it has its final length
+  await expect(page.locator("#grid [data-cell]")).toHaveCount(12);
   await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
   // patch changes are the last section (#62): their tab, not builds'
   await expect(page.locator("#nav-patches")).toHaveAttribute("aria-current", "location");
@@ -292,27 +292,58 @@ test("tier table: region select loads {mode}_{region}.json, lands in the URL and
   await expect(page.locator("#meta-line")).toContainText("폭풍 리그 · 아시아 (KR)");
 });
 
-test("tier table: a thin region says so; region and bracket exclude each other with a reason", async ({ page }) => {
+test("tier table: a thin region says so", async ({ page }) => {
   await page.goto("./tier/?mode=sl&region=na");
   await expect(page.locator("#region")).toHaveValue("na");
   await expect(page.locator("#region-note")).toHaveAttribute("data-thin", "true");
   await expect(page.locator("#region-note")).toContainText("12/91");
-  await expect(page.locator("#bracket")).toBeDisabled();
-  await expect(page.locator("#combo-note")).toContainText("지역별 데이터는 전체 구간만");
-  await page.locator("#region").selectOption("all");
-  await expect(page.locator("#bracket")).toBeEnabled();
-  await page.locator("#bracket").selectOption("high");
-  await expect(page.locator("#region")).toBeDisabled();
-  await expect(page.locator("#combo-note")).toContainText("지역별 데이터는 전체 구간만");
-  await expect(page).not.toHaveURL(/region=/);
 });
 
-test("hero detail: per-region rows for the mode, each with its collection date", async ({ page }) => {
+// owner 2026-10-02: region and bracket together, e.g. KR × 브실골플 (e2e-data: KR has both brackets, EU none)
+test("tier table: region and bracket combine, load {view}_{region}.json and both stay in the URL", async ({ page }) => {
+  await page.goto("./tier/?mode=sl&region=kr");
+  await expect(page.locator("#bracket")).toBeEnabled();
+  await page.locator("#bracket").selectOption("low");
+  await expect(page).toHaveURL(/mode=sl&region=kr&tier=low/);
+  await expect(page.locator("#region")).toHaveValue("kr");
+  await expect(page.locator("#region")).toBeEnabled();
+  await expect(page.locator("#table")).toHaveAttribute("aria-busy", "false");
+  await expect(page.locator("#region-note")).toContainText("아시아 (KR) · 브론즈 – 플래티넘");
+  await expect(page.locator("#region-note")).toContainText("09/27 수집");
+  await expect(page.locator("#rows tr").first()).toBeVisible();
+  await expect(page.locator("#combo-note")).toHaveCount(0);
+  // a cell not collected says so in the menu
+  await expect(page.locator('#region option[value="eu"]')).toHaveText("유럽 (EU) · 수집 전");
+  // a bracket alone gets the same note (its sample)
+  await page.locator("#region").selectOption("all");
+  await expect(page).toHaveURL(/mode=sl&tier=low/);
+  await expect(page.locator("#region-note")).toContainText("브론즈 – 플래티넘");
+});
+
+test("hero detail: region × bracket grid; a cell switches the stats above and lands in the URL", async ({ page }) => {
   await page.goto("./heroes/illidan/");
-  await expect(page.locator("#regions [data-region]")).toHaveCount(2); // KR, NA; EU not collected
-  await expect(page.locator('#regions [data-region="kr"]')).toContainText("아시아 (KR)");
-  await expect(page.locator('#regions [data-region="kr"]')).toContainText("09/27");
-  await expect(page.locator("nav[data-subnav] a[href='#regions-title']")).toBeVisible();
+  await expect(page.locator("#grid [data-cell]")).toHaveCount(4); // QM: regions only
+  await expect(page.locator('#grid [data-cell="all-all"]')).toHaveAttribute("aria-pressed", "true");
+  await expect(page.locator("nav[data-subnav] a[href='#grid-title']")).toBeVisible();
+  await page.locator('#grid [data-cell="kr-all"]').click();
+  await expect(page).toHaveURL(/region=kr/);
+  await expect(page.locator("#hero-region")).toHaveValue("kr");
+  await expect(page.locator("#meta-line [data-view]")).toContainText("아시아 (KR)");
+  await expect(page.locator("#stats > div")).toHaveCount(3);
+  // talent builds and matchups stay on every region and bracket, and say so
+  await expect(page.locator("#builds-sub")).toContainText("전체 지역·구간 기준");
+  // Storm League: KR × 브실골플 by the URL; EU has no files → the page says so
+  await page.goto("./heroes/illidan/?mode=sl&region=kr&tier=low");
+  await expect(page.locator("#hero-bracket")).toHaveValue("low");
+  await expect(page.locator('#grid [data-cell="kr-low"]')).toHaveAttribute("aria-pressed", "true");
+  await expect(page.locator("#meta-line [data-view]")).toContainText("아시아 (KR) · 브론즈 – 플래티넘");
+  await page.locator("#hero-region").selectOption("eu");
+  await expect(page.locator("#no-cell")).toBeVisible();
+  await expect(page.locator('#grid [data-cell="eu-low"]')).toHaveText("–");
+  await page.locator("#hero-region").selectOption("all");
+  await page.locator("#hero-bracket").selectOption("all");
+  await expect(page).toHaveURL(/\/heroes\/illidan\/\?mode=sl$/);
+  await expect(page.locator("#builds-sub")).not.toContainText("전체 지역·구간 기준");
 });
 
 test("tier table: a previous-patch bracket file of an older bracket definition is never shown under the new label", async ({ page }) => {
@@ -382,8 +413,10 @@ test("hero detail: opening a section link directly lands on that section once th
   await page.goto("./heroes/illidan/#builds-title");
   await expect(page.locator("#builds [data-build]")).toHaveCount(5);
   await page.locator("#mode-sl").click();
-  await expect(page.locator("#brackets [data-bracket]")).toHaveCount(2);
-  expect(fetched, "both modes are in the page").toEqual([]);
+  await expect(page.locator("#grid [data-cell]")).toHaveCount(12);
+  await page.locator('#grid [data-cell="kr-low"]').click();
+  await expect(page.locator("#stats > div")).toHaveCount(3);
+  expect(fetched, "every mode, region and bracket is in the page").toEqual([]);
   await page.goto("./tier/?mode=sl"); // control: the counter does see a page that loads its data
   await expect.poll(() => fetched.length).toBeGreaterThan(0);
   await page.goto("./heroes/illidan/#builds-title");

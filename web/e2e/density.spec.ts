@@ -53,7 +53,7 @@ test.describe("desktop 1280", () => {
     const stats = (await page.locator("#stats").boundingBox())!;
     expect(Math.abs(stats.y - h1.y)).toBeLessThan(80); // same band as the title
     const maps = (await page.locator("#maps-title").boundingBox())!;
-    const right = (await page.locator("#brackets-title").boundingBox())!;
+    const right = (await page.locator("#grid-title").boundingBox())!;
     expect(right.x).toBeGreaterThan(maps.x + 300); // a second column
     expect(right.y).toBeLessThan(500);
     const builds = (await page.locator("#builds-title").boundingBox())!;

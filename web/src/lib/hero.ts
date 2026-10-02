@@ -1,6 +1,6 @@
 /** Hero detail view models. Pure: computed at build time for both modes and serialised into each hero page. */
 import { computeTiers, type Snapshot, type Tier } from "../formula";
-import type { BuildsFile, MapTable, Region, TalentTable } from "../data";
+import { REGIONS, type Bracket, type BuildsFile, type MapTable, type Region, type TalentTable } from "../data";
 import { DEFAULT_LOCALE, type Locale } from "../i18n/locale";
 import { localField } from "../i18n/names";
 import { messages } from "../i18n/messages";
@@ -69,48 +69,39 @@ export function mapRows(snap: Snapshot, hero: string, maps: MapTable, minGames: 
     .sort((a, b) => b.win_rate - a.win_rate);
 }
 
-export interface BracketRow {
-  key: "low" | "high"; // label: messages common.brackets
-  tier: Tier | null; // null = below the sample floor in that bracket
+export interface GridCell {
+  bracket: Bracket; // label: messages common.brackets
+  tier: Tier | null; // null = below the sample floor, or no file
   rank: number | null;
-  n: number;
-  win_rate: number;
-  pick: number;
-  ban_rate: number;
+  n: number; // heroes ranked in that cell
+  win_rate: number | null; // null = the hero has no games there (or no file)
   games: number;
 }
-
-export function bracketRows(brackets: { key: "low" | "high"; snap: Snapshot | null }[], hero: string, minGames: number): BracketRow[] {
-  return brackets.flatMap(({ key, snap }) => {
-    if (!snap) return [];
-    const p = place(snap, "all", hero, minGames);
-    const row = p.r?.row ?? p.grey;
-    if (!row) return [];
-    return [{ key, tier: p.r?.tier ?? null, rank: p.r?.rank ?? null, n: p.n, win_rate: row.win_rate, pick: row.pick, ban_rate: row.ban_rate, games: row.games }];
-  });
+export interface GridRow {
+  region: Region; // label: messages common.regions
+  cells: GridCell[];
 }
-
-export interface RegionRow {
-  key: Exclude<Region, "all">; // label: messages common.regions
-  tier: Tier | null; // null = below the sample floor in that region
-  rank: number | null;
-  n: number;
-  win_rate: number;
-  pick: number;
-  games: number;
-  /** Regions rotate one a day, so each has its own date. */
-  collectedAt: string;
-}
-
-/** This hero in each collected region (current mode, every bracket). A region not collected yet has no row. */
-export function regionRows(regions: { key: Exclude<Region, "all">; snap: Snapshot | null }[], hero: string, minGames: number): RegionRow[] {
-  return regions.flatMap(({ key, snap }) => {
-    if (!snap) return [];
-    const p = place(snap, "all", hero, minGames);
-    const row = p.r?.row ?? p.grey;
-    if (!row) return [];
-    return [{ key, tier: p.r?.tier ?? null, rank: p.r?.rank ?? null, n: p.n, win_rate: row.win_rate, pick: row.pick, games: row.games, collectedAt: snap.collected_at }];
-  });
+/** 지역 × 구간 on the hero page (owner 2026-10-02): this hero in every region × bracket of the mode (QM: regions only). */
+export function heroGrid(
+  mode: "qm" | "sl",
+  cells: Record<Region, Record<Bracket, Snapshot | null>>,
+  hero: string,
+  minGames: number,
+): { brackets: Bracket[]; rows: GridRow[] } {
+  const brackets: Bracket[] = mode === "sl" ? ["all", "low", "high"] : ["all"];
+  const rows = REGIONS.map((region) => ({
+    region,
+    cells: brackets.map((bracket): GridCell => {
+      const snap = cells[region][bracket];
+      const empty = { bracket, tier: null, rank: null, n: 0, win_rate: null, games: 0 };
+      if (!snap) return empty;
+      const p = place(snap, "all", hero, minGames);
+      const row = p.r?.row ?? p.grey;
+      if (!row) return { ...empty, n: p.n };
+      return { bracket, tier: p.r?.tier ?? null, rank: p.r?.rank ?? null, n: p.n, win_rate: row.win_rate, games: row.games };
+    }),
+  }));
+  return { brackets, rows };
 }
 
 export interface BuildTalentView {

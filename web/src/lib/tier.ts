@@ -10,7 +10,7 @@ const SORT_KEYS: SortKey[] = ["score", "win_rate", "pick", "ban_rate", "games"];
 
 export interface TierState {
   mode: Mode;
-  bracket: Bracket; // Storm League only; "all" whenever a region is set (region × bracket is not collected)
+  bracket: Bracket; // Storm League only; combines with a region (owner 2026-10-02)
   region: Region; // both modes
   map: string; // "all" or a map name; Storm League only
   role: string; // "all" or a role name
@@ -32,8 +32,7 @@ export function parseTierState(search: string): TierState {
   const region: Region = r && r !== "all" && REGIONS.includes(r) ? r : "all";
   return {
     mode,
-    // region × bracket is not collected: a region in the URL wins
-    bracket: mode === "sl" && region === "all" && (bracket === "low" || bracket === "high") ? bracket : "all",
+    bracket: mode === "sl" && (bracket === "low" || bracket === "high") ? bracket : "all",
     region,
     map: mode === "sl" ? (q.get("map") ?? "all") : "all",
     role: q.get("role") ?? "all",
