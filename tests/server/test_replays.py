@@ -121,7 +121,7 @@ def test_match_rows_keep_hps_award_id_to_be_named_when_served() -> None:
 
 def test_the_replay_budget_fits_the_weekly_bucket() -> None:
     s = Settings(hp_api_token="x", _env_file=None)  # type: ignore[arg-type, call-arg]
-    assert s.replay_daily_budget * 7 + s.replay_quota_floor <= 1000
+    assert s.replay_daily_budget * 7 + s.replay_quota_floor <= 25_000
 
 
 async def test_a_game_cached_by_an_older_format_is_refreshed(

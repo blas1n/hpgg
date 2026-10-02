@@ -244,7 +244,7 @@ async def test_the_privacy_feed_also_drops_the_match_list(
 
 def test_the_full_budget_fits_the_weekly_bucket() -> None:
     s = Settings(hp_api_token="x", _env_file=None)  # type: ignore[arg-type, call-arg]
-    assert s.match_daily_budget * 7 + s.match_quota_floor <= 250
+    assert s.match_daily_budget * 7 + s.match_quota_floor <= 500
     assert s.match_ttl_seconds <= s.stale_max_seconds
 
 

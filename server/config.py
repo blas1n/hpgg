@@ -24,27 +24,29 @@ class Settings(BaseSettings):
     # Exact origins allowed to call the API from a browser (JSON list in the env).
     cors_origins: list[str] = ["https://hpgg.win"]
 
-    # Player search. /players is on the 10,000/week bucket (Basic plan).
+    # Player search. /players is on the 25,000/week bucket (Intermediate since 2026-10-02; 10,000
+    # on Basic). Weekly caps measured from HP's X-HP-Quota-Limit; tests/server/test_budgets.py.
     player_ttl_seconds: int = 6 * 3600
     # HP answers 404 for free; keep it short so someone who just uploaded sees their games soon.
     not_found_ttl_seconds: int = 600
     quota_floor: int = 200  # stop live calls when HP reports this many left in the week
-    daily_live_budget: int = 1300  # ≈ (10,000 − floor) / 7, so one busy day cannot starve the week
+    daily_live_budget: int = 3500  # ≈ (25,000 − floor) / 7, so one busy day cannot starve the week
     ip_requests_per_minute: int = 20
 
     # Match list (`server/players/matches.py`). Full stat lines come from /players/matches, the
-    # small bucket (250/week on Basic): ≈ (250 − floor) / 7 a day. Past that, the MMR history
-    # (10,000/week) gives the games without stat lines, cached shorter so a full list can follow.
+    # small bucket (500/week on Intermediate): ≈ (500 − floor) / 7 a day. Past that, the MMR
+    # history (25,000/week) gives the games without stat lines, cached shorter so a full list can
+    # follow.
     match_ttl_seconds: int = 6 * 3600
     basic_match_ttl_seconds: int = 3600
     match_quota_floor: int = 10
-    match_daily_budget: int = 34
+    match_daily_budget: int = 70
     mmr_history_quota_floor: int = 200
-    mmr_history_daily_budget: int = 1300
-    # One game in full (`server/players/replays.py`): /replay/{id}, 1,000/week on Basic. A game
-    # never changes, but it names ten players, so it is kept no longer than stale_max_seconds.
+    mmr_history_daily_budget: int = 3500
+    # One game in full (`server/players/replays.py`): /replay/{id}, 25,000/week on Intermediate. A
+    # game never changes, but it names ten players, so it is kept no longer than stale_max_seconds.
     replay_quota_floor: int = 50
-    replay_daily_budget: int = 135
+    replay_daily_budget: int = 3500
     # Stats per hero (`server/players/heroes.py`): /players/heroes, bucket player_hero_all (25/week
     # on Basic, 500 on Intermediate) ≈ (500 − floor) / 7 a day; one call per player and mode.
     hero_stats_ttl_seconds: int = 6 * 3600
