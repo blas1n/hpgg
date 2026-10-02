@@ -260,7 +260,7 @@ function StatCards({ s, sl, minGames }: { s: HeroSummary; sl: boolean; minGames:
     return (
       <>
         <Stat id="tier" k={t.common.tier} v="–" sub={t.hero.thinTier(int(s.games), String(minGames))} />
-        <Stat id="wr" k={t.common.winRate} v={pct(s.win_rate)} sub={t.common.games(int(s.games))} />
+        <Stat id="wr" k={t.common.winRate} v={s.win_rate === null ? "–" : pct(s.win_rate)} sub={t.common.games(int(s.games))} />
         <Stat id="pick" k={t.common.pickRate} v={pct(s.pick)} sub="" />
       </>
     );
@@ -327,16 +327,25 @@ function Grid({ grid, region, bracket, onPick }: { grid: HeroModeModel["grid"]; 
                   onClick={() => onPick(row.region, c.bracket)}
                   className={cx("flex flex-wrap items-center justify-center gap-x-1.5 gap-y-0.5 border-t border-l border-line px-1.5 py-2", on ? "bg-surface-3" : "hover:bg-surface-2")}
                 >
-                  {c.win_rate === null ? (
-                    <span className="text-muted">–</span>
-                  ) : (
+                  {c.sample === "uncollected" ? (
+                    <span data-sample="uncollected" className="text-2xs text-muted">{t.hero.gridUncollected}</span>
+                  ) : c.sample === "ranked" && c.tier && c.win_rate !== null ? (
                     <>
-                      {c.tier && <TierBadge tier={c.tier} />}
+                      <TierBadge tier={c.tier} />
                       <span className="num whitespace-nowrap text-left">
                         <span className={cx("block text-[13px] font-semibold leading-4", wrTone(c.win_rate))}>{pct(c.win_rate)}</span>
                         <span className="block text-2xs leading-4 text-muted">{t.common.games(int(c.games))}</span>
                       </span>
                     </>
+                  ) : (
+                    // under the floor (or no game at all): no tier, and the win rate is not coloured as a finding
+                    <span data-sample={c.sample} className="num whitespace-nowrap text-center">
+                      <span className="block text-2xs leading-4 text-muted">{t.common.thin}</span>
+                      <span className="block text-[13px] leading-4 text-fg-2">
+                        {c.win_rate !== null && `${pct(c.win_rate)} · `}
+                        {t.common.games(int(c.games))}
+                      </span>
+                    </span>
                   )}
                 </button>
               );

@@ -19,7 +19,8 @@ export type HeroSummary =
       pick: number;
       ban_rate: number;
     }
-  | { kind: "grey"; win_rate: number; games: number; pick: number }
+  // below the sample floor; win_rate null = the hero has no game in a view that was collected
+  | { kind: "grey"; win_rate: number | null; games: number; pick: number }
   | { kind: "none" };
 
 const place = (snap: Snapshot, map: string, hero: string, minGames: number) => {
@@ -45,7 +46,8 @@ export function heroSummary(snap: Snapshot, previous: Snapshot | null, hero: str
     };
   }
   if (grey) return { kind: "grey", win_rate: grey.win_rate, games: grey.games, pick: grey.pick };
-  return { kind: "none" };
+  // the view was collected and the hero did not play in it: a thin sample (0 games), not "no data"
+  return { kind: "grey", win_rate: null, games: 0, pick: 0 };
 }
 
 export interface MapRow {
@@ -76,6 +78,8 @@ export interface GridCell {
   n: number; // heroes ranked in that cell
   win_rate: number | null; // null = the hero has no games there (or no file)
   games: number;
+  /** ranked · thin (under the floor) · zero (collected, no game) · uncollected (no file for that cell) */
+  sample: "ranked" | "thin" | "zero" | "uncollected";
 }
 export interface GridRow {
   region: Region; // label: messages common.regions
@@ -94,11 +98,11 @@ export function heroGrid(
     cells: brackets.map((bracket): GridCell => {
       const snap = cells[region][bracket];
       const empty = { bracket, tier: null, rank: null, n: 0, win_rate: null, games: 0 };
-      if (!snap) return empty;
+      if (!snap) return { ...empty, sample: "uncollected" };
       const p = place(snap, "all", hero, minGames);
       const row = p.r?.row ?? p.grey;
-      if (!row) return { ...empty, n: p.n };
-      return { bracket, tier: p.r?.tier ?? null, rank: p.r?.rank ?? null, n: p.n, win_rate: row.win_rate, games: row.games };
+      if (!row) return { ...empty, n: p.n, sample: "zero" };
+      return { bracket, tier: p.r?.tier ?? null, rank: p.r?.rank ?? null, n: p.n, win_rate: row.win_rate, games: row.games, sample: p.r ? "ranked" : "thin" };
     }),
   }));
   return { brackets, rows };

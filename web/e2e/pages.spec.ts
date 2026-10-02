@@ -132,6 +132,18 @@ test("hero detail: section tabs stick under the header and land each section jus
   await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0);
 });
 
+test("hero detail: the 지역 × 구간 grid says 표본 부족 under the floor and 수집 전 where nothing was collected", async ({ page }) => {
+  // e2e data: Illidan has 88 Storm League games in NA (floor 200), KR is healthy, EU is not collected
+  await page.goto("./heroes/illidan/?mode=sl");
+  await expect(page.locator("#grid [data-cell]")).toHaveCount(12);
+  const na = page.locator('#grid [data-cell="na-all"]');
+  await expect(na.locator('[data-sample="thin"]')).toContainText("표본 부족");
+  await expect(na).toContainText("88게임");
+  await expect(na.locator(".tier-badge")).toHaveCount(0);
+  await expect(page.locator('#grid [data-cell="eu-all"]')).toHaveText("수집 전");
+  await expect(page.locator('#grid [data-cell="kr-all"] [data-sample]')).toHaveCount(0); // ranked: tier and win rate
+});
+
 test("hero detail: at the bottom of the page the last section's tab is active", async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 900 }); // the last title cannot reach the tabs
   await page.goto("./heroes/illidan/?mode=sl");
@@ -340,7 +352,7 @@ test("hero detail: region × bracket grid; a cell switches the stats above and l
   await expect(page.locator("#meta-line [data-view]")).toContainText("아시아 (KR) · 브론즈 – 플래티넘");
   await page.locator("#hero-region").selectOption("eu");
   await expect(page.locator("#no-cell")).toBeVisible();
-  await expect(page.locator('#grid [data-cell="eu-low"]')).toHaveText("–");
+  await expect(page.locator('#grid [data-cell="eu-low"]')).toHaveText("수집 전");
   await page.locator("#hero-region").selectOption("all");
   await page.locator("#hero-bracket").selectOption("all");
   await expect(page).toHaveURL(/\/heroes\/illidan\/\?mode=sl$/);

@@ -207,6 +207,7 @@ The same data gives different tiers under a different formula. This site always 
     wholeOnly: "all regions and brackets",
     buildsTitle: "Popular talent builds",
     buildsSub: (patch: string) => `Quick Match + Storm League combined · patch ${patch} · most played first`,
+    gridUncollected: "not collected yet",
     noData: "No data",
     noDataSub: "No games in this mode",
     thinTier: (games: string, min: string) => `too few games (${games} < ${min})`,
