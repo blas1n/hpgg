@@ -126,7 +126,11 @@ export function tierTable(snap: Snapshot, previous: Snapshot | null, map: string
         games: x.row.games,
       };
     }),
-    grey: grey.map((r) => ({ hero: ref(r.hero), games: r.games })),
+    // then every hero on the site without a row in this view: 0 games is a thin sample too
+    grey: [
+      ...grey.map((r) => ({ hero: ref(r.hero), games: r.games })),
+      ...heroes.heroes.filter((h) => !rows.some((r) => r.hero === h.name)).map((h) => ({ hero: ref(h.name), games: 0 })),
+    ],
     // every match has ten hero slots
     matches: map === "all" ? snap.matches : Math.round(rows.reduce((a, r) => a + r.games, 0) / 10),
     hasPrevious: prev !== null,

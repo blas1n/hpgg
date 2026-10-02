@@ -95,6 +95,12 @@ describe("region files", () => {
     const m: Meta = { ...meta, min_games_for_tier: 50, modes: { qm_kr: { matches: 1, heroes: 90, heroes_ranked: 76, heroes_over_200: 20, collected_at: "c" } } };
     expect(regionSample(m, "qm", "kr", "current")).toEqual({ collectedAt: "c", heroes: 90, over: 76, thin: false });
   });
+  it("the note counts against every hero on the site, not the heroes with a row (KR 다마그 10-02: 0/6 → 0/91)", () => {
+    const m: Meta = { ...meta, min_games_for_tier: 50, modes: { sl_high_kr: { matches: 0, heroes: 6, heroes_ranked: 0, heroes_over_200: 0, collected_at: "c" } } };
+    expect(regionSample(m, "sl", "kr", "current", "high", 91)).toEqual({ collectedAt: "c", heroes: 91, over: 0, thin: true });
+    const full: Meta = { ...meta, modes: { qm_kr: { matches: 1, heroes: 40, heroes_ranked: 40, heroes_over_200: 40, collected_at: "c" } } };
+    expect(regionSample(full, "qm", "kr", "current", "all", 91)!.thin).toBe(true); // 40 of 91 heroes is thin
+  });
   it("a region is looked up on the patch the view shows: previous-patch regions live in meta.previous_modes", () => {
     const onOld: Meta = {
       ...meta,

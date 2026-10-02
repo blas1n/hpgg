@@ -239,7 +239,7 @@ export function TierView({ meta, heroes, maps, initial }: { meta: Meta; heroes: 
         </div>
       </Card>
 
-      {(region !== "all" || (sl && bracket !== "all")) && <RegionNote meta={meta} mode={mode} region={region} bracket={sl ? bracket : "all"} patch={patch} />}
+      {(region !== "all" || (sl && bracket !== "all")) && <RegionNote meta={meta} mode={mode} region={region} bracket={sl ? bracket : "all"} patch={patch} shown={heroes.heroes.length} />}
 
       {/* clip, not hidden: hidden would make the card a scroll container and the sticky column header would stop */}
       <Card as="div" className="overflow-clip">
@@ -325,9 +325,9 @@ function viewLabel(t: ReturnType<typeof useT>, region: Region, bracket: Bracket)
 }
 
 /** A region or bracket view: which one, when it was collected, and how thin its sample is. */
-function RegionNote({ meta, mode, region, bracket, patch }: { meta: Meta; mode: Mode; region: Region; bracket: Bracket; patch: PatchChoice }) {
+function RegionNote({ meta, mode, region, bracket, patch, shown }: { meta: Meta; mode: Mode; region: Region; bracket: Bracket; patch: PatchChoice; shown: number }) {
   const t = useT();
-  const s = regionSample(meta, mode, region, patch, bracket);
+  const s = regionSample(meta, mode, region, patch, bracket, shown);
   if (!s) return null;
   return (
     <p

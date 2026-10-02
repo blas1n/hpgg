@@ -102,11 +102,22 @@ describe("tierTable", () => {
   it("one map: only that map's rows; thin heroes go to grey, and matches are games / 10", () => {
     const t = tierTable(sl, null, "Cursed Hollow", heroes, 200);
     const rows = sl.rows.filter((r) => r.map === "Cursed Hollow");
-    expect(t.rows.length + t.grey.length).toBe(rows.length);
+    // every hero on the site is either ranked or grey, played on this map or not
+    expect(t.rows.length + t.grey.length).toBe(heroes.heroes.length);
     expect(t.grey.length).toBeGreaterThan(0);
     expect(t.grey.every((g) => g.games < 200)).toBe(true);
     expect(t.matches).toBe(Math.round(rows.reduce((a, r) => a + r.games, 0) / 10));
     expect(tierTable(sl, null, "all", heroes, 200).matches).toBe(sl.matches);
+  });
+
+  it("a hero with no game in the view is grey with 0 games, after the ones that played (KR 다마그, 10-02)", () => {
+    const one = qm.rows.filter((r) => r.map === "all").slice(0, 2).map((r) => ({ ...r, games: 1, wins: 1 }));
+    const t = tierTable({ ...qm, rows: one }, null, "all", heroes, 50);
+    expect(t.rows).toHaveLength(0);
+    expect(t.grey).toHaveLength(heroes.heroes.length);
+    expect(t.grey.slice(0, 2).map((g) => g.games)).toEqual([1, 1]);
+    expect(t.grey.slice(2).every((g) => g.games === 0)).toBe(true);
+    expect(new Set(t.grey.map((g) => g.hero.slug)).size).toBe(heroes.heroes.length);
   });
 
   it("gives each row a Wilson 95% half-width", () => {
