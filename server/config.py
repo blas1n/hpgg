@@ -45,6 +45,11 @@ class Settings(BaseSettings):
     # never changes, but it names ten players, so it is kept no longer than stale_max_seconds.
     replay_quota_floor: int = 50
     replay_daily_budget: int = 135
+    # Stats per hero (`server/players/heroes.py`): /players/heroes, bucket player_hero_all (25/week
+    # on Basic, 500 on Intermediate) ≈ (500 − floor) / 7 a day; one call per player and mode.
+    hero_stats_ttl_seconds: int = 6 * 3600
+    hero_stats_quota_floor: int = 20
+    hero_stats_daily_budget: int = 68
     # A cold /players/matches query answers 202 and is asked again (polls are not charged).
     hp_job_poll_seconds: float = 2.0
     hp_job_wait_seconds: float = 20.0

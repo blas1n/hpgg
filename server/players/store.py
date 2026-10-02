@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import json
+from collections.abc import Callable
 from dataclasses import dataclass
+from functools import partial
 from typing import Any, Literal
 
 from sqlalchemy import delete, func, select
@@ -34,8 +36,19 @@ def matches_key(region: str, battletag: str) -> str:
     return f"player_matches|{region}|{battletag}"
 
 
+def heroes_key(region: str, battletag: str, mode: str) -> str:
+    """Cache key of one player's stats per hero for a mode (all, qm, sl; `heroes.py`)."""
+    return f"player_heroes|{mode}|{region}|{battletag}"
+
+
+HERO_MODES = ("all", "qm", "sl")
+
 # Every cache key that holds one player's data — a player going private drops them all.
-PLAYER_KEYS = (player_key, matches_key)
+PLAYER_KEYS: tuple[Callable[[str, str], str], ...] = (
+    player_key,
+    matches_key,
+    *(partial(heroes_key, mode=m) for m in HERO_MODES),
+)
 
 
 @dataclass(frozen=True)

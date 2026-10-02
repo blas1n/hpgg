@@ -7,6 +7,7 @@ import { expect, test, type Page, type Route } from "@playwright/test";
 const fixture = JSON.parse(readFileSync(join(dirname(fileURLToPath(import.meta.url)), "../tests/fixtures/api_player_zemill.json"), "utf-8"));
 const games = JSON.parse(readFileSync(join(dirname(fileURLToPath(import.meta.url)), "../tests/fixtures/api_matches_blas1n.json"), "utf-8"));
 const replay = JSON.parse(readFileSync(join(dirname(fileURLToPath(import.meta.url)), "../tests/fixtures/api_replay_65597227.json"), "utf-8"));
+const heroStats = JSON.parse(readFileSync(join(dirname(fileURLToPath(import.meta.url)), "../tests/fixtures/api_heroes_blas1n.json"), "utf-8"));
 const API = "https://api.hpgg.win/v1/players**";
 
 test.beforeEach(async ({ page }) => {
@@ -268,4 +269,40 @@ test("players: a game that cannot be opened says why", async ({ page }) => {
   const first = page.locator("#player-matches > li").first();
   await first.locator("[data-toggle]").click();
   await expect(first).toContainText("경기 상세 조회 한도");
+});
+
+
+test("players: stats per hero, one mode at a time, each asked once; quota says so", async ({ page }) => {
+  const seen = await mockApi(page, (route, url) => {
+    if (url.pathname.endsWith("/heroes")) {
+      const mode = url.searchParams.get("mode");
+      if (mode === "qm") return json(route, 429, { error: { code: "quota_exceeded" } });
+      return json(route, 200, { ...heroStats, mode, heroes: mode === "sl" ? heroStats.heroes.slice(0, 1) : heroStats.heroes });
+    }
+    return json(route, 200, url.pathname.endsWith("/matches") ? games : fixture);
+  });
+  await page.goto("./players/?tag=Player11%231011&region=KR");
+  const box = page.locator("#hero-stats");
+  await expect(page.locator("#player-result")).toHaveAttribute("data-state", "ok");
+  // nothing is asked until the section is in view (the bucket is small)
+  expect(seen.filter((u) => u.pathname.endsWith("/heroes"))).toHaveLength(0);
+  await box.scrollIntoViewIfNeeded();
+  await expect(box).toHaveAttribute("data-state", "ok");
+  await expect(box.locator("tbody tr")).toHaveCount(3);
+  await expect(box.locator("tbody tr").first()).toHaveAttribute("data-hero", "alarak");
+  await expect(box.locator("tbody tr").first()).toContainText("알라라크");
+  await expect(box.locator("tbody tr").first()).toContainText("44.4%");
+  await expect(box.locator("tbody tr").first()).toContainText("5.58");
+  await expect(box.locator('tbody tr a[href="/ko/hots/heroes/alarak/"]')).toHaveCount(1);
+  await page.locator("#hero-stats-sl").click();
+  await expect(box.locator("tbody tr")).toHaveCount(1);
+  await page.locator("#hero-stats-qm").click();
+  await expect(box).toHaveAttribute("data-state", "quota");
+  await expect(box).toContainText("조회 한도");
+  await page.locator("#hero-stats-all").click();
+  await expect(box.locator("tbody tr")).toHaveCount(3);
+  const asked = seen.filter((u) => u.pathname.endsWith("/heroes")).map((u) => u.searchParams.get("mode"));
+  expect(asked).toEqual(["all", "sl", "qm"]); // each mode once; going back to 전체 asks nothing
+  const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+  expect(overflow).toBeLessThanOrEqual(0); // the wide table scrolls inside its card
 });
