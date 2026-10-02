@@ -76,6 +76,36 @@ Why multiplicative: an additive formula ((WRs−50)+0.15·pick+0.15·ban) reprod
 | Player/MMR History (server) | 10,000 | ≤ 1,300 (match lists once the 250 are spent) |
 | Replay/Data (server) | 1,000 | ≤ 135 (a game opened on 전적 검색; floor 50) |
 Error responses and 202 job polling are not charged. `group_by_map=true` is rate-limited to 1 request/minute, hence the 60 s spacing (the stats part of a run takes ~7 minutes). `/heroes/matchups` without `group_by_map` answers `X-RateLimit-Limit: 60` (per minute, measured 2026-09-29) → 2 s spacing. Every charged answer carries `X-HP-Quota-Remaining`/`-Limit`, logged as `hp.quota`. `quota_exceeded` is never waited out (its Retry-After is the weekly reset, ~6 days). A manual `workflow_dispatch` costs a full day's calls — do not run it casually; the builds/all budget has no slack.
+
+### Plans compared (owner reviewing an upgrade, 2026-10-02)
+Prices from https://api.heroesprofile.com/Api (Basic $5, Intermediate $10, Developer $25 a month; Basic and Intermediate say "direct endpoint integration unavailable" — ask HP what that limits before upgrading). Per-endpoint weekly caps from the logged-in EndpointLimits page (owner's screenshots, 2026-10-02):
+
+| Endpoint (weekly) | Basic | Intermediate | Developer |
+|---|---|---|---|
+| Heroes/Stats, Talents/Details, Map/Stats, Global/Compositions(+Heroes), Global/Draft, Global/Party | 70 | 210 | 1,000 |
+| Hero/Matchups, Heroes/Matchups/Talents | 700 | 2,100 | 10,000 |
+| Talents/Builds, Talents/Builds/All, Talents/Builder(+Replays) | 7 | 21 | 100 |
+| Player | 10,000 | 25,000 | 50,000 |
+| Player/Match/History | 250 | 500 | 5,000 |
+| Player/Hero, Role, Map (All/Single), Talents/Build, Matchups, FriendFoe, Awards(+Games) | 25 | 500 | 5,000 |
+| Player/Privacy/Changes | 10,080 | 10,080 | 10,080 |
+| Replays General / Advanced (category, pricing page) | 1,000 / 1,000 | 10,000 / 25,000 | 25,000 / 250,000 |
+| NGS reads / NGS match & replay endpoints | 50 / 100 | 100 / 10,000 | 1,000 / 25,000 |
+| Calls per minute | 60 | 60 | 120 |
+
+**What Basic made us give up** (each one is a decision recorded where it was made):
+1. Regions rotate, one a day for QM + SL (a region is ≤ 3 days old); region × bracket is not collected (#14).
+2. The party correction is on QM and Storm League overall only; brackets, regions, per-map are uncorrected (#36).
+3. Two brackets (브실골플 / 다마그) — also a sample-size choice, not the plan alone.
+4. No room for incidents: Heroes/Stats is 56/70 at steady state, so one manual rerun a week; 2026-09-28 – 10-04 ran dry (setup and backfills, a 422 rerun, a push refused after collecting, a recovery run). No previous-patch backfill (12) fits beside the daily runs.
+5. Talent builds: one call a day, QM + SL together, no bracket / region / map split; 7/7, no slack.
+6. Matchups: Storm League only, every other day; Global/Draft and Compositions unused (#15, #25).
+7. Full match lists for 34 players a day (`MATCH_DAILY_BUDGET`), then MMR history without stat lines (#82).
+8. 팀운 waits (#90): a game opened is one replay call, 1,000/week.
+9. A player's per-hero stats and players met often (#88): HP's endpoints are 25/week, so they would be computed from data already fetched.
+
+**Intermediate ($10) in calls a day**: Heroes/Stats 30 (today 8: all three regions daily + bracket party correction = 14, ~110/week left for incidents), builds/all 3 (QM and SL apart = 2, 7/week left), matchups 300 (SL daily + QM every other day ≈ 945/week), match lists 71 a day, the 25/week player endpoints 71 a day, replays ×10. That lifts 1, 2, 4, 5, 6, 8 and makes 9 possible; 7 only doubles. Developer is for region × bracket × party everywhere and split builds — more than today's traffic needs.
+
 - **main takes no direct push** (ruleset `main`, 2026-10-01: PR required, no deletion, no force push). Its one bypass is **deploy keys**: `collect-and-deploy (Actions)` (secret `DATA_DEPLOY_KEY`, the collect job checks out with it, so the data commit and the snapshot push go over SSH) and `hotfix watcher (Mac mini)` (`~/.ssh/hpgg_hotfix_deploy`; the bot clone pushes to `git@github.com:blas1n/hpgg.git` with `core.sshCommand`). People and Claude sessions go through PRs. GitHub Actions itself cannot be a bypass actor on a personal repo (422). The 2026-10-02 run collected everything and was refused at the push; its data went with the runner. Since then the collected data is uploaded as the run's artifact `collected-data` (14 days) **before** the push, whatever happens, and every HP job URL is logged (`hp.job_started job=…`; polling a job is free, so a lost result can be fetched again while HP keeps it). **Recovery on what is left of the week**: `uv run python -m collector --only qm,sl` collects QM and SL with the party correction (4 Heroes/Stats calls), builds and matchups, no brackets and no region (those views say "no data" on the patch until the next full run).
 
 ### Matchups (counters / synergies, #15)
