@@ -144,10 +144,13 @@ export function thinSample(meta: Meta, key: string): boolean {
 const thin = (m: ModeSample | undefined): boolean => !!m?.heroes && m.heroes_ranked / m.heroes < 0.5;
 
 /** A region's sample health and collection date on the patch a view shows; null = not collected on that patch yet. */
-export function regionSample(meta: Meta, mode: Mode, region: Region, patch: PatchChoice, bracket: Bracket = "all"): { collectedAt: string | null; heroes: number; over: number; thin: boolean } | null {
+/** `shown`: the heroes on the site — the note's denominator. The file only has rows for heroes that played in it
+ *  (KR 다마그 on 10-02: 6), which read as "0/6" when 91 heroes are on the page. */
+export function regionSample(meta: Meta, mode: Mode, region: Region, patch: PatchChoice, bracket: Bracket = "all", shown?: number): { collectedAt: string | null; heroes: number; over: number; thin: boolean } | null {
   const m = (patch === "previous" ? meta.previous_modes : meta.modes)?.[snapshotKey(mode, bracket, region)];
   if (!m) return null;
-  return { collectedAt: m.collected_at ?? null, heroes: m.heroes, over: m.heroes_ranked, thin: thin(m) };
+  const heroes = Math.max(shown ?? 0, m.heroes);
+  return { collectedAt: m.collected_at ?? null, heroes, over: m.heroes_ranked, thin: thin({ ...m, heroes }) };
 }
 
 /** "2026-09-28T04:07:19Z" → "09/28" */
