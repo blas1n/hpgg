@@ -32,6 +32,9 @@ class Settings(BaseSettings):
     quota_floor: int = 200  # stop live calls when HP reports this many left in the week
     daily_live_budget: int = 3500  # ≈ (25,000 − floor) / 7, so one busy day cannot starve the week
     ip_requests_per_minute: int = 20
+    # 20 a minute alone is 28,800 a day: one address could spend the daily budget above in three
+    # hours (security review 2026-10-02). A search is 3-4 requests, a game opened one more.
+    ip_requests_per_day: int = 500
 
     # Match list (`server/players/matches.py`). Full stat lines come from /players/matches, the
     # small bucket (500/week on Intermediate): ≈ (500 − floor) / 7 a day. Past that, the MMR
