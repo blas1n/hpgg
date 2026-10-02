@@ -46,6 +46,12 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         help="one-off: every region of the previous patch missing in data/previous/ (≤ 6 calls)",
     )
+    ap.add_argument(
+        "--only",
+        metavar="VIEWS",
+        help="recovery: only these global views, no region (qm,sl[,sl_low,sl_high]); "
+        "qm,sl with the party correction is 4 Heroes/Stats calls",
+    )
     args = ap.parse_args(argv)
     settings = Settings()  # type: ignore[call-arg]  # hp_api_token comes from env/.env
     configure_logging(settings.log_level)
@@ -53,6 +59,8 @@ def main(argv: list[str] | None = None) -> int:
         return asyncio.run(run_backfill_previous_regions(settings))
     if args.previous:
         return asyncio.run(run_backfill_previous(settings, patch=args.previous))
+    if args.only:
+        return asyncio.run(run(settings, only=tuple(v.strip() for v in args.only.split(","))))
     return asyncio.run(run(settings))
 
 

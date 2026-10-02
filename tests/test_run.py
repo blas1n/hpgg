@@ -801,3 +801,59 @@ async def test_backfill_previous_regions_fetches_each_missing_region_once(
     assert len(respx.calls) == n  # nothing left to fetch
     s.data_dir.joinpath("latest", "meta.json").write_text(json.dumps({"current_patch": "x"}))
     assert await run_backfill_previous_regions(s, sleep=fake_sleep, now=lambda: "t") == 2
+
+
+@respx.mock
+async def test_only_collects_the_views_it_names(
+    tmp_path: Path, raw_by_map, patches_payload, fake_sleep
+) -> None:
+    """Recovery with what is left of the week (2026-10-02: 4 Heroes/Stats calls): QM and SL
+    with their party correction, no brackets, no region. The pages show those views on the
+    patch and say "no data" for the others."""
+    mock_api(raw_by_map, patches_payload)
+    s = settings(tmp_path)
+    assert (
+        await run(s, sleep=fake_sleep, now=lambda: "2026-09-28T00:00:00Z", only=("qm", "sl")) == 0
+    )
+    calls = [
+        dict(httpx.QueryParams(c.request.url.query))
+        for c in respx.calls
+        if c.request.url.path.endswith("/heroes/stats")
+    ]
+    assert [
+        (c["game_type"], c.get("league_tier"), c.get("region"), c.get("groupsize")) for c in calls
+    ] == [
+        ("qm", None, None, None),
+        ("sl", None, None, None),
+        ("qm", None, None, "Solo"),
+        ("sl", None, None, "Solo"),
+    ]
+    meta = json.loads((s.data_dir / "latest" / "meta.json").read_text())
+    assert set(meta["modes"]) == {"qm", "sl"}
+    assert "party" in json.loads((s.data_dir / "latest" / "qm.json").read_text())
+
+
+@respx.mock
+async def test_only_must_keep_qm_and_sl_which_decide_the_patch(
+    tmp_path: Path, raw_by_map, patches_payload, fake_sleep
+) -> None:
+    mock_api(raw_by_map, patches_payload)
+    s = settings(tmp_path)
+    assert await run(s, sleep=fake_sleep, now=lambda: "t", only=("qm",)) == 2
+    assert await run(s, sleep=fake_sleep, now=lambda: "t", only=("qm", "sl", "nope")) == 2
+    assert not [c for c in respx.calls if c.request.url.path.endswith("/heroes/stats")]
+
+
+def test_cli_only_passes_the_views_to_the_run(monkeypatch) -> None:
+    import collector.__main__ as cli
+
+    seen: dict[str, Any] = {}
+
+    async def fake_run(settings: Any, **kw: Any) -> int:
+        seen.update(kw)
+        return 0
+
+    monkeypatch.setattr(cli, "run", fake_run)
+    monkeypatch.setenv("HP_API_TOKEN", "x")
+    assert cli.main(["--only", "qm,sl"]) == 0
+    assert seen == {"only": ("qm", "sl")}

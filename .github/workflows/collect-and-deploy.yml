@@ -33,6 +33,9 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 1
+          # main takes no direct push (ruleset `main`, 2026-10-01); this deploy key is its one
+          # bypass, so the data commit and the snapshot push go over SSH with it
+          ssh-key: ${{ secrets.DATA_DEPLOY_KEY }}
       - uses: astral-sh/setup-uv@v5
       - run: uv sync --frozen --no-dev
       - name: Collect (4 stats + 2 region (KR→NA→EU) + 1 builds call, ~7 min at 1 req/min; then Storm League matchups for heroes due, every other day)
@@ -42,6 +45,22 @@ jobs:
         run: |
           uv run python -m collector
           echo "day=$(date -u +%F)" >> "$GITHUB_OUTPUT"
+      # before the push, and whatever happens: 2026-10-02 the push was refused and the run's
+      # data went with the runner (the week's quota could not pay for it again)
+      - name: Keep the collected data as an artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: collected-data
+          path: |
+            data/latest
+            data/previous
+            data/matchups
+            data/patchnotes.json
+            data/.snapshot_out
+          include-hidden-files: true
+          if-no-files-found: ignore
+          retention-days: 14
       - name: Commit data/latest (+ previous, matchups, patch notes) to main
         run: |
           git config user.name "hotsmeta-bot"

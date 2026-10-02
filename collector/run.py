@@ -21,6 +21,7 @@ from collector.models import JobSpec
 from collector.party import apply_party_correction
 from collector.patchnotes import collect_patchnotes
 from collector.snapshot import (
+    REFERENCE_MODES,
     REGION_KEYS,
     REGIONS,
     SOLO_OF,
@@ -439,13 +440,24 @@ async def run(
     sleep: SleepFn = asyncio.sleep,
     now: Callable[[], str] = utc_now_iso,
     client: HPClient | None = None,
+    only: tuple[str, ...] | None = None,
 ) -> int:
-    """Returns a process exit code. Never raises for API failures; never logs the token."""
+    """Returns a process exit code. Never raises for API failures; never logs the token.
+    `only`: the global views to collect (keys of SPECS, QM and SL among them — they decide the
+    patch), no region; for a recovery run on what is left of the week's quota."""
+    specs = SPECS
+    if only is not None:
+        if not set(REFERENCE_MODES) <= set(only) <= {spec.key for spec in SPECS}:
+            log.error("run.refused", reason="--only takes qm and sl, and sl_low / sl_high")
+            return 2
+        specs = tuple(spec for spec in SPECS if spec.key in only)
     collected_at = now()
     own_client = client is None
     c = client or _client(settings, sleep)
     try:
-        code = await _run_stats(c, settings, collected_at=collected_at, sleep=sleep)
+        code = await _run_stats(
+            c, settings, collected_at=collected_at, sleep=sleep, specs=specs, regions=only is None
+        )
         if code == 0:
             await _run_matchups(c, settings, collected_at=collected_at, sleep=sleep)
         # Blizzard's notes do not depend on HP: collected even when the stats failed
@@ -519,7 +531,15 @@ async def _run_matchups(
         _write_gz(settings.snapshot_out_dir / collected_at[:10] / "matchups.json.gz", bundle)
 
 
-async def _run_stats(c: HPClient, settings: Settings, *, collected_at: str, sleep: SleepFn) -> int:
+async def _run_stats(
+    c: HPClient,
+    settings: Settings,
+    *,
+    collected_at: str,
+    sleep: SleepFn,
+    specs: tuple[JobSpec, ...] = SPECS,
+    regions: bool = True,
+) -> int:
     try:
         patches = await c.get_json("/patches")
         at = datetime.fromisoformat(collected_at.replace("Z", "+00:00"))
@@ -527,7 +547,13 @@ async def _run_stats(c: HPClient, settings: Settings, *, collected_at: str, slee
         timeframe = timeframe_of(patches, patch, now=at)
         log.info("run.patch", patch=patch, builds=timeframe, collected_at=collected_at)
         raw_by_key, snapshots = await _collect_all(
-            c, settings, patch=patch, timeframe=timeframe, collected_at=collected_at, sleep=sleep
+            c,
+            settings,
+            patch=patch,
+            timeframe=timeframe,
+            collected_at=collected_at,
+            sleep=sleep,
+            specs=specs,
         )
         party_raw = await _collect_party(
             c,
@@ -545,13 +571,17 @@ async def _run_stats(c: HPClient, settings: Settings, *, collected_at: str, slee
         region_patch = _region_patch(
             settings.data_dir, reference=reference, current=patch, day=collected_at
         )
-        region_raw, region_snaps = await _collect_region(
-            c,
-            settings,
-            patch=region_patch,
-            timeframe=timeframe_of(patches, region_patch, now=at),
-            collected_at=collected_at,
-            sleep=sleep,
+        region_raw, region_snaps = (
+            await _collect_region(
+                c,
+                settings,
+                patch=region_patch,
+                timeframe=timeframe_of(patches, region_patch, now=at),
+                collected_at=collected_at,
+                sleep=sleep,
+            )
+            if regions
+            else ({}, {})
         )
         raw_by_key.update(region_raw)
         region_previous: dict[str, dict[str, Any]] = {}

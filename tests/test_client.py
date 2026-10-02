@@ -217,3 +217,21 @@ async def test_token_never_appears_in_error_text(fake_sleep) -> None:
     assert TOKEN not in str(ei.value)
     assert TOKEN not in repr(ei.value)
     assert TOKEN not in repr(c)
+
+
+@respx.mock
+async def test_the_job_url_is_logged_so_a_lost_result_can_be_fetched_again(fake_sleep) -> None:
+    """2026-10-02: a run's results were lost with its runner; polling a job is free, so the
+    job's URL in the log would have recovered them without spending the weekly quota."""
+    respx.get(f"{BASE}/heroes/stats").mock(
+        return_value=httpx.Response(
+            202, json={"job_id": "j9"}, headers={"Location": f"{BASE}/jobs/j9", "Retry-After": "1"}
+        )
+    )
+    respx.get(f"{BASE}/jobs/j9").mock(return_value=httpx.Response(200, json={"data": []}))
+    with structlog.testing.capture_logs() as logs:
+        async with make_client(fake_sleep) as c:
+            await c.get_json("/heroes/stats", params={"game_type": "qm"})
+    started = next(e for e in logs if e["event"] == "hp.job_started")
+    assert started["job"] == f"{BASE}/jobs/j9"
+    assert TOKEN not in str(logs)
