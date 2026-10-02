@@ -7,7 +7,7 @@ import gzip
 import json
 import shutil
 from collections.abc import Callable
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -88,6 +88,13 @@ log = structlog.get_logger(__name__)
 
 def utc_now_iso() -> str:
     return datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def snapshot_day(collected_at: str) -> str:
+    """The run's day on the Korean calendar (UTC+9, no DST), which names its snapshot folder:
+    the daily run is at 03:20 KST, still the day before in UTC."""
+    when = datetime.fromisoformat(collected_at.replace("Z", "+00:00"))
+    return (when + timedelta(hours=9)).strftime("%Y-%m-%d")
 
 
 def _write_gz(path: Path, obj: Any) -> None:
@@ -315,7 +322,7 @@ async def run_backfill_previous(
         json.dumps(meta, ensure_ascii=False, separators=(",", ":")), encoding="utf-8"
     )
     refresh_previous_modes(settings.data_dir)
-    day_dir = settings.snapshot_out_dir / collected_at[:10]
+    day_dir = settings.snapshot_out_dir / snapshot_day(collected_at)
     for key, raw in raw_by_key.items():
         _write_gz(day_dir / f"backfill_{patch}_raw_{key}.json.gz", raw)
         if key in snapshots:
@@ -416,7 +423,9 @@ async def _run_matchups(
     if res.written:
         out = settings.data_dir / "matchups"
         bundle = {slug: _load_json(out / f"{slug}.json") for slug in res.written}
-        _write_gz(settings.snapshot_out_dir / collected_at[:10] / "matchups.json.gz", bundle)
+        _write_gz(
+            settings.snapshot_out_dir / snapshot_day(collected_at) / "matchups.json.gz", bundle
+        )
 
 
 async def _run_stats(
@@ -477,10 +486,10 @@ async def _run_stats(
     )
     refresh_previous_modes(settings.data_dir)
     if builds_result is not None:
-        day_dir_b = settings.snapshot_out_dir / collected_at[:10]
+        day_dir_b = settings.snapshot_out_dir / snapshot_day(collected_at)
         _write_gz(day_dir_b / "raw_builds.json.gz", builds_result[0])
         _write_gz(day_dir_b / "builds.json.gz", builds_result[1])
-    day_dir = settings.snapshot_out_dir / collected_at[:10]
+    day_dir = settings.snapshot_out_dir / snapshot_day(collected_at)
     for key, raw in raw_by_key.items():
         _write_gz(day_dir / f"raw_{key}.json.gz", raw)
         if key in snapshots:

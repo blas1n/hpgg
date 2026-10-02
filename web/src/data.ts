@@ -151,7 +151,13 @@ export function regionSample(meta: Meta, mode: Mode, region: Region, patch: Patc
 }
 
 /** "2026-09-28T04:07:19Z" → "09/28" */
-export const shortDate = (iso: string): string => iso.slice(5, 10).replace("-", "/");
+/** MM/DD of a collection time on the Korean calendar (UTC+9, no DST): the daily run is at 03:20 KST,
+ *  which is still the day before in UTC. */
+export const shortDate = (iso: string): string => {
+  const t = Date.parse(iso);
+  const day = Number.isNaN(t) ? iso : new Date(t + 9 * 3600_000).toISOString();
+  return day.slice(5, 10).replace("-", "/");
+};
 
 export interface BuildTalent {
   level: number;

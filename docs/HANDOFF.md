@@ -13,8 +13,10 @@ A static Heroes of the Storm tier site, Korean by default with every UI string a
 
 ## Architecture in one screen
 ```
-GitHub Actions (cron 03:20 KST, workflow_dispatch, push:main)
-  collect job (cron/dispatch only)
+Mac mini launchd com.blas1n.hpgg-collect, 03:20 KST → gh workflow run … -f if_stale=true
+GitHub Actions (that dispatch, cron 05:20 KST as fallback, plain workflow_dispatch, push:main)
+  gate job (cron / if_stale): data/latest collected < 12 h ago → stop (python3 -m collector.freshness)
+  collect job (cron/dispatch only, not after a fresh gate)
     uv run python -m collector
       GET /v1/patches                       → newest build with valid_globals
       12× GET /v1/heroes/stats?group_by_map&region=KR|NA|EU → qm, sl, sl_low(1-4), sl_high(5-6) per region (60 s apart)

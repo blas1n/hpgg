@@ -2,11 +2,18 @@ name: collect-and-deploy
 
 on:
   schedule:
-    # 03:20 KST daily. GitHub registers a schedule from the default branch's workflow file; after the repo rename
-    # (hotsmeta → hpgg, 2026-09-28) the first night (2026-09-29) produced no scheduled run at all — this commit
-    # re-registers it. If a night is missed again: `gh run list --event schedule` is empty → dispatch once by hand.
-    - cron: "20 18 * * *"
+    # Fallback only. The daily run is dispatched from the Mac mini at 03:20 KST (tools/collect/, launchd), because
+    # GitHub started this cron ~4 h late every night (18:20Z asked, 22:15–22:41Z run, 2026-09-29 → 10-01) and the
+    # site says "매일 새벽 갱신". 05:20 KST here; the gate below skips it when the dawn run already collected.
+    # GitHub registers a schedule from the default branch's workflow file; if `gh run list --event schedule` is
+    # ever empty after a rename, dispatch once by hand.
+    - cron: "20 20 * * *"
   workflow_dispatch:
+    inputs:
+      if_stale:
+        description: "Skip collecting when data/latest was collected in the last 12 h (the Mac mini's dawn dispatch sets this)"
+        type: boolean
+        default: false
   push:
     branches: [main]
 
@@ -21,9 +28,29 @@ permissions:
   issues: write
 
 jobs:
+  gate:
+    # the cron fallback and the Mac mini's dispatch: whichever comes second finds today's data and stops here, so
+    # the week's Heroes/Stats quota (210) is never spent twice in a night. A plain manual dispatch always collects.
+    if: github.event_name == 'schedule' || inputs.if_stale
+    runs-on: ubuntu-latest
+    outputs:
+      fresh: ${{ steps.check.outputs.fresh }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          sparse-checkout: |
+            collector
+            data/latest/meta.json
+          sparse-checkout-cone-mode: false
+      - id: check
+        run: python3 -m collector.freshness data/latest/meta.json 12 | tee -a "$GITHUB_OUTPUT"
+
   collect:
-    # cron / manual only — a push just rebuilds and deploys what is already in data/
-    if: github.event_name != 'push'
+    needs: [gate]
+    # cron / manual only — a push just rebuilds and deploys what is already in data/; the gate is skipped on a
+    # plain manual dispatch, hence always()
+    if: always() && github.event_name != 'push' && needs.gate.outputs.fresh != 'true'
     runs-on: ubuntu-latest
     # stats ~25 min (24 calls at 1 a minute) + builds + matchups (≤ 25 min budget, + at most one
     # in-flight job poll of ≤ 15 min)
@@ -45,7 +72,8 @@ jobs:
           HP_API_TOKEN: ${{ secrets.HP_API_TOKEN }}
         run: |
           uv run python -m collector
-          echo "day=$(date -u +%F)" >> "$GITHUB_OUTPUT"
+          # the folder the collector just wrote (its day is KST: collector.run.snapshot_day)
+          echo "day=$(ls data/.snapshot_out | sort | tail -1)" >> "$GITHUB_OUTPUT"
       # before the push, and whatever happens: 2026-10-02 the push was refused and the run's
       # data went with the runner (the week's quota could not pay for it again)
       - name: Keep the collected data as an artifact
@@ -70,7 +98,7 @@ jobs:
           if [ -d data/previous ]; then git add data/previous; fi
           if [ -d data/matchups ]; then git add data/matchups; fi
           if [ -f data/patchnotes.json ]; then git add data/patchnotes.json; fi
-          git commit -m "data: $(date -u +%F) $(python3 -c 'import json;print(json.load(open("data/latest/meta.json"))["current_patch"])')" || echo "nothing to commit"
+          git commit -m "data: $(TZ=Asia/Seoul date +%F) $(python3 -c 'import json;print(json.load(open("data/latest/meta.json"))["current_patch"])')" || echo "nothing to commit"
           git pull --rebase --autostash origin main
           git push origin main
       - name: Archive raw + normalised snapshots to the orphan `snapshots` branch

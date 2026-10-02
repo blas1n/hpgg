@@ -274,7 +274,8 @@ test("tier table: Storm League rank-bracket selector loads sl_<bracket>.json and
   await expect(page).not.toHaveURL(/tier=/);
 });
 
-// e2e-data regions (synthetic, scaled from the global files): KR healthy (collected 09/27), NA thin (09/28), EU not collected
+// e2e-data regions (synthetic, scaled from the global files): KR healthy (collected 2026-09-27T18:31Z = 03:31 KST, shown
+// as 09/28: dates are the Korean day, data.ts shortDate), NA thin (09/28), EU not collected
 test("tier table: region select loads {mode}_{region}.json, lands in the URL and shows that region's date", async ({ page }) => {
   await page.goto("./tier/");
   await expect(page.locator("#region option")).toHaveText(["전체 지역", "아시아 (KR)", "아메리카 (NA)", "유럽 (EU) · 수집 전"]);
@@ -284,7 +285,7 @@ test("tier table: region select loads {mode}_{region}.json, lands in the URL and
   await expect(page.locator("#table")).toHaveAttribute("aria-busy", "false");
   await expect(page.locator("#meta-line")).toContainText("아시아 (KR)");
   await expect(page.locator("#meta-line")).toContainText("12,570 매치");
-  await expect(page.locator("#region-note")).toContainText("09/27 수집");
+  await expect(page.locator("#region-note")).toContainText("09/28 수집");
   await expect(page.locator("#region-note")).not.toHaveAttribute("data-thin", "true");
   await expect(page.locator("#rows [data-delta]")).toHaveCount(0); // no previous-patch file for a region: no ▲▼
   await page.locator("#mode-sl").click(); // the region stays across modes
@@ -309,7 +310,7 @@ test("tier table: region and bracket combine, load {view}_{region}.json and both
   await expect(page.locator("#region")).toBeEnabled();
   await expect(page.locator("#table")).toHaveAttribute("aria-busy", "false");
   await expect(page.locator("#region-note")).toContainText("아시아 (KR) · 브론즈 – 플래티넘");
-  await expect(page.locator("#region-note")).toContainText("09/27 수집");
+  await expect(page.locator("#region-note")).toContainText("09/28 수집");
   await expect(page.locator("#rows tr").first()).toBeVisible();
   await expect(page.locator("#combo-note")).toHaveCount(0);
   // a cell not collected says so in the menu

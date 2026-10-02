@@ -704,3 +704,15 @@ def test_cli_only_passes_the_views_to_the_run(monkeypatch) -> None:
     monkeypatch.setenv("HP_API_TOKEN", "x")
     assert cli.main(["--only", "qm,sl"]) == 0
     assert seen == {"only": ("qm", "sl")}
+
+
+@respx.mock
+async def test_a_dawn_run_files_its_snapshot_under_the_korean_day(
+    tmp_path: Path, raw_by_map, patches_payload, fake_sleep
+) -> None:
+    """03:20 KST is 18:20Z the day before: named by the UTC day, tonight's archive would land in
+    the folder of the run that collected at noon (snapshots/2026-10-02) and overwrite it."""
+    mock_api(raw_by_map, patches_payload)
+    s = settings(tmp_path)
+    assert await run(s, sleep=fake_sleep, now=lambda: "2026-09-28T18:25:00Z") == 0
+    assert [p.name for p in s.snapshot_out_dir.iterdir()] == ["2026-09-29"]
