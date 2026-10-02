@@ -66,7 +66,6 @@ export const ko = {
     heroes: "영웅",
     maps: "전장",
     contact: "문의 · contact@hpgg.win",
-    bugs: "버그 제보 (GitHub)",
     data: "데이터: Heroes Profile",
     tagline: "Happy Good Game. 매치 데이터로 보는 메타 통계. 공식을 숨기지 않습니다.",
     dataBy: "Data provided by",

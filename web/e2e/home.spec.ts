@@ -78,6 +78,16 @@ test("footer offers a contact address", async ({ page }) => {
   await expect(page.locator('footer a[href="mailto:contact@hpgg.win"]')).toBeVisible();
 });
 
+test("footer links go only to the site, the contact address and the data source (owner 10-02: no repository link)", async ({ page }) => {
+  for (const path of ["./", "/en/hots/"]) {
+    await page.goto(path);
+    const hrefs = await page.locator("footer a").evaluateAll((as) => as.map((a) => a.getAttribute("href") ?? ""));
+    expect(hrefs.length).toBeGreaterThan(4);
+    const off = hrefs.filter((h) => !h.startsWith("/") && h !== "mailto:contact@hpgg.win" && h !== "https://www.heroesprofile.com/");
+    expect(off).toEqual([]);
+  }
+});
+
 test("홈 says what the site is in one short line, above the player search (#30)", async ({ page }) => {
   await page.goto("./");
   const line = page.locator("#site-tagline");

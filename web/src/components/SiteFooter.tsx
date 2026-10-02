@@ -18,9 +18,8 @@ export function SiteFooter({ locale }: { locale: Locale }) {
     {
       title: "HPGG",
       links: [
-        { href: "https://github.com/blas1n/hpgg", label: "GitHub" },
+        // no repository link (owner 2026-10-02): bugs and questions go to the contact address
         { href: "mailto:contact@hpgg.win", label: t.contact },
-        { href: "https://github.com/blas1n/hpgg/issues", label: t.bugs },
         { href: "https://www.heroesprofile.com/", label: t.data },
       ],
     },

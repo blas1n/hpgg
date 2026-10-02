@@ -63,7 +63,6 @@ export const en: Messages = {
     heroes: "Heroes",
     maps: "Battlegrounds",
     contact: "Contact · contact@hpgg.win",
-    bugs: "Report a bug (GitHub)",
     data: "Data: Heroes Profile",
     tagline: "Happy Good Game. Meta statistics from match data. The formula is always shown.",
     dataBy: "Data provided by",
