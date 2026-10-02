@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import { expect, test, type Page } from "@playwright/test";
 import { LOCALES } from "../src/i18n/locales";
 import { messages } from "../src/i18n/messages";
+import { navIds, sectionEnabled } from "../src/features";
 
 // #10: every language under /<locale>/ from one route tree (/ko/hots/…, /en/hots/…); the header switch moves between
 // them; the URLs from before (/hots/…) forward.
@@ -16,7 +17,7 @@ test.beforeEach(async ({ page }) => {
 });
 
 /** Every page type: its Korean path and the English heading it must show. */
-const PAGES = [
+const ALL_PAGES = [
   { path: "/hots/", h1: "Today's meta", ko: "오늘의 메타" },
   { path: "/hots/tier/", h1: "Hero tier list", ko: "영웅 티어" },
   { path: "/hots/heroes/", h1: "Heroes", ko: "영웅" },
@@ -26,6 +27,8 @@ const PAGES = [
   { path: "/hots/players/", h1: "Player search", ko: "전적 검색" },
   { path: "/hots/draft/", h1: "Draft simulator", ko: "밴픽 시뮬레이터" },
 ];
+/** Without the sections switched off on the live site (src/features.ts): the export has no such pages. */
+const PAGES = ALL_PAGES.filter((p) => sectionEnabled(p.path.split("/")[2] ?? ""));
 
 /** Visible text on the page, minus the language switch (labelled in the other language on purpose). */
 const visibleHangul = (page: Page) =>
@@ -86,7 +89,7 @@ test("English pages show no Korean text, including views built in the browser", 
     "/en/hots/tier/?mode=sl&map=Cursed%20Hollow",
     "/en/hots/tier/?mode=sl&tier=high",
     "/en/hots/tier/?region=kr",
-    "/en/hots/draft/?map=Cursed%20Hollow&d=illidan.zeratul.tracer.genji.abathur.uther.muradin",
+    ...(sectionEnabled("draft") ? ["/en/hots/draft/?map=Cursed%20Hollow&d=illidan.zeratul.tracer.genji.abathur.uther.muradin"] : []),
     "/en/hots/heroes/illidan/?mode=sl",
     "/en/hots/players/?tag=Player12%231012&region=NA",
   ];
@@ -130,7 +133,7 @@ test("Korean player page: 일반 선발전 and 무작위 영웅 대전, ARAM map
 
 test("English links stay in English: nav, hero search, cards and the map objective's English source", async ({ page }) => {
   await page.goto("/en/hots/");
-  for (const id of ["home", "tier", "heroes", "draft", "maps", "players"]) await expect(page.locator(`header a[data-page="${id}"]`).first()).toHaveAttribute("href", /^\/en\/hots\//);
+  for (const id of navIds()) await expect(page.locator(`header a[data-page="${id}"]`).first()).toHaveAttribute("href", /^\/en\/hots\//);
   await page.locator("#site-search").fill("일리"); // Korean names stay searchable on English pages
   await expect(page.getByRole("listbox")).toContainText("Illidan");
   await page.locator("#site-search").press("Enter");

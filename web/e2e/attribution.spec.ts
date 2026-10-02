@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { sectionEnabled } from "../src/features";
 
 // Heroes Profile API terms §4 (https://www.heroesprofile.com/Api/Terms, pointed out by HP 2026-09-29): on every page that
 // shows its data, "Data provided by Heroes Profile" with a visible link, on the same screen as the data (no scrolling
@@ -8,7 +9,9 @@ test.beforeEach(async ({ page }) => {
   await page.route("https://www.heroesprofile.com/**", (r) => r.fulfill({ status: 200, contentType: "text/html", body: "<p>stub</p>" }));
 });
 
-const PAGES = ["./", "./tier/", "./heroes/", "./heroes/illidan/", "./maps/", "./maps/cursed-hollow/", "./draft/", "./players/", "../../en/hots/tier/"];
+/** Pages of switched-off sections (src/features.ts) are not in the export. */
+const live = (path: string): boolean => sectionEnabled(path.split("/")[1]?.split("?")[0] ?? "");
+const PAGES = ["./", "./tier/", "./heroes/", "./heroes/illidan/", "./maps/", "./maps/cursed-hollow/", "./draft/", "./players/", "../../en/hots/tier/"].filter(live);
 
 for (const path of PAGES) {
   for (const width of [390, 1280]) {
@@ -47,7 +50,7 @@ const TITLED = [
   { path: "./maps/", title: "전장" },
   { path: "./draft/", title: "밴픽 시뮬레이터" },
   { path: "./players/", title: "전적 검색" },
-];
+].filter((p) => live(p.path));
 
 for (const { path, title } of TITLED) {
   test(`credit belongs to the title on ${path}`, async ({ page }) => {

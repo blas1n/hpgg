@@ -6,11 +6,12 @@
  */
 import { writeFileSync } from "node:fs";
 import { join } from "node:path";
+import { sectionEnabled } from "../src/features.ts";
 import { LOCALES, SITE_URL } from "../src/i18n/locales.ts";
 import type { HeroTable, MapTable } from "../src/data";
 
 /** The static sections under app/[locale]/hots (tests/sitemap.test.ts fails when a directory is missing here). */
-const SECTIONS = ["tier", "heroes", "maps", "draft", "players"];
+const SECTIONS = ["tier", "heroes", "maps", "draft", "players"].filter((s) => sectionEnabled(s)); // src/features.ts
 
 export function sitemapUrls(heroes: HeroTable, maps: MapTable): string[] {
   return LOCALES.flatMap((l) => {

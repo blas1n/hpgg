@@ -1,5 +1,9 @@
 import { readFileSync } from "node:fs";
 import { expect, test, type Page } from "@playwright/test";
+import { FEATURES } from "../src/features";
+
+// switched off on the live site (owner 2026-10-02, src/features.ts): the export has no 밴픽 page to test
+test.skip(!FEATURES.draft, "밴픽 is switched off (src/features.ts)");
 
 test.beforeEach(async ({ page }) => {
   await page.route("**/gc.zgo.at/**", (r) => r.abort());

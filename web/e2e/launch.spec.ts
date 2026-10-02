@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 import { LOCALES } from "../src/i18n/locales";
+import { FEATURES } from "../src/features";
 
 // Before the first community post (2026-10-02): a crawler finds robots.txt and the sitemap, and a link pasted into
 // Inven, Arca, Discord or KakaoTalk previews as a 1200×630 card in the page's language.
@@ -33,3 +34,16 @@ for (const locale of LOCALES) {
     }
   });
 }
+
+// owner 2026-10-02: 밴픽 is switched off until its suggestions account for team roles (src/features.ts)
+test("a switched-off section is not in the menu, the sitemap or the site", async ({ page, request }) => {
+  test.skip(FEATURES.draft, "밴픽 is on");
+  await page.route("**/gc.zgo.at/**", (r) => r.abort());
+  for (const l of LOCALES) {
+    await page.goto(`/${l}/hots/`);
+    await expect(page.locator('header a[data-page="tier"]').first()).toBeAttached(); // the menu is there
+    await expect(page.locator('header a[data-page="draft"]')).toHaveCount(0);
+    expect((await request.get(`/${l}/hots/draft/`)).status()).toBe(404);
+  }
+  expect(await (await request.get("/sitemap.xml")).text()).not.toContain("/hots/draft/");
+});

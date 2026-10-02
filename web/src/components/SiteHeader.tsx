@@ -5,14 +5,13 @@ import { usePathname } from "next/navigation";
 import { assetUrl, hotsHref } from "@/data";
 import { useLocale, useT } from "@/i18n/client";
 import { sectionPath } from "@/i18n/locale";
+import { navIds, type NavId } from "@/features";
 import type { SearchItem } from "@/lib/search";
 import { HeroSearch } from "./HeroSearch";
 import { LanguageToggle } from "./LanguageToggle";
 import { ThemeToggle } from "./ThemeToggle";
 import { cx } from "./ui";
 
-const NAV_IDS = ["home", "tier", "heroes", "draft", "maps", "players"] as const;
-type NavId = (typeof NAV_IDS)[number];
 
 function activeId(path: string): NavId {
   const p = sectionPath(path); // the section is the same in every language
@@ -28,7 +27,7 @@ function activeId(path: string): NavId {
 export function SiteHeader({ searchIndex }: { searchIndex: SearchItem[] }) {
   const t = useT();
   const href = hotsHref(useLocale());
-  const nav = NAV_IDS.map((id) => ({ id, href: id === "tier" ? href.tier() : id === "draft" ? href.draft() : href[id], label: t.nav[id] }));
+  const nav = navIds().map((id) => ({ id, href: id === "tier" ? href.tier() : id === "draft" ? href.draft() : href[id], label: t.nav[id] }));
   const active = activeId(usePathname() ?? "/hots/");
   const ref = useRef<HTMLElement>(null);
   // --header-h lets sticky sub-navigation and anchor targets sit exactly under the header (it is two rows on phones)

@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import { robotsTxt, sitemapUrls, sitemapXml } from "../scripts/sitemap";
 import { LOCALES, SITE_URL } from "../src/i18n/locales";
+import { sectionEnabled } from "../src/features";
 import type { HeroTable, MapTable } from "../src/data";
 
 // robots.txt and sitemap.xml were 404 before the first community post (2026-10-02). The sitemap is made from the
@@ -18,14 +19,17 @@ const maps = json<MapTable>(join(data, "maps_ko.json"));
 const urls = sitemapUrls(heroes, maps);
 
 describe("sitemap", () => {
-  it("lists every static section under app/[locale]/hots in every language", () => {
+  it("lists every static section under app/[locale]/hots in every language, unless its feature is off", () => {
     const sections = readdirSync(join(here, "..", "app", "[locale]", "hots"), { withFileTypes: true })
       .filter((d) => d.isDirectory() && !d.name.startsWith("["))
       .map((d) => d.name);
     expect(sections.length).toBeGreaterThan(3);
     for (const l of LOCALES) {
       expect(urls).toContain(`${SITE_URL}/${l}/hots/`);
-      for (const s of sections) expect(urls).toContain(`${SITE_URL}/${l}/hots/${s}/`);
+      for (const s of sections) {
+        if (sectionEnabled(s)) expect(urls).toContain(`${SITE_URL}/${l}/hots/${s}/`);
+        else expect(urls.some((u) => u.startsWith(`${SITE_URL}/${l}/hots/${s}/`))).toBe(false);
+      }
     }
   });
 
