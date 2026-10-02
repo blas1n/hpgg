@@ -25,6 +25,8 @@ SPECS: tuple[JobSpec, ...] = (
     JobSpec("sl_high", "sl", (5, 6), "sl_high.json"),
 )
 
+VIEWS: tuple[str, ...] = ("qm", "sl", "sl_low", "sl_high")  # the keys of SPECS
+
 # The region × bracket cube (owner 2026-10-02): every view in every region, each with its solo
 # twin for the party correction — 24 Heroes/Stats calls a day (Intermediate: 210/week). The
 # whole is their sum (`sum_regions`): a game is played on one server, and CN closed in 2023;

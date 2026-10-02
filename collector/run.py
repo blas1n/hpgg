@@ -25,6 +25,7 @@ from collector.snapshot import (
     CELL_SPECS,
     REFERENCE_MODES,
     SPECS,
+    VIEWS,
     build_meta,
     choose_patch,
     commit_atomic,
@@ -161,7 +162,7 @@ async def _collect_cube(
     timeframe: str,
     collected_at: str,
     sleep: SleepFn,
-    views: tuple[str, ...] = tuple(spec.key for spec in SPECS),
+    views: tuple[str, ...] = VIEWS,
 ) -> tuple[dict[str, Any], dict[str, dict[str, Any]]]:
     """Every view in every region (CELL_SPECS), then each one's solo twin; every view gets the
     party correction, and the whole of each view is the sum of its regions (corrected with the
@@ -334,7 +335,7 @@ async def run(
     """Returns a process exit code. Never raises for API failures; never logs the token.
     `only`: the views to collect (keys of SPECS, QM and SL among them — they decide the patch),
     each in every region; for a recovery run on what is left of the week's quota."""
-    views = tuple(spec.key for spec in SPECS)
+    views = VIEWS
     if only is not None:
         if not set(REFERENCE_MODES) <= set(only) <= set(views):
             log.error("run.refused", reason="--only takes qm and sl, and sl_low / sl_high")
@@ -424,7 +425,7 @@ async def _run_stats(
     *,
     collected_at: str,
     sleep: SleepFn,
-    views: tuple[str, ...] = tuple(spec.key for spec in SPECS),
+    views: tuple[str, ...] = VIEWS,
 ) -> int:
     try:
         patches = await c.get_json("/patches")

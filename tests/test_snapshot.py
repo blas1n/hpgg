@@ -552,3 +552,9 @@ def test_regions_of_different_patches_are_not_summed() -> None:
     a = _cell("KR", [("Nova", "all", 1, 2, 0)], 1)
     with pytest.raises(ValueError, match="patch"):
         sum_regions([a, {**a, "patch": "2.55.17"}], key="sl", collected_at="c")
+
+
+def test_views_are_the_keys_of_the_specs() -> None:
+    from collector.snapshot import VIEWS
+
+    assert tuple(s.key for s in SPECS) == VIEWS
