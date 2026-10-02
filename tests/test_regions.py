@@ -1,44 +1,23 @@
-"""Region rotation (#14, Basic plan): one region a day for QM + SL (2 extra Heroes/Stats calls),
-KR → NA → EU by a deterministic day index; the other regions' files are carried forward."""
+"""The region × bracket cube (owner 2026-10-02, Intermediate plan): every view (QM, SL, 브실골플,
+다마그) in every region (KR, NA, EU), each with its solo twin — 24 Heroes/Stats calls a day.
+The whole is the sum of the regions; every view carries the party correction."""
 
 from __future__ import annotations
 
 import json
-from datetime import date
 from pathlib import Path
 from typing import Any
 
 import httpx
-import pytest
 import respx
 
 from collector.run import run, run_backfill_previous
-from collector.snapshot import REGIONS, region_for_day, region_specs
+from collector.snapshot import CELL_SPECS
 from tests.conftest import BASE
-from tests.test_run import mock_api, settings
+from tests.test_run import CUR_TF, _mock_blizzard, settings
 
-
-@pytest.mark.parametrize(
-    ("day", "region"),
-    [
-        ("2026-09-30", "kr"),
-        ("2026-10-01", "na"),
-        ("2026-10-02", "eu"),
-        ("2026-10-03", "kr"),
-        ("2026-09-29", "eu"),  # before the epoch the cycle runs backwards the same way
-        ("2027-01-01", REGIONS[(date(2027, 1, 1) - date(2026, 9, 30)).days % 3][0]),
-    ],
-)
-def test_region_for_day_cycles_kr_na_eu(day: str, region: str) -> None:
-    assert region_for_day(date.fromisoformat(day)) == region
-
-
-def test_region_specs_are_qm_and_sl_without_brackets() -> None:
-    specs = region_specs("na")
-    assert [(s.key, s.game_type, s.league_tier, s.region, s.filename) for s in specs] == [
-        ("qm_na", "qm", None, "NA", "qm_na.json"),
-        ("sl_na", "sl", None, "NA", "sl_na.json"),
-    ]
+VIEWS = ("qm", "sl", "sl_low", "sl_high")
+CELLS = [f"{m}_{r}" for r in ("kr", "na", "eu") for m in VIEWS]
 
 
 def _calls() -> list[dict[str, str]]:
@@ -57,112 +36,120 @@ def _latest(s: Any) -> dict[str, Any]:
     }
 
 
-@respx.mock
-async def test_run_collects_todays_region_for_qm_and_sl(
-    tmp_path: Path, raw_by_map, patches_payload, fake_sleep
-) -> None:
-    mock_api(raw_by_map, patches_payload)
-    s = settings(tmp_path)
-    assert await run(s, sleep=fake_sleep, now=lambda: "2026-09-30T18:30:00Z") == 0
-    regional = [(c["game_type"], c.get("league_tier")) for c in _calls() if "region" in c]
-    assert regional == [("qm", None), ("sl", None)]
-    assert {c["region"] for c in _calls() if "region" in c} == {"KR"}
-    assert all(c["group_by_map"] == "true" for c in _calls())
-    latest = _latest(s)
-    assert latest["qm_kr"]["region"] == "KR" and latest["sl_kr"]["region"] == "KR"
-    assert latest["qm"]["region"] is None
-    assert latest["qm_kr"]["mode"] == "qm_kr" and latest["qm_kr"]["game_type"] == "qm"
-    meta = latest["meta"]
-    assert set(meta["modes"]) == {"qm", "sl", "sl_low", "sl_high", "qm_kr", "sl_kr"}
-    assert meta["modes"]["qm_kr"]["collected_at"] == "2026-09-30T18:30:00Z"
-    assert meta["modes"]["qm_kr"]["heroes_over_200"] >= 0
-    # 4 stats + 2 solo + 2 region calls at 1/min (7 gaps) + 1 before builds
-    assert fake_sleep.calls == [60.0] * 8
-
-
-@respx.mock
-async def test_next_day_adds_the_next_region_and_carries_the_others(
-    tmp_path: Path, raw_by_map, patches_payload, fake_sleep
-) -> None:
-    mock_api(raw_by_map, patches_payload)
-    s = settings(tmp_path)
-    assert await run(s, sleep=fake_sleep, now=lambda: "2026-09-30T18:30:00Z") == 0
-    assert await run(s, sleep=fake_sleep, now=lambda: "2026-10-01T18:30:00Z") == 0
-    latest = _latest(s)
-    assert latest["qm_kr"]["collected_at"] == "2026-09-30T18:30:00Z"  # carried
-    assert latest["qm_na"]["collected_at"] == "2026-10-01T18:30:00Z"  # today's
-    assert "qm_eu" not in latest
-    modes = latest["meta"]["modes"]
-    assert modes["sl_kr"]["collected_at"] == "2026-09-30T18:30:00Z"
-    assert modes["sl_na"]["collected_at"] == "2026-10-01T18:30:00Z"
-    # only today's region was asked for
-    assert {c["region"] for c in _calls()[-2:]} == {"NA"}
-
-
-@respx.mock
-async def test_region_failure_keeps_yesterdays_region_files_and_the_run_succeeds(
-    tmp_path: Path, raw_by_map, patches_payload, fake_sleep
-) -> None:
-    mock_api(raw_by_map, patches_payload)
-    s = settings(tmp_path)
-    # day 1 (KR) then 3 days later KR again, but the region call fails
-    assert await run(s, sleep=fake_sleep, now=lambda: "2026-09-30T18:30:00Z") == 0
-    respx.reset()
-    mock_api(raw_by_map, patches_payload)
+def mock_cube(raw_by_map: dict[str, Any], patches: dict[str, Any], fail: str | None = None) -> None:
+    """Every stats call answers raw_by_map; `fail` = "<region>" or "<region>/Solo" answers 500."""
+    respx.get(f"{BASE}/patches").mock(return_value=httpx.Response(200, json=patches))
 
     def stats(request: httpx.Request) -> httpx.Response:
-        if "region" in dict(httpx.QueryParams(request.url.query)):
-            return httpx.Response(429, json={"error": {"code": "quota_exceeded", "message": "w"}})
+        q = dict(httpx.QueryParams(request.url.query))
+        assert q["group_by_map"] == "true"
+        tag = q.get("region", "") + ("/Solo" if q.get("groupsize") == "Solo" else "")
+        if fail is not None and tag == fail:
+            return httpx.Response(500, json={"error": {"code": "server_error", "message": "x"}})
         return httpx.Response(200, json=raw_by_map)
 
     respx.get(f"{BASE}/heroes/stats").mock(side_effect=stats)
-    assert await run(s, sleep=fake_sleep, now=lambda: "2026-10-03T18:30:00Z") == 0
-    latest = _latest(s)
-    assert latest["qm_kr"]["collected_at"] == "2026-09-30T18:30:00Z"
-    assert latest["qm"]["collected_at"] == "2026-10-03T18:30:00Z"
+    respx.get(f"{BASE}/heroes/talents/builds/all").mock(
+        return_value=httpx.Response(200, json={"Nova": []})
+    )
+    _mock_blizzard()
 
 
 @respx.mock
-async def test_patch_change_moves_region_files_to_previous_and_drops_them_from_latest(
+async def test_every_view_in_every_region_with_its_solo_twin(
     tmp_path: Path, raw_by_map, patches_payload, fake_sleep
 ) -> None:
-    mock_api(raw_by_map, patches_payload)
+    mock_cube(raw_by_map, patches_payload)
     s = settings(tmp_path)
-    assert await run(s, sleep=fake_sleep, now=lambda: "2026-09-30T18:30:00Z") == 0  # KR
+    assert await run(s, sleep=fake_sleep, now=lambda: "2026-10-03T00:00:00Z") == 0
+    calls = _calls()
+    assert len(calls) == 24
+    assert all(c["timeframe"] == CUR_TF for c in calls)
+    assert all(c.get("region") in {"KR", "NA", "EU"} for c in calls)  # the whole is summed
+    tiers = {(c["region"], c["game_type"], c.get("league_tier"), c.get("groupsize")) for c in calls}
+    assert ("KR", "sl", "1,2,3,4", "Solo") in tiers and ("EU", "qm", None, None) in tiers
+    latest = _latest(s)
+    assert set(VIEWS) | set(CELLS) <= set(latest)
+    assert set(latest["meta"]["modes"]) == set(VIEWS) | set(CELLS)
+    # the formula is the same everywhere: every view, every row
+    for key in (*VIEWS, *CELLS):
+        assert "party" in latest[key], key
+        assert all("tier_win_rate" in r for r in latest[key]["rows"]), key
+
+
+@respx.mock
+async def test_the_whole_is_the_sum_of_its_regions(
+    tmp_path: Path, raw_by_map, patches_payload, fake_sleep
+) -> None:
+    mock_cube(raw_by_map, patches_payload)
+    s = settings(tmp_path)
+    assert await run(s, sleep=fake_sleep, now=lambda: "2026-10-03T00:00:00Z") == 0
+    latest = _latest(s)
+    for view in VIEWS:
+        whole = latest[view]
+        parts = [latest[f"{view}_{r}"] for r in ("kr", "na", "eu")]
+        assert whole["region"] is None and all(p["region"] for p in parts)
+        assert whole["matches"] == sum(p["matches"] for p in parts)
+        rows = {(r["hero"], r["map"]): r for r in whole["rows"]}
+        for p in parts[0]["rows"]:
+            assert rows[(p["hero"], p["map"])]["wins"] == 3 * p["wins"]  # three equal regions
+        # corrected with the summed solo games of the three regions
+        assert whole["party"]["solo_games"] == sum(p["party"]["solo_games"] for p in parts)
+
+
+@respx.mock
+async def test_a_region_that_fails_keeps_yesterdays_files(
+    tmp_path: Path, raw_by_map, patches_payload, fake_sleep
+) -> None:
+    """The whole is a sum: without one region it would be a different number under the same
+    name, so nothing is updated (as with a missing party correction)."""
+    mock_cube(raw_by_map, patches_payload)
+    s = settings(tmp_path)
+    assert await run(s, sleep=fake_sleep, now=lambda: "2026-10-03T00:00:00Z") == 0
+    before = {p.name: p.read_bytes() for p in (s.data_dir / "latest").iterdir()}
+    for fail in ("NA", "EU/Solo"):
+        respx.reset()
+        mock_cube(raw_by_map, patches_payload, fail=fail)
+        assert await run(s, sleep=fake_sleep, now=lambda: "2026-10-04T00:00:00Z") != 0, fail
+        assert {p.name: p.read_bytes() for p in (s.data_dir / "latest").iterdir()} == before
+
+
+@respx.mock
+async def test_patch_change_moves_every_view_to_previous(
+    tmp_path: Path, raw_by_map, patches_payload, fake_sleep
+) -> None:
+    mock_cube(raw_by_map, patches_payload)
+    s = settings(tmp_path)
+    assert await run(s, sleep=fake_sleep, now=lambda: "2026-10-03T00:00:00Z") == 0
     respx.reset()
     newer = json.loads(json.dumps(patches_payload))
     newer["patches"].append({"game_version": "2.55.18.99000", "valid_globals": True})
     respx.get(f"{BASE}/patches").mock(return_value=httpx.Response(200, json=newer))
-    respx.get(f"{BASE}/heroes/stats").mock(return_value=httpx.Response(200, json=raw_by_map))
-    respx.get(f"{BASE}/heroes/talents/builds/all").mock(
-        return_value=httpx.Response(200, json={"Nova": []})
-    )
-    assert await run(s, sleep=fake_sleep, now=lambda: "2026-10-01T18:30:00Z") == 0  # NA
-    latest = _latest(s)
-    assert "qm_kr" not in latest  # another patch: not carried
-    assert latest["qm_na"]["patch"] == "2.55.18"
-    assert "qm_kr" not in latest["meta"]["modes"]
-    prev = json.loads((s.data_dir / "previous" / "qm_kr.json").read_text())
-    assert prev["patch"] == "2.55.17"
+    assert await run(s, sleep=fake_sleep, now=lambda: "2026-10-04T00:00:00Z") == 0
+    prev = {p.stem for p in (s.data_dir / "previous").glob("*.json")} - {"meta", "builds"}
+    assert prev == set(VIEWS) | set(CELLS)
+    meta = _latest(s)["meta"]
+    assert set(meta["previous_modes"]) == set(VIEWS) | set(CELLS)
 
 
 @respx.mock
-async def test_backfill_keeps_previous_region_files_of_the_same_patch_only(
+async def test_backfill_collects_the_whole_cube_of_the_older_patch(
     tmp_path: Path, raw_by_map, patches_payload, fake_sleep
 ) -> None:
-    mock_api(raw_by_map, patches_payload)
+    mock_cube(raw_by_map, patches_payload)
     s = settings(tmp_path)
-    assert await run(s, sleep=fake_sleep, now=lambda: "2026-09-30T18:30:00Z") == 0
-    prev = s.data_dir / "previous"
-    prev.mkdir()
-    (prev / "qm_kr.json").write_text(json.dumps({"patch": "2.55.9", "region": "KR"}))
-    (prev / "sl_na.json").write_text(json.dumps({"patch": "2.55.16.00000", "region": "NA"}))
-    respx.get(f"{BASE}/heroes/stats").mock(return_value=httpx.Response(200, json=raw_by_map))
+    assert await run(s, sleep=fake_sleep, now=lambda: "2026-10-03T00:00:00Z") == 0
+    respx.reset()
     code = await run_backfill_previous(
-        s, patch="2.55.9", sleep=fake_sleep, now=lambda: "2026-10-01T00:00:00Z"
+        s, patch="2.55.9", sleep=fake_sleep, now=lambda: "2026-10-03T01:00:00Z"
     )
     assert code == 0
-    names = sorted(p.name for p in prev.iterdir())
-    assert names == ["qm.json", "qm_kr.json", "sl.json", "sl_high.json", "sl_low.json"]
-    # backfill asks for the four global views only (regions rotate daily; 4 calls, as before)
-    assert not [c for c in _calls()[-4:] if "region" in c]
+    assert len(_calls()) == 24 and {c["timeframe"] for c in _calls()} == {"2.55.9.90000"}
+    prev = {p.stem for p in (s.data_dir / "previous").glob("*.json")}
+    assert prev == set(VIEWS) | set(CELLS)
+    meta = _latest(s)["meta"]
+    assert meta["previous_patch"] == "2.55.9" and set(meta["previous_modes"]) == prev
+
+
+def test_cells_cover_three_regions_and_four_views() -> None:
+    assert [s.key for s in CELL_SPECS] == CELLS

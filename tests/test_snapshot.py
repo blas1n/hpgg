@@ -462,3 +462,93 @@ def test_a_build_of_the_new_regular_patch_is_never_promoted(tmp_path: Path) -> N
     )
     commit_atomic(data_dir=data, tmp_dir=tmp, snapshots=_healthy("2.57.0"), meta=m1, prev_meta=old)
     assert not (data / "previous" / "qm.json").exists()  # nothing rotated
+
+
+# --- region × bracket cube (owner 2026-10-02) -------------------------------------------------
+
+
+def test_cells_are_every_view_in_every_region() -> None:
+    """KR / NA / EU × (QM, SL, 브실골플, 다마그): 12 calls, each with its solo twin. The whole
+    is their sum (regions do not overlap; CN closed in 2023)."""
+    from collector.snapshot import CELL_SOLO_SPECS, CELL_SPECS
+
+    assert [s.key for s in CELL_SPECS] == [
+        f"{m}_{r}" for r in ("kr", "na", "eu") for m in ("qm", "sl", "sl_low", "sl_high")
+    ]
+    by = {s.key: s for s in CELL_SPECS}
+    assert (by["sl_low_kr"].region, by["sl_low_kr"].league_tier) == ("KR", (1, 2, 3, 4))
+    assert by["sl_high_eu"].filename == "sl_high_eu.json" and by["qm_na"].league_tier is None
+    assert [s.key for s in CELL_SOLO_SPECS] == [f"{s.key}_solo" for s in CELL_SPECS]
+    assert all(s.groupsize == "Solo" for s in CELL_SOLO_SPECS)
+
+
+def _cell(region: str, rows: list[tuple[str, str, int, int, int]], matches: int) -> dict:
+    return {
+        "patch": "2.57.0",
+        "mode": f"sl_{region.lower()}",
+        "game_type": "sl",
+        "league_tier": None,
+        "region": region,
+        "collected_at": "t",
+        "matches": matches,
+        "rows": [
+            {
+                "hero": h,
+                "map": m,
+                "wins": w,
+                "losses": g - w,
+                "games": g,
+                "bans": b,
+                "pick": 0.0,
+                "popularity": 0.0,
+                "win_rate": 0.0,
+                "ban_rate": 0.0,
+                "ci": 1.0,
+            }
+            for h, m, w, g, b in rows
+        ],
+    }
+
+
+def test_the_whole_is_the_sum_of_the_regions() -> None:
+    """Checked on 2.55.17.98025: KR + NA + EU = the global file, wins and losses of all
+    1,440 QM and 1,170 SL rows exactly; bans within rounding (they are derived from rates)."""
+    from collector.snapshot import sum_regions
+
+    kr = _cell("KR", [("Nova", "all", 6, 10, 2), ("Nova", "Hanamura", 6, 10, 2)], matches=10)
+    na = _cell(
+        "NA",
+        [
+            ("Nova", "all", 4, 10, 1),
+            ("Nova", "Hanamura", 4, 10, 1),
+            ("Ana", "all", 5, 10, 0),
+            ("Ana", "Alterac", 5, 10, 0),
+        ],
+        matches=20,
+    )
+    out = sum_regions([kr, na], key="sl", collected_at="c")
+    assert (out["mode"], out["region"], out["matches"], out["collected_at"]) == (
+        "sl",
+        None,
+        30,
+        "c",
+    )
+    by = {(r["hero"], r["map"]): r for r in out["rows"]}
+    nova = by[("Nova", "all")]
+    assert (nova["wins"], nova["losses"], nova["games"], nova["bans"]) == (10, 10, 20, 3)
+    assert nova["win_rate"] == 50.0
+    assert nova["pick"] == pytest.approx(20 / 30 * 100, abs=1e-4)  # of the summed matches
+    assert nova["ban_rate"] == pytest.approx(3 / 30 * 100, abs=1e-4)
+    assert nova["popularity"] == pytest.approx(23 / 30 * 100, abs=1e-4)
+    assert nova["ci"] is None  # a region's interval is not the whole's
+    hana = by[("Nova", "Hanamura")]  # a map's matches: Σ games on it / 10 = 2
+    assert (hana["games"], hana["pick"]) == (20, 1000.0)
+    assert by[("Ana", "Alterac")]["games"] == 10  # a hero or map in one region only
+
+
+def test_regions_of_different_patches_are_not_summed() -> None:
+    from collector.snapshot import sum_regions
+
+    a = _cell("KR", [("Nova", "all", 1, 2, 0)], 1)
+    with pytest.raises(ValueError, match="patch"):
+        sum_regions([a, {**a, "patch": "2.55.17"}], key="sl", collected_at="c")

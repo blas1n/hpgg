@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 import shutil
 from dataclasses import asdict
-from datetime import date, datetime, timedelta
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -15,9 +15,9 @@ from collector.models import HeroStat, JobSpec, ModeSnapshot
 
 log = structlog.get_logger(__name__)
 
-# The four daily calls. league_tier ids: 1 bronze … 6 master; HP has no grandmaster id, so
-# grandmasters are counted inside master. Two brackets while the player base is small
-# (브실골플 / 다마그, owner 2026-09-29); split further when samples allow.
+# The four views, each collected per region (CELL_SPECS). league_tier ids: 1 bronze … 6 master;
+# HP has no grandmaster id, so grandmasters are counted inside master. Two brackets while the
+# player base is small (브실골플 / 다마그, owner 2026-09-29); split further when samples allow.
 SPECS: tuple[JobSpec, ...] = (
     JobSpec("qm", "qm", None, "qm.json"),
     JobSpec("sl", "sl", None, "sl.json"),
@@ -25,13 +25,21 @@ SPECS: tuple[JobSpec, ...] = (
     JobSpec("sl_high", "sl", (5, 6), "sl_high.json"),
 )
 
-# Party correction (#36): the same QM and SL views, solo-queue games only. Folded into qm.json /
-# sl.json by collector.party (2 more Heroes/Stats calls → 56/70 a week); never written as files.
-SOLO_SPECS: tuple[JobSpec, ...] = (
-    JobSpec("qm_solo", "qm", None, "", groupsize="Solo"),
-    JobSpec("sl_solo", "sl", None, "", groupsize="Solo"),
+# The region × bracket cube (owner 2026-10-02): every view in every region, each with its solo
+# twin for the party correction — 24 Heroes/Stats calls a day (Intermediate: 210/week). The
+# whole is their sum (`sum_regions`): a game is played on one server, and CN closed in 2023;
+# on 2.55.17.98025 KR + NA + EU reproduced the global file's wins and losses row for row.
+# Brackets are not summed: a game counts in the bracket of each of its players.
+CELL_REGIONS: tuple[tuple[str, str], ...] = (("kr", "KR"), ("na", "NA"), ("eu", "EU"))
+CELL_SPECS: tuple[JobSpec, ...] = tuple(
+    JobSpec(f"{s.key}_{r}", s.game_type, s.league_tier, f"{s.key}_{r}.json", region=code)
+    for r, code in CELL_REGIONS
+    for s in SPECS
 )
-SOLO_OF: dict[str, str] = {"qm_solo": "qm", "sl_solo": "sl"}
+CELL_SOLO_SPECS: tuple[JobSpec, ...] = tuple(
+    JobSpec(f"{s.key}_solo", s.game_type, s.league_tier, "", region=s.region, groupsize="Solo")
+    for s in CELL_SPECS
+)
 
 # A hero is tiered from this many games; under it the row is grey (owner 2026-10-01: 50, tuned
 # as the sample allows — the win rate is shrunk toward 50 anyway, and a hero never tiered says
@@ -65,26 +73,6 @@ def reference_patch(current: str, previous: str | None, modes: dict[str, Any]) -
     if previous and any(_thin(modes.get(m)) for m in REFERENCE_MODES):
         return previous
     return current
-
-
-# Regions (#14, owner 2026-09-29, Basic plan): one region a day for QM + SL (2 extra Heroes/Stats
-# calls → 14/week; 42/70 in total), KR → NA → EU by the day index below; each region is 3 days old
-# at most. Region × bracket is not collected. The in-game Asia server is `KR`; CN is left out.
-REGIONS: tuple[tuple[str, str], ...] = (("kr", "KR"), ("na", "NA"), ("eu", "EU"))
-REGION_EPOCH = date(2026, 9, 30)  # a KR day
-REGION_KEYS: tuple[str, ...] = tuple(f"{m}_{r}" for r, _ in REGIONS for m in ("qm", "sl"))
-
-
-def region_for_day(day: date) -> str:
-    """The region collected on this (UTC) day: KR, NA, EU, KR, … counted from REGION_EPOCH."""
-    return REGIONS[(day - REGION_EPOCH).days % len(REGIONS)][0]
-
-
-def region_specs(region: str) -> tuple[JobSpec, ...]:
-    code = dict(REGIONS)[region]
-    return tuple(
-        JobSpec(f"{m}_{region}", m, None, f"{m}_{region}.json", region=code) for m in ("qm", "sl")
-    )
 
 
 def _version_key(v: str) -> tuple[int, ...]:
@@ -279,6 +267,58 @@ def normalize_by_map(
         matches=int(matches_f),
         rows=rows,
     )
+
+
+def sum_regions(parts: list[dict[str, Any]], *, key: str, collected_at: str) -> dict[str, Any]:
+    """One view's region snapshots → the whole: wins, losses, games and bans summed per
+    (hero, map); rates recomputed against the summed matches (a map's: Σ games on it / 10).
+    A region's confidence interval is not the whole's, so `ci` is None."""
+    patches = {p.get("patch") for p in parts}
+    if len(patches) != 1:
+        raise ValueError(f"regions of different patches: {sorted(map(str, patches))}")
+    acc: dict[tuple[str, str], dict[str, int]] = {}
+    for p in parts:
+        for r in p.get("rows", []):
+            a = acc.setdefault(
+                (r["hero"], r["map"]), {"wins": 0, "losses": 0, "games": 0, "bans": 0}
+            )
+            for f in a:
+                a[f] += int(r.get(f) or 0)
+    matches = sum(int(p.get("matches") or 0) for p in parts)
+    map_matches: dict[str, float] = {}
+    for (_, m), a in acc.items():
+        if m != "all":
+            map_matches[m] = map_matches.get(m, 0) + a["games"] / 10
+    rows: list[HeroStat] = []
+    for (hero, m), a in acc.items():
+        n = matches if m == "all" else map_matches.get(m, 0)
+        g = a["games"]
+        rows.append(
+            HeroStat(
+                hero=hero,
+                map=m,
+                wins=a["wins"],
+                losses=a["losses"],
+                games=g,
+                bans=a["bans"],
+                pick=round(g / n * 100, 4) if n else 0.0,
+                popularity=round((g + a["bans"]) / n * 100, 4) if n else 0.0,
+                win_rate=round(a["wins"] / g * 100, 4) if g else 0.0,
+                ban_rate=round(a["bans"] / n * 100, 4) if n else 0.0,
+                ci=None,
+            )
+        )
+    first = parts[0]
+    return {
+        "patch": first.get("patch"),
+        "mode": key,
+        "game_type": first.get("game_type"),
+        "league_tier": first.get("league_tier"),
+        "region": None,
+        "collected_at": collected_at,
+        "matches": matches,
+        "rows": [asdict(r) for r in rows],
+    }
 
 
 def snapshot_to_json(snap: ModeSnapshot) -> dict[str, Any]:
