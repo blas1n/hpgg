@@ -6,6 +6,7 @@ import { computeTiers, type Snapshot } from "../formula";
 import type { HeroTable, HotfixesFile, Mode, PatchNotesFile, PatchVerdict } from "../data";
 import type { Locale } from "../i18n/locale";
 import type { HeroRef } from "./home";
+import { hotfixGroups, noteGroups, type ChangeGroup } from "./patchnotes";
 
 /** One mode's rank and win rate on the previous patch → this one (tier formula on each). */
 export interface PatchImpact {
@@ -28,6 +29,9 @@ export interface PatchHeroRow {
   /** the change is the same in every mode; only the ranks differ (owner 10-03: one page, modes side by side) */
   qm: PatchImpact | null;
   sl: PatchImpact | null;
+  /** this patch's changed lines for the hero: the notes' (newest first), then the hotfixes' numbers (owner 10-04: read
+   *  the changes here; the hero page is one click away) */
+  groups: (ChangeGroup & { source: "note" | "hotfix" })[];
 }
 
 type ByMode<T> = Record<Mode, T>;
@@ -96,7 +100,12 @@ export function patchSummary({ patch, notes, hotfixes, modes, heroes, minGames, 
   const names = new Set([...verdict.keys(), ...hotfixed, ...MODES.flatMap((m) => [...tables[m].wr.keys()].filter(isNew))]);
   const rows: PatchHeroRow[] = [...names].flatMap((name) => {
     const hero = refs.get(name);
-    return hero ? [{ hero, verdict: verdict.get(name) ?? null, hotfix: hotfixed.has(name), isNew: isNew(name), qm: impact("qm", name), sl: impact("sl", name) }] : [];
+    if (!hero) return [];
+    const groups = [
+      ...patchNotes.flatMap((n) => (n.heroes[name] ? noteGroups(n.heroes[name].groups, locale).map((g) => ({ ...g, source: "note" as const })) : [])),
+      ...hotfixBuilds.flatMap((b) => hotfixGroups(b.heroes[name] ?? [], locale).map((g) => ({ ...g, source: "hotfix" as const }))),
+    ];
+    return [{ hero, verdict: verdict.get(name) ?? null, hotfix: hotfixed.has(name), isNew: isNew(name), qm: impact("qm", name), sl: impact("sl", name), groups }];
   });
   const d = (r: PatchHeroRow, m: Mode) => r[m]?.delta ?? -Infinity;
   rows.sort((a, b) => Number(b.isNew) - Number(a.isNew) || d(b, "qm") - d(a, "qm") || d(b, "sl") - d(a, "sl") || a.hero.ko.localeCompare(b.hero.ko, locale));

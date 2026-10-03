@@ -4,6 +4,7 @@ import { hotsHref, shortDate, type Mode } from "@/data";
 import { useLocale, useT } from "@/i18n/client";
 import type { PatchHeroRow, PatchImpact, PatchSummary } from "@/lib/patchSummary";
 import { PageHead } from "@/components/PageHead";
+import { ChangeGroups } from "./ChangeGroups";
 import { Card, CardHeader, cx, Portrait, RankDelta } from "../ui";
 
 const pct = (n: number) => `${n.toFixed(1)}%`;
@@ -52,8 +53,10 @@ export function PatchesView({ model: m, collectedAt }: { model: PatchSummary; co
 
       <Card aria-labelledby="h-changed">
         <CardHeader id="h-changed" title={t.patches.tableTitle} sub={m.previousPatch ? t.patches.tableSub(m.previousPatch) : t.patches.tableSubNoPrev} />
-        {m.rows.length ? <Rows rows={m.rows} /> : <p className="px-4 py-6 text-center text-[13px] text-muted">{t.patches.none}</p>}
-        <p className="border-t border-line px-4 py-2.5 text-2xs text-muted">{t.patches.rule}</p>
+        {m.rows.length ? <Heroes rows={m.rows} /> : <p className="px-4 py-6 text-center text-[13px] text-muted">{t.patches.none}</p>}
+        <p className="border-t border-line px-4 py-2.5 text-2xs leading-relaxed text-muted">
+          {t.hero.patchesRule} {t.patches.rule}
+        </p>
       </Card>
     </main>
   );
@@ -81,59 +84,60 @@ function Summary({ model: m }: { model: PatchSummary }) {
   );
 }
 
-function Rows({ rows }: { rows: PatchHeroRow[] }) {
+/** Every changed hero with this patch's lines (owner 10-04: read the changes here, the hero page is one click away). */
+function Heroes({ rows }: { rows: PatchHeroRow[] }) {
   const t = useT();
   const href = hotsHref(useLocale());
   return (
-    <table className="num w-full table-fixed border-collapse text-[13px] sm:text-sm">
-      <thead>
-        <tr className="border-b border-line text-xs text-muted">
-          <th className="py-2 pl-4 text-left font-semibold">{t.common.hero}</th>
-          <th className="w-[4.5rem] py-2 text-left font-semibold sm:w-36">{t.patches.change}</th>
-          <th className="w-[5.5rem] py-2 text-right font-semibold sm:w-52">{t.common.modes.qm}</th>
-          <th className="w-[5.5rem] py-2 pr-4 text-right font-semibold sm:w-52">{t.common.modes.sl}</th>
-        </tr>
-      </thead>
-      <tbody id="patch-rows">
-        {rows.map((r) => (
-          <tr key={r.hero.slug} data-hero={r.hero.slug} className="border-b border-line/70 last:border-b-0">
-            <td className="overflow-hidden py-1.5 pl-4">
-              {/* the hero page's own patch section has the changed lines */}
-              <a href={`${href.hero(r.hero.slug)}#patches-title`} className="flex min-w-0 items-center gap-2.5 hover:text-primary">
-                <Portrait src={r.hero.portrait} size={28} role={r.hero.role} />
-                <span className="truncate font-semibold text-fg">{r.hero.ko}</span>
-              </a>
-            </td>
-            <td className="py-1.5">
-              <span className="flex flex-wrap gap-1">
-                {r.isNew && <span data-badge="new" className="rounded border border-primary/50 px-1.5 py-px text-2xs font-bold text-primary">{t.patches.newBadge}</span>}
-                {r.verdict && (
-                  <span data-verdict={r.verdict} className={cx("rounded border px-1.5 py-px text-2xs font-bold", VERDICT_TONE[r.verdict])}>
-                    {t.hero.patchVerdict[r.verdict]}
-                  </span>
-                )}
-                {r.hotfix && <span data-badge="hotfix" className="rounded border border-line px-1.5 py-px text-2xs font-bold text-fg-2">{t.hero.hotfixBadge}</span>}
-              </span>
-            </td>
-            <td data-mode="qm" className="py-1.5 text-right">
-              <Impact v={r.qm} />
-            </td>
-            <td data-mode="sl" className="py-1.5 pr-4 text-right">
-              <Impact v={r.sl} />
-            </td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
+    <div id="patch-rows" className="grid items-start gap-3 p-3 lg:grid-cols-2">
+      {rows.map((r) => (
+        <article key={r.hero.slug} data-hero={r.hero.slug} className="rounded-lg border border-line bg-surface-2 px-3 py-2.5">
+          <header className="flex flex-wrap items-center gap-x-3 gap-y-2">
+            <a href={href.hero(r.hero.slug)} data-hero-link className="flex min-w-0 items-center gap-2.5 hover:text-primary">
+              <Portrait src={r.hero.portrait} size={36} role={r.hero.role} />
+              <span className="truncate text-[15px] font-bold text-fg">{r.hero.ko}</span>
+            </a>
+            <span className="flex flex-wrap gap-1">
+              {r.isNew && <span data-badge="new" className="rounded border border-primary/50 px-1.5 py-px text-2xs font-bold text-primary">{t.patches.newBadge}</span>}
+              {r.verdict && (
+                <span data-verdict={r.verdict} className={cx("rounded border px-1.5 py-px text-2xs font-bold", VERDICT_TONE[r.verdict])}>
+                  {t.hero.patchVerdict[r.verdict]}
+                </span>
+              )}
+              {r.hotfix && <span data-badge="hotfix" className="rounded border border-line px-1.5 py-px text-2xs font-bold text-fg-2">{t.hero.hotfixBadge}</span>}
+            </span>
+            <span className="ml-auto flex gap-3 text-right">
+              <Impact mode="qm" v={r.qm} />
+              <Impact mode="sl" v={r.sl} />
+            </span>
+          </header>
+          <div className="mt-2 border-t border-line/70 pt-2">
+            {r.groups.length ? (
+              <ChangeGroups groups={r.groups} label={(g) => (g.source === "hotfix" ? t.hero.hotfixBadge : null)} />
+            ) : (
+              <p className="text-[13px] text-muted">{r.isNew ? t.patches.newHero : ""}</p>
+            )}
+          </div>
+        </article>
+      ))}
+    </div>
   );
 }
 
-/** One mode: #before → #after ▲▼ and the win rate; on a phone the rank, ▲▼ and win rate only, so the name keeps its room. */
-function Impact({ v }: { v: PatchImpact | null }) {
+/** One mode: its name, #before → #after ▲▼ and the win rate (on a phone the after only). */
+function Impact({ mode, v }: { mode: Mode; v: PatchImpact | null }) {
   const t = useT();
-  if (!v || v.rank === null) return <span className="text-2xs text-muted">{t.patches.unranked}</span>;
   return (
-    <span className="inline-flex flex-col items-end leading-4">
+    <span data-mode={mode} className="inline-flex flex-col items-end leading-4">
+      <span className="text-2xs text-muted">{t.common.modes[mode]}</span>
+      {!v || v.rank === null ? <span className="text-2xs text-muted">{t.patches.unranked}</span> : <Ranks v={v} />}
+    </span>
+  );
+}
+
+function Ranks({ v }: { v: PatchImpact }) {
+  return (
+    <>
       <span className="inline-flex items-center gap-1.5">
         {v.prevRank !== null && <span className="hidden text-2xs text-muted sm:inline">#{v.prevRank} →</span>}
         <span className="font-semibold text-fg">#{v.rank}</span>
@@ -145,6 +149,6 @@ function Impact({ v }: { v: PatchImpact | null }) {
           <span className={wrClass(v.wr)}>{pct(v.wr)}</span>
         </span>
       )}
-    </span>
+    </>
   );
 }

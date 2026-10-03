@@ -288,6 +288,7 @@ The same data gives different tiers under a different formula. This site always 
     none: "No hero changed in this patch",
     change: "Change",
     rank: "Rank",
+    newHero: "New in this patch",
     newBadge: "New",
     unranked: "too few games",
     rule: "Ranks come from each patch's statistics with the same tier formula. A change in rank does not mean the patch caused it.",

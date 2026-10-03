@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { assetUrl, BRACKETS, hotsHref, REGIONS, shortDate, snapshotKey, type Bracket, type HeroInfo, type Mode, type Region } from "@/data";
 import { HpCredit } from "@/components/HpCredit";
+import { ChangeGroups } from "@/components/patches/ChangeGroups";
 import { useLocale, useT } from "@/i18n/client";
 import { descParts, type BuildTalentView, type BuildView, type GridRow, type HeroSummary, type MapRow } from "@/lib/hero";
 import { matchupRule, type MatchupRow, type MatchupsView } from "@/lib/matchups";
@@ -451,24 +452,8 @@ function PatchNote({ n }: { n: PatchNoteView }) {
           </span>
         )}
       </header>
-      <div className="mt-1.5 flex flex-col gap-1.5">
-        {n.groups.map((g, i) => (
-          <div key={i}>
-            <div className="text-2xs text-muted">
-              {[t.hero.patchSection[g.section], g.level !== null && t.hero.patchLevel(String(g.level)), g.ability].filter(Boolean).join(" · ")}
-            </div>
-            <ul className="mt-0.5 flex flex-col gap-0.5">
-              {g.changes.map((c, j) => (
-                <li key={j} data-change={c.direction} className="grid grid-cols-[14px_1fr] gap-1 text-[13px] leading-snug text-fg-2">
-                  <span aria-hidden className={cx("text-center text-2xs leading-5", c.direction === "up" ? "text-pos" : c.direction === "down" ? "text-neg" : "text-muted")}>
-                    {c.direction === "up" ? "▲" : c.direction === "down" ? "▼" : "·"}
-                  </span>
-                  <span>{c.text}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        ))}
+      <div className="mt-1.5">
+        <ChangeGroups groups={n.groups} />
       </div>
     </article>
   );

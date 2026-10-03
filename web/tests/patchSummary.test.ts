@@ -22,7 +22,12 @@ const note = (id: string, build: string | null, verdicts: Record<string, "buff" 
   build,
   title: { ko: `패치 노트 ${id}`, en: `Patch notes ${id}` },
   url: { ko: `https://news.blizzard.com/ko-kr/${id}`, en: `https://news.blizzard.com/en-us/${id}` },
-  heroes: Object.fromEntries(Object.entries(verdicts).map(([h, verdict]) => [h, { verdict, groups: [] }])),
+  heroes: Object.fromEntries(
+    Object.entries(verdicts).map(([h, verdict]) => [
+      h,
+      { verdict, groups: [{ section: "base" as const, level: null, ability: { ko: `${h} 능력 ${id}`, en: `${h} ability ${id}` }, changes: [{ ko: `${h} 변경 ${id}`, en: `${h} change ${id}`, direction: verdict === "nerf" ? ("down" as const) : ("up" as const) }] }] },
+    ]),
+  ),
 });
 const notes: PatchNotesFile = {
   parser: 1,
@@ -31,7 +36,7 @@ const notes: PatchNotesFile = {
 };
 const hotfixes: HotfixesFile = {
   builds: [
-    { build: "2.57.0.98304", previous: "2.57.0.98297", first_seen: "2026-09-29T21:46:46Z", parser: 1, heroes: { Auriel: [{ kind: "talent", id: "x", ko: "특성", en: "Talent", changes: [] }] } },
+    { build: "2.57.0.98304", previous: "2.57.0.98297", first_seen: "2026-09-29T21:46:46Z", parser: 1, heroes: { Auriel: [{ kind: "talent", id: "x", ko: "부활의 빛", en: "Light", changes: [{ old: "-10", new: "-5" }] }] } },
     // the build an official note belongs to is the note, not a hotfix
     { build: "2.57.0.98285", previous: "2.55.17.98025", first_seen: "2026-09-28T17:38:57Z", parser: 1, heroes: { Garrosh: [] } },
     { build: "2.55.17.97650", previous: "2.55.17.97605", first_seen: "2026-07-24T17:21:04Z", parser: 1, heroes: { Valla: [] } },
@@ -121,6 +126,23 @@ describe("patchSummary", () => {
     const t = patchSummary({ patch: "2.57.0.98304", notes, hotfixes, modes, heroes, minGames: 200, locale: "ko" });
     expect(t.hotfixBuilds).toEqual(["2.57.0.98304"]);
     expect(t.notes).toEqual([]);
+  });
+
+  it("each changed hero carries this patch's changed lines, newest note first, then its hotfix numbers (owner 10-04)", () => {
+    const g = by("Garrosh")!.groups;
+    expect(g.map((x) => x.changes.map((c) => c.text)).flat()).toEqual(["Garrosh 변경 b", "Garrosh 변경 a"]);
+    expect(g[0]).toMatchObject({ source: "note", section: "base", ability: "Garrosh 능력 b" });
+    expect(g[0]!.changes[0]!.direction).toBe("down");
+    const h = by("Auriel")!.groups;
+    expect(h).toHaveLength(1);
+    expect(h[0]).toMatchObject({ source: "hotfix", section: "talents", ability: "부활의 빛" });
+    expect(h[0]!.changes[0]!.text).toBe("\u221210 → \u22125"); // the game data's numbers, typographic minus
+    expect(by("Xal")!.groups).toEqual([]); // a new hero has no changed lines
+  });
+
+  it("the lines are in the page language", () => {
+    const en = patchSummary({ patch: "2.57.0", notes, hotfixes, modes, heroes, minGames: 200, locale: "en" });
+    expect(en.rows.find((r) => r.hero.name === "Garrosh")!.groups[0]!.changes[0]!.text).toBe("Garrosh change b");
   });
 
   it("only heroes on the site (with assets) are listed", () => {

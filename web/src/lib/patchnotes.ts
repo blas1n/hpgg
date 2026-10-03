@@ -1,6 +1,6 @@
 /** The hero page's patch changes (#62): the hero's entries in Blizzard's official notes, in the page language.
  *  Pure: computed at build time from data/patchnotes.json. */
-import type { HotfixesFile, PatchDirection, PatchNotesFile, PatchVerdict } from "../data";
+import type { HotfixesFile, HotfixItem, PatchDirection, PatchGroup, PatchNotesFile, PatchVerdict } from "../data";
 import type { Locale } from "../i18n/locale";
 
 export const PATCH_NOTES_SHOWN = 3;
@@ -17,7 +17,15 @@ export interface PatchNoteView {
   url: string | null;
   status: PatchStatus;
   verdict: PatchVerdict | null;
-  groups: { section: "base" | "talents"; level: number | null; ability: string | null; changes: { text: string; direction: PatchDirection }[] }[];
+  groups: ChangeGroup[];
+}
+
+/** Changed lines under one heading (section · level · ability), in the page language. */
+export interface ChangeGroup {
+  section: "base" | "talents";
+  level: number | null;
+  ability: string | null;
+  changes: { text: string; direction: PatchDirection }[];
 }
 
 export interface HeroPatchNotes {
@@ -36,6 +44,37 @@ const newer = (a: string, b: string) => {
 // hotfix numbers as the game data has them, with a typographic minus
 const num = (v: string) => v.replace(/^-/, "\u2212");
 
+const pick = (locale: Locale, v: { ko: string | null; en: string | null }) => (locale === "ko" ? v.ko : v.en);
+
+/** An official note's groups for one hero, in the page language; lines without text in that language are left out. */
+export function noteGroups(groups: PatchGroup[], locale: Locale): ChangeGroup[] {
+  return groups
+    .map((g) => ({
+      section: g.section,
+      level: g.level,
+      ability: g.ability ? pick(locale, g.ability) : null,
+      changes: g.changes.flatMap((c) => {
+        const t = pick(locale, c);
+        return t ? [{ text: t, direction: c.direction }] : [];
+      }),
+    }))
+    .filter((g) => g.changes.length > 0);
+}
+
+/** A hotfix build's items for one hero: the game data's numbers, old → new (no direction is judged). */
+export function hotfixGroups(items: HotfixItem[], locale: Locale): ChangeGroup[] {
+  return items.flatMap((t) => {
+    const name = t.kind === "base" ? null : pick(locale, t);
+    if (t.kind !== "base" && !name) return [];
+    const changes = t.changes.map((c) => ({
+      text: `${c.label ? `${c.label[locale]} ` : ""}${num(c.old)} → ${num(c.new)}`,
+      direction: "neutral" as const,
+    }));
+    const ability = name && t.key ? `${name} [${t.key}]` : name;
+    return [{ section: t.kind === "talent" ? ("talents" as const) : ("base" as const), level: null, ability, changes }];
+  });
+}
+
 type Item = { at: string; build: string | null; view: () => PatchNoteView | null };
 
 export function heroPatchNotes(
@@ -46,7 +85,6 @@ export function heroPatchNotes(
   hotfixes: HotfixesFile | null = null,
 ): HeroPatchNotes {
   if (!file && !hotfixes) return { notes: [], since: null };
-  const text = (v: { ko: string | null; en: string | null }) => (locale === "ko" ? v.ko : v.en);
   const items: Item[] = [];
   for (const n of file?.notes ?? []) {
     items.push({
@@ -55,17 +93,7 @@ export function heroPatchNotes(
       view: () => {
         const entry = n.heroes[hero];
         if (!entry) return null;
-        const groups = entry.groups
-          .map((g) => ({
-            section: g.section,
-            level: g.level,
-            ability: g.ability ? text(g.ability) : null,
-            changes: g.changes.flatMap((c) => {
-              const t = text(c);
-              return t ? [{ text: t, direction: c.direction }] : [];
-            }),
-          }))
-          .filter((g) => g.changes.length > 0);
+        const groups = noteGroups(entry.groups, locale);
         return { kind: "note", id: n.id, published: n.published, title: n.title[locale], url: n.url[locale], status: null, verdict: entry.verdict, groups };
       },
     });
@@ -78,16 +106,7 @@ export function heroPatchNotes(
       at: h.first_seen,
       build: h.build,
       view: () => {
-        const groups = (h.heroes[hero] ?? []).flatMap((t) => {
-          const name = t.kind === "base" ? null : text(t);
-          if (t.kind !== "base" && !name) return [];
-          const changes = t.changes.map((c) => ({
-            text: `${c.label ? `${c.label[locale]} ` : ""}${num(c.old)} → ${num(c.new)}`,
-            direction: "neutral" as const,
-          }));
-          const ability = name && t.key ? `${name} [${t.key}]` : name;
-          return [{ section: t.kind === "talent" ? ("talents" as const) : ("base" as const), level: null, ability, changes }];
-        });
+        const groups = hotfixGroups(h.heroes[hero] ?? [], locale);
         return groups.length ? { kind: "hotfix", id: h.build, published: h.first_seen, title: h.build, url: null, status: null, verdict: null, groups } : null;
       },
     });
