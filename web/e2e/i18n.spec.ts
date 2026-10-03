@@ -26,6 +26,7 @@ const ALL_PAGES = [
   { path: "/hots/maps/cursed-hollow/", h1: "Cursed Hollow", ko: "저주받은 골짜기" },
   { path: "/hots/players/", h1: "Player search", ko: "전적 검색" },
   { path: "/hots/draft/", h1: "Draft simulator", ko: "밴픽 시뮬레이터" },
+  { path: "/hots/patches/", h1: "Patch summary", ko: "패치 요약" },
 ];
 /** Without the sections switched off on the live site (src/features.ts): the export has no such pages. */
 const PAGES = ALL_PAGES.filter((p) => sectionEnabled(p.path.split("/")[2] ?? ""));

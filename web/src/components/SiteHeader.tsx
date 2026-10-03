@@ -19,6 +19,7 @@ function activeId(path: string): NavId {
   if (p.startsWith("/hots/heroes")) return "heroes";
   if (p.startsWith("/hots/maps")) return "maps";
   if (p.startsWith("/hots/players")) return "players";
+  if (p.startsWith("/hots/patches")) return "patches";
   if (p.startsWith("/hots/draft")) return "draft";
   return "home";
 }
