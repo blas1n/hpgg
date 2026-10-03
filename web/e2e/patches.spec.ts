@@ -24,9 +24,10 @@ test("a patch nothing changed says so, in numbers, and still compares with the p
   await expect(page.getByText("이 패치에 바뀐 영웅이 없습니다")).toBeVisible();
 });
 
-test("the mode toggle lands in the URL", async ({ page }) => {
-  await page.goto("./patches/");
-  await page.locator("#mode-sl").click();
-  await expect(page).toHaveURL(/\/patches\/\?mode=sl$/);
-  await expect(page.locator("#meta-line")).toContainText("폭풍 리그");
+test("one page for the patch: no mode toggle — the changes are the same in both modes (owner 10-03)", async ({ page }) => {
+  await page.goto("./patches/?mode=sl");
+  await expect(page.locator("h1")).toHaveText("패치 요약");
+  await expect(page.locator("#mode-qm, #mode-sl")).toHaveCount(0);
+  await expect(page.locator("#meta-line")).not.toContainText("폭풍 리그");
+  await expect(page.locator("#meta-line")).not.toContainText("빠른 대전");
 });
