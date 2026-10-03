@@ -252,9 +252,10 @@ export function PatchesPage({ locale }: { locale: Locale }) {
   const heroes = readHeroes(locale);
   const notes = readPatchNotes();
   const hotfixes = readHotfixes();
-  const model = (mode: Mode) => {
+  const shown = (mode: Mode) => {
     const s = readShown(mode)!;
-    return patchSummary({ patch: referencePatchId(meta), previousPatch: s.previous?.patch ?? null, notes, hotfixes, snap: s.snap, previous: s.previous, heroes, minGames: meta.min_games_for_tier, locale });
+    return { snap: s.snap, previous: s.previous };
   };
-  return <PatchesView models={{ qm: model("qm"), sl: model("sl") }} collectedAt={meta.collected_at} />;
+  const model = patchSummary({ patch: referencePatchId(meta), notes, hotfixes, modes: { qm: shown("qm"), sl: shown("sl") }, heroes, minGames: meta.min_games_for_tier, locale });
+  return <PatchesView model={model} collectedAt={meta.collected_at} />;
 }
