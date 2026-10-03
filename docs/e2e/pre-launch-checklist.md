@@ -17,6 +17,6 @@ Automated: `tests/test_snapshot.py` (match floor), `tests/test_freshness.py`, `t
 
 ## Next night (10-03)
 - [x] `~/Library/Logs/hpgg-collect.log` shows the 03:20 dispatch; the run's gate says `fresh=false` and it collects — dispatched 03:20:04 KST; gate → collect (26 min) → publish → build → deploy all green by 03:47
-- [ ] The 05:20 cron run (whenever GitHub starts it) stops at the gate with `fresh=true`; Heroes/Stats spent 24, not 48
+- [x] The 05:20 cron run (whenever GitHub starts it) stops at the gate with `fresh=true`; Heroes/Stats spent 24, not 48 — started 08:51 KST (3.5 h late), gate fresh=true, collect/publish skipped, one data commit for 10-03
 - [x] Site shows "10/03 갱신" in the morning; `snapshots/2026-10-03/` exists and `snapshots/2026-10-02/` is unchanged — data commit `data: 2026-10-03 2.57.0` by the publish job (first run since #111)
 - [x] `data/latest/sl_high_kr.json` (KR 다마그): `matches` ≥ the largest hero's games, no pick over 100 % — 1 match, top pick 100 %; the page says "1 매치"
