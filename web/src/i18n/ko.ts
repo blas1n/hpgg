@@ -352,6 +352,8 @@ export const ko = {
     errorBody: "Heroes Profile 응답이 없어 지금은 새로 조회할 수 없습니다. 잠시 후 다시 시도하세요.",
     notFoundTitle: "플레이어를 찾지 못했습니다",
     notFoundBody: "배틀태그 철자·번호와 지역을 확인하세요. 한국 서버는 아시아입니다. 그래도 없다면 아래 안내대로 리플레이를 올려 주세요.",
+    notFoundGain: "올린 경기는 Heroes Profile에 쌓여 내 전적이 검색되고, 아시아(KR) 통계 표본에도 더해집니다.",
+    notFoundCta: "리플레이 올리기",
     guide: {
       summary: "히오스에는 공식 전적 API가 없어, 전적은 플레이어들이 Heroes Profile에 올린 리플레이로 만들어집니다.",
       more: "내 전적이 안 나온다면",

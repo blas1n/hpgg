@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { PageHead } from "@/components/PageHead";
+import { track } from "@/lib/track";
 import { HP_EMBED_URL, readHpMessage } from "@/lib/hpUpload";
 import type { HeroTable, MapTable } from "@/data";
 import { useLocale, useT } from "@/i18n/client";
@@ -102,7 +103,15 @@ function Result({ state, games, me, region, heroes, maps, retry }: { state: Stat
     case "error":
       return <Notice tone="warn" title={t.errorTitle} body={t.errorBody} retry={retry} />;
     case "not_found":
-      return <Notice title={t.notFoundTitle} body={t.notFoundBody} />;
+      // the most common outcome right after launch (31 % of searches, 10-03): the way out is right here
+      return (
+        <Notice title={t.notFoundTitle} body={t.notFoundBody}>
+          <p className="mt-2 text-sm text-fg">{t.notFoundGain}</p>
+          <button type="button" onClick={toUploader} className="mt-3 rounded-lg bg-primary px-4 py-2 text-sm font-bold text-primary-ink transition-opacity hover:opacity-90">
+            {t.notFoundCta}
+          </button>
+        </Notice>
+      );
     case "private":
       return <Notice title={t.privateTitle} body={t.privateBody} />;
     case "quota":
@@ -117,6 +126,13 @@ function Result({ state, games, me, region, heroes, maps, retry }: { state: Stat
 }
 
 const HP_UPLOAD = "https://www.heroesprofile.com/Upload";
+
+/** From the not-found notice: open the guide and bring Heroes Profile's uploader into view. */
+function toUploader() {
+  track("upload-cta");
+  document.getElementById("upload-guide")?.setAttribute("open", "");
+  document.getElementById("hp-uploader")?.scrollIntoView({ behavior: "smooth", block: "start" });
+}
 
 /** Why a player may be missing (no official API: records come from replays uploaded to Heroes Profile) and how to fix
  *  it. Always on the page, folded; opened when a search finds nobody. Paths from the Heroes Profile uploaders' sources. */
@@ -134,12 +150,7 @@ function UploadGuide({ open }: { open: boolean }) {
       </summary>
       <div className="mt-3 space-y-3">
         <p>{g.why}</p>
-        <div>
-          <h3 className="font-bold text-fg">{g.autoTitle}</h3>
-          <p className="mt-0.5">
-            {g.autoBody} {link}
-          </p>
-        </div>
+        {/* the games so far first: the uploader is the one thing to do now (owner 10-03) */}
         <div>
           <h3 className="font-bold text-fg">{g.pastTitle}</h3>
           <p className="mt-0.5">
@@ -156,6 +167,12 @@ function UploadGuide({ open }: { open: boolean }) {
             </dd>
           </dl>
           <HpUploader />
+        </div>
+        <div>
+          <h3 className="font-bold text-fg">{g.autoTitle}</h3>
+          <p className="mt-0.5">
+            {g.autoBody} {link}
+          </p>
         </div>
         <p className="text-xs text-muted">{g.leaderboard}</p>
         <p className="text-xs text-muted">{g.after}</p>
@@ -174,7 +191,10 @@ function HpUploader() {
     const on = (e: MessageEvent) => {
       const m = readHpMessage(e);
       if (m?.type === "resize") setHeight(m.height);
-      else if (m?.type === "complete") setFound(m.uploaded + m.duplicates);
+      else if (m?.type === "complete") {
+        setFound(m.uploaded + m.duplicates);
+        track("upload-complete");
+      }
     };
     window.addEventListener("message", on);
     return () => window.removeEventListener("message", on);
@@ -191,12 +211,13 @@ function HpUploader() {
   );
 }
 
-function Notice({ title, body, tone, retry }: { title: string; body: string; tone?: "info" | "warn"; retry?: () => void }) {
+function Notice({ title, body, tone, retry, children }: { title: string; body: string; tone?: "info" | "warn"; retry?: () => void; children?: React.ReactNode }) {
   const t = useT();
   return (
     <Card className={cx("p-5", tone === "warn" && "border-warn-line", tone === "info" && "border-primary/40")}>
       <h2 className="text-[15px] font-bold text-fg">{title}</h2>
       <p className="mt-1 text-sm text-fg-2">{body}</p>
+      {children}
       {retry && (
         <button type="button" onClick={retry} className="mt-3 rounded-md border border-line px-3 py-1.5 text-xs font-semibold text-fg-2 hover:border-primary hover:text-fg">
           {t.players.retry}
