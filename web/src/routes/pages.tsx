@@ -25,6 +25,8 @@ import { homeModel, mapCards } from "@/lib/home";
 import { mapDetail } from "@/lib/maps";
 import { matchupsView } from "@/lib/matchups";
 import { heroPatchNotes } from "@/lib/patchnotes";
+import { patchSummary } from "@/lib/patchSummary";
+import { PatchesView } from "@/components/patches/PatchesView";
 import { tierTable } from "@/lib/tier";
 import { readBuilds, readHeroes, readMaps, readMapsMeta, readMatchups, readMeta, readHotfixes, readPatchNotes, readSearchIndex, readShown, readTalents } from "@/server/data";
 
@@ -236,4 +238,23 @@ export function DraftPage({ locale }: { locale: Locale }) {
   const shown = readShown("sl");
   const heroes = draftHeroes(shown?.snap ?? null, table).sort((a, b) => a.ko.localeCompare(b.ko, locale));
   return <DraftView heroes={heroes} maps={readMaps(locale).maps} roles={table.roles} patch={shown?.snap.patch ?? ""} />;
+}
+
+// --- 패치 요약: the reference patch's notes, hotfixes and new heroes, with each changed hero against the previous patch ---
+export const patchesMetadata = (locale: Locale): Metadata => ({
+  title: messages[locale].meta.patchesTitle,
+  description: messages[locale].meta.patchesDescription,
+  alternates: alternates("/hots/patches/", locale),
+});
+
+export function PatchesPage({ locale }: { locale: Locale }) {
+  const meta = readMeta();
+  const heroes = readHeroes(locale);
+  const notes = readPatchNotes();
+  const hotfixes = readHotfixes();
+  const model = (mode: Mode) => {
+    const s = readShown(mode)!;
+    return patchSummary({ patch: referencePatchId(meta), previousPatch: s.previous?.patch ?? null, notes, hotfixes, snap: s.snap, previous: s.previous, heroes, minGames: meta.min_games_for_tier, locale });
+  };
+  return <PatchesView models={{ qm: model("qm"), sl: model("sl") }} collectedAt={meta.collected_at} />;
 }

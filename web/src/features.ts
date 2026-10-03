@@ -24,7 +24,7 @@ export const sectionEnabled = (section: string, flags: Flags = FEATURES): boolea
 export const disabledSections = (flags: Flags = FEATURES): string[] =>
   (Object.keys(SECTION_OF) as Feature[]).filter((f) => !flags[f]).map((f) => SECTION_OF[f]);
 
-const NAV_IDS = ["home", "tier", "heroes", "draft", "maps", "players"] as const;
+const NAV_IDS = ["home", "tier", "heroes", "draft", "maps", "patches", "players"] as const;
 export type NavId = (typeof NAV_IDS)[number];
 
 /** The header menu, in order, without switched-off sections. */
