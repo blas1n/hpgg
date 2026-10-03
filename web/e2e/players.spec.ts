@@ -179,6 +179,32 @@ test("players: the upload guide embeds Heroes Profile's uploader and says when t
   await expect(page.locator("#upload-guide")).toContainText("문서\\Heroes of the Storm\\Accounts"); // the folder to pick stays
 });
 
+test("players: not found leads straight to uploading, and the funnel is counted (owner 10-03: 31 % found nobody)", async ({ page }) => {
+  await page.route("https://www.heroesprofile.com/Upload/Embed**", (r) => r.fulfill({ status: 200, contentType: "text/html", body: WIDGET_STUB }));
+  // GoatCounter is blocked in tests: record what the page would send
+  await page.addInitScript(() => {
+    const w = window as unknown as { goatcounter: { count: (v: { path: string }) => void }; __events: string[] };
+    w.__events = [];
+    w.goatcounter = { count: (v) => w.__events.push(v.path) };
+  });
+  await mockApi(page, (route) => json(route, 404, { error: { code: "player_not_found" } }));
+  await page.goto("./players/?tag=Nobody%231234&region=KR");
+  const result = page.locator("#player-result");
+  await expect(result).toHaveAttribute("data-state", "not_found");
+  // what uploading gives, in the notice itself
+  await expect(result).toContainText("내 전적이 검색되고");
+  const cta = result.getByRole("button", { name: "리플레이 올리기" });
+  await cta.click();
+  await expect(page.locator("#hp-uploader")).toBeInViewport();
+  // in the guide, the uploader (games so far) comes before the installer (games from now on)
+  const titles = await page.locator("#upload-guide h3").allTextContents();
+  expect(titles[0]).toContain("지금까지의 경기");
+  await expect(page.locator("#upload-done")).toBeVisible(); // the stub finishes its queue
+  // the stub finishes as soon as it loads (the guide is already open), so the order is not the visitor's
+  const events = await page.evaluate(() => (window as unknown as { __events: string[] }).__events);
+  expect([...events].sort()).toEqual(["upload-complete", "upload-cta"]);
+});
+
 const withGames = (body: unknown) => (route: Route, url: URL) => json(route, 200, url.pathname.endsWith("/matches") ? body : fixture);
 
 test("players: the newest 20 games — briefing, MMR line, stat lines and talents; more on request", async ({ page }) => {
