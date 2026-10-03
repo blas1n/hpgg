@@ -185,7 +185,10 @@ test("one formula: no formula selector, and an old ?preset= link opens the defau
 test("keyboard: the hero name is a real link (no <tr role=button>), Enter opens the hero page (#30)", async ({ page }) => {
   await page.goto("./tier/?mode=sl");
   await expect(page.locator('#rows tr[role="button"], #rows [data-toggle]')).toHaveCount(0);
-  await row(page, "qhira").locator("a[data-link]").focus();
+  const link = row(page, "qhira").locator("a[data-link]");
+  // ?mode=sl is applied after hydration; before it the rows link to the Quick Match pages (CI flake, 2026-10-03)
+  await expect(link).toHaveAttribute("href", /\?mode=sl$/);
+  await link.focus();
   await page.keyboard.press("Enter");
   await expect(page).toHaveURL(/\/ko\/hots\/heroes\/qhira\/\?mode=sl$/);
 });
