@@ -11,7 +11,7 @@ test.beforeEach(async ({ page }) => {
 
 /** Pages of switched-off sections (src/features.ts) are not in the export. */
 const live = (path: string): boolean => sectionEnabled(path.split("/")[1]?.split("?")[0] ?? "");
-const PAGES = ["./", "./tier/", "./heroes/", "./heroes/illidan/", "./maps/", "./maps/cursed-hollow/", "./draft/", "./players/", "../../en/hots/tier/"].filter(live);
+const PAGES = ["./", "./tier/", "./heroes/", "./heroes/illidan/", "./maps/", "./maps/cursed-hollow/", "./draft/", "./patches/", "./players/", "../../en/hots/tier/"].filter(live);
 
 for (const path of PAGES) {
   for (const width of [390, 1280]) {
@@ -49,6 +49,7 @@ const TITLED = [
   { path: "./heroes/", title: "영웅" },
   { path: "./maps/", title: "전장" },
   { path: "./draft/", title: "밴픽 시뮬레이터" },
+  { path: "./patches/", title: "패치 요약" },
   { path: "./players/", title: "전적 검색" },
 ].filter((p) => live(p.path));
 

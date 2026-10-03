@@ -67,6 +67,7 @@ export function hotsHref(locale: Locale) {
     hero: (slug: string, mode?: Mode) => p(`/hots/heroes/${encodeURIComponent(slug)}/`) + (mode === "sl" ? "?mode=sl" : ""),
     maps: p("/hots/maps/"),
     players: p("/hots/players/"),
+    patches: p("/hots/patches/"),
     draft: (qs?: string) => p("/hots/draft/") + (qs ? `?${qs}` : ""),
     map: (slug: string) => p(`/hots/maps/${encodeURIComponent(slug)}/`),
   };

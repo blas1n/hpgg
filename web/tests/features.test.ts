@@ -21,8 +21,8 @@ describe("features", () => {
   });
 
   it("the menu leaves out a switched-off section and keeps the order", () => {
-    expect(navIds({ draft: false })).toEqual(["home", "tier", "heroes", "maps", "players"]);
-    expect(navIds({ draft: true })).toEqual(["home", "tier", "heroes", "draft", "maps", "players"]);
+    expect(navIds({ draft: false })).toEqual(["home", "tier", "heroes", "maps", "patches", "players"]);
+    expect(navIds({ draft: true })).toEqual(["home", "tier", "heroes", "draft", "maps", "patches", "players"]);
   });
 
   it("the export loses a switched-off section in every language and keeps the rest", () => {
