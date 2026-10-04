@@ -1,21 +1,22 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useLocale, useT } from "@/i18n/client";
 import { localizedPath } from "@/i18n/locale";
-import { parseBattletag, playersHref, REGIONS, type Region } from "@/lib/players";
+import { parseBattletag, playersHref, REGIONS, rememberRegion, startRegion, type Region } from "@/lib/players";
 import { cx } from "../ui";
 
 /** BattleTag + region. On 홈 it opens the 전적 검색 page; on that page `onSearch` runs the search in place. */
 export function PlayerSearchForm({
   id = "player-search",
   initialTag = "",
-  initialRegion = "KR",
+  initialRegion,
   onSearch,
   className,
 }: {
   id?: string;
   initialTag?: string;
+  /** none: the visitor's region — chosen before, else the time zone, else the page language (lib/players.ts) */
   initialRegion?: Region;
   onSearch?: (tag: string, region: Region) => void;
   className?: string;
@@ -23,7 +24,11 @@ export function PlayerSearchForm({
   const t = useT();
   const locale = useLocale();
   const [tag, setTag] = useState(initialTag);
-  const [region, setRegion] = useState<Region>(initialRegion);
+  // the static page renders the language's default; the visitor's own region is set once in the browser
+  const [region, setRegion] = useState<Region>(initialRegion ?? (locale === "ko" ? "KR" : "NA"));
+  useEffect(() => {
+    if (!initialRegion) setRegion(startRegion(locale));
+  }, [initialRegion, locale]);
   const [invalid, setInvalid] = useState(false);
 
   const submit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -32,6 +37,7 @@ export function PlayerSearchForm({
     setInvalid(!parsed);
     if (!parsed) return;
     setTag(parsed);
+    rememberRegion(region);
     if (onSearch) onSearch(parsed, region);
     else window.location.assign(playersHref(locale, parsed, region));
   };

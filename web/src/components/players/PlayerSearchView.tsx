@@ -6,7 +6,7 @@ import { track } from "@/lib/track";
 import { HP_EMBED_URL, readHpMessage } from "@/lib/hpUpload";
 import type { HeroTable, MapTable } from "@/data";
 import { useLocale, useT } from "@/i18n/client";
-import { fetchPlayer, isRegion, parseBattletag, playersHref, playerView, type PlayerResult, type PlayerView, type Region } from "@/lib/players";
+import { fetchPlayer, isRegion, parseBattletag, playersHref, playerView, REGIONS, startRegion, type PlayerResult, type PlayerView, type Region } from "@/lib/players";
 import { Card, CardHeader, cx, Portrait } from "../ui";
 import { fetchMatches, type MatchesResult } from "@/lib/matches";
 import { HeroStats } from "./HeroStats";
@@ -59,12 +59,12 @@ export function PlayerSearchView({ heroes, maps }: { heroes: HeroTable; maps: Ma
         return;
       }
       setFormKey((k) => k + 1); // re-seed the form with the URL's query
-      void run(tag, isRegion(region) ? region : "KR");
+      void run(tag, isRegion(region) ? region : startRegion(locale));
     };
     fromUrl();
     window.addEventListener("popstate", fromUrl);
     return () => window.removeEventListener("popstate", fromUrl);
-  }, [run]);
+  }, [run, locale]);
 
   const search = (tag: string, region: Region) => {
     history.pushState(null, "", playersHref(locale, tag, region));
@@ -76,9 +76,18 @@ export function PlayerSearchView({ heroes, maps }: { heroes: HeroTable; maps: Ma
       <PageHead title={t.players.title}>
         <p className="mt-0.5 text-xs text-muted">{t.players.sub}</p>
       </PageHead>
-      <PlayerSearchForm key={formKey} initialTag={query?.tag ?? ""} initialRegion={query?.region ?? "KR"} onSearch={search} className="max-w-xl" />
+      <PlayerSearchForm key={formKey} initialTag={query?.tag ?? ""} initialRegion={query?.region} onSearch={search} className="max-w-xl" />
       <section id="player-result" data-state={state.kind} aria-live="polite" aria-busy={state.kind === "loading"}>
-        <Result state={state} games={games} me={query?.tag ?? ""} region={query?.region ?? "KR"} heroes={heroes} maps={maps} retry={query ? () => void run(query.tag, query.region) : undefined} />
+        <Result
+          state={state}
+          games={games}
+          me={query?.tag ?? ""}
+          region={query?.region ?? "KR"}
+          heroes={heroes}
+          maps={maps}
+          retry={query ? () => void run(query.tag, query.region) : undefined}
+          elsewhere={query ? (r: Region) => search(query.tag, r) : undefined}
+        />
       </section>
       {/* remounted when a search finds nobody, so it opens then and stays under the visitor's control otherwise */}
       <UploadGuide key={state.kind === "not_found" ? "not-found" : "default"} open={state.kind === "not_found"} />
@@ -86,7 +95,7 @@ export function PlayerSearchView({ heroes, maps }: { heroes: HeroTable; maps: Ma
   );
 }
 
-function Result({ state, games, me, region, heroes, maps, retry }: { state: State; games: Games; me: string; region: Region; heroes: HeroTable; maps: MapTable; retry?: () => void }) {
+function Result({ state, games, me, region, heroes, maps, retry, elsewhere }: { state: State; games: Games; me: string; region: Region; heroes: HeroTable; maps: MapTable; retry?: () => void; elsewhere?: (r: Region) => void }) {
   const t = useT().players;
   const locale = useLocale();
   switch (state.kind) {
@@ -106,6 +115,17 @@ function Result({ state, games, me, region, heroes, maps, retry }: { state: Stat
       // the most common outcome right after launch (31 % of searches, 10-03): the way out is right here
       return (
         <Notice title={t.notFoundTitle} body={t.notFoundBody}>
+          {elsewhere && (
+            // the wrong region is the cheapest miss to fix (owner 10-04: EU visitors)
+            <p className="mt-2 flex flex-wrap items-center gap-1.5 text-sm text-fg-2">
+              {t.tryRegion}
+              {REGIONS.filter((r) => r !== region).map((r) => (
+                <button key={r} type="button" data-other-region={r} onClick={() => elsewhere(r)} className="rounded-md border border-line px-2.5 py-1 text-xs font-semibold text-fg hover:border-primary">
+                  {t.regions[r]}
+                </button>
+              ))}
+            </p>
+          )}
           <p className="mt-2 text-sm text-fg">{t.notFoundGain}</p>
           <button type="button" onClick={toUploader} className="mt-3 rounded-lg bg-primary px-4 py-2 text-sm font-bold text-primary-ink transition-opacity hover:opacity-90">
             {t.notFoundCta}
