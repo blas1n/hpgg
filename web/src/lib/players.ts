@@ -12,6 +12,45 @@ export type Region = "KR" | "NA" | "EU";
 export const REGIONS: Region[] = ["KR", "NA", "EU"];
 export const isRegion = (s: string | null | undefined): s is Region => REGIONS.some((r) => r === s);
 
+/** The player-search region a visitor starts with (owner 2026-10-04: English and EU visitors landed on Asia).
+ *  A region chosen before wins; else the browser's time zone (no network lookup); else the page language. */
+export const REGION_KEY = "hpgg-region";
+
+export function regionFromTimeZone(tz: string | undefined): Region | null {
+  if (!tz) return null;
+  if (/^(Europe|Africa)\//.test(tz)) return "EU";
+  // Oceania plays on the Americas server
+  if (/^(America|Australia|Pacific)\//.test(tz)) return "NA";
+  if (/^Asia\//.test(tz)) return "KR";
+  return null;
+}
+
+export function defaultRegion({ stored, timeZone, locale }: { stored: Region | null; timeZone: string | undefined; locale: Locale }): Region {
+  return stored ?? regionFromTimeZone(timeZone) ?? (locale === "ko" ? "KR" : "NA");
+}
+
+/** Browser storage can be blocked or cleared: a missing or unreadable value is no choice. */
+export function readStoredRegion(): Region | null {
+  try {
+    const v = localStorage.getItem(REGION_KEY);
+    return isRegion(v) ? v : null;
+  } catch {
+    return null;
+  }
+}
+
+export function rememberRegion(r: Region): void {
+  try {
+    localStorage.setItem(REGION_KEY, r);
+  } catch {
+    // a choice that is not remembered is asked again next time
+  }
+}
+
+/** In the browser: the region to start with when the URL names none. */
+export const startRegion = (locale: Locale): Region =>
+  defaultRegion({ stored: readStoredRegion(), timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone, locale });
+
 /** Same rule as the server: a name without spaces or '#', then '#' and 3-8 digits. */
 const BATTLETAG = /^[^\s#]{1,24}#\d{3,8}$/u;
 
