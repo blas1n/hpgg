@@ -39,6 +39,7 @@ from collector.snapshot import (
     sum_regions,
     timeframe_of,
 )
+from collector.weekly import build_weekly, history_entry, write_history
 
 BUILDS_GAME_TYPE = "qm,sl"
 BUILDS_TOTAL = 5
@@ -170,10 +171,11 @@ async def _collect_cube(
     collected_at: str,
     sleep: SleepFn,
     views: tuple[str, ...] = VIEWS,
-) -> tuple[dict[str, Any], dict[str, dict[str, Any]]]:
+) -> tuple[dict[str, Any], dict[str, dict[str, Any]], dict[str, dict[str, Any]]]:
     """Every view in every region (CELL_SPECS), then each one's solo twin; every view gets the
     party correction, and the whole of each view is the sum of its regions (corrected with the
-    summed solo games) → (raw by key, snapshots by key). Any failure raises: a whole without
+    summed solo games) → (raw by key, snapshots by key, each whole view's solo twin — the weekly
+    report's party correction needs it). Any failure raises: a whole without
     one region, or a view without its correction, would be a different number under the same
     name (owner 2026-10-01 / 10-02), so the caller keeps yesterday's files."""
     cells = tuple(spec for spec in CELL_SPECS if _view_of(spec.key) in views)
@@ -201,6 +203,7 @@ async def _collect_cube(
         out: dict[str, dict[str, Any]] = {
             key: apply_party_correction(snap, solo[f"{key}_solo"]) for key, snap in parts.items()
         }
+        wholes_solo: dict[str, dict[str, Any]] = {}
         for view in views:
             keys = [spec.key for spec in cells if _view_of(spec.key) == view]
             whole = sum_regions([parts[k] for k in keys], key=view, collected_at=collected_at)
@@ -208,6 +211,7 @@ async def _collect_cube(
                 [solo[f"{k}_solo"] for k in keys], key=f"{view}_solo", collected_at=collected_at
             )
             out[view] = apply_party_correction(whole, whole_solo)
+            wholes_solo[view] = whole_solo
     except HPError as e:
         log.error("run.party_failed", status=e.status, code=e.code)
         raise
@@ -216,7 +220,7 @@ async def _collect_cube(
         raise
     for view in views:
         log.info("run.party", view=view, **out[view]["party"])
-    return {**raw, **solo_raw}, out
+    return {**raw, **solo_raw}, out, wholes_solo
 
 
 def _view_of(cell_key: str) -> str:
@@ -287,7 +291,7 @@ async def run_backfill_previous(
     c = client or _client(settings, sleep)
     try:
         timeframe = await _timeframe(c, patch)
-        raw_by_key, snapshots = await _collect_cube(
+        raw_by_key, snapshots, _ = await _collect_cube(
             c, settings, patch=patch, timeframe=timeframe, collected_at=collected_at, sleep=sleep
         )
     except HPError as e:
@@ -442,7 +446,7 @@ async def _run_stats(
         patch = choose_patch(patches, now=at)
         timeframe = timeframe_of(patches, patch, now=at)
         log.info("run.patch", patch=patch, builds=timeframe, collected_at=collected_at)
-        raw_by_key, snapshots = await _collect_cube(
+        raw_by_key, snapshots, wholes_solo = await _collect_cube(
             c,
             settings,
             patch=patch,
@@ -485,6 +489,18 @@ async def _run_stats(
         extra_files=extra,
     )
     refresh_previous_modes(settings.data_dir)
+    # 주간 메타 리포트: the day's record, then any issue it closes
+    write_history(
+        settings.data_dir,
+        history_entry(
+            day=snapshot_day(collected_at),
+            collected_at=collected_at,
+            patch=patch,
+            snapshots=snapshots,
+            solos=wholes_solo,
+        ),
+    )
+    build_weekly(settings.data_dir)
     if builds_result is not None:
         day_dir_b = settings.snapshot_out_dir / snapshot_day(collected_at)
         _write_gz(day_dir_b / "raw_builds.json.gz", builds_result[0])

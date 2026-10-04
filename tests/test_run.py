@@ -716,3 +716,24 @@ async def test_a_dawn_run_files_its_snapshot_under_the_korean_day(
     s = settings(tmp_path)
     assert await run(s, sleep=fake_sleep, now=lambda: "2026-09-28T18:25:00Z") == 0
     assert [p.name for p in s.snapshot_out_dir.iterdir()] == ["2026-09-29"]
+
+
+@respx.mock
+async def test_a_run_keeps_the_days_record_for_the_weekly_report(
+    tmp_path: Path, raw_by_map, patches_payload, fake_sleep
+) -> None:
+    """주간 메타 리포트: each run keeps the whole views' cumulative counts and solo counts for
+    its KST day, and writes the weekly index (no issue yet with one record)."""
+    mock_api(raw_by_map, patches_payload)
+    s = settings(tmp_path)
+    assert await run(s, sleep=fake_sleep, now=lambda: "2026-09-28T18:25:00Z") == 0
+    record = json.loads((s.data_dir / "history" / "2026-09-29.json").read_text())
+    assert record["patch"] == "2.55.17" and set(record["views"]) == {"qm", "sl"}
+    qm = record["views"]["qm"]
+    latest = json.loads((s.data_dir / "latest" / "qm.json").read_text())
+    assert qm["matches"] == latest["matches"]
+    assert sum(g for g, _, _ in qm["heroes"].values()) == sum(
+        r["games"] for r in latest["rows"] if r["map"] == "all"
+    )
+    assert qm["solo"]  # the party correction's input
+    assert json.loads((s.data_dir / "weekly" / "index.json").read_text()) == {"issues": []}
