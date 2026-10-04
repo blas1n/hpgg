@@ -349,6 +349,7 @@ The same data gives different tiers under a different formula. This site always 
     errorBody: "Heroes Profile is not answering, so no new lookups are possible right now. Try again in a moment.",
     notFoundTitle: "Player not found",
     notFoundBody: "Check the BattleTag's spelling, number and region. If it still isn't there, upload your replays as described below.",
+    tryRegion: "Search another region:",
     notFoundGain: "Uploaded games go to Heroes Profile: your record becomes searchable, and they add to the statistics of your region.",
     notFoundCta: "Upload replays",
     guide: {

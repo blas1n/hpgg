@@ -15,6 +15,11 @@ import {
   relativeDay,
   tierLabel,
   type PlayerResponse,
+  defaultRegion,
+  readStoredRegion,
+  regionFromTimeZone,
+  rememberRegion,
+  REGION_KEY,
 } from "../src/lib/players";
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -216,5 +221,40 @@ describe("playerView", () => {
     expect(w.stale).toBe(true);
     expect(w.notice).toBe("quota_exceeded");
     expect(w.fetchedLabel).toMatch(/^09\/29 \d\d:\d\d 기준$/);
+  });
+});
+
+describe("default region for player search (owner 2026-10-04: English visitors, and EU ones)", () => {
+  it("guesses from the browser's time zone: Europe/Africa → EU, the Americas and Oceania → NA (Oceania plays on the Americas server), Asia → KR", () => {
+    expect(regionFromTimeZone("Europe/Berlin")).toBe("EU");
+    expect(regionFromTimeZone("Africa/Cairo")).toBe("EU");
+    expect(regionFromTimeZone("America/New_York")).toBe("NA");
+    expect(regionFromTimeZone("Australia/Sydney")).toBe("NA");
+    expect(regionFromTimeZone("Pacific/Auckland")).toBe("NA");
+    expect(regionFromTimeZone("Asia/Seoul")).toBe("KR");
+    expect(regionFromTimeZone("UTC")).toBeNull();
+    expect(regionFromTimeZone(undefined)).toBeNull();
+  });
+
+  it("a region the visitor chose before wins, then the time zone, then the page language", () => {
+    expect(defaultRegion({ stored: "EU", timeZone: "America/Chicago", locale: "en" })).toBe("EU");
+    expect(defaultRegion({ stored: null, timeZone: "Europe/Paris", locale: "en" })).toBe("EU");
+    expect(defaultRegion({ stored: null, timeZone: "UTC", locale: "en" })).toBe("NA");
+    expect(defaultRegion({ stored: null, timeZone: undefined, locale: "ko" })).toBe("KR");
+  });
+
+  it("remembers the last region searched; storage that throws or holds junk is ignored", () => {
+    const store = new Map<string, string>();
+    const ls = { getItem: (k: string) => store.get(k) ?? null, setItem: (k: string, v: string) => void store.set(k, v) };
+    (globalThis as { localStorage?: unknown }).localStorage = ls;
+    expect(readStoredRegion()).toBeNull();
+    rememberRegion("EU");
+    expect(readStoredRegion()).toBe("EU");
+    store.set(REGION_KEY, "XX");
+    expect(readStoredRegion()).toBeNull();
+    (globalThis as { localStorage?: unknown }).localStorage = { getItem: () => { throw new Error("blocked"); }, setItem: () => { throw new Error("blocked"); } };
+    expect(readStoredRegion()).toBeNull();
+    expect(() => rememberRegion("NA")).not.toThrow();
+    delete (globalThis as { localStorage?: unknown }).localStorage;
   });
 });
