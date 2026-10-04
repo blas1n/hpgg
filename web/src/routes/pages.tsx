@@ -26,9 +26,11 @@ import { mapDetail } from "@/lib/maps";
 import { matchupsView } from "@/lib/matchups";
 import { heroPatchNotes } from "@/lib/patchnotes";
 import { patchSummary } from "@/lib/patchSummary";
+import { weeklyModel } from "@/lib/weekly";
+import { WeeklyView } from "@/components/weekly/WeeklyView";
 import { PatchesView } from "@/components/patches/PatchesView";
 import { tierTable } from "@/lib/tier";
-import { readBuilds, readHeroes, readMaps, readMapsMeta, readMatchups, readMeta, readHotfixes, readPatchNotes, readSearchIndex, readShown, readTalents } from "@/server/data";
+import { readBuilds, readHeroes, readMaps, readMapsMeta, readMatchups, readMeta, readHotfixes, readPatchNotes, readSearchIndex, readShown, readTalents, readWeekly, readWeeklyIndex } from "@/server/data";
 
 type Params = { params: Promise<{ slug: string }> };
 
@@ -258,4 +260,23 @@ export function PatchesPage({ locale }: { locale: Locale }) {
   };
   const model = patchSummary({ patch: referencePatchId(meta), notes, hotfixes, modes: { qm: shown("qm"), sl: shown("sl") }, heroes, minGames: meta.min_games_for_tier, locale });
   return <PatchesView model={model} collectedAt={meta.collected_at} />;
+}
+
+// --- 주간 메타 리포트: the newest issue at /hots/meta/, each issue at /hots/meta/<week>/ (data/weekly, collector/weekly.py) ---
+const weeks = (): string[] => readWeeklyIndex()?.issues.map((i) => i.week) ?? [];
+export const weekParams = (): { week: string }[] => weeks().map((week) => ({ week }));
+
+export const weeklyMetadata = (locale: Locale, week?: string): Metadata => ({
+  title: week ? `${messages[locale].meta.weeklyTitle} ${week}` : messages[locale].meta.weeklyTitle,
+  description: messages[locale].meta.weeklyDescription,
+  alternates: alternates(week ? `/hots/meta/${week}/` : "/hots/meta/", locale),
+});
+
+export function WeeklyPage({ locale, week }: { locale: Locale; week?: string }) {
+  const all = weeks();
+  const which = week ?? all[0];
+  const issue = which ? readWeekly(which) : null;
+  if (week && !issue) notFound();
+  const model = issue ? weeklyModel(issue, readHeroes(locale), readMeta().min_games_for_tier, all) : null;
+  return <WeeklyView model={model} />;
 }
