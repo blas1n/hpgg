@@ -152,7 +152,7 @@ for (const theme of ["dark", "light"] as const) {
       test.setTimeout(120_000);
       await page.setViewportSize({ width, height: 900 });
       if (theme === "light") await page.addInitScript(() => localStorage.setItem("hpgg-theme", "light"));
-      const ko = ["./", "./tier/", "./tier/?mode=sl", "./heroes/", "./heroes/illidan/", "./heroes/illidan/?mode=sl", "./maps/", "./maps/cursed-hollow/", "./maps/towers-of-doom/", "./patches/", "./players/", "./players/?tag=Zemill%231940&region=NA", "./draft/", "./draft/?map=Cursed%20Hollow&d=illidan.zeratul.tracer.genji.abathur.uther.muradin"].filter(live);
+      const ko = ["./", "./tier/", "./tier/?mode=sl", "./heroes/", "./heroes/illidan/", "./heroes/illidan/?mode=sl", "./maps/", "./maps/cursed-hollow/", "./maps/towers-of-doom/", "./patches/", "./meta/", "./meta/?mode=sl", "./players/", "./players/?tag=Zemill%231940&region=NA", "./draft/", "./draft/?map=Cursed%20Hollow&d=illidan.zeratul.tracer.genji.abathur.uther.muradin"].filter(live);
       // English pages (#10): the same pages under /en/hots/ — longer words, other line breaks
       for (const path of [...ko, ...ko.map((p) => `/en/hots/${p.slice(2)}`)]) {
         await page.goto(path);

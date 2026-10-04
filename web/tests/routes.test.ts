@@ -44,6 +44,8 @@ describe("one route tree for every language", () => {
       "[locale]/hots/heroes/page.tsx",
       "[locale]/hots/maps/[slug]/page.tsx",
       "[locale]/hots/maps/page.tsx",
+      "[locale]/hots/meta/[week]/page.tsx",
+      "[locale]/hots/meta/page.tsx",
       "[locale]/hots/page.tsx",
       "[locale]/hots/patches/page.tsx",
       "[locale]/hots/players/page.tsx",
