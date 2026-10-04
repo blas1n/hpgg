@@ -11,9 +11,10 @@ import { LOCALES, SITE_URL } from "../src/i18n/locales.ts";
 import type { HeroTable, MapTable } from "../src/data";
 
 /** The static sections under app/[locale]/hots (tests/sitemap.test.ts fails when a directory is missing here). */
-const SECTIONS = ["tier", "heroes", "maps", "draft", "patches", "players"].filter((s) => sectionEnabled(s)); // src/features.ts
+const SECTIONS = ["tier", "meta", "heroes", "maps", "draft", "patches", "players"].filter((s) => sectionEnabled(s)); // src/features.ts
 
-export function sitemapUrls(heroes: HeroTable, maps: MapTable): string[] {
+/** `weeks`: the weekly report issues (data/weekly/index.json), each with its own page. */
+export function sitemapUrls(heroes: HeroTable, maps: MapTable, weeks: string[] = []): string[] {
   return LOCALES.flatMap((l) => {
     const base = `${SITE_URL}/${l}/hots/`;
     return [
@@ -21,19 +22,20 @@ export function sitemapUrls(heroes: HeroTable, maps: MapTable): string[] {
       ...SECTIONS.map((s) => `${base}${s}/`),
       ...heroes.heroes.map((h) => `${base}heroes/${h.slug}/`),
       ...maps.maps.map((m) => `${base}maps/${m.slug}/`),
+      ...weeks.map((w) => `${base}meta/${w}/`),
     ];
   });
 }
 
-export function sitemapXml(heroes: HeroTable, maps: MapTable): string {
-  const urls = sitemapUrls(heroes, maps).map((u) => `  <url><loc>${u}</loc></url>`);
+export function sitemapXml(heroes: HeroTable, maps: MapTable, weeks: string[] = []): string {
+  const urls = sitemapUrls(heroes, maps, weeks).map((u) => `  <url><loc>${u}</loc></url>`);
   return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.join("\n")}\n</urlset>\n`;
 }
 
 export const robotsTxt = (): string => `User-agent: *\nAllow: /\n\nSitemap: ${SITE_URL}/sitemap.xml\n`;
 
-export function writeSitemap(pub: string, heroes: HeroTable, maps: MapTable): number {
+export function writeSitemap(pub: string, heroes: HeroTable, maps: MapTable, weeks: string[] = []): number {
   writeFileSync(join(pub, "robots.txt"), robotsTxt());
-  writeFileSync(join(pub, "sitemap.xml"), sitemapXml(heroes, maps));
-  return sitemapUrls(heroes, maps).length;
+  writeFileSync(join(pub, "sitemap.xml"), sitemapXml(heroes, maps, weeks));
+  return sitemapUrls(heroes, maps, weeks).length;
 }

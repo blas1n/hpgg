@@ -7,6 +7,7 @@ import { onReference, type Bracket, type BuildsFile, type HeroTable, type MapTab
 import { pickShown, type Shown } from "../lib/shown";
 import type { SearchItem } from "../lib/search";
 import type { MapsMeta } from "../lib/maps";
+import type { WeeklyIndex, WeeklyIssue } from "../lib/weekly";
 import type { Locale } from "../i18n/locale";
 import { localizeHeroes, localizeMaps } from "../i18n/names";
 
@@ -43,6 +44,10 @@ export const readPatchNotes = (): PatchNotesFile | null => (patchNotes === undef
 let hotfixes: HotfixesFile | null | undefined;
 /** Builds shipped without notes and their changed talent numbers (tools/hotfix_diff.py); read once per build. */
 export const readHotfixes = (): HotfixesFile | null => (hotfixes === undefined ? (hotfixes = opt<HotfixesFile>("hotfixes.json")) : hotfixes);
+
+/** 주간 메타 리포트 (collector/weekly.py): the issues, newest first; null until the first one is written. */
+export const readWeeklyIndex = (): WeeklyIndex | null => opt<WeeklyIndex>("weekly/index.json");
+export const readWeekly = (week: string): WeeklyIssue | null => (/^\d{4}-w\d{2}$/.test(week) ? opt<WeeklyIssue>(`weekly/${week}.json`) : null);
 
 /** Header search index: every hero, sorted by name in the page language, with the current tier in `mode`. */
 export function readSearchIndex(locale: Locale, mode: Mode = "qm"): SearchItem[] {

@@ -4,6 +4,7 @@ import { isLocale, type Locale } from "@/i18n/locale";
 
 export type LocaleProps = { params: Promise<{ locale: string }> };
 export type SlugProps = { params: Promise<{ locale: string; slug: string }> };
+export type WeekProps = { params: Promise<{ locale: string; week: string }> };
 
 /** The page's language; anything outside LOCALES is a 404 (dynamicParams = false already refuses it at build time). */
 export async function pageLocale({ params }: { params: Promise<{ locale: string }> }): Promise<Locale> {

@@ -16,5 +16,6 @@ rmSync(pub, { recursive: true, force: true });
 cpSync(src, pub, { recursive: true, filter: (p) => !/[/\\]\./.test(p.slice(src.length)) });
 const json = (f) => JSON.parse(readFileSync(join(src, f), "utf-8"));
 const n = writeForwarders(pub, json("heroes_ko.json"), json("maps_ko.json"));
-const urls = writeSitemap(pub, json("heroes_ko.json"), json("maps_ko.json"));
+const weekly = existsSync(join(src, "weekly", "index.json")) ? json("weekly/index.json").issues.map((i) => i.week) : [];
+const urls = writeSitemap(pub, json("heroes_ko.json"), json("maps_ko.json"), weekly);
 console.log(`synced ${src} -> public/ (+${n} forwarding pages, robots.txt, sitemap.xml with ${urls} pages)`);
