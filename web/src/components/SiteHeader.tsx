@@ -20,6 +20,7 @@ function activeId(path: string): NavId {
   if (p.startsWith("/hots/maps")) return "maps";
   if (p.startsWith("/hots/players")) return "players";
   if (p.startsWith("/hots/patches")) return "patches";
+  if (p.startsWith("/hots/meta")) return "meta";
   if (p.startsWith("/hots/draft")) return "draft";
   return "home";
 }
@@ -28,7 +29,7 @@ function activeId(path: string): NavId {
 export function SiteHeader({ searchIndex }: { searchIndex: SearchItem[] }) {
   const t = useT();
   const href = hotsHref(useLocale());
-  const nav = navIds().map((id) => ({ id, href: id === "tier" ? href.tier() : id === "draft" ? href.draft() : href[id], label: t.nav[id] }));
+  const nav = navIds().map((id) => ({ id, href: id === "tier" ? href.tier() : id === "draft" ? href.draft() : id === "meta" ? href.meta() : href[id], label: t.nav[id] }));
   const active = activeId(usePathname() ?? "/hots/");
   const ref = useRef<HTMLElement>(null);
   // --header-h lets sticky sub-navigation and anchor targets sit exactly under the header (it is two rows on phones)
