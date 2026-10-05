@@ -4,7 +4,7 @@ import { FEATURES } from "../src/features";
 // 주간 메타 리포트 (owner 2026-10-05). The e2e data carries the real first issue, 2026-w40 (2.57.0's first week,
 // against 2.55.17); the model is tested in tests/weekly.test.ts and collector/weekly.py in tests/test_weekly.py.
 
-// switched off on the live site (owner 2026-10-05, src/features.ts): the export has no report pages
+// a switch (src/features.ts): when off, the export has no report pages
 test.skip(!FEATURES.weekly, "주간 메타 리포트 is switched off (src/features.ts)");
 
 test.beforeEach(async ({ page }) => {
@@ -39,7 +39,7 @@ test("the report is Storm League prose; its evidence card waits for a centre the
   await expect(page.locator("#mode-sl, #mode-qm")).toHaveCount(0); // no Quick Match: no counter picks to explain
   await expect(page.locator("#h-analysis")).toContainText("잘아타스");
   expect(await page.locator("#weekly-analysis p").count()).toBeGreaterThan(2);
-  await expect(page.locator('[data-status="draft"]')).toBeVisible();
+  await expect(page.locator('[data-status="draft"]')).toHaveCount(0); // reviewed: no draft badge
   // the e2e hero table predates Xal'atath (90 heroes): no card, and no broken page (tests/weekly.test.ts has the card)
   await expect(page.locator("#h-evidence")).toHaveCount(0);
   await expect(page.locator("#weekly-top a").first()).toHaveAttribute("href", /\?mode=sl$/);
