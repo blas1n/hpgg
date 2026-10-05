@@ -649,6 +649,11 @@ def _hd2() -> tuple[dict, dict, dict]:
     )
 
 
+def _label(ability: dict) -> dict:
+    """An ability's name and hotkey (it also carries its tooltip, cooldown and cost)."""
+    return {k: ability[k] for k in ("ko", "en", "key")}
+
+
 def _matched(entry: str, game: dict) -> bool:
     """As collector/hotfixes.py names an ability: an id the entry starts with."""
     return any(entry.startswith(k) for k in game["abilities"])
@@ -709,7 +714,7 @@ def test_heroes_data2_game_ids_feed_the_hotfix_diff() -> None:
     game = ba.hero_game_ids(herodata, kokr, heroes, enus)
     xal = game["xal-atath"]
     assert xal["unit"] == "HeroXalatath" and xal["weapons"] == ["XalatathHeroWeapon"]
-    assert xal["abilities"]["XalatathShadowMark"] == {
+    assert _label(xal["abilities"]["XalatathShadowMark"]) == {
         "ko": "그림자 표식",
         "en": "Shadow Mark",
         "key": "Q",
@@ -788,7 +793,7 @@ def test_heroes_data2_passive_abilities_keep_their_button_id() -> None:
     herodata, kokr, enus = _hd2()
     heroes = [{"name": "Alarak", "slug": "alarak"}, {"name": "Fenix", "slug": "fenix"}]
     game = ba.hero_game_ids(herodata, kokr, heroes, enus)
-    assert game["alarak"]["abilities"]["AlarakSadism"] == {
+    assert _label(game["alarak"]["abilities"]["AlarakSadism"]) == {
         "ko": "가학성",
         "en": "Sadism",
         "key": "D",
@@ -816,7 +821,11 @@ def test_heroes_data2_abilities_of_the_heros_units_are_its_abilities() -> None:
         "LostVikingsVikingBribery",
     ):
         assert k in lv, k
-    assert lv["LostVikingsSpinToWin"] == {"ko": "돌아야 이긴다!", "en": "Spin To Win!", "key": "Q"}
+    assert _label(lv["LostVikingsSpinToWin"]) == {
+        "ko": "돌아야 이긴다!",
+        "en": "Spin To Win!",
+        "key": "Q",
+    }
     # Portal's three ids (Instant, 2, Mastery) share a name → one key, their common prefix
     assert _matched("MedivhPortalInstant", game["medivh"])
 
@@ -830,7 +839,11 @@ def test_an_ability_is_named_by_the_ability_and_a_talent_by_the_talent() -> None
     assert talents["TyraelAspectofJustice"]["ko"] == "정의의 화신"
     abilities = ba.hero_game_ids(herodata, kokr, heroes, enus)["tyrael"]["abilities"]
     # the trait's buttons share a name, so they are one entry by their common id prefix
-    assert abilities["TyraelA"] == {"ko": "대천사의 분노", "en": "Archangel's Wrath", "key": "D"}
+    assert _label(abilities["TyraelA"]) == {
+        "ko": "대천사의 분노",
+        "en": "Archangel's Wrath",
+        "key": "D",
+    }
 
 
 def test_hero_specs_come_from_the_game_data_per_slug() -> None:
@@ -853,3 +866,18 @@ def test_hero_specs_come_from_the_game_data_per_slug() -> None:
 def test_hero_specs_skip_heroes_the_game_data_does_not_have() -> None:
     herodata, _, _ = _hd2()
     assert ba.hero_specs(herodata, [{"name": "Nobody", "slug": "nobody"}]) == {}
+
+
+def test_each_ability_carries_what_it_does_its_cooldown_and_cost() -> None:
+    """The weekly report explains a hero by its kit (owner 2026-10-05: Xal'atath is hard to
+    catch because of Void Step), so each ability keeps its tooltip, cooldown and cost."""
+    herodata, kokr, enus = _hd2()
+    game = ba.hero_game_ids(herodata, kokr, [{"name": "Xal'atath", "slug": "xal-atath"}], enus)
+    step = game["xal-atath"]["abilities"]["XalatathVoidStep"]
+    assert (step["ko"], step["key"]) == ("공허 걸음", "E")
+    assert "삼각형" in step["desc"] and "<" not in step["desc"]
+    assert "triangular" in step["desc_en"]
+    assert step["cd"] == "재사용 대기시간: 15초" and step["cd_en"] == "Cooldown: 15 seconds"
+    assert step["cost"] == "마나: 50"
+    trait = game["xal-atath"]["abilities"]["XalatathVoidVolley"]
+    assert trait["key"] == "D" and trait["desc"]

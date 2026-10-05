@@ -40,6 +40,7 @@ from collector.snapshot import (
     sum_regions,
     timeframe_of,
 )
+from collector.talent_details import fetch_weekly_talents
 from collector.weekly import build_weekly, history_entry, write_history
 
 BUILDS_GAME_TYPE = "qm,sl"
@@ -465,6 +466,36 @@ async def _run_averages(
     log.info("averages.done", patch=patch, stats=sorted(out["stats"]))
 
 
+async def _run_weekly_talents(
+    c: HPClient,
+    settings: Settings,
+    *,
+    weeks: list[str],
+    patches: Any,
+    meta: dict[str, Any],
+    at: datetime,
+    collected_at: str,
+    sleep: SleepFn,
+) -> None:
+    """Talent picks of the heroes a new issue cites (collector/talent_details.py). A failure
+    leaves the issue without them and never fails the run."""
+    if not settings.weekly_talents or not weeks:
+        return
+    patch = meta["reference_patch"]
+    try:
+        await fetch_weekly_talents(
+            c,
+            settings,
+            weeks=weeks,
+            patch=patch,
+            timeframe=timeframe_of(patches, patch, now=at),
+            collected_at=collected_at,
+            sleep=sleep,
+        )
+    except Exception as e:  # noqa: BLE001 — supplementary numbers never fail the daily run
+        log.warning("talents.failed", error=f"{type(e).__name__}: {e}")
+
+
 async def _run_stats(
     c: HPClient,
     settings: Settings,
@@ -538,9 +569,19 @@ async def _run_stats(
             solos=wholes_solo,
         ),
     )
-    build_weekly(settings.data_dir)
+    weeks = build_weekly(settings.data_dir)
     await _run_averages(
         c, settings, patches=patches, meta=meta, at=at, collected_at=collected_at, sleep=sleep
+    )
+    await _run_weekly_talents(
+        c,
+        settings,
+        weeks=weeks,
+        patches=patches,
+        meta=meta,
+        at=at,
+        collected_at=collected_at,
+        sleep=sleep,
     )
     if builds_result is not None:
         day_dir_b = settings.snapshot_out_dir / snapshot_day(collected_at)

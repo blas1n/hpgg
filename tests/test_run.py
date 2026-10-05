@@ -39,6 +39,7 @@ def settings(tmp_path: Path, **kw: Any) -> Settings:
         **{
             "patchnotes_limit": 3,
             "average_stats": False,
+            "weekly_talents": False,
             **kw,
         },  # the three notes in fixtures/patchnotes
     )
@@ -774,3 +775,40 @@ async def test_failed_average_stats_never_fail_the_run(
     assert await run(s, sleep=fake_sleep, now=lambda: "2026-09-28T18:25:00Z") == 0
     assert (s.data_dir / "latest" / "qm.json").exists()
     assert not (s.data_dir / "latest" / "sl_averages.json").exists()
+
+
+@respx.mock
+async def test_a_run_that_writes_an_issue_fetches_its_cited_heroes_talents(
+    tmp_path: Path, raw_by_map, patches_payload, fake_sleep, monkeypatch
+) -> None:
+    import collector.run as run_mod
+
+    mock_api(raw_by_map, patches_payload)
+    asked: list[dict[str, Any]] = []
+
+    async def fake_fetch(c: Any, s: Any, **kw: Any) -> None:
+        asked.append(kw)
+
+    monkeypatch.setattr(run_mod, "build_weekly", lambda data_dir: ["2026-w39"])
+    monkeypatch.setattr(run_mod, "fetch_weekly_talents", fake_fetch)
+    s = settings(tmp_path, weekly_talents=True)
+    assert await run(s, sleep=fake_sleep, now=lambda: "2026-09-28T18:25:00Z") == 0
+    assert len(asked) == 1 and asked[0]["weeks"] == ["2026-w39"]
+    assert asked[0]["patch"] and asked[0]["timeframe"]
+
+
+@respx.mock
+async def test_failed_weekly_talents_never_fail_the_run(
+    tmp_path: Path, raw_by_map, patches_payload, fake_sleep, monkeypatch
+) -> None:
+    import collector.run as run_mod
+
+    mock_api(raw_by_map, patches_payload)
+
+    async def boom(c: Any, s: Any, **kw: Any) -> None:
+        raise RuntimeError("x")
+
+    monkeypatch.setattr(run_mod, "build_weekly", lambda data_dir: ["2026-w39"])
+    monkeypatch.setattr(run_mod, "fetch_weekly_talents", boom)
+    s = settings(tmp_path, weekly_talents=True)
+    assert await run(s, sleep=fake_sleep, now=lambda: "2026-09-28T18:25:00Z") == 0
