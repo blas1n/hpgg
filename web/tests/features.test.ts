@@ -16,13 +16,19 @@ describe("features", () => {
     expect(sectionEnabled("draft")).toBe(false);
   });
 
+  it("주간 메타 리포트 is off on the live site (owner 2026-10-05: a real analysis first — the meta's centre, why, who answers it)", () => {
+    expect(FEATURES.weekly).toBe(false);
+    expect(sectionEnabled("meta")).toBe(false);
+  });
+
   it("a section without a feature is always on", () => {
     for (const s of ["tier", "heroes", "maps", "players"]) expect(sectionEnabled(s)).toBe(true);
   });
 
   it("the menu leaves out a switched-off section and keeps the order", () => {
-    expect(navIds({ draft: false })).toEqual(["home", "tier", "meta", "heroes", "maps", "patches", "players"]);
-    expect(navIds({ draft: true })).toEqual(["home", "tier", "meta", "heroes", "draft", "maps", "patches", "players"]);
+    expect(navIds({ draft: false, weekly: true })).toEqual(["home", "tier", "meta", "heroes", "maps", "patches", "players"]);
+    expect(navIds({ draft: true, weekly: true })).toEqual(["home", "tier", "meta", "heroes", "draft", "maps", "patches", "players"]);
+    expect(navIds({ draft: false, weekly: false })).toEqual(["home", "tier", "heroes", "maps", "patches", "players"]);
   });
 
   it("the export loses a switched-off section in every language and keeps the rest", () => {
@@ -34,13 +40,13 @@ describe("features", () => {
           writeFileSync(join(dist, l, "hots", s, "index.html"), "x");
         }
       }
-      const removed = pruneDisabled(dist, { draft: false });
+      const removed = pruneDisabled(dist, { draft: false, weekly: true });
       expect(removed.sort()).toEqual(LOCALES.map((l) => `${l}/hots/draft`).sort());
       for (const l of LOCALES) {
         expect(existsSync(join(dist, l, "hots", "draft"))).toBe(false);
         expect(existsSync(join(dist, l, "hots", "tier", "index.html"))).toBe(true);
       }
-      expect(pruneDisabled(dist, { draft: true })).toEqual([]);
+      expect(pruneDisabled(dist, { draft: true, weekly: true })).toEqual([]);
     } finally {
       rmSync(dist, { recursive: true, force: true });
     }

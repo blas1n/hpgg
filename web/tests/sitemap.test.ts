@@ -40,9 +40,13 @@ describe("sitemap", () => {
     }
   });
 
-  it("lists every weekly report issue in every language (data/weekly/index.json)", () => {
+  it("lists every weekly report issue in every language (data/weekly/index.json), unless the report is off", () => {
     const withWeeks = sitemapUrls(heroes, maps, ["2026-w41", "2026-w40"]);
-    for (const l of LOCALES) for (const w of ["2026-w41", "2026-w40"]) expect(withWeeks).toContain(`${SITE_URL}/${l}/hots/meta/${w}/`);
+    for (const l of LOCALES)
+      for (const w of ["2026-w41", "2026-w40"]) {
+        if (sectionEnabled("meta")) expect(withWeeks).toContain(`${SITE_URL}/${l}/hots/meta/${w}/`);
+        else expect(withWeeks.some((u) => u.includes("/hots/meta/"))).toBe(false);
+      }
   });
 
   it("lists no forwarding page and no duplicate", () => {
