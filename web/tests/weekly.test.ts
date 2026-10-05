@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import type { HeroTable } from "../src/data";
 import type { Row, Snapshot } from "../src/formula";
-import { weekDays, weeklyModel, type WeeklyIssue } from "../src/lib/weekly";
+import { weekDays, weeklyModel, type WeeklyAnalysis, type WeeklyIssue } from "../src/lib/weekly";
 
 // 주간 메타 리포트 (owner 2026-10-05): one issue a week — the week's own games (collector/weekly.py), ranked by the
 // site's tier formula, against the week before or, in a patch's first week, the previous patch.
@@ -84,6 +84,21 @@ describe("weeklyModel", () => {
     expect(sl.fresh).toEqual([]); // nothing to be new against
   });
 
+  it("carries the analysis in the page language; no analysis yet is none", () => {
+    const analysis: WeeklyAnalysis = {
+      week: "2026-w41",
+      status: "reviewed",
+      basis: "sl",
+      title: { ko: "제목", en: "Title" },
+      paragraphs: { ko: ["첫 문단", "둘째 문단"], en: ["First", "Second"] },
+      notes: { ko: "기준", en: "Basis" },
+    };
+    const ko = weeklyModel(issue, heroes, 50, ["2026-w41"], { analysis, locale: "ko" });
+    expect(ko.analysis).toEqual({ title: "제목", paragraphs: ["첫 문단", "둘째 문단"], notes: "기준", status: "reviewed" });
+    expect(weeklyModel(issue, heroes, 50, ["2026-w41"], { analysis, locale: "en" }).analysis?.title).toBe("Title");
+    expect(m.analysis).toBeNull();
+  });
+
   it("links the issues before and after", () => {
     expect(m.newer).toBeNull();
     expect(m.older).toBe("2026-w40");
@@ -95,5 +110,28 @@ describe("weeklyModel", () => {
     expect(r.kind).toBe("patch_start");
     expect(r.modes.qm!.fresh.map((x) => x.hero.name)).toContain("Xal'atath");
     expect(r.modes.qm!.top).toHaveLength(10);
+  });
+});
+
+describe("centreCard (the evidence behind the prose)", () => {
+  it("reads the evidence: the centre's use, its ranks and its matchups with findings marked", async () => {
+    const { centreCard } = await import("../src/lib/weekly");
+    const ev = JSON.parse(readFileSync(join(here, "..", "..", "data", "weekly", "2026-w40.evidence.json"), "utf-8"));
+    const c = centreCard(ev, heroes)!;
+    expect(c.hero.name).toBe("Xal'atath");
+    expect(c.banRate).toBeCloseTo(81.6, 1);
+    expect(c.stats.find((s) => s.key === "hero_damage")).toMatchObject({ rankAll: 1, ofAll: 91 });
+    expect(c.life).toMatchObject({ value: 1330, rankRole: 26, ofRole: 31 });
+    const tyrael = c.heldBy.find((x) => x.hero.name === "Tyrael")!;
+    expect(tyrael.significant).toBe(true);
+    expect(c.heldBy.find((x) => x.hero.name === "Illidan")!.significant).toBe(false);
+    expect(c.crushes[0]!.delta).toBeGreaterThan(0);
+  });
+
+  it("is nothing when the centre is not in the hero table (a page without it, not a crash)", async () => {
+    const { centreCard } = await import("../src/lib/weekly");
+    const ev = JSON.parse(readFileSync(join(here, "..", "..", "data", "weekly", "2026-w40.evidence.json"), "utf-8"));
+    const without = { ...heroes, heroes: heroes.heroes.filter((h) => h.name !== "Xal'atath") };
+    expect(centreCard(ev, without)).toBeNull();
   });
 });

@@ -7,7 +7,7 @@ import { onReference, type Bracket, type BuildsFile, type HeroTable, type MapTab
 import { pickShown, type Shown } from "../lib/shown";
 import type { SearchItem } from "../lib/search";
 import type { MapsMeta } from "../lib/maps";
-import type { WeeklyIndex, WeeklyIssue } from "../lib/weekly";
+import type { WeeklyAnalysis, WeeklyEvidence, WeeklyIndex, WeeklyIssue } from "../lib/weekly";
 import type { Locale } from "../i18n/locale";
 import { localizeHeroes, localizeMaps } from "../i18n/names";
 
@@ -47,6 +47,10 @@ export const readHotfixes = (): HotfixesFile | null => (hotfixes === undefined ?
 
 /** 주간 메타 리포트 (collector/weekly.py): the issues, newest first; null until the first one is written. */
 export const readWeeklyIndex = (): WeeklyIndex | null => opt<WeeklyIndex>("weekly/index.json");
+const isWeek = (w: string) => /^\d{4}-w\d{2}$/.test(w);
+/** The week's prose (owner-reviewed) and the evidence it was drafted from (tools/weekly_evidence.py). */
+export const readWeeklyAnalysis = (week: string): WeeklyAnalysis | null => (isWeek(week) ? opt<WeeklyAnalysis>(`weekly/${week}.analysis.json`) : null);
+export const readWeeklyEvidence = (week: string): WeeklyEvidence | null => (isWeek(week) ? opt<WeeklyEvidence>(`weekly/${week}.evidence.json`) : null);
 export const readWeekly = (week: string): WeeklyIssue | null => (/^\d{4}-w\d{2}$/.test(week) ? opt<WeeklyIssue>(`weekly/${week}.json`) : null);
 
 /** Header search index: every hero, sorted by name in the page language, with the current tier in `mode`. */

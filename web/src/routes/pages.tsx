@@ -26,11 +26,11 @@ import { mapDetail } from "@/lib/maps";
 import { matchupsView } from "@/lib/matchups";
 import { heroPatchNotes } from "@/lib/patchnotes";
 import { patchSummary } from "@/lib/patchSummary";
-import { weeklyModel } from "@/lib/weekly";
+import { centreCard, weeklyModel } from "@/lib/weekly";
 import { WeeklyView } from "@/components/weekly/WeeklyView";
 import { PatchesView } from "@/components/patches/PatchesView";
 import { tierTable } from "@/lib/tier";
-import { readBuilds, readHeroes, readMaps, readMapsMeta, readMatchups, readMeta, readHotfixes, readPatchNotes, readSearchIndex, readShown, readTalents, readWeekly, readWeeklyIndex } from "@/server/data";
+import { readBuilds, readHeroes, readMaps, readMapsMeta, readMatchups, readMeta, readHotfixes, readPatchNotes, readSearchIndex, readShown, readTalents, readWeekly, readWeeklyAnalysis, readWeeklyEvidence, readWeeklyIndex } from "@/server/data";
 
 type Params = { params: Promise<{ slug: string }> };
 
@@ -277,6 +277,8 @@ export function WeeklyPage({ locale, week }: { locale: Locale; week?: string }) 
   const which = week ?? all[0];
   const issue = which ? readWeekly(which) : null;
   if (week && !issue) notFound();
-  const model = issue ? weeklyModel(issue, readHeroes(locale), readMeta().min_games_for_tier, all) : null;
-  return <WeeklyView model={model} />;
+  const heroes = readHeroes(locale);
+  const model = issue ? weeklyModel(issue, heroes, readMeta().min_games_for_tier, all, { analysis: readWeeklyAnalysis(issue.week), locale }) : null;
+  const evidence = issue ? readWeeklyEvidence(issue.week) : null;
+  return <WeeklyView model={model} centre={evidence ? centreCard(evidence, heroes) : null} />;
 }
