@@ -59,6 +59,17 @@ class Settings(BaseSettings):
     hp_job_poll_seconds: float = 2.0
     hp_job_wait_seconds: float = 20.0
 
+    # Comments (`server/comments/`, owner 2026-10-05): anonymous; per address a few at a time and a
+    # day's worth; hidden after reports from `comment_hide_reports` addresses.
+    comment_posts_per_window: int = 3
+    comment_window_seconds: int = 600
+    comment_posts_per_day: int = 20
+    comment_reports_per_day: int = 30
+    comment_reads_per_minute: int = 60
+    comment_hide_reports: int = 3
+    # HMAC key for addresses; empty = one the server makes and keeps in the database
+    comment_secret: SecretStr = SecretStr("")
+
     # HP API terms §5: within 24 h of a player going private, their data must be gone from every
     # surface and cache. The privacy feed (own bucket, 10,080/week) is polled well inside that, and
     # no profile is served or kept longer than 24 h after HP last returned it, feed or no feed.
