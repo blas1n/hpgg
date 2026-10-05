@@ -22,7 +22,7 @@ export function sitemapUrls(heroes: HeroTable, maps: MapTable, weeks: string[] =
       ...SECTIONS.map((s) => `${base}${s}/`),
       ...heroes.heroes.map((h) => `${base}heroes/${h.slug}/`),
       ...maps.maps.map((m) => `${base}maps/${m.slug}/`),
-      ...weeks.map((w) => `${base}meta/${w}/`),
+      ...(sectionEnabled("meta") ? weeks.map((w) => `${base}meta/${w}/`) : []),
     ];
   });
 }
