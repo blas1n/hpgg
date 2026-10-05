@@ -168,7 +168,9 @@ def test_a_normal_week_compares_with_the_week_before() -> None:
     assert base["Valla"]["games"] == 700
 
 
-def test_a_daily_record_where_two_records_of_the_patch_are_a_day_apart() -> None:
+def test_a_day_is_the_games_played_that_day_between_two_dawn_records() -> None:
+    # the 10/5 dawn record less the 10/4 one is what was played on 10/4: the week (9/28 – 10/4)
+    # never shows a 10/5
     history = {
         d: _entry(d, s)
         for d, s in (("2026-10-02", 2), ("2026-10-03", 3), ("2026-10-04", 4), ("2026-10-05", 5))
@@ -181,7 +183,7 @@ def test_a_daily_record_where_two_records_of_the_patch_are_a_day_apart() -> None
         patch_started_at="2026-09-29",
     )
     days = issue["daily"]["qm"]
-    assert [d["day"] for d in days] == ["2026-10-03", "2026-10-04", "2026-10-05"]
+    assert [d["day"] for d in days] == ["2026-10-02", "2026-10-03", "2026-10-04"]
     assert days[0]["heroes"]["Xal'atath"] == [100, 70]
 
 
