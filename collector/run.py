@@ -14,6 +14,7 @@ from typing import Any
 import httpx
 import structlog
 
+from collector.averages import collect_averages, due
 from collector.client import HPClient, HPError, SleepFn
 from collector.config import Settings
 from collector.matchups import collect_matchups, load_hero_list
@@ -432,6 +433,38 @@ async def _run_matchups(
         )
 
 
+async def _run_averages(
+    c: HPClient,
+    settings: Settings,
+    *,
+    patches: Any,
+    meta: dict[str, Any],
+    at: datetime,
+    collected_at: str,
+    sleep: SleepFn,
+) -> None:
+    """The weekly report's Storm League average stats, on the reference patch, about once a
+    week (collector/averages.py). A failure keeps the previous set and never fails the run."""
+    path = settings.data_dir / "latest" / "sl_averages.json"
+    patch = meta["reference_patch"]
+    if not settings.average_stats or not due(path, patch=patch, collected_at=collected_at):
+        return
+    try:
+        out = await collect_averages(
+            c,
+            settings,
+            patch=patch,
+            timeframe=timeframe_of(patches, patch, now=at),
+            collected_at=collected_at,
+            sleep=sleep,
+        )
+    except Exception as e:  # noqa: BLE001 — supplementary numbers never fail the daily run
+        log.warning("averages.failed", error=f"{type(e).__name__}: {e}")
+        return
+    _write_atomic(path, out)
+    log.info("averages.done", patch=patch, stats=sorted(out["stats"]))
+
+
 async def _run_stats(
     c: HPClient,
     settings: Settings,
@@ -480,6 +513,11 @@ async def _run_stats(
         kept = _load_json(settings.data_dir / "latest" / "builds.json")
         if kept is not None:
             extra["builds.json"] = kept
+    # the weekly average stats are fetched about once a week: carried through the swap of
+    # data/latest like builds, or every run would find them gone and fetch again
+    kept_avg = _load_json(settings.data_dir / "latest" / "sl_averages.json")
+    if kept_avg is not None:
+        extra["sl_averages.json"] = kept_avg
     commit_atomic(
         data_dir=settings.data_dir,
         tmp_dir=settings.tmp_dir,
@@ -501,6 +539,9 @@ async def _run_stats(
         ),
     )
     build_weekly(settings.data_dir)
+    await _run_averages(
+        c, settings, patches=patches, meta=meta, at=at, collected_at=collected_at, sleep=sleep
+    )
     if builds_result is not None:
         day_dir_b = settings.snapshot_out_dir / snapshot_day(collected_at)
         _write_gz(day_dir_b / "raw_builds.json.gz", builds_result[0])

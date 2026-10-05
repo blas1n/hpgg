@@ -19,6 +19,8 @@ class Settings(BaseSettings):
     poll_interval_default: float = 10.0
     poll_max_seconds: float = 900.0
     map_call_spacing_seconds: float = 60.0
+    # the weekly report's Storm League average stats, about once a week (collector/averages.py)
+    average_stats: bool = True
     # /heroes/matchups without group_by_map allows 60 requests/minute (measured 2026-09-29)
     matchups_call_spacing_seconds: float = 2.0
     # a matchups round stops starting new calls after this long (cache misses poll); the rest
