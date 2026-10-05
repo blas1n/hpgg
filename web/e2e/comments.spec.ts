@@ -1,4 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
+import { FEATURES } from "../src/features";
 
 // Comments on the weekly report and hero pages (owner 2026-10-05). The API (server/comments) is mocked in memory here;
 // its rules are tested in tests/server/test_comments.py.
@@ -41,14 +42,16 @@ test.beforeEach(async ({ page }) => {
   await page.route("**/gc.zgo.at/**", (r) => r.abort());
 });
 
-test("weekly report: comments load when scrolled to; a comment is posted and the nickname remembered", async ({ page }) => {
+test("comments load when scrolled to; a comment is posted and the nickname remembered", async ({ page }) => {
   const api = await mockComments(page);
-  await page.goto("./meta/2026-w40/");
-  await expect(page.locator("#weekly-top li").first()).toBeVisible();
+  // the weekly report when it is on, else a hero page: the same thread component
+  const [path, thread] = FEATURES.weekly ? ["./meta/2026-w40/", "weekly:2026-w40"] : ["./heroes/valla/", "hero:valla"];
+  await page.goto(path);
+  await expect(page.locator("main h1")).toBeVisible();
   expect(api.asked).toEqual([]); // nothing asked before the section is near
   await page.locator("#comments-title").scrollIntoViewIfNeeded();
   await expect(page.locator("#comments-empty")).toBeVisible();
-  expect(api.asked).toEqual(["weekly:2026-w40"]);
+  expect(api.asked).toEqual([thread]);
   const form = page.locator("#comment-form");
   await form.locator('[name="nickname"]').fill("잘아타스장인");
   await form.locator('[name="password"]').fill("1234");
@@ -92,7 +95,7 @@ test("hero page: delete needs the password; report is once; a refused nickname s
 
 test("the bot field is neither seen nor reached", async ({ page }) => {
   await mockComments(page);
-  await page.goto("./meta/");
+  await page.goto("./heroes/valla/");
   await page.locator("#comments-title").scrollIntoViewIfNeeded();
   const trap = page.locator('#comment-form [name="website"]');
   await expect(trap).toHaveAttribute("tabindex", "-1");

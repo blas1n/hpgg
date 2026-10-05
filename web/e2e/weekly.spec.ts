@@ -1,7 +1,11 @@
 import { expect, test } from "@playwright/test";
+import { FEATURES } from "../src/features";
 
 // 주간 메타 리포트 (owner 2026-10-05). The e2e data carries the real first issue, 2026-w40 (2.57.0's first week,
 // against 2.55.17); the model is tested in tests/weekly.test.ts and collector/weekly.py in tests/test_weekly.py.
+
+// switched off on the live site (owner 2026-10-05, src/features.ts): the export has no report pages
+test.skip(!FEATURES.weekly, "주간 메타 리포트 is switched off (src/features.ts)");
 
 test.beforeEach(async ({ page }) => {
   await page.route("**/gc.zgo.at/**", (r) => r.abort());
