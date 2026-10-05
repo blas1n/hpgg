@@ -6,6 +6,7 @@ import { useLocale, useT } from "@/i18n/client";
 import type { WeeklyModeModel, WeeklyModel, WeeklyRow } from "@/lib/weekly";
 import { DAILY_MIN_GAMES } from "@/lib/weekly";
 import { PageHead } from "@/components/PageHead";
+import { CommentThread } from "@/components/comments/CommentThread";
 import { Card, CardHeader, cx, Portrait, RankDelta, Segmented, TierBadge } from "../ui";
 
 const pct = (n: number) => `${n.toFixed(1)}%`;
@@ -83,6 +84,8 @@ export function WeeklyView({ model }: { model: WeeklyModel | null }) {
         <ModeReport m={m} mode={mode} />
       )}
       <p className="text-2xs leading-relaxed text-muted">{t.weekly.rule}</p>
+      {/* does it match what players see? (owner 2026-10-05) — one thread per issue, both modes */}
+      <CommentThread thread={`weekly:${model.week}`} sub={t.comments.subWeekly} />
     </main>
   );
 }
