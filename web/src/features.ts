@@ -9,13 +9,17 @@ export const FEATURES = {
   /** 밴픽 시뮬레이터 — off 2026-10-02 (owner): it sorts by score with a matchup correction and ignores the roles a
    *  team needs (tank, healer…); back once the suggestions account for them. */
   draft: false,
+  /** 주간 메타 리포트 — off 2026-10-05 (owner): a top 10 and a diff is not a report. Back with an analysis on Storm
+   *  League: the meta's centre, its specs and average stats, who answers it — drafted and reviewed each week. The
+   *  collector keeps writing data/history and data/weekly meanwhile. */
+  weekly: false,
 } as const;
 
 export type Feature = keyof typeof FEATURES;
 export type Flags = Record<Feature, boolean>;
 
 /** The section under /<locale>/hots/ each feature owns. */
-const SECTION_OF: Record<Feature, string> = { draft: "draft" };
+const SECTION_OF: Record<Feature, string> = { draft: "draft", weekly: "meta" };
 
 export const sectionEnabled = (section: string, flags: Flags = FEATURES): boolean =>
   (Object.keys(SECTION_OF) as Feature[]).every((f) => SECTION_OF[f] !== section || flags[f]);
