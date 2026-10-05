@@ -144,7 +144,8 @@ def _corrected(end: dict[str, Any], start: dict[str, Any] | None, view: str) -> 
 def _daily(
     history: dict[str, dict[str, Any]], frm: date, end_day: str, patch: str, view: str
 ) -> list[dict[str, Any]]:
-    """Each day of the week with a record of the patch the day before: the heroes' [games, wins]."""
+    """Each day with records of the patch at its dawn and the next dawn: the heroes' [games, wins]
+    played that day. A record is taken at dawn (KST), so record D less record D-1 is day D-1."""
     out = []
     d = frm + timedelta(days=1)
     while d.isoformat() <= end_day:
@@ -165,7 +166,10 @@ def _daily(
                 for h, (g, w, _) in t.items()
             }
             out.append(
-                {"day": d.isoformat(), "heroes": {h: v for h, v in heroes.items() if v[0] > 0}}
+                {
+                    "day": (d - timedelta(days=1)).isoformat(),
+                    "heroes": {h: v for h, v in heroes.items() if v[0] > 0},
+                }
             )
         d += timedelta(days=1)
     return out
