@@ -11,7 +11,7 @@ from typing import Any
 
 import pytest
 
-from tools.weekly_evidence import build_evidence, significant
+from collector.evidence import build_evidence, significant
 
 
 def _row(hero: str, games: int, wins: int, pick: float, ban: float = 0.0) -> dict[str, Any]:
@@ -248,3 +248,109 @@ def test_movers_carry_their_matchup_with_the_centre(tmp_path: Path) -> None:
     assert up["Tyrael"]["role"] == "Bruiser"
     assert ev["mode"] == "sl" and ev["week"] == "2026-w40"
     assert ev["new_heroes"] == ["Xal'atath"]
+
+
+def test_the_cited_heroes_are_the_centre_its_findings_and_the_biggest_movers(
+    tmp_path: Path,
+) -> None:
+    from collector.evidence import cited_heroes
+
+    ev = build_evidence(_data(tmp_path), "2026-w40")
+    cited = cited_heroes(ev)
+    assert cited[0] == "Xal'atath"
+    assert {"Tyrael", "Diablo"} <= set(cited)  # the significant matchups
+    assert "Valla" in cited  # a mover
+    assert len(cited) == len(set(cited))
+
+
+def _kit_and_talents(d: Path) -> None:
+    (d / "talents").mkdir()
+    (d / "talents" / "xal-atath.json").write_text(
+        json.dumps(
+            {
+                "talents": {
+                    "XalatathAnchoredCore": {
+                        "ko": "고정 핵",
+                        "en": "Anchored Core",
+                        "desc": "반경",
+                    },
+                    "XalatathVoidAdept": {
+                        "ko": "공허의 달인",
+                        "en": "Void Adept",
+                        "desc": "퀘스트",
+                    },
+                },
+                "game": {
+                    "abilities": {
+                        "XalatathVoidStep": {
+                            "ko": "공허 걸음",
+                            "en": "Void Step",
+                            "key": "E",
+                            "desc": "{{3}}회에 걸쳐 삼각형 패턴으로 순간이동",
+                            "cd": "재사용 대기시간: 15초",
+                            "cost": "마나: 50",
+                        },
+                        "XalatathShadowMark": {
+                            "ko": "그림자 표식",
+                            "en": "Shadow Mark",
+                            "key": "Q",
+                        },
+                    }
+                },
+            },
+            ensure_ascii=False,
+        )
+    )
+    row = lambda t, g, w, p: {  # noqa: E731
+        "talent": t,
+        "games": g,
+        "wins": w,
+        "popularity": p,
+        "win_rate": round(w / g * 100, 2),
+    }
+    (d / "weekly" / "2026-w40.talents.json").write_text(
+        json.dumps(
+            {
+                "patch": "2.57.0",
+                "game_type": "sl",
+                "heroes": {
+                    "Xal'atath": {
+                        "1": [
+                            row("XalatathAnchoredCore", 1307, 926, 73.34),
+                            row("XalatathVoidAdept", 313, 176, 17.56),
+                        ]
+                    }
+                },
+            }
+        )
+    )
+
+
+def test_a_cited_hero_carries_its_kit_and_its_talent_picks(tmp_path: Path) -> None:
+    d = _data(tmp_path)
+    _kit_and_talents(d)
+    xal = build_evidence(d, "2026-w40")["heroes"]["Xal'atath"]
+    step = next(a for a in xal["kit"] if a["key"] == "E")
+    assert step == {
+        "key": "E",
+        "name": "공허 걸음",
+        "desc": "3회에 걸쳐 삼각형 패턴으로 순간이동",
+        "cd": "재사용 대기시간: 15초",
+        "cost": "마나: 50",
+    }
+    assert [a["key"] for a in xal["kit"]] == ["Q", "E"]  # in hotkey order
+    first = xal["talents"]["1"]
+    assert first[0]["name"] == "고정 핵" and first[0]["popularity"] == 73.34
+    assert first[0]["games"] == 1307 and first[0]["win_rate"] == pytest.approx(70.85, abs=0.01)
+    # a less picked talent's win-rate gap is a finding only with games and outside the margin
+    adept = first[1]
+    assert adept["vs_top"] == pytest.approx(56.23 - 70.85, abs=0.01)
+    assert adept["significant"] is True
+
+
+def test_without_a_talent_file_the_kit_is_still_there(tmp_path: Path) -> None:
+    d = _data(tmp_path)
+    _kit_and_talents(d)
+    (d / "weekly" / "2026-w40.talents.json").unlink()
+    xal = build_evidence(d, "2026-w40")["heroes"]["Xal'atath"]
+    assert xal["talents"] is None and xal["kit"]
