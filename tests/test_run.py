@@ -35,7 +35,12 @@ def settings(tmp_path: Path, **kw: Any) -> Settings:
         data_dir=tmp_path / "data",
         tmp_dir=tmp_path / "tmp",
         snapshot_out_dir=tmp_path / "snap",
-        **{"patchnotes_limit": 3, **kw},  # the three notes in fixtures/patchnotes
+        # the call-by-call tests pin the daily collection; the average stats have their own
+        **{
+            "patchnotes_limit": 3,
+            "average_stats": False,
+            **kw,
+        },  # the three notes in fixtures/patchnotes
     )
 
 
@@ -46,6 +51,11 @@ def mock_api(
 
     def stats(request: httpx.Request) -> httpx.Response:
         q = dict(httpx.QueryParams(request.url.query))
+        if "statfilter" in q:  # the weekly report's average stats (collector/averages.py)
+            if fail_key == "averages":
+                return httpx.Response(500, json={"error": {"code": "server_error", "message": "x"}})
+            row = {"name": "Nova", "games_played": 10, "total_filter_type": 1234.5}
+            return httpx.Response(200, json={"average_total_filter_type": 1000.0, "data": [row]})
         assert q["group_by_map"] == "true"
         # regions follow the reference patch (#14): the previous one while the new one is thin
         allowed = {CUR_TF, OLD_TF} if q.get("region") else {CUR_TF}
@@ -737,3 +747,30 @@ async def test_a_run_keeps_the_days_record_for_the_weekly_report(
     )
     assert qm["solo"]  # the party correction's input
     assert json.loads((s.data_dir / "weekly" / "index.json").read_text()) == {"issues": []}
+
+
+@respx.mock
+async def test_a_run_fetches_the_weekly_average_stats_when_due(
+    tmp_path: Path, raw_by_map, patches_payload, fake_sleep
+) -> None:
+    mock_api(raw_by_map, patches_payload)
+    s = settings(tmp_path, average_stats=True)
+    assert await run(s, sleep=fake_sleep, now=lambda: "2026-09-28T18:25:00Z") == 0
+    avg = json.loads((s.data_dir / "latest" / "sl_averages.json").read_text())
+    assert avg["game_type"] == "sl" and avg["stats"]["hero_damage"]["Nova"] == 1234.5
+    calls = [c for c in respx.calls if "statfilter" in str(c.request.url)]
+    assert len(calls) == 5
+    # the next day: not due again
+    assert await run(s, sleep=fake_sleep, now=lambda: "2026-09-29T18:25:00Z") == 0
+    assert len([c for c in respx.calls if "statfilter" in str(c.request.url)]) == 5
+
+
+@respx.mock
+async def test_failed_average_stats_never_fail_the_run(
+    tmp_path: Path, raw_by_map, patches_payload, fake_sleep
+) -> None:
+    mock_api(raw_by_map, patches_payload, fail_key="averages")
+    s = settings(tmp_path, average_stats=True)
+    assert await run(s, sleep=fake_sleep, now=lambda: "2026-09-28T18:25:00Z") == 0
+    assert (s.data_dir / "latest" / "qm.json").exists()
+    assert not (s.data_dir / "latest" / "sl_averages.json").exists()

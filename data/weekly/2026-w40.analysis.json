@@ -1,0 +1,29 @@
+{
+  "week": "2026-w40",
+  "status": "draft",
+  "basis": "sl",
+  "title": {
+    "ko": "잘아타스 출시 첫 주: 딜 1위의 잡기 어려운 원거리 암살자",
+    "en": "Xal'atath's first week: the top damage dealer who is hard to catch"
+  },
+  "paragraphs": {
+    "ko": [
+      "이번 주 폭풍 리그 메타의 중심은 신규 영웅 잘아타스다. 밴률 81.6%로 열 판 중 여덟 판 넘게 밴되고, 밴을 피해 나온 1,379판에서 승률 66.4%로 티어 1위를 기록했다.",
+      "강한 이유는 숫자로 드러난다. 판당 영웅 피해 72,730으로 91명 중 1위이고, 원거리 암살자 평균(중앙값 62,532)보다 16% 높다. 공성 피해도 117,773으로 11위다. 몸은 약하다. 기본 체력 1,330은 원거리 암살자 31명 중 26위로 낮은 편이다. 그런데도 판당 받은 피해(33,110, 91명 중 77위)와 죽음(2.9회, 75위)은 적다. 체력은 낮지만 잘 잡히지 않는 영웅이라는 뜻이다.",
+      "잘아타스를 상대로 가장 잘 버틴 쪽은 티리엘이다. 142판에서 잘아타스 승률이 59.2%로 평소보다 8.1%p 낮았고, 표본과 오차를 감안해도 의미 있는 차이다. 일리단·사무로·D.Va·굴단·모랄레스·E.T.C.·라그나로스를 상대로도 약 7~9%p(6.9~9.1%p) 낮게 나왔지만, 판수가 적거나 오차 범위 안이라 아직 가설이다. 반대로 첸(104판, 80.8%)과 디아블로(153판, 79.7%)는 잘아타스에게 크게 밀린다. 그레이메인·블레이즈도 같은 쪽으로 보이지만 아직 가설이다.",
+      "순위 변화를 보면, 가장 크게 오른 영웅은 임페리우스(69위→15위)지만 잘아타스와의 상성 차이는 거의 없어(-0.2%p, 91판) 잘아타스와 관련된 상승으로 보기 어렵다. 말가니스는 56위에서 6위로 올라 상위권에 들어왔는데, 이번 패치의 버프 영웅이라 상승의 상당 부분은 패치 영향으로 보이며, 잘아타스 상대 승률 차이(-5.5%p, 68판)는 아직 가설 수준이다. 굴단도 76위에서 48위로 올랐고 잘아타스를 상대로 7.2%p 낮췄다(120판, 가설). 가로쉬는 16위에서 66위로 가장 크게 내려갔는데, 이번 패치에서 조정된 영웅이라 잘아타스 영향(+6.2%p, 94판)과 분리하기 어렵다. 잘아타스에게 크게 밀리는 디아블로·첸은 순위 변화가 크지 않았고(디아블로 90→90위, 첸 63→70위), 잘아타스에게 버티는 티리엘은 4위를 지켰다.",
+      "정리하면, 잘아타스는 딜은 최상위이면서 잘 죽지 않는 원거리 암살자라 대부분의 판에서 밴된다. 지금까지 데이터로 확인되는 대응책은 티리엘 정도이고, 나머지는 표본이 더 쌓여야 판단할 수 있다."
+    ],
+    "en": [
+      "This week's Storm League meta centres on the new hero Xal'atath. She is banned in 81.6% of games, more than eight in ten, and in the 1,379 games she got through she won 66.4%, first in the tier list.",
+      "The numbers show why. She deals 72,730 hero damage per game, first of 91 heroes and 16% above the ranged assassin median (62,532). Her siege damage, 117,773, ranks 11th. Her body is frail: base life 1,330 is 26th of 31 ranged assassins. Yet she takes little damage per game (33,110, 77th of 91) and dies rarely (2.9 times, 75th). Low life, but hard to catch.",
+      "Tyrael holds her down best: over 142 games her win rate against him is 59.2%, 8.1 points under her usual, a real difference given the sample and the margin. Against Illidan, Samuro, D.Va, Gul'dan, Lt. Morales, E.T.C. and Ragnaros she is also about 7–9 points lower (6.9–9.1), but on few games or inside the margin, so these are hunches for now. Chen (104 games, 80.8%) and Diablo (153 games, 79.7%) are crushed by her; Greymane and Blaze look the same but are still hunches.",
+      "Among rank changes, Imperius climbed most (69th to 15th), but his matchup with Xal'atath is even (-0.2 points, 91 games), so his rise is hard to tie to her. Mal'Ganis went from 56th to 6th, into the top tier; he was buffed this patch, so much of the climb is likely the patch, and his gap against Xal'atath (-5.5 points, 68 games) is still a hunch. Gul'dan rose from 76th to 48th and lowers her win rate by 7.2 points (120 games, a hunch). Garrosh fell most, 16th to 66th, but he was changed this patch, so her part (+6.2 points, 94 games) cannot be separated. Diablo and Chen, whom she crushes, barely moved (Diablo 90th→90th, Chen 63rd→70th), and Tyrael, who holds her down, kept 4th.",
+      "In short: Xal'atath is a top-damage ranged assassin who rarely dies, so she is banned in most games. So far the data confirms one answer, Tyrael; the rest needs more games."
+    ]
+  },
+  "notes": {
+    "ko": "전 지역 폭풍 리그, 패치 2.57.0 첫 주(9/29~) 대 직전 패치 2.55.17. '의미 있는 차이' = 100판 이상이고 95% 오차 범위 밖. 그 외는 가설. 판당 평균 스탯: Heroes Profile, 스펙: 게임 데이터.",
+    "en": "All regions, Storm League; patch 2.57.0's first week (from 9/29) against 2.55.17. A 'real difference' is 100+ games and outside the 95% margin; the rest are hunches. Per-game averages: Heroes Profile; specs: game data."
+  }
+}

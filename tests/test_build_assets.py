@@ -778,6 +778,8 @@ def test_main_reads_a_heroes_data2_build(tmp_path: Path, monkeypatch: pytest.Mon
     body = json.loads((data / "talents" / "xal-atath.json").read_text())
     assert len(body["talents"]) == 22 and "heroes-data2 2.57.0.98304" in body["source"]
     assert body["game"]["unit"] == "HeroXalatath"
+    specs = json.loads((data / "hero_specs.json").read_text())
+    assert set(specs["heroes"]) == {"abathur", "xal-atath"} and "2.57.0.98304" in specs["source"]
 
 
 def test_heroes_data2_passive_abilities_keep_their_button_id() -> None:
@@ -829,3 +831,25 @@ def test_an_ability_is_named_by_the_ability_and_a_talent_by_the_talent() -> None
     abilities = ba.hero_game_ids(herodata, kokr, heroes, enus)["tyrael"]["abilities"]
     # the trait's buttons share a name, so they are one entry by their common id prefix
     assert abilities["TyraelA"] == {"ko": "대천사의 분노", "en": "Archangel's Wrath", "key": "D"}
+
+
+def test_hero_specs_come_from_the_game_data_per_slug() -> None:
+    """주간 메타 리포트 (owner 2026-10-05): a sentence like "a squishy mage" needs the hero's
+    specs — life, reach, basic attack, Blizzard's own 1–10 ratings and its playstyle tags."""
+    herodata, kokr, enus = _hd2()
+    heroes = [{"name": "Xal'atath", "slug": "xal-atath"}, {"name": "Tyrael", "slug": "tyrael"}]
+    specs = ba.hero_specs(herodata, heroes)
+    assert set(specs) == {"xal-atath", "tyrael"}
+    xal = specs["xal-atath"]
+    assert xal["life"] == 1330 and xal["life_per_level"] == 0.04
+    assert xal["melee"] is False
+    assert (xal["attack_damage"], xal["attack_period"], xal["attack_range"]) == (55, 1, 6.5)
+    assert xal["ratings"] == {"damage": 8, "survivability": 6, "utility": 6, "complexity": 8}
+    assert "RoleCaster" not in xal["playstyles"] and "Ganker" in xal["playstyles"]
+    assert specs["tyrael"]["life"] == 2517 and specs["tyrael"]["melee"] is True
+    assert "RoleTank" in specs["tyrael"]["playstyles"]
+
+
+def test_hero_specs_skip_heroes_the_game_data_does_not_have() -> None:
+    herodata, _, _ = _hd2()
+    assert ba.hero_specs(herodata, [{"name": "Nobody", "slug": "nobody"}]) == {}

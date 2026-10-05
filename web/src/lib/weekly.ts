@@ -19,6 +19,17 @@ export interface WeeklyIssue {
   daily: Partial<Record<Mode, { day: string; heroes: Record<string, [number, number]> }[]>>;
 }
 
+/** data/weekly/<week>.analysis.json: the week's prose, drafted from <week>.evidence.json (tools/weekly_evidence.py)
+ *  and published only after the owner's review (owner 2026-10-05). Storm League. */
+export interface WeeklyAnalysis {
+  week: string;
+  status: "draft" | "reviewed";
+  basis: "sl";
+  title: Record<"ko" | "en", string>;
+  paragraphs: Record<"ko" | "en", string[]>;
+  notes: Record<"ko" | "en", string>;
+}
+
 export interface WeeklyIndex {
   issues: { week: string; kind: WeeklyIssue["kind"]; start: string; end: string; patch: string }[];
 }
@@ -60,6 +71,8 @@ export interface WeeklyModel {
   modes: Partial<Record<Mode, WeeklyModeModel>>;
   older: string | null;
   newer: string | null;
+  /** the week's prose in the page language; null until one is written */
+  analysis: { title: string; paragraphs: string[]; notes: string; status: WeeklyAnalysis["status"] } | null;
 }
 
 export const TOP_N = 10;
@@ -111,7 +124,13 @@ function mode(view: { window: Snapshot; baseline: Snapshot | null }, daily: Week
 }
 
 /** `weeks`: every issue, newest first (index.json), for the links to the issues before and after. */
-export function weeklyModel(issue: WeeklyIssue, heroes: HeroTable, minGames: number, weeks: string[]): WeeklyModel {
+export function weeklyModel(
+  issue: WeeklyIssue,
+  heroes: HeroTable,
+  minGames: number,
+  weeks: string[],
+  { analysis = null, locale = "ko" }: { analysis?: WeeklyAnalysis | null; locale?: "ko" | "en" } = {},
+): WeeklyModel {
   const index = refs(heroes);
   const modes: WeeklyModel["modes"] = {};
   for (const m of ["qm", "sl"] as const) {
@@ -132,5 +151,75 @@ export function weeklyModel(issue: WeeklyIssue, heroes: HeroTable, minGames: num
     modes,
     newer: at > 0 ? weeks[at - 1]! : null,
     older: at >= 0 && at < weeks.length - 1 ? weeks[at + 1]! : null,
+    analysis: analysis ? { title: analysis.title[locale], paragraphs: analysis.paragraphs[locale], notes: analysis.notes[locale], status: analysis.status } : null,
+  };
+}
+
+/** data/weekly/<week>.evidence.json (tools/weekly_evidence.py), the part the page shows. */
+export interface WeeklyEvidence {
+  centre: {
+    hero: string;
+    games: number;
+    win_rate: number;
+    pick: number;
+    ban_rate: number;
+    profile: {
+      specs: { life: number } | null;
+      life_rank_role: { rank: number; of: number } | null;
+      averages: Record<string, { value: number; rank_all: number | null; of_all: number | null; rank_role: number | null; of_role: number | null }>;
+    };
+    matchups: { held_by: EvidenceGap[]; crushes: EvidenceGap[] };
+  };
+}
+interface EvidenceGap {
+  hero: string;
+  games: number;
+  centre_win_rate: number;
+  delta: number;
+  significant: boolean;
+}
+
+export interface CentreGap {
+  hero: HeroRef;
+  games: number;
+  centreWr: number;
+  delta: number;
+  /** 100+ games and outside the 95 % margin; else a hunch */
+  significant: boolean;
+}
+export interface CentreCard {
+  hero: HeroRef;
+  games: number;
+  wr: number;
+  pick: number;
+  banRate: number;
+  life: { value: number; rankRole: number; ofRole: number } | null;
+  stats: { key: string; value: number; rankAll: number | null; ofAll: number | null; rankRole: number | null; ofRole: number | null }[];
+  heldBy: CentreGap[];
+  crushes: CentreGap[];
+}
+
+/** The evidence behind the prose: the meta's centre — its use, where its specs and averages rank, its matchups.
+ *  null when the centre is not in the hero table: the page goes without the card. */
+export function centreCard(ev: WeeklyEvidence, heroes: HeroTable): CentreCard | null {
+  const index = refs(heroes);
+  const c = ev.centre;
+  const hero = index.get(c.hero);
+  if (!hero) return null;
+  const gap = (g: EvidenceGap): CentreGap[] => {
+    const hero = index.get(g.hero);
+    return hero ? [{ hero, games: g.games, centreWr: g.centre_win_rate, delta: g.delta, significant: g.significant }] : [];
+  };
+  const life = c.profile.specs && c.profile.life_rank_role ? { value: c.profile.specs.life, rankRole: c.profile.life_rank_role.rank, ofRole: c.profile.life_rank_role.of } : null;
+  return {
+    hero,
+    games: c.games,
+    wr: c.win_rate,
+    pick: c.pick,
+    banRate: c.ban_rate,
+    life,
+    stats: Object.entries(c.profile.averages).map(([key, v]) => ({ key, value: v.value, rankAll: v.rank_all, ofAll: v.of_all, rankRole: v.rank_role, ofRole: v.of_role })),
+    heldBy: c.matchups.held_by.flatMap(gap),
+    crushes: c.matchups.crushes.flatMap(gap),
   };
 }

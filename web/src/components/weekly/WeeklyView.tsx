@@ -1,31 +1,24 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { hotsHref, type Mode } from "@/data";
 import { useLocale, useT } from "@/i18n/client";
-import type { WeeklyModeModel, WeeklyModel, WeeklyRow } from "@/lib/weekly";
+import type { CentreCard, CentreGap, WeeklyModeModel, WeeklyModel, WeeklyRow } from "@/lib/weekly";
 import { DAILY_MIN_GAMES } from "@/lib/weekly";
 import { PageHead } from "@/components/PageHead";
 import { CommentThread } from "@/components/comments/CommentThread";
-import { Card, CardHeader, cx, Portrait, RankDelta, Segmented, TierBadge } from "../ui";
+import { Card, CardHeader, cx, Portrait, RankDelta, TierBadge } from "../ui";
 
 const pct = (n: number) => `${n.toFixed(1)}%`;
 const int = (n: number) => n.toLocaleString("ko-KR");
 const wrClass = (wr: number) => (wr >= 50 ? "text-pos" : "text-neg");
 const md = (day: string) => `${Number(day.slice(5, 7))}/${Number(day.slice(8, 10))}`;
 
-/** 주간 메타 리포트: one issue; the mode toggle swaps the pre-rendered modes (each mode is its own numbers). */
-export function WeeklyView({ model }: { model: WeeklyModel | null }) {
+/** 주간 메타 리포트: one issue, Storm League only (owner 2026-10-05: Quick Match picks come before the map and the
+ *  teams, so there is no counter pick to explain). The week's prose first, its evidence, then the numbers. */
+export function WeeklyView({ model, centre }: { model: WeeklyModel | null; centre: CentreCard | null }) {
   const t = useT();
   const href = hotsHref(useLocale());
-  const [mode, setMode] = useState<Mode>("qm");
-  useEffect(() => {
-    if (new URLSearchParams(location.search).get("mode") === "sl") setMode("sl");
-  }, []);
-  const change = (m: Mode) => {
-    setMode(m);
-    history.replaceState(null, "", location.pathname + (m === "sl" ? "?mode=sl" : ""));
-  };
+  const mode: Mode = "sl";
   if (!model) {
     return (
       <main className="page-x mt-6 space-y-6">
@@ -44,23 +37,9 @@ export function WeeklyView({ model }: { model: WeeklyModel | null }) {
 
   return (
     <main className="page-x mt-6 space-y-6">
-      <PageHead
-        title={t.weekly.title}
-        aside={
-          <Segmented
-            label={t.common.gameMode}
-            idPrefix="mode"
-            value={mode}
-            onChange={change}
-            options={[
-              { value: "qm", label: t.common.modes.qm },
-              { value: "sl", label: t.common.modes.sl },
-            ]}
-          />
-        }
-      >
+      <PageHead title={t.weekly.title}>
         <p id="meta-line" className="num mt-0.5 text-xs text-muted">
-          {t.weekly.weekLabel(year!, String(Number(week)), md(model.monday), md(model.sunday))} · {model.baseline?.kind === "previous_patch" ? vs : `${t.common.patch(model.patch)} · ${vs}`}
+          {t.weekly.weekLabel(year!, String(Number(week)), md(model.monday), md(model.sunday))} · {t.weekly.basisSl} · {model.baseline?.kind === "previous_patch" ? vs : `${t.common.patch(model.patch)} · ${vs}`}
         </p>
         <nav aria-label={t.weekly.title} className="mt-2 flex gap-3 text-xs font-semibold">
           {model.older && (
@@ -76,6 +55,8 @@ export function WeeklyView({ model }: { model: WeeklyModel | null }) {
         </nav>
       </PageHead>
 
+      {model.analysis && <Analysis a={model.analysis} />}
+      {centre && <Evidence c={centre} />}
       {!m ? (
         <Card className="p-5">
           <p className="text-sm text-muted">{t.weekly.noMode}</p>
@@ -242,6 +223,99 @@ function Spark({ days, wr }: { days: string[]; wr: (number | null)[] }) {
           </span>
         ))}
       </div>
+    </div>
+  );
+}
+
+/** The week's prose, drafted from the evidence and published after the owner's review. */
+function Analysis({ a }: { a: NonNullable<WeeklyModel["analysis"]> }) {
+  const t = useT();
+  return (
+    <Card aria-labelledby="h-analysis">
+      <header className="flex flex-wrap items-center gap-2 border-b border-line px-4 py-3">
+        <h2 id="h-analysis" className="text-[17px] font-bold text-fg">
+          {a.title}
+        </h2>
+        {a.status === "draft" && (
+          <span data-status="draft" className="rounded border border-warn-line bg-warn-bg px-1.5 py-px text-2xs font-bold text-warn-fg">
+            {t.weekly.draftBadge}
+          </span>
+        )}
+      </header>
+      <div id="weekly-analysis" className="space-y-3 px-4 py-4 text-[15px] leading-7 text-fg-2">
+        {a.paragraphs.map((p, i) => (
+          <p key={i}>{p}</p>
+        ))}
+      </div>
+      <p className="border-t border-line px-4 py-2.5 text-2xs leading-relaxed text-muted">{a.notes}</p>
+    </Card>
+  );
+}
+
+/** What the prose stands on: the centre's use, where its specs and averages rank, its matchups. */
+function Evidence({ c }: { c: CentreCard }) {
+  const t = useT();
+  const w = t.weekly;
+  return (
+    <Card aria-labelledby="h-evidence">
+      <CardHeader id="h-evidence" title={w.evidenceTitle} sub={w.evidenceSub(c.hero.ko)} />
+      <div className="grid gap-4 p-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+        <div>
+          <div className="flex items-center gap-3">
+            <Portrait src={c.hero.portrait} size={48} role={c.hero.role} />
+            <div>
+              <div className="text-[15px] font-bold text-fg">{c.hero.ko}</div>
+              <div className="num text-xs text-fg-2">{w.centreUse(pct(c.banRate), pct(c.pick), pct(c.wr), int(c.games))}</div>
+            </div>
+          </div>
+          <dl id="evidence-stats" className="num mt-3 divide-y divide-line/70 text-[13px]">
+            {c.life && <StatRow label={w.lifeLabel} value={int(c.life.value)} ranks={[w.rankRole(String(c.life.rankRole), String(c.life.ofRole))]} />}
+            {c.stats.map((s) => (
+              <StatRow
+                key={s.key}
+                label={w.statLabels[s.key] ?? s.key}
+                value={s.key === "deaths" ? s.value.toFixed(1) : int(Math.round(s.value))}
+                ranks={[s.rankAll !== null ? w.rankAll(String(s.rankAll), String(s.ofAll)) : "", s.rankRole !== null ? w.rankRole(String(s.rankRole), String(s.ofRole)) : ""].filter(Boolean)}
+              />
+            ))}
+          </dl>
+        </div>
+        <div className="space-y-3">
+          <Gaps id="evidence-held" title={w.heldByTitle(c.hero.ko)} rows={c.heldBy} />
+          <Gaps id="evidence-crushes" title={w.crushesTitle(c.hero.ko)} rows={c.crushes} />
+          <p className="text-2xs text-muted">{w.gapRule}</p>
+        </div>
+      </div>
+    </Card>
+  );
+}
+
+function StatRow({ label, value, ranks }: { label: string; value: string; ranks: string[] }) {
+  return (
+    <div className="flex flex-wrap items-baseline gap-x-2 py-1.5">
+      <dt className="text-muted">{label}</dt>
+      <dd className="font-semibold text-fg">{value}</dd>
+      <dd className="ml-auto text-2xs text-fg-2">{ranks.join(" · ")}</dd>
+    </div>
+  );
+}
+
+function Gaps({ id, title, rows }: { id: string; title: string; rows: CentreGap[] }) {
+  const t = useT();
+  const w = t.weekly;
+  return (
+    <div>
+      <h3 className="text-xs font-bold text-fg">{title}</h3>
+      <ul id={id} className="mt-1 divide-y divide-line/70">
+        {rows.slice(0, 6).map((g) => (
+          <li key={g.hero.slug} data-significant={g.significant} className="flex items-center gap-2 py-1 text-[13px]">
+            <Portrait src={g.hero.portrait} size={22} role={g.hero.role} />
+            <span className="min-w-0 truncate text-fg">{g.hero.ko}</span>
+            <span className="num ml-auto whitespace-nowrap text-2xs text-fg-2">{w.gapLine(pct(g.centreWr), int(g.games), `${g.delta > 0 ? "+" : ""}${g.delta.toFixed(1)}%p`)}</span>
+            <span className={cx("shrink-0 rounded border px-1 py-px text-2xs font-bold", g.significant ? "border-primary/50 text-primary" : "border-line text-muted")}>{g.significant ? w.finding : w.hunch}</span>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
