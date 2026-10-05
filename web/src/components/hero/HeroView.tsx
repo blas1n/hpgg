@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import { assetUrl, BRACKETS, hotsHref, REGIONS, shortDate, snapshotKey, type Bracket, type HeroInfo, type Mode, type Region } from "@/data";
 import { HpCredit } from "@/components/HpCredit";
 import { ChangeGroups } from "@/components/patches/ChangeGroups";
+import { CommentThread } from "@/components/comments/CommentThread";
 import { useLocale, useT } from "@/i18n/client";
 import { descParts, type BuildTalentView, type BuildView, type GridRow, type HeroSummary, type MapRow } from "@/lib/hero";
 import { matchupRule, type MatchupRow, type MatchupsView } from "@/lib/matchups";
@@ -107,6 +108,8 @@ export function HeroView({
     ...(builds.length ? [{ id: "builds-title", label: tab.builds, nav: "nav-builds" }] : []),
     // long and not what people come for first: last, below both columns
     ...(patches.notes.length || patches.since ? [{ id: "patches-title", label: tab.patches, nav: "nav-patches" }] : []),
+    // what players think of the numbers (owner 2026-10-05): the end of the page
+    { id: "comments-title", label: tab.comments, nav: "nav-comments" },
   ];
 
   return (
@@ -210,6 +213,9 @@ export function HeroView({
       </section>
       </div>
       <Patches p={patches} />
+      <div className="mt-8">
+        <CommentThread thread={`hero:${hero.slug}`} sub={t.comments.subHero} />
+      </div>
     </main>
   );
 }
