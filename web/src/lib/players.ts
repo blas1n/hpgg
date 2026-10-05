@@ -5,7 +5,7 @@ import { localizedPath, type Locale } from "../i18n/locale";
 import { messages, type Messages } from "../i18n/messages";
 
 export const API_BASE_DEFAULT = "https://api.hpgg.win";
-const apiBase = (): string => process.env.NEXT_PUBLIC_API_BASE || API_BASE_DEFAULT;
+export const apiBase = (): string => process.env.NEXT_PUBLIC_API_BASE || API_BASE_DEFAULT;
 
 export type Region = "KR" | "NA" | "EU";
 /** Asia (KR) first; labels: messages players.regions. */

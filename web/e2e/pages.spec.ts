@@ -108,8 +108,10 @@ test("hero detail: three stat cards, per-map rows (not links) in SL, region × b
   await expect(page.locator('#maps [data-map="cursed-hollow"]')).toContainText("저주받은 골짜기");
   await expect(page.locator("#maps a")).toHaveCount(0); // map rows do not navigate
   await expect(page.locator("#grid [data-cell]")).toHaveCount(12); // 4 regions × (전체, 브실골플, 다마그)
-  // no vote buttons: only the mode toggle, the grid cells and talent icons are buttons
-  await expect(page.locator("main button:not([id^=mode-]):not([data-talent]):not([data-cell])")).toHaveCount(0);
+  // no vote buttons (owner 2026-09-28): outside the comments (2026-10-05: post, delete, report — opinions in words,
+  // not a 👍👎 count), only the mode toggle, the grid cells and talent icons are buttons
+  await expect(page.locator("main button:not([id^=mode-]):not([data-talent]):not([data-cell])").filter({ hasNot: page.locator("xpath=ancestor::*[@id='comment-form' or @id='comments']") })).toHaveCount(0);
+  await expect(page.locator("#comments button, #comment-form button").filter({ hasText: /👍|👎|추천|비추/ })).toHaveCount(0);
 });
 
 test("hero detail: section tabs stick under the header and land each section just below them", async ({ page }) => {
@@ -168,9 +170,9 @@ test("hero detail: at the bottom of the page the last section's tab is active", 
   // ?mode=sl is applied after hydration and changes the page: scroll only once it has its final length
   await expect(page.locator("#grid [data-cell]")).toHaveCount(12);
   await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
-  // patch changes are the last section (#62): their tab, not builds'
-  await expect(page.locator("#nav-patches")).toHaveAttribute("aria-current", "location");
-  await expect(page.locator("#nav-builds")).not.toHaveAttribute("aria-current", "location");
+  // comments are the last section since 2026-10-05 (patch changes before them, #62): their tab, not the patches'
+  await expect(page.locator("#nav-comments")).toHaveAttribute("aria-current", "location");
+  await expect(page.locator("#nav-patches")).not.toHaveAttribute("aria-current", "location");
 });
 
 test("hero detail: counters and synergies from the matchups file, with numbers, links and the rule", async ({ page }) => {
@@ -223,9 +225,12 @@ test("hero detail: patch changes from the official notes, marked against the ref
   await expect(line).toHaveAttribute("data-change", "down");
   await expect(line).toContainText("생명력 감쇠 감소량이 50%에서 40%로 감소했습니다.");
   await expect(page.locator("nav[data-subnav] a[href='#patches-title']")).toBeVisible();
-  // long and not the first thing people look for: the last section, below both desktop columns
-  await expect(page.locator("main h2[id]").last()).toHaveAttribute("id", "patches-title");
-  await expect(page.locator("nav[data-subnav] a").last()).toHaveAttribute("href", "#patches-title");
+  // long and not the first thing people look for: below both desktop columns, the last section before the comments
+  // (2026-10-05)
+  const titles = await page.locator("main h2[id]").evaluateAll((hs) => hs.map((h) => h.id));
+  expect(titles.slice(-2)).toEqual(["patches-title", "comments-title"]);
+  const tabs = await page.locator("nav[data-subnav] a").evaluateAll((as) => as.map((a) => a.getAttribute("href")));
+  expect(tabs.slice(-2)).toEqual(["#patches-title", "#comments-title"]);
   await page.setViewportSize({ width: 1280, height: 900 });
   const [patchesBox, mapsBox] = [await page.locator("#patches").boundingBox(), await page.locator("#maps").boundingBox()];
   expect(patchesBox!.width).toBeGreaterThan(mapsBox!.width * 1.5);
