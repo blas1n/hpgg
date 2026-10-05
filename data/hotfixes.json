@@ -1,6 +1,212 @@
 {
  "builds": [
   {
+   "build": "2.57.0.98348",
+   "previous": "2.57.0.98304",
+   "first_seen": "2026-10-05T17:12:19Z",
+   "parser": 3,
+   "heroes": {
+    "Whitemane": [
+     {
+      "kind": "ability",
+      "id": "WhitemaneDesperatePlea",
+      "ko": "절박한 기도",
+      "en": "Desperate Plea",
+      "key": "Q",
+      "changes": [
+       {
+        "old": "40",
+        "new": "45"
+       }
+      ]
+     }
+    ],
+    "Xal'atath": [
+     {
+      "kind": "ability",
+      "id": "XalatathShadowMark",
+      "ko": "그림자 표식",
+      "en": "Shadow Mark",
+      "key": "Q",
+      "changes": [
+       {
+        "old": "0.7",
+        "new": "0.65"
+       }
+      ]
+     },
+     {
+      "kind": "ability",
+      "id": "XalatathVoidStep",
+      "ko": "공허 걸음",
+      "en": "Void Step",
+      "key": "E",
+      "changes": [
+       {
+        "old": "5",
+        "new": "2"
+       },
+       {
+        "old": "-1",
+        "new": "-1.08"
+       },
+       {
+        "old": "-5.5",
+        "new": "-4.5"
+       },
+       {
+        "old": "5.5",
+        "new": "4.5"
+       },
+       {
+        "old": "3.5",
+        "new": "2.85"
+       },
+       {
+        "old": "0.0625",
+        "new": "0"
+       },
+       {
+        "old": "-5.5",
+        "new": "2.85"
+       },
+       {
+        "old": "3.5",
+        "new": "-4.5"
+       },
+       {
+        "old": "-5.5",
+        "new": "4.5"
+       }
+      ]
+     },
+     {
+      "kind": "ability",
+      "id": "XalatathDarkHeartRitual",
+      "ko": "검은 심장의 의식",
+      "en": "Dark Heart Ritual",
+      "key": "W",
+      "changes": [
+       {
+        "old": "0.125",
+        "new": "1.1"
+       },
+       {
+        "old": "4",
+        "new": "3"
+       }
+      ]
+     },
+     {
+      "kind": "ability",
+      "id": "XalatathVoidVolley",
+      "ko": "공허 화살",
+      "en": "Void Volley",
+      "key": "D",
+      "changes": [
+       {
+        "old": "90",
+        "new": "72"
+       }
+      ]
+     },
+     {
+      "kind": "ability",
+      "id": "XalatathVoidEruption",
+      "ko": "공허 폭발",
+      "en": "Void Eruption",
+      "key": "R",
+      "changes": [
+       {
+        "old": "1.25",
+        "new": "2.5"
+       },
+       {
+        "old": "3",
+        "new": "5.5"
+       },
+       {
+        "old": "6",
+        "new": "9.75"
+       },
+       {
+        "old": "0.0125",
+        "new": "0.0625"
+       }
+      ]
+     },
+     {
+      "kind": "talent",
+      "id": "XalatathParadoxLoop",
+      "ko": "역설의 고리",
+      "en": "Paradox Loop",
+      "changes": [
+       {
+        "old": "5.5",
+        "new": "4.5"
+       },
+       {
+        "old": "3.5",
+        "new": "2.85"
+       },
+       {
+        "old": "-5.5",
+        "new": "-4.5"
+       }
+      ]
+     },
+     {
+      "kind": "talent",
+      "id": "XalatathUnstableCore",
+      "ko": "불안정한 핵",
+      "en": "Unstable Core",
+      "changes": [
+       {
+        "old": "4",
+        "new": "3"
+       }
+      ]
+     },
+     {
+      "kind": "talent",
+      "id": "XalatathAnchoredCore",
+      "ko": "고정 핵",
+      "en": "Anchored Core",
+      "changes": [
+       {
+        "old": "1.5",
+        "new": "1.25"
+       }
+      ]
+     },
+     {
+      "kind": "talent",
+      "id": "XalatathOrbitalEruption",
+      "ko": "전령의 소모",
+      "en": "Harbinger's Consumption",
+      "changes": [
+       {
+        "old": "400",
+        "new": "320"
+       },
+       {
+        "old": "500",
+        "new": "425"
+       },
+       {
+        "old": "600",
+        "new": "540"
+       },
+       {
+        "old": "700",
+        "new": "665"
+       }
+      ]
+     }
+    ]
+   }
+  },
+  {
    "build": "2.57.0.98304",
    "previous": "2.57.0.98297",
    "first_seen": "2026-09-29T21:46:46Z",
