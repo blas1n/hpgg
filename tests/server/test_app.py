@@ -210,7 +210,12 @@ def test_cors_allowlist(client: TestClient) -> None:
         headers={"Origin": "https://hpgg.win", "Access-Control-Request-Method": "GET"},
     )
     assert pre.status_code == 200
-    assert "POST" not in pre.headers["access-control-allow-methods"]
+    # comments are posted from the browser since 2026-10-05; nothing else writes, and other
+    # origins are still refused (above)
+    assert pre.headers["access-control-allow-methods"].replace(" ", "").split(",") == [
+        "GET",
+        "POST",
+    ]
 
 
 def test_token_and_authorization_never_logged_or_echoed(
