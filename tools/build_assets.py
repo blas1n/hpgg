@@ -139,6 +139,38 @@ def hero_rows(
     return rows, missing
 
 
+def hero_specs(herodata: dict[str, Any], heroes: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
+    """Each site hero's specs from the game data, by slug (주간 메타 리포트, owner 2026-10-05): life
+    and its growth per level, melee or not, the basic attack (damage, seconds between attacks,
+    range), Blizzard's own 1–10 ratings and the playstyle tags (RoleCaster, RoleTank, Ganker…).
+    A hero the game data lacks is left out."""
+    idx = hero_index(herodata)
+    out: dict[str, dict[str, Any]] = {}
+    for h in heroes:
+        found = idx.get(norm(h["name"]))
+        if not found:
+            continue
+        data = found[1]
+        life = data.get("life") or {}
+        weapon = (data.get("weapons") or [{}])[0]
+        out[h["slug"]] = {
+            "life": life.get("amount"),
+            "life_per_level": life.get("scale"),
+            "life_regen": life.get("regenRate"),
+            "melee": bool(data.get("isMelee")),
+            "speed": data.get("speed"),
+            "attack_damage": weapon.get("damage"),
+            "attack_period": weapon.get("period"),
+            "attack_range": weapon.get("range"),
+            "ratings": {
+                k: (data.get("ratings") or {}).get(k)
+                for k in ("damage", "survivability", "utility", "complexity")
+            },
+            "playstyles": sorted(data.get("playstyles") or []),
+        }
+    return out
+
+
 def portrait_file(hero: dict[str, Any]) -> str | None:
     """heroes-images heroportraits/ file name: the draft-screen portrait."""
     p = (hero.get("portraits") or {}).get("draftScreen")
@@ -526,6 +558,14 @@ def main() -> None:
         f"HeroesToolChest/heroes-data2 gamestrings kokr + enus (build {b}, MIT)"
     )
     table_p.write_text(json.dumps(table, ensure_ascii=False, indent=0), encoding="utf-8")
+    # the weekly report's specs (life, reach, attack, Blizzard's ratings, playstyle tags)
+    specs = {
+        "source": f"HeroesToolChest heroes-data2 {args.build}, MIT",
+        "heroes": hero_specs(herodata, heroes),
+    }
+    (data / "hero_specs.json").write_text(
+        json.dumps(specs, ensure_ascii=False, indent=0), encoding="utf-8"
+    )
     idx = hero_index(herodata)
     for h in [] if args.skip_icons else heroes:
         dst = data / h["portrait"]
