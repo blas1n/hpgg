@@ -28,17 +28,20 @@ test("an issue has its own address and the report's sections", async ({ page }) 
   await expect(page.locator("#weekly-up li").first()).toBeVisible();
   await expect(page.locator("#weekly-down li").first()).toBeVisible();
   await expect(page.locator("#weekly-daily svg").first()).toBeVisible();
-  // a hero links to its page in the same mode
-  await expect(page.locator("#weekly-top a").first()).toHaveAttribute("href", /\/ko\/hots\/heroes\/[^/]+\/$/);
+  // a hero links to its page in Storm League, the report's basis
+  await expect(page.locator("#weekly-top a").first()).toHaveAttribute("href", /\/ko\/hots\/heroes\/[^/]+\/\?mode=sl$/);
   await expect(page.locator("#older-issue, #newer-issue")).toHaveCount(0); // the only issue
 });
 
-test("the mode toggle swaps the numbers and lands in the URL", async ({ page }) => {
+test("the report is Storm League prose; its evidence card waits for a centre the site knows", async ({ page }) => {
   await page.goto("./meta/");
-  const first = await page.locator("#weekly-top li").first().innerText();
-  await page.locator("#mode-sl").click();
-  await expect(page).toHaveURL(/\/meta\/\?mode=sl$/);
-  await expect(page.locator("#weekly-top li").first()).not.toHaveText(first);
+  await expect(page.locator("#meta-line")).toContainText("폭풍 리그 기준");
+  await expect(page.locator("#mode-sl, #mode-qm")).toHaveCount(0); // no Quick Match: no counter picks to explain
+  await expect(page.locator("#h-analysis")).toContainText("잘아타스");
+  expect(await page.locator("#weekly-analysis p").count()).toBeGreaterThan(2);
+  await expect(page.locator('[data-status="draft"]')).toBeVisible();
+  // the e2e hero table predates Xal'atath (90 heroes): no card, and no broken page (tests/weekly.test.ts has the card)
+  await expect(page.locator("#h-evidence")).toHaveCount(0);
   await expect(page.locator("#weekly-top a").first()).toHaveAttribute("href", /\?mode=sl$/);
 });
 

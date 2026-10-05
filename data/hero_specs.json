@@ -1,0 +1,2100 @@
+{
+"source": "HeroesToolChest heroes-data2 2.57.0.98304, MIT",
+"heroes": {
+"abathur": {
+"life": 685,
+"life_per_level": 0.04,
+"life_regen": 1.4257,
+"melee": true,
+"speed": 4.75,
+"attack_damage": 26,
+"attack_period": 0.7,
+"attack_range": 1,
+"ratings": {
+"damage": 3,
+"survivability": 1,
+"utility": 7,
+"complexity": 9
+},
+"playstyles": [
+"Ganker",
+"Helper",
+"InstantTraveler",
+"RoleSpecialist",
+"TowerPusher",
+"WaveClearer"
+]
+},
+"alarak": {
+"life": 1950,
+"life_per_level": 0.04,
+"life_regen": 4.0585,
+"melee": true,
+"speed": 4.8398,
+"attack_damage": 160,
+"attack_period": 0.8332,
+"attack_range": 1.5,
+"ratings": {
+"damage": 7,
+"survivability": 6,
+"utility": 7,
+"complexity": 8
+},
+"playstyles": [
+"EnergyImportant",
+"Escaper",
+"Ganker",
+"RoleCaster",
+"SoloLaner"
+]
+},
+"alexstrasza": {
+"life": 1780,
+"life_per_level": 0.04,
+"life_regen": 9.2708,
+"melee": false,
+"speed": 4.8398,
+"attack_damage": 73,
+"attack_period": 1,
+"attack_range": 5.5,
+"ratings": {
+"damage": 3,
+"survivability": 4,
+"utility": 6,
+"complexity": 6
+},
+"playstyles": [
+"AllyHealer",
+"EnergyImportant",
+"Helper",
+"RoleSupport"
+]
+},
+"ana": {
+"life": 1598,
+"life_per_level": 0.04,
+"life_regen": 3.3281,
+"melee": false,
+"speed": 4.8398,
+"attack_damage": 30,
+"attack_period": 0.75,
+"attack_range": 6.5,
+"ratings": {
+"damage": 3,
+"survivability": 3,
+"utility": 7,
+"complexity": 6
+},
+"playstyles": [
+"AllyHealer",
+"ChanneledAutoAttacker",
+"EnergyImportant",
+"Helper",
+"Roamer",
+"RoleSupport"
+]
+},
+"anduin": {
+"life": 1665,
+"life_per_level": 0.04,
+"life_regen": 3.4687,
+"melee": false,
+"speed": 4.8398,
+"attack_damage": 85,
+"attack_period": 1,
+"attack_range": 5.5,
+"ratings": {
+"damage": 2,
+"survivability": 4,
+"utility": 7,
+"complexity": 4
+},
+"playstyles": [
+"AllyHealer",
+"EnergyImportant",
+"Helper",
+"RoleSupport",
+"SelfHealer"
+]
+},
+"anub-arak": {
+"life": 2150,
+"life_per_level": 0.04,
+"life_regen": 4.4804,
+"melee": true,
+"speed": 4.8398,
+"attack_damage": 81,
+"attack_period": 1,
+"attack_range": 1.5,
+"ratings": {
+"damage": 4,
+"survivability": 7,
+"utility": 6,
+"complexity": 5
+},
+"playstyles": [
+"BodyBlocker",
+"EnergyImportant",
+"Escaper",
+"Ganker",
+"Overconfident",
+"RoleTank"
+]
+},
+"artanis": {
+"life": 2490,
+"life_per_level": 0.04,
+"life_regen": 5.1875,
+"melee": true,
+"speed": 4.8398,
+"attack_damage": 111,
+"attack_period": 1,
+"attack_range": 1.25,
+"ratings": {
+"damage": 6,
+"survivability": 8,
+"utility": 6,
+"complexity": 5
+},
+"playstyles": [
+"BodyBlocker",
+"EnergyImportant",
+"Ganker",
+"Overconfident",
+"RoleAutoAttacker",
+"RoleTank"
+]
+},
+"arthas": {
+"life": 2750,
+"life_per_level": 0.04,
+"life_regen": 5.7304,
+"melee": true,
+"speed": 4.8398,
+"attack_damage": 95,
+"attack_period": 1.1,
+"attack_range": 2,
+"ratings": {
+"damage": 6,
+"survivability": 8,
+"utility": 5,
+"complexity": 4
+},
+"playstyles": [
+"BodyBlocker",
+"EnergyImportant",
+"Ganker",
+"Overconfident",
+"RoleTank"
+]
+},
+"auriel": {
+"life": 1700,
+"life_per_level": 0.04,
+"life_regen": 3.539,
+"melee": false,
+"speed": 4.8398,
+"attack_damage": 64,
+"attack_period": 0.8,
+"attack_range": 5.5,
+"ratings": {
+"damage": 3,
+"survivability": 4,
+"utility": 8,
+"complexity": 8
+},
+"playstyles": [
+"AllyHealer",
+"Helper",
+"RoleSupport",
+"SelfHealer"
+]
+},
+"azmodan": {
+"life": 2464.2,
+"life_per_level": 0.04,
+"life_regen": 5.1328,
+"melee": false,
+"speed": 4.8398,
+"attack_damage": 85,
+"attack_period": 1,
+"attack_range": 5.5,
+"ratings": {
+"damage": 3,
+"survivability": 7,
+"utility": 6,
+"complexity": 5
+},
+"playstyles": [
+"EnergyImportant",
+"RoleSpecialist",
+"SoloLaner",
+"TowerPusher",
+"WaveClearer"
+]
+},
+"blaze": {
+"life": 2900,
+"life_per_level": 0.04,
+"life_regen": 6.039,
+"melee": false,
+"speed": 4.8398,
+"attack_damage": 60,
+"attack_period": 1,
+"attack_range": 4.5,
+"ratings": {
+"damage": 6,
+"survivability": 9,
+"utility": 7,
+"complexity": 7
+},
+"playstyles": [
+"BodyBlocker",
+"EnergyImportant",
+"Ganker",
+"Overconfident",
+"RoleTank",
+"SoloLaner"
+]
+},
+"brightwing": {
+"life": 1425,
+"life_per_level": 0.04,
+"life_regen": 2.9687,
+"melee": false,
+"speed": 4.8398,
+"attack_damage": 81,
+"attack_period": 0.9,
+"attack_range": 5.5,
+"ratings": {
+"damage": 4,
+"survivability": 5,
+"utility": 9,
+"complexity": 7
+},
+"playstyles": [
+"AllyHealer",
+"EnergyImportant",
+"Escaper",
+"Helper",
+"RoleSupport",
+"SelfHealer",
+"SoloLaner"
+]
+},
+"cassia": {
+"life": 1660,
+"life_per_level": 0.04,
+"life_regen": 3.457,
+"melee": false,
+"speed": 4.8398,
+"attack_damage": 125,
+"attack_period": 0.9,
+"attack_range": 2,
+"ratings": {
+"damage": 7,
+"survivability": 6,
+"utility": 5,
+"complexity": 4
+},
+"playstyles": [
+"EnergyImportant",
+"Ganker",
+"RoleAutoAttacker",
+"RoleCaster"
+]
+},
+"chen": {
+"life": 2473,
+"life_per_level": 0.04,
+"life_regen": 5.1523,
+"melee": true,
+"speed": 4.8398,
+"attack_damage": 90,
+"attack_period": 0.9,
+"attack_range": 2,
+"ratings": {
+"damage": 5,
+"survivability": 8,
+"utility": 5,
+"complexity": 8
+},
+"playstyles": [
+"BodyBlocker",
+"Escaper",
+"Ganker",
+"Overconfident",
+"RoleTank",
+"SoloLaner"
+]
+},
+"cho": {
+"life": 2950,
+"life_per_level": 0.045,
+"life_regen": 6.1445,
+"melee": true,
+"speed": 4.8398,
+"attack_damage": 130,
+"attack_period": 1.1,
+"attack_range": 1,
+"ratings": {
+"damage": 6,
+"survivability": 10,
+"utility": 2,
+"complexity": 7
+},
+"playstyles": [
+"BodyBlocker",
+"Escaper",
+"Ganker",
+"MercKiller",
+"Overconfident",
+"RoleTank",
+"SoloLaner"
+]
+},
+"chromie": {
+"life": 1390,
+"life_per_level": 0.04,
+"life_regen": 2.8984,
+"melee": false,
+"speed": 4.8398,
+"attack_damage": 82,
+"attack_period": 1,
+"attack_range": 7,
+"ratings": {
+"damage": 9,
+"survivability": 3,
+"utility": 4,
+"complexity": 5
+},
+"playstyles": [
+"EnergyImportant",
+"RoleCaster"
+]
+},
+"d-va": {
+"life": 2150,
+"life_per_level": 0.04,
+"life_regen": 4.4804,
+"melee": false,
+"speed": 4.8398,
+"attack_damage": 22,
+"attack_period": 0.25,
+"attack_range": 3.75,
+"ratings": {
+"damage": 4,
+"survivability": 8,
+"utility": 8,
+"complexity": 6
+},
+"playstyles": [
+"BodyBlocker",
+"Escaper",
+"Overconfident",
+"RoleTank"
+]
+},
+"deathwing": {
+"life": 2750,
+"life_per_level": 0.04,
+"life_regen": 5.7304,
+"melee": true,
+"speed": 4.8398,
+"attack_damage": 117,
+"attack_period": 1.5,
+"attack_range": 2.5,
+"ratings": {
+"damage": 7,
+"survivability": 10,
+"utility": 7,
+"complexity": 8
+},
+"playstyles": [
+"BodyBlocker",
+"Ganker",
+"HealingAltarGoalDisabled",
+"InstantTraveler",
+"Overconfident",
+"Roamer",
+"RoleAutoAttacker",
+"Suicidal",
+"TowerPusher",
+"WaveClearer"
+]
+},
+"deckard": {
+"life": 1780,
+"life_per_level": 0.04,
+"life_regen": 3.707,
+"melee": true,
+"speed": 4.8398,
+"attack_damage": 63,
+"attack_period": 1.1,
+"attack_range": 1.5,
+"ratings": {
+"damage": 3,
+"survivability": 7,
+"utility": 8,
+"complexity": 5
+},
+"playstyles": [
+"AllyHealer",
+"EnergyImportant",
+"Helper",
+"RoleSupport",
+"SelfHealer"
+]
+},
+"dehaka": {
+"life": 2385,
+"life_per_level": 0.04,
+"life_regen": 4.9687,
+"melee": true,
+"speed": 4.8398,
+"attack_damage": 95,
+"attack_period": 0.8,
+"attack_range": 1,
+"ratings": {
+"damage": 6,
+"survivability": 9,
+"utility": 8,
+"complexity": 7
+},
+"playstyles": [
+"BodyBlocker",
+"EnergyImportant",
+"Ganker",
+"Overconfident",
+"RoleTank",
+"SoloLaner",
+"WaveClearer"
+]
+},
+"diablo": {
+"life": 2825,
+"life_per_level": 0.04,
+"life_regen": 5.8854,
+"melee": true,
+"speed": 4.8398,
+"attack_damage": 105,
+"attack_period": 1.05,
+"attack_range": 1.25,
+"ratings": {
+"damage": 5,
+"survivability": 9,
+"utility": 7,
+"complexity": 5
+},
+"playstyles": [
+"BodyBlocker",
+"EnergyImportant",
+"Ganker",
+"Overconfident",
+"RoleTank"
+]
+},
+"e-t-c": {
+"life": 2280,
+"life_per_level": 0.04,
+"life_regen": 4.75,
+"melee": true,
+"speed": 4.8398,
+"attack_damage": 99,
+"attack_period": 0.8,
+"attack_range": 1.5,
+"ratings": {
+"damage": 4,
+"survivability": 9,
+"utility": 6,
+"complexity": 3
+},
+"playstyles": [
+"BodyBlocker",
+"EnergyImportant",
+"Escaper",
+"Ganker",
+"Overconfident",
+"RoleTank",
+"SelfHealer"
+]
+},
+"falstad": {
+"life": 1365,
+"life_per_level": 0.04,
+"life_regen": 2.8437,
+"melee": false,
+"speed": 4.8398,
+"attack_damage": 104,
+"attack_period": 0.7,
+"attack_range": 5.5,
+"ratings": {
+"damage": 8,
+"survivability": 4,
+"utility": 4,
+"complexity": 5
+},
+"playstyles": [
+"EnergyImportant",
+"Escaper",
+"Ganker",
+"RoleAutoAttacker",
+"RoleCaster"
+]
+},
+"fenix": {
+"life": 1140,
+"life_per_level": 0.04,
+"life_regen": 2.379,
+"melee": false,
+"speed": 4.8398,
+"attack_damage": 83,
+"attack_period": 1.35,
+"attack_range": 5,
+"ratings": {
+"damage": 9,
+"survivability": 5,
+"utility": 4,
+"complexity": 5
+},
+"playstyles": [
+"Escaper",
+"Ganker",
+"RoleAutoAttacker",
+"WaveClearer"
+]
+},
+"gall": {
+"life": 1,
+"life_per_level": 0,
+"life_regen": 0,
+"melee": false,
+"speed": 4.8398,
+"attack_damage": null,
+"attack_period": null,
+"attack_range": null,
+"ratings": {
+"damage": 9,
+"survivability": 10,
+"utility": 4,
+"complexity": 3
+},
+"playstyles": [
+"GoalsDisabled",
+"RoleCaster"
+]
+},
+"garrosh": {
+"life": 2060,
+"life_per_level": 0.04,
+"life_regen": 4.293,
+"melee": true,
+"speed": 4.8398,
+"attack_damage": 137,
+"attack_period": 1.2,
+"attack_range": 1.25,
+"ratings": {
+"damage": 3,
+"survivability": 9,
+"utility": 7,
+"complexity": 6
+},
+"playstyles": [
+"BodyBlocker",
+"EnergyImportant",
+"Ganker",
+"Overconfident",
+"RoleTank"
+]
+},
+"gazlowe": {
+"life": 2275,
+"life_per_level": 0.04,
+"life_regen": 4.74,
+"melee": true,
+"speed": 4.8398,
+"attack_damage": 100,
+"attack_period": 0.8,
+"attack_range": 1.25,
+"ratings": {
+"damage": 5,
+"survivability": 5,
+"utility": 6,
+"complexity": 6
+},
+"playstyles": [
+"EnergyImportant",
+"MercKiller",
+"RoleSpecialist",
+"SoloLaner",
+"TowerPusher",
+"WaveClearer"
+]
+},
+"genji": {
+"life": 1675,
+"life_per_level": 0.04,
+"life_regen": 3.4882,
+"melee": false,
+"speed": 4.8398,
+"attack_damage": 44,
+"attack_period": 1,
+"attack_range": 4.5,
+"ratings": {
+"damage": 8,
+"survivability": 4,
+"utility": 4,
+"complexity": 6
+},
+"playstyles": [
+"EnergyImportant",
+"Escaper",
+"Ganker",
+"Overconfident",
+"RoleCaster"
+]
+},
+"greymane": {
+"life": 1876,
+"life_per_level": 0.045,
+"life_regen": 3.9062,
+"melee": false,
+"speed": 4.8398,
+"attack_damage": 148,
+"attack_period": 1,
+"attack_range": 1.5,
+"ratings": {
+"damage": 9,
+"survivability": 4,
+"utility": 3,
+"complexity": 7
+},
+"playstyles": [
+"EnergyImportant",
+"Ganker",
+"RoleAutoAttacker",
+"RoleCaster",
+"SoloLaner",
+"WaveClearer"
+]
+},
+"gul-dan": {
+"life": 1700,
+"life_per_level": 0.04,
+"life_regen": 3.543,
+"melee": false,
+"speed": 4.8398,
+"attack_damage": 60,
+"attack_period": 1,
+"attack_range": 5.5,
+"ratings": {
+"damage": 8,
+"survivability": 5,
+"utility": 3,
+"complexity": 6
+},
+"playstyles": [
+"RoleCaster",
+"SoloLaner",
+"TowerPusher",
+"WaveClearer"
+]
+},
+"hanzo": {
+"life": 1375,
+"life_per_level": 0.04,
+"life_regen": 2.8632,
+"melee": false,
+"speed": 4.8398,
+"attack_damage": 198,
+"attack_period": 1.5,
+"attack_range": 6.5,
+"ratings": {
+"damage": 8,
+"survivability": 4,
+"utility": 5,
+"complexity": 6
+},
+"playstyles": [
+"EnergyImportant",
+"Escaper",
+"RoleAutoAttacker",
+"RoleCaster"
+]
+},
+"hogger": {
+"life": 2260,
+"life_per_level": 0.04,
+"life_regen": 4.711,
+"melee": true,
+"speed": 4.8398,
+"attack_damage": 150,
+"attack_period": 1.375,
+"attack_range": 2,
+"ratings": {
+"damage": 7,
+"survivability": 7,
+"utility": 8,
+"complexity": 8
+},
+"playstyles": []
+},
+"illidan": {
+"life": 1725,
+"life_per_level": 0.04,
+"life_regen": 3.5898,
+"melee": true,
+"speed": 4.8398,
+"attack_damage": 78,
+"attack_period": 0.55,
+"attack_range": 1.25,
+"ratings": {
+"damage": 8,
+"survivability": 6,
+"utility": 3,
+"complexity": 8
+},
+"playstyles": [
+"BodyBlocker",
+"Escaper",
+"Ganker",
+"MercKiller",
+"Overconfident",
+"RoleAutoAttacker"
+]
+},
+"imperius": {
+"life": 2375,
+"life_per_level": 0.04,
+"life_regen": 4.9492,
+"melee": true,
+"speed": 4.8398,
+"attack_damage": 126,
+"attack_period": 1.2,
+"attack_range": 2,
+"ratings": {
+"damage": 6,
+"survivability": 5,
+"utility": 6,
+"complexity": 6
+},
+"playstyles": [
+"BodyBlocker",
+"EnergyImportant",
+"Ganker",
+"Overconfident",
+"SoloLaner"
+]
+},
+"jaina": {
+"life": 1365,
+"life_per_level": 0.04,
+"life_regen": 2.8437,
+"melee": false,
+"speed": 4.8398,
+"attack_damage": 60,
+"attack_period": 1,
+"attack_range": 5.5,
+"ratings": {
+"damage": 10,
+"survivability": 2,
+"utility": 4,
+"complexity": 4
+},
+"playstyles": [
+"EnergyImportant",
+"RoleCaster",
+"TowerPusher",
+"WaveClearer"
+]
+},
+"johanna": {
+"life": 2625,
+"life_per_level": 0.04,
+"life_regen": 5.4687,
+"melee": true,
+"speed": 4.8398,
+"attack_damage": 99,
+"attack_period": 1.1,
+"attack_range": 1.5,
+"ratings": {
+"damage": 3,
+"survivability": 10,
+"utility": 6,
+"complexity": 4
+},
+"playstyles": [
+"BodyBlocker",
+"Overconfident",
+"RoleTank",
+"WaveClearer"
+]
+},
+"junkrat": {
+"life": 1425,
+"life_per_level": 0.04,
+"life_regen": 2.9687,
+"melee": false,
+"speed": 4.8398,
+"attack_damage": 120,
+"attack_period": 1,
+"attack_range": 5.5,
+"ratings": {
+"damage": 7,
+"survivability": 5,
+"utility": 8,
+"complexity": 6
+},
+"playstyles": [
+"RoleSpecialist",
+"TowerPusher",
+"WaveClearer"
+]
+},
+"kael-thas": {
+"life": 1595,
+"life_per_level": 0.04,
+"life_regen": 3.3164,
+"melee": false,
+"speed": 4.8398,
+"attack_damage": 65,
+"attack_period": 0.9,
+"attack_range": 5.5,
+"ratings": {
+"damage": 9,
+"survivability": 3,
+"utility": 5,
+"complexity": 7
+},
+"playstyles": [
+"EnergyImportant",
+"Ganker",
+"RoleCaster",
+"TowerPusher",
+"WaveClearer"
+]
+},
+"kel-thuzad": {
+"life": 1490,
+"life_per_level": 0.04,
+"life_regen": 3.0976,
+"melee": false,
+"speed": 4.8398,
+"attack_damage": 72,
+"attack_period": 1,
+"attack_range": 5.5,
+"ratings": {
+"damage": 8,
+"survivability": 4,
+"utility": 7,
+"complexity": 7
+},
+"playstyles": [
+"DeadUpdater",
+"EnergyImportant",
+"Ganker",
+"RoleCaster"
+]
+},
+"kerrigan": {
+"life": 1764,
+"life_per_level": 0.04,
+"life_regen": 3.6757,
+"melee": true,
+"speed": 4.8398,
+"attack_damage": 115,
+"attack_period": 0.8,
+"attack_range": 2,
+"ratings": {
+"damage": 8,
+"survivability": 6,
+"utility": 4,
+"complexity": 6
+},
+"playstyles": [
+"EnergyImportant",
+"Ganker",
+"Overconfident",
+"RoleCaster"
+]
+},
+"kharazim": {
+"life": 2080,
+"life_per_level": 0.04,
+"life_regen": 4.3333,
+"melee": true,
+"speed": 4.8398,
+"attack_damage": 64,
+"attack_period": 0.5,
+"attack_range": 1.75,
+"ratings": {
+"damage": 4,
+"survivability": 7,
+"utility": 9,
+"complexity": 4
+},
+"playstyles": [
+"AllyHealer",
+"EnergyImportant",
+"Escaper",
+"Ganker",
+"Overconfident",
+"RoleSupport",
+"SelfHealer"
+]
+},
+"leoric": {
+"life": 2550,
+"life_per_level": 0.04,
+"life_regen": 5.3125,
+"melee": true,
+"speed": 4.8398,
+"attack_damage": 115,
+"attack_period": 1.3,
+"attack_range": 2,
+"ratings": {
+"damage": 4,
+"survivability": 8,
+"utility": 5,
+"complexity": 6
+},
+"playstyles": [
+"EnergyImportant",
+"Overconfident",
+"RoleTank",
+"WaveClearer"
+]
+},
+"li-li": {
+"life": 1500,
+"life_per_level": 0.04,
+"life_regen": 3.125,
+"melee": false,
+"speed": 4.8398,
+"attack_damage": 60,
+"attack_period": 0.8,
+"attack_range": 5.5,
+"ratings": {
+"damage": 3,
+"survivability": 8,
+"utility": 8,
+"complexity": 3
+},
+"playstyles": [
+"AllyHealer",
+"EnergyImportant",
+"Helper",
+"RoleSupport",
+"SelfHealer"
+]
+},
+"li-ming": {
+"life": 1270,
+"life_per_level": 0.04,
+"life_regen": 2.6484,
+"melee": false,
+"speed": 4.8398,
+"attack_damage": 63,
+"attack_period": 1,
+"attack_range": 5.5,
+"ratings": {
+"damage": 10,
+"survivability": 3,
+"utility": 1,
+"complexity": 7
+},
+"playstyles": [
+"EnergyImportant",
+"Ganker",
+"RoleCaster",
+"TowerPusher"
+]
+},
+"lt-morales": {
+"life": 1560,
+"life_per_level": 0.04,
+"life_regen": 3.25,
+"melee": false,
+"speed": 4.8398,
+"attack_damage": 83,
+"attack_period": 1,
+"attack_range": 5.5,
+"ratings": {
+"damage": 3,
+"survivability": 4,
+"utility": 9,
+"complexity": 5
+},
+"playstyles": [
+"AllyHealer",
+"Helper",
+"RoleSupport"
+]
+},
+"lunara": {
+"life": 1430,
+"life_per_level": 0.04,
+"life_regen": 2.9804,
+"melee": false,
+"speed": 4.8398,
+"attack_damage": 90,
+"attack_period": 0.9,
+"attack_range": 1.6,
+"ratings": {
+"damage": 8,
+"survivability": 4,
+"utility": 5,
+"complexity": 5
+},
+"playstyles": [
+"EnergyImportant",
+"Escaper",
+"RoleAutoAttacker",
+"RoleCaster",
+"WaveClearer"
+]
+},
+"lucio": {
+"life": 1442,
+"life_per_level": 0.04,
+"life_regen": 3,
+"melee": false,
+"speed": 4.8398,
+"attack_damage": 23,
+"attack_period": 1.25,
+"attack_range": 5.5,
+"ratings": {
+"damage": 3,
+"survivability": 6,
+"utility": 8,
+"complexity": 5
+},
+"playstyles": [
+"AllyHealer",
+"EnergyImportant",
+"Escaper",
+"Helper",
+"RoleSupport",
+"SelfHealer"
+]
+},
+"maiev": {
+"life": 2021,
+"life_per_level": 0.04,
+"life_regen": 4.211,
+"melee": true,
+"speed": 4.8398,
+"attack_damage": 145,
+"attack_period": 0.9,
+"attack_range": 1.5,
+"ratings": {
+"damage": 6,
+"survivability": 7,
+"utility": 5,
+"complexity": 7
+},
+"playstyles": []
+},
+"mal-ganis": {
+"life": 2600,
+"life_per_level": 0.04,
+"life_regen": 5.414,
+"melee": true,
+"speed": 4.8398,
+"attack_damage": 96,
+"attack_period": 1.1,
+"attack_range": 1.3,
+"ratings": {
+"damage": 5,
+"survivability": 7,
+"utility": 3,
+"complexity": 3
+},
+"playstyles": [
+"BodyBlocker",
+"Ganker",
+"Overconfident",
+"RoleTank",
+"SelfHealer"
+]
+},
+"malfurion": {
+"life": 1525,
+"life_per_level": 0.04,
+"life_regen": 3.1796,
+"melee": false,
+"speed": 4.8398,
+"attack_damage": 60,
+"attack_period": 0.9,
+"attack_range": 5.5,
+"ratings": {
+"damage": 4,
+"survivability": 5,
+"utility": 7,
+"complexity": 5
+},
+"playstyles": [
+"AllyHealer",
+"EnergyImportant",
+"Helper",
+"RoleSupport",
+"SelfHealer"
+]
+},
+"malthael": {
+"life": 1962,
+"life_per_level": 0.04,
+"life_regen": 4.086,
+"melee": true,
+"speed": 4.8398,
+"attack_damage": 82,
+"attack_period": 1.1,
+"attack_range": 1.5,
+"ratings": {
+"damage": 7,
+"survivability": 6,
+"utility": 4,
+"complexity": 6
+},
+"playstyles": [
+"BodyBlocker",
+"DeadUpdater",
+"EnergyImportant",
+"Ganker",
+"RoleAutoAttacker",
+"SoloLaner",
+"WaveClearer"
+]
+},
+"medivh": {
+"life": 1470,
+"life_per_level": 0.045,
+"life_regen": 3.0625,
+"melee": false,
+"speed": 4.8398,
+"attack_damage": 80,
+"attack_period": 0.9,
+"attack_range": 5.5,
+"ratings": {
+"damage": 2,
+"survivability": 6,
+"utility": 10,
+"complexity": 8
+},
+"playstyles": [
+"EnergyImportant",
+"Escaper",
+"Helper",
+"RoleSpecialist",
+"WaveClearer"
+]
+},
+"mei": {
+"life": 2625,
+"life_per_level": 0.04,
+"life_regen": 5.5703,
+"melee": false,
+"speed": 4.8398,
+"attack_damage": 75,
+"attack_period": 1,
+"attack_range": 4.5,
+"ratings": {
+"damage": 3,
+"survivability": 8,
+"utility": 7,
+"complexity": 4
+},
+"playstyles": [
+"BodyBlocker",
+"EnergyImportant",
+"Ganker",
+"Overconfident",
+"RoleTank"
+]
+},
+"mephisto": {
+"life": 1968,
+"life_per_level": 0.04,
+"life_regen": 4.1015,
+"melee": false,
+"speed": 4.8398,
+"attack_damage": 66,
+"attack_period": 1,
+"attack_range": 4.5,
+"ratings": {
+"damage": 8,
+"survivability": 6,
+"utility": 4,
+"complexity": 7
+},
+"playstyles": [
+"EnergyImportant",
+"Overconfident",
+"Roamer",
+"RoleCaster"
+]
+},
+"muradin": {
+"life": 2765,
+"life_per_level": 0.04,
+"life_regen": 5.7617,
+"melee": true,
+"speed": 4.8398,
+"attack_damage": 88,
+"attack_period": 0.9,
+"attack_range": 1,
+"ratings": {
+"damage": 5,
+"survivability": 9,
+"utility": 5,
+"complexity": 4
+},
+"playstyles": [
+"BodyBlocker",
+"EnergyImportant",
+"Escaper",
+"Ganker",
+"Overconfident",
+"RoleTank"
+]
+},
+"murky": {
+"life": 730,
+"life_per_level": 0.04,
+"life_regen": 29.1992,
+"melee": true,
+"speed": 4.8398,
+"attack_damage": 60,
+"attack_period": 0.8,
+"attack_range": 1.25,
+"ratings": {
+"damage": 5,
+"survivability": 1,
+"utility": 5,
+"complexity": 8
+},
+"playstyles": [
+"BodyBlocker",
+"Escaper",
+"Ganker",
+"MercKiller",
+"Overconfident",
+"RoleSpecialist",
+"SoloLaner",
+"TowerPusher",
+"WaveClearer"
+]
+},
+"nazeebo": {
+"life": 1502,
+"life_per_level": 0.04,
+"life_regen": 3.129,
+"melee": false,
+"speed": 4.8398,
+"attack_damage": 88,
+"attack_period": 0.9,
+"attack_range": 5.5,
+"ratings": {
+"damage": 8,
+"survivability": 3,
+"utility": 4,
+"complexity": 6
+},
+"playstyles": [
+"EnergyImportant",
+"RoleSpecialist",
+"SoloLaner",
+"TowerPusher",
+"WaveClearer"
+]
+},
+"nova": {
+"life": 1300,
+"life_per_level": 0.04,
+"life_regen": 2.711,
+"melee": false,
+"speed": 4.8398,
+"attack_damage": 105,
+"attack_period": 0.5,
+"attack_range": 6.5,
+"ratings": {
+"damage": 10,
+"survivability": 2,
+"utility": 4,
+"complexity": 5
+},
+"playstyles": [
+"EnergyImportant",
+"Ganker",
+"Helper",
+"RoleCaster"
+]
+},
+"orphea": {
+"life": 1525,
+"life_per_level": 0.04,
+"life_regen": 3.1757,
+"melee": false,
+"speed": 4.8398,
+"attack_damage": 88,
+"attack_period": 0.8332,
+"attack_range": 5.5,
+"ratings": {
+"damage": 9,
+"survivability": 7,
+"utility": 5,
+"complexity": 4
+},
+"playstyles": [
+"Escaper",
+"Ganker",
+"Overconfident",
+"RoleAutoAttacker",
+"RoleCaster",
+"SoloLaner",
+"WaveClearer"
+]
+},
+"probius": {
+"life": 1260,
+"life_per_level": 0.04,
+"life_regen": 2.625,
+"melee": false,
+"speed": 4.8398,
+"attack_damage": 33,
+"attack_period": 0.9,
+"attack_range": 3,
+"ratings": {
+"damage": 8,
+"survivability": 4,
+"utility": 4,
+"complexity": 7
+},
+"playstyles": [
+"RoleSpecialist",
+"SoloLaner",
+"TowerPusher",
+"WaveClearer"
+]
+},
+"qhira": {
+"life": 2000,
+"life_per_level": 0.04,
+"life_regen": 4.168,
+"melee": false,
+"speed": 4.8398,
+"attack_damage": 100,
+"attack_period": 1,
+"attack_range": 2.25,
+"ratings": {
+"damage": 8,
+"survivability": 7,
+"utility": 6,
+"complexity": 6
+},
+"playstyles": [
+"ChanneledAutoAttacker",
+"Escaper",
+"Ganker",
+"Overconfident",
+"Roamer",
+"RoleAutoAttacker",
+"SoloLaner"
+]
+},
+"ragnaros": {
+"life": 2075,
+"life_per_level": 0.04,
+"life_regen": 4.3242,
+"melee": true,
+"speed": 4.8398,
+"attack_damage": 180,
+"attack_period": 1.2,
+"attack_range": 2,
+"ratings": {
+"damage": 8,
+"survivability": 8,
+"utility": 7,
+"complexity": 7
+},
+"playstyles": [
+"EnergyImportant",
+"Escaper",
+"Overconfident",
+"RoleCaster",
+"WaveClearer"
+]
+},
+"raynor": {
+"life": 1450,
+"life_per_level": 0.04,
+"life_regen": 3.0195,
+"melee": false,
+"speed": 4.8398,
+"attack_damage": 98,
+"attack_period": 0.8,
+"attack_range": 2,
+"ratings": {
+"damage": 9,
+"survivability": 6,
+"utility": 1,
+"complexity": 3
+},
+"playstyles": [
+"EnergyImportant",
+"RoleAutoAttacker",
+"TowerPusher"
+]
+},
+"rehgar": {
+"life": 1900,
+"life_per_level": 0.04,
+"life_regen": 3.957,
+"melee": true,
+"speed": 4.8398,
+"attack_damage": 110,
+"attack_period": 0.9,
+"attack_range": 1.5,
+"ratings": {
+"damage": 5,
+"survivability": 7,
+"utility": 7,
+"complexity": 6
+},
+"playstyles": [
+"AllyHealer",
+"EnergyImportant",
+"Escaper",
+"Helper",
+"Overconfident",
+"RoleSupport",
+"SelfHealer"
+]
+},
+"rexxar": {
+"life": 1810,
+"life_per_level": 0.04,
+"life_regen": 3.7695,
+"melee": false,
+"speed": 4.8398,
+"attack_damage": 134,
+"attack_period": 1.15,
+"attack_range": 1.5,
+"ratings": {
+"damage": 5,
+"survivability": 7,
+"utility": 8,
+"complexity": 6
+},
+"playstyles": [
+"EnergyImportant",
+"MercKiller",
+"RoleSpecialist",
+"SoloLaner",
+"WaveClearer"
+]
+},
+"samuro": {
+"life": 1725,
+"life_per_level": 0.04,
+"life_regen": 3.5898,
+"melee": true,
+"speed": 4.8398,
+"attack_damage": 102,
+"attack_period": 0.6,
+"attack_range": 2,
+"ratings": {
+"damage": 6,
+"survivability": 7,
+"utility": 3,
+"complexity": 7
+},
+"playstyles": [
+"Ganker",
+"MercKiller",
+"Overconfident",
+"RoleAutoAttacker",
+"WaveClearer"
+]
+},
+"sgt-hammer": {
+"life": 1720,
+"life_per_level": 0.04,
+"life_regen": 3.582,
+"melee": false,
+"speed": 4.8398,
+"attack_damage": 140,
+"attack_period": 1,
+"attack_range": 5.5,
+"ratings": {
+"damage": 9,
+"survivability": 3,
+"utility": 3,
+"complexity": 6
+},
+"playstyles": [
+"EnergyImportant",
+"RoleAutoAttacker",
+"TowerPusher",
+"WaveClearer"
+]
+},
+"sonya": {
+"life": 2450,
+"life_per_level": 0.04,
+"life_regen": 5.1054,
+"melee": true,
+"speed": 4.8398,
+"attack_damage": 84,
+"attack_period": 0.8,
+"attack_range": 1.5,
+"ratings": {
+"damage": 7,
+"survivability": 6,
+"utility": 5,
+"complexity": 5
+},
+"playstyles": [
+"Ganker",
+"MercKiller",
+"Overconfident",
+"RoleAutoAttacker",
+"RoleCaster",
+"SoloLaner",
+"WaveClearer"
+]
+},
+"stitches": {
+"life": 3020,
+"life_per_level": 0.04,
+"life_regen": 6.293,
+"melee": true,
+"speed": 4.8398,
+"attack_damage": 71,
+"attack_period": 1.1,
+"attack_range": 1.5,
+"ratings": {
+"damage": 6,
+"survivability": 8,
+"utility": 10,
+"complexity": 4
+},
+"playstyles": [
+"BodyBlocker",
+"EnergyImportant",
+"Ganker",
+"Overconfident",
+"RoleTank"
+]
+},
+"stukov": {
+"life": 1835,
+"life_per_level": 0.04,
+"life_regen": 3.8242,
+"melee": true,
+"speed": 4.8398,
+"attack_damage": 261,
+"attack_period": 1.5,
+"attack_range": 5.5,
+"ratings": {
+"damage": 3,
+"survivability": 5,
+"utility": 8,
+"complexity": 7
+},
+"playstyles": [
+"AllyHealer",
+"EnergyImportant",
+"Helper",
+"RoleSupport",
+"SelfHealer"
+]
+},
+"sylvanas": {
+"life": 1650,
+"life_per_level": 0.04,
+"life_regen": 3.4414,
+"melee": false,
+"speed": 4.8398,
+"attack_damage": 81,
+"attack_period": 0.6,
+"attack_range": 5.5,
+"ratings": {
+"damage": 9,
+"survivability": 3,
+"utility": 7,
+"complexity": 6
+},
+"playstyles": [
+"EnergyImportant",
+"Escaper",
+"MercKiller",
+"RoleSpecialist",
+"TowerDisabler",
+"TowerPusher",
+"WaveClearer"
+]
+},
+"tassadar": {
+"life": 1650,
+"life_per_level": 0.04,
+"life_regen": 3.4375,
+"melee": false,
+"speed": 4.8398,
+"attack_damage": 14,
+"attack_period": 0.25,
+"attack_range": 6.5,
+"ratings": {
+"damage": 6,
+"survivability": 7,
+"utility": 7,
+"complexity": 4
+},
+"playstyles": [
+"ChanneledAutoAttacker",
+"EnergyImportant",
+"Escaper",
+"Helper",
+"RoleCaster",
+"WaveClearer"
+]
+},
+"the-butcher": {
+"life": 2154,
+"life_per_level": 0.045,
+"life_regen": 4.4882,
+"melee": true,
+"speed": 4.8398,
+"attack_damage": 130,
+"attack_period": 0.9,
+"attack_range": 1.5,
+"ratings": {
+"damage": 9,
+"survivability": 5,
+"utility": 4,
+"complexity": 3
+},
+"playstyles": [
+"EnergyImportant",
+"Ganker",
+"MercKiller",
+"Overconfident",
+"RoleAutoAttacker",
+"SoloLaner"
+]
+},
+"the-lost-vikings": {
+"life": 1,
+"life_per_level": 0,
+"life_regen": 0,
+"melee": true,
+"speed": 20,
+"attack_damage": null,
+"attack_period": null,
+"attack_range": null,
+"ratings": {
+"damage": 7,
+"survivability": 6,
+"utility": 5,
+"complexity": 10
+},
+"playstyles": []
+},
+"thrall": {
+"life": 1946,
+"life_per_level": 0.04,
+"life_regen": 4.0546,
+"melee": true,
+"speed": 4.8398,
+"attack_damage": 167,
+"attack_period": 1.1,
+"attack_range": 1.5,
+"ratings": {
+"damage": 8,
+"survivability": 7,
+"utility": 5,
+"complexity": 6
+},
+"playstyles": [
+"EnergyImportant",
+"Escaper",
+"Ganker",
+"Overconfident",
+"RoleAutoAttacker"
+]
+},
+"tracer": {
+"life": 1330,
+"life_per_level": 0.04,
+"life_regen": 2.707,
+"melee": false,
+"speed": 4.8398,
+"attack_damage": 23,
+"attack_period": 0.125,
+"attack_range": 5,
+"ratings": {
+"damage": 8,
+"survivability": 5,
+"utility": 2,
+"complexity": 8
+},
+"playstyles": [
+"Escaper",
+"Ganker",
+"RoleAutoAttacker"
+]
+},
+"tychus": {
+"life": 1925,
+"life_per_level": 0.04,
+"life_regen": 4.0117,
+"melee": false,
+"speed": 4.8398,
+"attack_damage": 50,
+"attack_period": 0.25,
+"attack_range": 4.5,
+"ratings": {
+"damage": 8,
+"survivability": 5,
+"utility": 1,
+"complexity": 6
+},
+"playstyles": [
+"EnergyImportant",
+"Ganker",
+"RoleAutoAttacker",
+"WaveClearer"
+]
+},
+"tyrael": {
+"life": 2517,
+"life_per_level": 0.04,
+"life_regen": 5.2438,
+"melee": true,
+"speed": 4.8398,
+"attack_damage": 82,
+"attack_period": 0.8,
+"attack_range": 1.5,
+"ratings": {
+"damage": 6,
+"survivability": 8,
+"utility": 6,
+"complexity": 5
+},
+"playstyles": [
+"BodyBlocker",
+"EnergyImportant",
+"Escaper",
+"Ganker",
+"Overconfident",
+"RoleAutoAttacker",
+"RoleTank"
+]
+},
+"tyrande": {
+"life": 1511,
+"life_per_level": 0.04,
+"life_regen": 3.1484,
+"melee": false,
+"speed": 4.8398,
+"attack_damage": 55,
+"attack_period": 0.75,
+"attack_range": 6,
+"ratings": {
+"damage": 5,
+"survivability": 4,
+"utility": 7,
+"complexity": 7
+},
+"playstyles": [
+"AllyHealer",
+"EnergyImportant",
+"Ganker",
+"Helper",
+"RoleAutoAttacker",
+"RoleSupport",
+"SelfHealer"
+]
+},
+"uther": {
+"life": 1975,
+"life_per_level": 0.04,
+"life_regen": 4.1146,
+"melee": true,
+"speed": 4.8398,
+"attack_damage": 75,
+"attack_period": 1,
+"attack_range": 1,
+"ratings": {
+"damage": 3,
+"survivability": 7,
+"utility": 9,
+"complexity": 2
+},
+"playstyles": [
+"AllyHealer",
+"EnergyImportant",
+"Helper",
+"Overconfident",
+"RoleSupport",
+"SelfHealer"
+]
+},
+"valeera": {
+"life": 2047,
+"life_per_level": 0.04,
+"life_regen": 4.2656,
+"melee": true,
+"speed": 4.8398,
+"attack_damage": 79,
+"attack_period": 0.5,
+"attack_range": 1.25,
+"ratings": {
+"damage": 5,
+"survivability": 6,
+"utility": 8,
+"complexity": 8
+},
+"playstyles": [
+"Ganker",
+"Helper",
+"Overconfident",
+"RoleAutoAttacker",
+"RoleCaster"
+]
+},
+"valla": {
+"life": 1340,
+"life_per_level": 0.04,
+"life_regen": 2.793,
+"melee": false,
+"speed": 4.8398,
+"attack_damage": 70,
+"attack_period": 0.6,
+"attack_range": 5.5,
+"ratings": {
+"damage": 9,
+"survivability": 4,
+"utility": 1,
+"complexity": 3
+},
+"playstyles": [
+"EnergyImportant",
+"Ganker",
+"RoleAutoAttacker",
+"RoleCaster",
+"WaveClearer"
+]
+},
+"varian": {
+"life": 2220,
+"life_per_level": 0.04,
+"life_regen": 4.625,
+"melee": true,
+"speed": 4.8398,
+"attack_damage": 74,
+"attack_period": 0.8,
+"attack_range": 1.25,
+"ratings": {
+"damage": 6,
+"survivability": 6,
+"utility": 7,
+"complexity": 6
+},
+"playstyles": [
+"EnergyImportant",
+"Ganker",
+"Overconfident",
+"RoleAutoAttacker",
+"RoleTank"
+]
+},
+"whitemane": {
+"life": 1400,
+"life_per_level": 0.04,
+"life_regen": 2.9218,
+"melee": false,
+"speed": 4.8398,
+"attack_damage": 62,
+"attack_period": 1,
+"attack_range": 5.5,
+"ratings": {
+"damage": 5,
+"survivability": 5,
+"utility": 7,
+"complexity": 8
+},
+"playstyles": [
+"AllyHealer",
+"EnergyImportant",
+"RoleSupport",
+"SelfHealer"
+]
+},
+"xal-atath": {
+"life": 1330,
+"life_per_level": 0.04,
+"life_regen": 2.6484,
+"melee": false,
+"speed": 4.8398,
+"attack_damage": 55,
+"attack_period": 1,
+"attack_range": 6.5,
+"ratings": {
+"damage": 8,
+"survivability": 6,
+"utility": 6,
+"complexity": 8
+},
+"playstyles": [
+"EnergyImportant",
+"Escaper",
+"Ganker",
+"Overconfident",
+"TowerPusher"
+]
+},
+"xul": {
+"life": 2080,
+"life_per_level": 0.04,
+"life_regen": 4.332,
+"melee": true,
+"speed": 4.8398,
+"attack_damage": 95,
+"attack_period": 0.8332,
+"attack_range": 1.5,
+"ratings": {
+"damage": 5,
+"survivability": 7,
+"utility": 9,
+"complexity": 4
+},
+"playstyles": [
+"EnergyImportant",
+"Ganker",
+"Overconfident",
+"RoleSpecialist",
+"SoloLaner",
+"TowerPusher",
+"WaveClearer"
+]
+},
+"yrel": {
+"life": 2678,
+"life_per_level": 0.04,
+"life_regen": 5.418,
+"melee": true,
+"speed": 4.8398,
+"attack_damage": 155,
+"attack_period": 1.3,
+"attack_range": 1.5,
+"ratings": {
+"damage": 5,
+"survivability": 10,
+"utility": 4,
+"complexity": 5
+},
+"playstyles": [
+"BodyBlocker",
+"Escaper",
+"Ganker",
+"Overconfident",
+"RoleTank",
+"SelfHealer",
+"SoloLaner"
+]
+},
+"zagara": {
+"life": 1550,
+"life_per_level": 0.04,
+"life_regen": 3.2304,
+"melee": false,
+"speed": 4.8398,
+"attack_damage": 83,
+"attack_period": 0.8,
+"attack_range": 6.6,
+"ratings": {
+"damage": 6,
+"survivability": 5,
+"utility": 8,
+"complexity": 6
+},
+"playstyles": [
+"EnergyImportant",
+"RoleSpecialist",
+"SoloLaner",
+"TowerPusher",
+"WaveClearer"
+]
+},
+"zarya": {
+"life": 2292,
+"life_per_level": 0.04,
+"life_regen": 4.7734,
+"melee": false,
+"speed": 4.8398,
+"attack_damage": 20,
+"attack_period": 0.25,
+"attack_range": 4.5,
+"ratings": {
+"damage": 5,
+"survivability": 8,
+"utility": 7,
+"complexity": 7
+},
+"playstyles": [
+"ChanneledAutoAttacker",
+"Helper",
+"Overconfident",
+"RoleTank"
+]
+},
+"zeratul": {
+"life": 1622,
+"life_per_level": 0.04,
+"life_regen": 3.379,
+"melee": true,
+"speed": 4.8398,
+"attack_damage": 126,
+"attack_period": 0.9,
+"attack_range": 1.5,
+"ratings": {
+"damage": 8,
+"survivability": 6,
+"utility": 6,
+"complexity": 5
+},
+"playstyles": [
+"EnergyImportant",
+"Escaper",
+"Ganker",
+"Helper",
+"Overconfident",
+"RoleAutoAttacker",
+"RoleCaster"
+]
+},
+"zul-jin": {
+"life": 1875,
+"life_per_level": 0.04,
+"life_regen": 3.9023,
+"melee": false,
+"speed": 4.8398,
+"attack_damage": 94,
+"attack_period": 0.8,
+"attack_range": 5.5,
+"ratings": {
+"damage": 8,
+"survivability": 6,
+"utility": 4,
+"complexity": 4
+},
+"playstyles": [
+"EnergyImportant",
+"Ganker",
+"RoleAutoAttacker",
+"RoleCaster"
+]
+}
+}
+}
