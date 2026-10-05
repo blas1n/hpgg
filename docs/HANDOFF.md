@@ -219,6 +219,14 @@ browser (hpgg.win/ko/hots/players/?tag=Name%231234&region=KR)
 - Local run: `HP_API_TOKEN=… CORS_ORIGINS='["http://localhost:5173"]' uv run python -m server` (DB in `data/.tmp/`), then `NEXT_PUBLIC_API_BASE=http://localhost:8000 npm run dev` in `web/`.
 - New migration: change models, `mkdir -p data/.tmp && uv run alembic -c server/alembic.ini revision --autogenerate -m "…"`, review, run `tests/server/test_db.py`.
 
+## Comments (server/comments/, owner 2026-10-05)
+Weekly report issues (`weekly:<week>`) and hero pages (`hero:<slug>`). Anonymous: nickname + password (scrypt), no account; `account_id` is left for a later Battle.net login (#28).
+- Rules: nickname 1–16 chars, no 운영자/관리자/admin/hpgg; body 1–500 chars, ≤ 10 line breaks, **no links** (spam is links); a hidden `website` field must stay empty (bots fill it).
+- Per address (CF-Connecting-IP): 3 comments per 10 min, 20 a day, 30 reports a day, 60 reads a minute. Hidden when 3 different addresses report it.
+- Stored: no address and no password. `ip_hash` = HMAC(server secret, address) — the secret is made on first start and kept in `app_secrets` (or `COMMENT_SECRET`); the 4-character tag shown next to a nickname comes from it.
+- Moderation, on the Mac mini: `docker --context colima exec hpgg-api python -m server.comments.admin list --hidden` · `hide|restore|delete <id>`. There is no web admin.
+- CORS allows POST + Content-Type from hpgg.win (the only write).
+
 ## Future: accounts (Battle.net login, #28)
 Not built. Verified from the Battle.net developer docs ("Using OAuth", 2026-09-29): OAuth 2.0 authorization-code flow at `https://oauth.battle.net/authorize` / `/token` for US, EU and APAC (APAC replaced the old kr/tw regions; China uses `oauth.battlenet.com.cn`); login needs no scope — without scopes an app gets the account ID and BattleTag; the `openid` scope exposes OIDC `https://oauth.battle.net/userinfo` (authorization-code token required); redirect URIs must be HTTPS; access tokens last 24 h. Plan: `server/accounts/` module on this server (`/v1/auth/battlenet/login|callback`, `state` check), HttpOnly Secure session cookie for `.hpgg.win`, store only account id + BattleTag; the BattleTag links straight to 전적 검색. **Unverified**: exact `/userinfo` field names, whether Battle.net reveals the player's HotS region (probably not — the page may still ask for the region), refresh-token behaviour.
 

@@ -20,6 +20,8 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
+from server.comments.router import router as comments_router
+from server.comments.service import CommentService
 from server.config import Settings
 from server.db import Database, migrate
 from server.errors import on_validation_error
@@ -67,6 +69,19 @@ def create_app(
         app.state.privacy = PrivacyFeed(hp=hp, store=store, settings=settings, clock=clock)
         poller = asyncio.create_task(app.state.privacy.run_forever()) if privacy_poll else None
         app.state.ip_limiter = SlidingWindowLimiter(settings.ip_requests_per_minute, 60.0, clock)
+        app.state.comments = CommentService(db, settings, clock)
+        app.state.comment_read_limiter = SlidingWindowLimiter(
+            settings.comment_reads_per_minute, 60.0, clock
+        )
+        app.state.comment_post_limiter = SlidingWindowLimiter(
+            settings.comment_posts_per_window, float(settings.comment_window_seconds), clock
+        )
+        app.state.comment_day_limiter = SlidingWindowLimiter(
+            settings.comment_posts_per_day, 86_400.0, clock
+        )
+        app.state.comment_report_limiter = SlidingWindowLimiter(
+            settings.comment_reports_per_day, 86_400.0, clock
+        )
         app.state.ip_day_limiter = SlidingWindowLimiter(
             settings.ip_requests_per_day, 86_400.0, clock
         )
@@ -87,8 +102,9 @@ def create_app(
     app.add_middleware(
         CORSMiddleware,
         allow_origins=settings.cors_origins,
-        allow_methods=["GET"],
-        allow_headers=[],
+        # comments are posted from the browser (JSON): POST and its Content-Type header
+        allow_methods=["GET", "POST"],
+        allow_headers=["Content-Type"],
         max_age=3600,
     )
     app.add_exception_handler(RequestValidationError, on_validation_error)
@@ -130,4 +146,5 @@ def create_app(
 
     app.include_router(players_router)
     app.include_router(replays_router)
+    app.include_router(comments_router)
     return app
