@@ -215,13 +215,25 @@ export interface PatchNote {
   title: { ko: string; en: string };
   url: { ko: string; en: string };
   /** by API hero name */
-  heroes: Record<string, { verdict: PatchVerdict; groups: PatchGroup[] }>;
+  heroes: Record<string, NoteHero>;
+  /** the dated hotfix sections Blizzard adds to the top of the note, newest first (parser 3) */
+  hotfixes?: NoteHotfix[];
+}
+export interface NoteHero {
+  verdict: PatchVerdict;
+  groups: PatchGroup[];
+}
+export interface NoteHotfix {
+  /** the date Blizzard heads the section with (US), YYYY-MM-DD */
+  date: string;
+  /** heroes whose balance it changes; Korean is null until Blizzard translates it */
+  heroes: Record<string, NoteHero>;
 }
 export interface PatchGroup {
   section: "base" | "talents";
   level: number | null;
-  ability: { ko: string; en: string | null } | null;
-  changes: { ko: string; en: string | null; direction: PatchDirection }[];
+  ability: { ko: string | null; en: string | null } | null;
+  changes: { ko: string | null; en: string | null; direction: PatchDirection }[];
 }
 /** data/hotfixes.json — builds shipped without notes, their changed talent numbers (collector/hotfixes.py, #62). */
 export interface HotfixesFile {

@@ -6,7 +6,7 @@ import { computeTiers, type Snapshot } from "../formula";
 import type { HeroTable, HotfixesFile, Mode, PatchNotesFile, PatchVerdict } from "../data";
 import type { Locale } from "../i18n/locale";
 import type { HeroRef } from "./home";
-import { hotfixGroups, noteGroups, type ChangeGroup } from "./patchnotes";
+import { announcedHotfixes, hotfixGroups, noteGroups, unannounced, type ChangeGroup } from "./patchnotes";
 
 /** One mode's rank and win rate on the previous patch → this one (tier formula on each). */
 export interface PatchImpact {
@@ -70,10 +70,18 @@ export function patchSummary({ patch, notes, hotfixes, modes, heroes, minGames, 
   const refs = new Map(heroes.heroes.map((h) => [h.name, { slug: h.slug, ko: h.ko, name: h.name, role: h.role, role_ko: h.role_ko, portrait: h.portrait } as HeroRef]));
   const patchNotes = (notes?.notes ?? []).filter((n) => inPatch(n.build, patch));
   const noted = new Set(patchNotes.map((n) => n.build));
-  const hotfixBuilds = (hotfixes?.builds ?? []).filter((b) => inPatch(b.build, patch) && !noted.has(b.build) && Object.keys(b.heroes).length > 0);
+  // hotfix sections Blizzard added to this patch's notes, newest first; the heroes they name are announced in the
+  // build that shipped them
+  const announced = announcedHotfixes(patchNotes, hotfixes);
+  const hotfixBuilds = (hotfixes?.builds ?? [])
+    .filter((b) => inPatch(b.build, patch) && !noted.has(b.build))
+    .map((b) => ({ ...b, heroes: unannounced(b, announced) }))
+    .filter((b) => Object.keys(b.heroes).length > 0);
 
+  // newest first: a note's hotfixes before the note itself
+  const official = patchNotes.flatMap((n) => [...announced.filter((a) => a.note === n).map((a) => ({ heroes: a.fix.heroes, untranslated: true })), { heroes: n.heroes, untranslated: false }]);
   const verdict = new Map<string, PatchVerdict>();
-  for (const n of patchNotes) {
+  for (const n of official) {
     for (const [name, entry] of Object.entries(n.heroes)) {
       const had = verdict.get(name);
       verdict.set(name, had && had !== entry.verdict ? "mixed" : entry.verdict);
@@ -102,7 +110,7 @@ export function patchSummary({ patch, notes, hotfixes, modes, heroes, minGames, 
     const hero = refs.get(name);
     if (!hero) return [];
     const groups = [
-      ...patchNotes.flatMap((n) => (n.heroes[name] ? noteGroups(n.heroes[name].groups, locale).map((g) => ({ ...g, source: "note" as const })) : [])),
+      ...official.flatMap((n) => (n.heroes[name] ? noteGroups(n.heroes[name].groups, locale, n.untranslated).map((g) => ({ ...g, source: "note" as const })) : [])),
       ...hotfixBuilds.flatMap((b) => hotfixGroups(b.heroes[name] ?? [], locale).map((g) => ({ ...g, source: "hotfix" as const }))),
     ];
     return [{ hero, verdict: verdict.get(name) ?? null, hotfix: hotfixed.has(name), isNew: isNew(name), qm: impact("qm", name), sl: impact("sl", name), groups }];

@@ -181,6 +181,158 @@ def parse_balance(html: str, locale: str) -> list[HeroEntry]:
     return [h for h in heroes if h.groups]
 
 
+# --- hotfix sections: Blizzard adds "Hotfix - 10/5/2026" to the top of the live note it fixes ----
+# Pasted from elsewhere: bold is a styled span, abilities are "(Q)", one list item can hold several
+# headings ("Xal'atath Balance Updates<br><br>Abilities"). Only the balance parts are kept.
+
+
+@dataclass
+class HotfixSection:
+    date: str  # the date Blizzard heads it with, YYYY-MM-DD
+    heroes: list[HeroEntry] = field(default_factory=list)
+
+
+_HOTFIX_DATE = (
+    re.compile(r"(?:Hotfix|핫픽스).*?\b(\d{1,2})/(\d{1,2})/(\d{4})\b"),  # M/D/YYYY
+    re.compile(r"(?:Hotfix|핫픽스).*?(\d{4})\s*년\s*(\d{1,2})\s*월\s*(\d{1,2})\s*일"),
+)
+_HOTFIX_HERO = re.compile(r"^(?P<hero>.+?) (?:Balance Updates?|밸런스 (?:업데이트|조정))$")
+_HOTFIX_SECTIONS: dict[str, Section] = {**SECTIONS, "Abilities": "base", "기술": "base"}
+_KEY_PAREN = re.compile(r"\s*\(([QWERD]|Trait|고유 능력)\)$")
+
+
+def _hotfix_date(text: str) -> str | None:
+    t = _clean(text)
+    if m := _HOTFIX_DATE[0].search(t):
+        mo, d, y = m.groups()
+    elif m := _HOTFIX_DATE[1].search(t):
+        y, mo, d = m.groups()
+    else:
+        return None
+    return f"{int(y):04d}-{int(mo):02d}-{int(d):02d}"
+
+
+def _bold(n: _Node) -> bool:
+    style = (n.attrs.get("style") or "").replace(" ", "")
+    return n.tag in {"strong", "b"} or "font-weight:700" in style or "font-weight:bold" in style
+
+
+def _labels(n: _Node) -> list[str]:
+    """The bold runs of a list item's own line (its sub-lists aside), in order."""
+    out: list[str] = []
+    for c in n.children:
+        if not isinstance(c, _Node) or c.tag == "ul":
+            continue
+        if _bold(c):
+            if t := _clean(c.text().replace("\u200b", "")):
+                out.append(t)
+        else:
+            out.extend(_labels(c))
+    return out
+
+
+def _own_text(li: _Node) -> str:
+    return _clean(
+        "".join(
+            c if isinstance(c, str) else c.text()
+            for c in li.children
+            if not (isinstance(c, _Node) and c.tag == "ul")
+        ).replace("\u200b", "")
+    )
+
+
+class _HotfixWalk:
+    def __init__(self, locale: str) -> None:
+        self.locale = locale
+        self.heroes: list[HeroEntry] = []
+        self.hero: HeroEntry | None = None
+        self.section: Section | None = None
+
+    def heading(self, label: str) -> bool:
+        if m := _HOTFIX_HERO.match(label):
+            self.hero = HeroEntry(m.group("hero"))
+            self.heroes.append(self.hero)
+            self.section = None
+            return True
+        if label in _HOTFIX_SECTIONS:
+            self.section = _HOTFIX_SECTIONS[label]
+            return True
+        if "Bug Fix" in label or "버그 수정" in label:
+            self.hero = None  # a hero's bug fixes, or the general ones: not balance
+            return True
+        return False
+
+    def walk(self, ul: _Node, level: int | None, ability: str | None) -> None:
+        for li in _lis(ul):
+            labels = _labels(li)
+            subs = [c for c in li.children if isinstance(c, _Node) and c.tag == "ul"]
+            text = _own_text(li)
+            if labels and text == _clean(" ".join(labels)):
+                rest = [lb for lb in labels if not self.heading(lb)]
+                if subs:
+                    lv, ab = level, ability
+                    if rest:
+                        m = _LEVEL.match(rest[-1])
+                        if m:
+                            lv, ab = int(m.group(1) or m.group(2)), None
+                        else:
+                            ab = _KEY_PAREN.sub(lambda k: f" [{k.group(1)}]", rest[-1])
+                    for s in subs:
+                        self.walk(s, lv, ab)
+                continue
+            if text and self.hero is not None and self.section is not None:
+                last = self.hero.groups[-1] if self.hero.groups else None
+                if last is None or (last.section, last.level, last.ability) != (
+                    self.section,
+                    level,
+                    ability,
+                ):
+                    last = Group(self.section, level, ability)
+                    self.hero.groups.append(last)
+                last.changes.append(Change(text, direction(text, self.locale)))
+            for s in subs:
+                self.walk(s, level, ability)
+
+
+def parse_hotfixes(html: str, locale: str) -> list[HotfixSection]:
+    """The note's dated hotfix sections that change a hero's balance, top (newest) first."""
+    tree = _Tree()
+    tree.feed(html)
+    flat: list[_Node] = []
+
+    def walk(n: _Node) -> None:
+        for c in n.children:
+            if isinstance(c, _Node):
+                flat.append(c)
+                if c.tag not in {"h2", "h3", "h4", "p", "ul"}:
+                    walk(c)
+
+    walk(tree.root)
+    out: list[HotfixSection] = []
+    cur: _HotfixWalk | None = None
+    date = ""
+
+    def close() -> None:
+        if cur is not None:
+            heroes = [h for h in cur.heroes if h.groups]
+            if heroes:
+                out.append(HotfixSection(date, heroes))
+
+    for n in flat:
+        heading = n.tag in {"h2", "h3"} or (n.tag == "a" and n.attrs.get("name"))
+        if heading:
+            when = _hotfix_date(n.text()) if n.tag == "h3" else None
+            if when or (n.tag != "h3" or _clean(n.text())):
+                close()
+                cur = None
+            if when:
+                cur, date = _HotfixWalk(locale), when
+        elif cur is not None and n.tag == "ul":
+            cur.walk(n, None, None)
+    close()
+    return out
+
+
 # --- direction of one change line -------------------------------------------------------------
 
 _NUM = r"(-?(?:\d[\d,]*(?:\.\d+)?|\.\d+))"
@@ -285,7 +437,10 @@ LOCALES = {"ko": "ko-kr", "en": "en-us"}
 BUILD_WINDOW = (timedelta(days=-1), timedelta(days=3))
 NOTE_LIMIT = 12
 # bump when parsing or direction rules change: every kept note is parsed again
-PARSER_VERSION = 2
+PARSER_VERSION = 3
+# Blizzard adds hotfix sections to a live note for weeks after it (2.57: 9/29, 10/5) without
+# touching its date: a note this young is read again on every run
+REFRESH = timedelta(days=45)
 
 log = structlog.get_logger(__name__)
 
@@ -335,16 +490,40 @@ def _hero_keys(heroes: dict[str, Any]) -> dict[str, str]:
     return keys
 
 
-def _record(
-    news_id: str,
-    published: str,
-    titles: dict[str, str],
-    parsed: dict[str, list[HeroEntry]],
-    keys: dict[str, str],
-    build: str | None,
+def _hotfix_record(
+    en: HotfixSection, ko: HotfixSection | None, keys: dict[str, str], news_id: str
+) -> dict[str, Any]:
+    """One hotfix section; Blizzard posts it in English first, so Korean may be missing."""
+    by_name = {keys.get(h.name, h.name): h for h in (ko.heroes if ko else [])}
+    heroes: dict[str, Any] = {}
+    for eh in en.heroes:
+        key = keys.get(eh.name, eh.name)
+        kh = by_name.get(key)
+        if kh is not None:
+            heroes.update(_heroes([(kh, eh)], keys, news_id))
+            continue
+        groups, dirs = [], []
+        for g in eh.groups:
+            dirs += [c.direction for c in g.changes]
+            groups.append(
+                {
+                    "section": g.section,
+                    "level": g.level,
+                    "ability": {"ko": None, "en": g.ability} if g.ability else None,
+                    "changes": [
+                        {"ko": None, "en": c.text, "direction": c.direction} for c in g.changes
+                    ],
+                }
+            )
+        heroes[key] = {"verdict": verdict(dirs), "groups": groups}
+    return {"date": en.date, "heroes": heroes}
+
+
+def _heroes(
+    pairs: list[tuple[HeroEntry, HeroEntry]], keys: dict[str, str], news_id: str
 ) -> dict[str, Any]:
     heroes: dict[str, Any] = {}
-    for ko, en in zip(parsed["ko"], parsed["en"], strict=False):
+    for ko, en in pairs:
         key = keys.get(en.name) or keys.get(ko.name) or en.name
         same_shape = [(g.section, g.level, len(g.changes)) for g in ko.groups] == [
             (g.section, g.level, len(g.changes)) for g in en.groups
@@ -367,13 +546,31 @@ def _record(
                 {"section": kg.section, "level": kg.level, "ability": ability, "changes": changes}
             )
         heroes[key] = {"verdict": verdict(dirs), "groups": groups}
+    return heroes
+
+
+def _record(
+    news_id: str,
+    published: str,
+    titles: dict[str, str],
+    parsed: dict[str, list[HeroEntry]],
+    hotfixes: dict[str, list[HotfixSection]],
+    keys: dict[str, str],
+    build: str | None,
+) -> dict[str, Any]:
+    pairs = list(zip(parsed["ko"], parsed["en"], strict=False))
+    ko_fixes = {h.date: h for h in hotfixes["ko"]}
     return {
         "id": news_id,
         "published": published,
         "build": build,
         "title": titles,
         "url": {k: ARTICLE.format(locale=loc, id=news_id) for k, loc in LOCALES.items()},
-        "heroes": heroes,
+        "heroes": _heroes(pairs, keys, news_id),
+        # newest first, as the note lists them
+        "hotfixes": [
+            _hotfix_record(h, ko_fixes.get(h.date), keys, news_id) for h in hotfixes["en"]
+        ],
     }
 
 
@@ -393,7 +590,8 @@ async def collect_patchnotes(
     limit: int = NOTE_LIMIT,
 ) -> dict[str, Any]:
     """The newest `limit` live/balance notes. Known notes are kept as they are (only a missing
-    build is filled in); new ones are fetched in Korean and English and parsed."""
+    build is filled in) once older than REFRESH; new and recent ones are fetched in Korean and
+    English and parsed, a recent one keeping the date and build it was first given."""
     lists = {
         k: _items(json.loads(await _get_text(http, NEWS.format(locale=loc))))
         for k, loc in LOCALES.items()
@@ -401,7 +599,8 @@ async def collect_patchnotes(
     ko_titles = {str(p["newsId"]): str(p.get("title", "")) for p in lists["ko"]}
     wanted = [p for p in lists["en"] if is_patch_note(str(p.get("title", "")))][:limit]
     same_parser = (existing or {}).get("parser") == PARSER_VERSION
-    known = {n["id"]: n for n in (existing or {}).get("notes", [])} if same_parser else {}
+    before = {n["id"]: n for n in (existing or {}).get("notes", [])}
+    known = before if same_parser else {}
     keys = _hero_keys(heroes)
     notes = []
     for p in wanted:
@@ -409,17 +608,24 @@ async def collect_patchnotes(
         published = str(p.get("lastUpdated", ""))
         when = _when(published)
         build = build_for(when, patches_payload) if when else None
-        if news_id in known:
-            note = dict(known[news_id])
-            note["build"] = note.get("build") or build
-            notes.append(note)
-            continue
-        parsed = {
-            k: parse_balance(await _get_text(http, ARTICLE.format(locale=loc, id=news_id)), loc)
+        # a reparse keeps the build the note was given: HP may list none that night
+        build = build or (before.get(news_id) or {}).get("build")
+        kept = known.get(news_id)
+        if kept is not None:
+            kept = {**kept, "build": kept.get("build") or build}
+            if when is None or now - when > REFRESH:
+                notes.append(kept)
+                continue
+        html = {
+            k: await _get_text(http, ARTICLE.format(locale=loc, id=news_id))
             for k, loc in LOCALES.items()
         }
+        parsed = {k: parse_balance(html[k], LOCALES[k]) for k in LOCALES}
+        fixes = {k: parse_hotfixes(html[k], LOCALES[k]) for k in LOCALES}
         titles = {"ko": ko_titles.get(news_id, ""), "en": str(p.get("title", ""))}
-        notes.append(_record(news_id, published, titles, parsed, keys, build))
+        if kept is not None:  # the date and build the note was first given stay
+            published, build = kept["published"], kept["build"]
+        notes.append(_record(news_id, published, titles, parsed, fixes, keys, build))
         log.info("patchnotes.note", note=news_id, heroes=len(notes[-1]["heroes"]), build=build)
     return {
         "parser": PARSER_VERSION,

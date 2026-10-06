@@ -447,7 +447,7 @@ function PatchNote({ n }: { n: PatchNoteView }) {
         </span>
         {n.url ? (
           <a href={n.url} target="_blank" rel="noopener noreferrer" className="min-w-0 text-[13px] font-semibold text-fg hover:underline">
-            {n.title}
+            {n.hotfix ? t.hero.noteHotfixTitle(String(Number(n.hotfix.slice(5, 7))), String(Number(n.hotfix.slice(8, 10))), n.title) : n.title}
           </a>
         ) : (
           <span className="min-w-0 text-[13px] font-semibold text-fg">{t.hero.hotfixTitle(n.title)}</span>
