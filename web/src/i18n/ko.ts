@@ -236,6 +236,8 @@ export const ko = {
     hotfixBadge: "핫픽스",
     hotfixTitle: (build: string) => `공지 없는 핫픽스 ${build}`,
     hotfixSeconds: (n: string) => `${n}초`,
+    untranslatedHotfix: "한국어 공지 전 · 게임 데이터 수치",
+    hotfixOriginal: "블리자드 원문 보기",
     noteHotfixTitle: (month: string, day: string, title: string) => `핫픽스 ${month}월 ${day}일 · ${title}`,
     patchStatus: { current: "현재 통계 기준", collecting: "표본 쌓는 중" },
     patchSection: { base: "기본", talents: "특성" },

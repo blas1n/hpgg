@@ -277,13 +277,21 @@ test("hero detail: a hotfix Blizzard added to a note is the note's, in Blizzard'
   await expect(fix).toHaveAttribute("data-kind", "note");
   await expect(fix.locator("a[href='https://news.blizzard.com/ko-kr/article/24303007/']")).toHaveText(/^핫픽스 9월 29일 · /);
   await expect(fix.locator("[data-verdict]")).toHaveText("버프");
-  // not translated yet: Blizzard's English line
-  await expect(fix).toContainText("Bonus damage increased from 10% to 15%.");
+  // not in Korean yet (owner 10-06): the build's numbers in Korean, Blizzard's English folded underneath
+  await expect(fix.locator("[data-untranslated]")).toHaveText("한국어 공지 전 · 게임 데이터 수치");
+  await expect(fix).toContainText("천상의 분노");
+  const original = fix.locator("details[data-original]");
+  await expect(original.getByText("Bonus damage increased from 10% to 15%.")).toBeHidden();
+  await original.locator("summary").click();
+  await expect(original.getByText("Bonus damage increased from 10% to 15%.")).toBeVisible();
   await expect(page.locator("#patches [data-note='2.57.0.98304']")).toHaveCount(0);
   await expect(page.locator("#patches")).not.toContainText("공지 없는 핫픽스");
 
   await page.goto("/en/hots/heroes/auriel/");
   await expect(page.locator("#patches [data-note='24303007#2026-09-29'] a")).toHaveText(/^Hotfix Sep 29 · Heroes of the Storm Live Patch Notes/);
+  // in the language Blizzard wrote it: its lines, nothing folded
+  await expect(page.locator("#patches [data-note='24303007#2026-09-29']")).toContainText("Bonus damage increased from 10% to 15%.");
+  await expect(page.locator("#patches [data-note='24303007#2026-09-29'] details")).toHaveCount(0);
 });
 
 test("hero detail: unknown slug is a 404 page with a way back", async ({ page }) => {
