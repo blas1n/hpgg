@@ -44,8 +44,9 @@ ANSWER_STATS = (
     "deaths",
     "hero_damage",
     "teamfight_hero_damage",
-    "time_cc_enemy_heroes",
     "stunning_enemies",
+    "rooting_enemies",
+    "silencing_enemies",
     "outnumbered_deaths",
 )
 
@@ -331,3 +332,45 @@ def ban_rates(games: list[Game]) -> list[dict[str, Any]]:
         {"hero": h, "ban_rate": k / n * 100, "first_phase_rate": first[h] / n * 100}
         for h, k in banned.most_common()
     ]
+
+
+def by_enemy_trait(games: list[Game], hero: str, stat: str) -> dict[str, Any]:
+    """The hero's record against teams with more and less of `stat` (the opposing team's total,
+    split at its median over these games, or into some and none when most have none): does a
+    team that roots, stuns… beat it more?"""
+    rows: list[tuple[float, int]] = []
+    for g in games:
+        team = _team_of(g, hero)
+        if team is None:
+            continue
+        total = sum(
+            float((p.get("score") or {}).get(stat) or 0) for p in g["players"] if p["team"] != team
+        )
+        rows.append((total, int(g["winner"] == team)))
+    if not rows:
+        return {
+            "cut": None,
+            "more": {"games": 0, "win_rate": None},
+            "less": {"games": 0, "win_rate": None},
+        }
+    cut = statistics.median(t for t, _ in rows)
+    # a stat most teams lack (roots: only some heroes have one) splits into some and none
+    more = [w for t, w in rows if (t > 0 if cut == 0 else t >= cut)]
+    less = [w for t, w in rows if (t == 0 if cut == 0 else t < cut)]
+    return {
+        "cut": cut,
+        "more": {"games": len(more), "win_rate": _rate(sum(more), len(more))},
+        "less": {"games": len(less), "win_rate": _rate(sum(less), len(less))},
+    }
+
+
+def build_after(games: list[Game], day: str) -> str | None:
+    """The build a hotfix of `day` shipped in: the newest build whose first game is on or after
+    that day (UTC), if any."""
+    first: dict[str, str] = {}
+    for g in games:
+        v, d = str(g.get("version") or ""), str(g.get("date") or "")
+        if v and d and (v not in first or d < first[v]):
+            first[v] = d
+    later = [v for v, d in first.items() if d[:10] >= day]
+    return max(later, key=_build_key) if later else None

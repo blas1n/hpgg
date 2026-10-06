@@ -22,7 +22,9 @@ from collector.replay_insights import (
     LEVELS,
     answered_by,
     ban_rates,
+    build_after,
     build_split,
+    by_enemy_trait,
     draft_profile,
     game_shape,
     load_week,
@@ -40,6 +42,10 @@ def centre_of(games: list[dict[str, Any]]) -> str:
     return seen.most_common(1)[0][0]
 
 
+# time_cc_enemy_heroes is always 0 in HP's replays (2026-10-06)
+CONTROL = ("rooting_enemies", "stunning_enemies", "silencing_enemies")
+
+
 def _phase(games: list[dict[str, Any]], c: str) -> dict[str, Any]:
     return {
         "games": len(games),
@@ -47,6 +53,8 @@ def _phase(games: list[dict[str, Any]], c: str) -> dict[str, Any]:
         "shape": game_shape(games, c),
         "talents": talent_picks(games, c),
         "bans": ban_rates(games)[:10] if games else [],
+        # against teams with more or less crowd control (10/5 hotfix: Immobilize stops Void Step)
+        "vs_control": {st: by_enemy_trait(games, c, st) for st in CONTROL},
     }
 
 
@@ -55,12 +63,34 @@ def _hotfix(sl: list[dict[str, Any]], c: str, build: str) -> dict[str, Any]:
     return {"build": build, "before": _phase(before, c), "after": _phase(after, c)}
 
 
+def official_hotfix_day(patchnotes: Path, week: str, hero: str) -> str | None:
+    """The day of an official hotfix to `hero` inside the week (Blizzard's notes), if any."""
+    from datetime import date, timedelta
+
+    if not patchnotes.exists():
+        return None
+    y, w = week.split("-w")
+    monday = date.fromisocalendar(int(y), int(w), 1)
+    days = {(monday + timedelta(days=i)).isoformat() for i in range(-1, 7)}
+    notes = json.loads(patchnotes.read_text(encoding="utf-8")).get("notes", [])
+    hits = [
+        h["date"]
+        for n in notes
+        for h in n.get("hotfixes") or []
+        if h.get("date") in days and hero in (h.get("heroes") or {})
+    ]
+    return min(hits) if hits else None
+
+
 def analyse(
     week: str, snapshots: Path, *, centre: str | None, answers: int, hotfix: str | None = None
 ) -> dict[str, Any]:
     games = load_week(snapshots, week)
     sl, qm = games["sl"], games["qm"]
     c = centre or centre_of(sl)
+    if hotfix == "auto":
+        day = official_hotfix_day(Path("data/patchnotes.json"), week, c)
+        hotfix = build_after(sl, day) if day else None
     drafted = answered_by(sl, c)
     top = [r["hero"] for r in drafted[:answers]]
     return {
@@ -128,6 +158,11 @@ def summary(r: dict[str, Any]) -> str:
             lines.append(
                 "    bans: " + ", ".join(f"{b['hero']} {b['ban_rate']:.0f}%" for b in p["bans"][:6])
             )
+            for st, v in p["vs_control"].items():
+                lines.append(
+                    f"    vs {st}: more {v['more']['games']}g {_pct(v['more']['win_rate'])}, "
+                    f"less {v['less']['games']}g {_pct(v['less']['win_rate'])} (cut {v['cut']})"
+                )
     for a, x in r["answers"].items():
         lines.append(f"== {a} vs {r['centre']}")
         for kind in ("sl", "qm"):
@@ -154,7 +189,11 @@ def main() -> None:
     ap.add_argument("--snapshots", required=True)
     ap.add_argument("--centre")
     ap.add_argument("--answers", type=int, default=4)
-    ap.add_argument("--hotfix", help="a build that changed the centre this week, e.g. 2.57.0.98348")
+    ap.add_argument(
+        "--hotfix",
+        help="a build that changed the centre this week (e.g. 2.57.0.98348), or 'auto': the build "
+        "of an official hotfix to the centre dated in the week (data/patchnotes.json)",
+    )
     ap.add_argument("--out")
     args = ap.parse_args()
     r = analyse(
