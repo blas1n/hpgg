@@ -21,6 +21,8 @@ class Settings(BaseSettings):
     map_call_spacing_seconds: float = 60.0
     # the weekly report's Storm League average stats, about once a week (collector/averages.py)
     average_stats: bool = True
+    # the weekly report: talent picks of the heroes a new issue cites (collector/talent_details.py)
+    weekly_talents: bool = True
     # the weekly report's per-game records (collector/replay_sample.py, owner 2026-10-06)
     replay_sample: bool = True
     replay_sl_per_run: int = 1200

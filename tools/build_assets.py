@@ -270,6 +270,15 @@ def _ability_names(strings: dict[str, Any]) -> dict[str, str]:
     )
 
 
+def _ability_texts(strings: dict[str, Any]) -> dict[str, dict[str, str]]:
+    """Ability id → tooltip / cooldown / cost text (heroes-data2 only; empty for heroes-data)."""
+    g = strings["gamestrings"].get("ability", {})
+    return {
+        f: _by_name_id({"gamestrings": {"abiltalent": g}}, f)
+        for f in ("full", "cooldown", "energy")
+    }
+
+
 # abilities the hotfix diff can name (#62); mount, hearth, spray, voice, item actives are not
 _ABILITY_TIERS = {"basic", "heroic", "trait"}
 # Blizzard's patch notes write the heroic as [R] and the trait as [D]
@@ -286,6 +295,7 @@ def hero_game_ids(
     unit, its weapons, the life/energy words of the game strings, and each ability by the
     common id prefix of its buttons ("MalGanisFelClaws" for First/Second/Third)."""
     ko_name, en_name = _ability_names(kokr), _ability_names(enus)
+    ko_text, en_text = _ability_texts(kokr), _ability_texts(enus)
     ko_unit = kokr["gamestrings"].get("unit", {})
     en_unit = enus["gamestrings"].get("unit", {})
     idx = hero_index(herodata)
@@ -319,11 +329,24 @@ def hero_game_ids(
             # the buttons of one ability share an id prefix longer than the hero's own
             keys = [prefix] if len(prefix) > len(key) else ids
             first = group[0]
+            # what it does (the weekly report reads a hero's kit): the first button's own text
+            text: dict[str, str] = {}
+            for field, out_ko, out_en in (("full", "desc", "desc_en"), ("cooldown", "cd", "cd_en")):
+                for i in ids:
+                    if i in ko_text[field]:
+                        text[out_ko] = clean_desc(ko_text[field][i])
+                        if i in en_text[field]:
+                            text[out_en] = clean_desc(en_text[field][i], "en")
+                        break
+            cost = next((ko_text["energy"][i] for i in ids if i in ko_text["energy"]), None)
+            if cost:
+                text["cost"] = clean_desc(cost)
             for k in keys:
                 abilities[k] = {
                     "ko": name,
                     "en": next((en_name[i] for i in ids if i in en_name), name),
                     "key": _HOTKEY.get(first["abilityType"], first["abilityType"]),
+                    **text,
                 }
 
         def words(field: str, key: str = key) -> dict[str, str] | None:
@@ -427,7 +450,12 @@ def _v4_strings(strings: dict[str, Any]) -> dict[str, Any]:
                 "cooldown": both("cooldownText", talent, ability),
             },
             # abilities by their own name (hero_game_ids); v4 had one list for both
-            "ability": {"name": both("name", ability, talent)},
+            "ability": {
+                "name": both("name", ability, talent),
+                "full": both("fullText", ability, talent),
+                "cooldown": both("cooldownText", ability, talent),
+                "energy": both("energyText", ability, talent),
+            },
         }
     }
 
