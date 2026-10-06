@@ -40,6 +40,7 @@ def settings(tmp_path: Path, **kw: Any) -> Settings:
             "patchnotes_limit": 3,
             "average_stats": False,
             "weekly_talents": False,
+            "replay_sample": False,
             **kw,
         },  # the three notes in fixtures/patchnotes
     )
@@ -812,3 +813,53 @@ async def test_failed_weekly_talents_never_fail_the_run(
     monkeypatch.setattr(run_mod, "fetch_weekly_talents", boom)
     s = settings(tmp_path, weekly_talents=True)
     assert await run(s, sleep=fake_sleep, now=lambda: "2026-09-28T18:25:00Z") == 0
+
+
+@respx.mock
+async def test_a_run_samples_replays_into_the_days_snapshot_and_keeps_the_cursor(
+    tmp_path: Path, raw_by_map, patches_payload, fake_sleep, monkeypatch
+) -> None:
+    import collector.run as run_mod
+    from collector.replay_sample import SampleResult
+
+    mock_api(raw_by_map, patches_payload)
+    seen: list[dict[str, Any]] = []
+
+    async def fake_sample(c: Any, s: Any, **kw: Any) -> SampleResult:
+        seen.append(kw)
+        return SampleResult(
+            records={"sl": [{"id": 7, "type": "sl"}], "qm": []}, cursor={"sl": 7, "qm": 9}
+        )
+
+    monkeypatch.setattr(run_mod, "sample_replays", fake_sample)
+    s = settings(tmp_path, replay_sample=True)
+    assert await run(s, sleep=fake_sleep, now=lambda: "2026-09-28T18:25:00Z") == 0
+    assert seen[0]["cursor"] == {}
+    day = s.snapshot_out_dir / "2026-09-29"
+    import gzip
+
+    with gzip.open(day / "replays_sl.jsonl.gz", "rt", encoding="utf-8") as f:
+        assert [json.loads(line)["id"] for line in f] == [7]
+    assert not (day / "replays_qm.jsonl.gz").exists()
+    cursor = json.loads((s.data_dir / "replays" / "cursor.json").read_text())
+    assert cursor["cursor"] == {"sl": 7, "qm": 9}
+    # the next run starts from it
+    assert await run(s, sleep=fake_sleep, now=lambda: "2026-09-29T18:25:00Z") == 0
+    assert seen[1]["cursor"] == {"sl": 7, "qm": 9}
+
+
+@respx.mock
+async def test_failed_replay_sampling_never_fails_the_run(
+    tmp_path: Path, raw_by_map, patches_payload, fake_sleep, monkeypatch
+) -> None:
+    import collector.run as run_mod
+
+    mock_api(raw_by_map, patches_payload)
+
+    async def boom(c: Any, s: Any, **kw: Any) -> Any:
+        raise RuntimeError("x")
+
+    monkeypatch.setattr(run_mod, "sample_replays", boom)
+    s = settings(tmp_path, replay_sample=True)
+    assert await run(s, sleep=fake_sleep, now=lambda: "2026-09-28T18:25:00Z") == 0
+    assert not (s.data_dir / "replays" / "cursor.json").exists()
