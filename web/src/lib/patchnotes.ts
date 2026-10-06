@@ -2,6 +2,7 @@
  *  Pure: computed at build time from data/patchnotes.json. */
 import type { Hotfix, HotfixesFile, HotfixItem, NoteHotfix, PatchDirection, PatchGroup, PatchNote, PatchNotesFile, PatchVerdict } from "../data";
 import type { Locale } from "../i18n/locale";
+import { messages } from "../i18n/messages";
 
 export const PATCH_NOTES_SHOWN = 3;
 
@@ -45,6 +46,8 @@ const newer = (a: string, b: string) => {
 
 // hotfix numbers as the game data has them, with a typographic minus
 const num = (v: string) => v.replace(/^-/, "\u2212");
+const inUnit = (v: string, unit: "s" | "%" | "x" | undefined, locale: Locale) =>
+  unit === "x" ? `×${num(v)}` : unit === "s" ? messages[locale].hero.hotfixSeconds(num(v)) : `${num(v)}${unit ?? ""}`;
 
 const pick = (locale: Locale, v: { ko: string | null; en: string | null }) => (locale === "ko" ? v.ko : v.en);
 const pickOrOther = (locale: Locale, v: { ko: string | null; en: string | null }) => pick(locale, v) ?? (locale === "ko" ? v.en : v.ko);
@@ -72,7 +75,7 @@ export function hotfixGroups(items: HotfixItem[], locale: Locale): ChangeGroup[]
     const name = t.kind === "base" ? null : pick(locale, t);
     if (t.kind !== "base" && !name) return [];
     const changes = t.changes.map((c) => ({
-      text: `${c.label ? `${c.label[locale]} ` : ""}${num(c.old)} → ${num(c.new)}`,
+      text: `${c.label ? `${c.label[locale]} ` : ""}${inUnit(c.old, c.unit, locale)} → ${inUnit(c.new, c.unit, locale)}`,
       direction: "neutral" as const,
     }));
     const ability = name && t.key ? `${name} [${t.key}]` : name;

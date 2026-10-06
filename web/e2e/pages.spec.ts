@@ -258,7 +258,8 @@ test("hero detail: an unannounced hotfix shows the talent and its numbers old �
   await expect(hotfix.locator("[data-status]")).toHaveText("현재 통계 기준");
   await expect(hotfix.locator("a")).toHaveCount(0);
   await expect(hotfix).toContainText("다시 처음으로");
-  await expect(hotfix.locator("[data-change]").first()).toHaveText(/−0\.55 → −0\.5/);
+  // the number says which stat it is, in its unit (parser 4, owner 2026-10-06)
+  await expect(hotfix.locator("[data-change]").first()).toHaveText(/피해 배율 −55% → −50%/);
   await expect(page.locator("#patches [data-note='2.55.17.97650']")).toContainText("만성적인 현상");
 
   await page.goto("/en/hots/heroes/chromie/");
@@ -266,6 +267,7 @@ test("hero detail: an unannounced hotfix shows the talent and its numbers old �
   await expect(en.locator("[data-verdict]")).toHaveText("Hotfix");
   await expect(en).toContainText("Unannounced hotfix 2.55.17.97771");
   await expect(en).toContainText("Once Again the First Time");
+  await expect(en.locator("[data-change]").first()).toHaveText(/Damage Modifier −55% → −50%/);
 });
 
 test("hero detail: a hotfix Blizzard added to a note is the note's, in Blizzard's words, not unannounced numbers", async ({ page }) => {

@@ -16,7 +16,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-HOTFIX_PARSER = 3
+HOTFIX_PARSER = 4
 
 # attributes that name a slot rather than hold a value
 _KEY_ATTRS = {"id", "index", "parent"}
@@ -31,6 +31,11 @@ class NumericChange:
     new: str
     # the changed element's other attribute values (validators, indexes): what it is gated on
     context: tuple[str, ...]
+    # a talent's modification: the catalog and field it modifies (Behavior, Modification.Unified…)
+    # and how (FlatModification, MultiplyLevelModification)
+    catalog: str = ""
+    field: str = ""
+    how: str = ""
 
 
 def _num(raw: str | None, consts: dict[str, str]) -> float | None:
@@ -51,7 +56,7 @@ def _fmt(v: float) -> str:
     return "0" if s in {"-0", ""} else s
 
 
-_Flat = dict[str, tuple[str, str, float, tuple[str, ...]]]
+_Flat = dict[str, tuple[str, str, float, tuple[str, ...], tuple[str, str, str]]]
 
 
 def _flatten(xml: str) -> tuple[_Flat, list[str]]:
@@ -68,6 +73,11 @@ def _flatten(xml: str) -> tuple[_Flat, list[str]]:
 
     def walk(el: ET.Element, entry: str, tag: str, path: str) -> None:
         counts: dict[str, int] = {}
+        # <Modifications><Catalog value=…/><Field value=…/><Value value=…/>: what Value modifies
+        named = {
+            c.tag: str(c.get("value", "")) for c in el if c.tag in {"Catalog", "Field", "Type"}
+        }
+        target = (named.get("Catalog", ""), named.get("Field", ""), named.get("Type", ""))
         for child in el:
             n = counts.get(child.tag, 0)
             counts[child.tag] = n + 1
@@ -80,7 +90,13 @@ def _flatten(xml: str) -> tuple[_Flat, list[str]]:
                 v = _num(raw, consts)
                 if v is not None:
                     key = f"{here}@{k}"
-                    out[key] = (entry, tag, v, context)
+                    out[key] = (
+                        entry,
+                        tag,
+                        v,
+                        context,
+                        target if child.tag == "Value" else ("", "", ""),
+                    )
                     order.append(key)
             walk(child, entry, tag, here)
 
@@ -102,10 +118,12 @@ def numeric_changes(old_xml: str, new_xml: str) -> list[NumericChange]:
     for key in order:
         if key not in old:
             continue
-        entry, tag, v_new, context = new[key]
+        entry, tag, v_new, context, target = new[key]
         v_old = old[key][2]
         if _fmt(v_old) != _fmt(v_new):
-            changes.append(NumericChange(entry, tag, key, _fmt(v_old), _fmt(v_new), context))
+            changes.append(
+                NumericChange(entry, tag, key, _fmt(v_old), _fmt(v_new), context, *target)
+            )
     return changes
 
 
@@ -160,6 +178,8 @@ class TalentIndex:
         self.names = names
         self.game = game or {}
         self._owner = {nid: slug for slug, ts in talents.items() for nid in ts}
+        # ids differ in capitals only (XalatathSilenceOftheLamb… for XalatathSilenceOfTheLamb)
+        self._lower = {nid: nid.lower() for nid in self._owner}
         # the hero's own prefix ("Chromie"), stripped to match a talent named inside another id
         self._prefix = {slug: _hero_prefix(list(ts)) for slug, ts in talents.items() if ts}
         self._weapons = {w: slug for slug, g in self.game.items() for w in g.get("weapons", [])}
@@ -189,7 +209,8 @@ class TalentIndex:
 
     def _talent(self, c: NumericChange) -> Owner | None:
         # 1. the entry is named after the talent: ChenMasteryKegSmashATouchOfHoney, …Accumulator
-        named = [nid for nid in self._owner if c.entry.startswith(nid)]
+        entry = c.entry.lower()
+        named = [nid for nid, low in self._lower.items() if entry.startswith(low)]
         if named:
             nid = max(named, key=len)
             return Owner(self._owner[nid], "talent", nid)
@@ -197,13 +218,13 @@ class TalentIndex:
         #    GallDoubleTrouble)
         #    or in what the change is gated on: Validator="ChromieCreatorDoesHaveSandBlast
         #    OnceAgainTheFirstTimeQuestCompleteBehavior" names ChromieSandBlastOnceAgainTheFirstTime
-        where = (c.entry[1:], *c.context)  # [1:]: the whole id is rule 1's
+        where = tuple(v.lower() for v in (c.entry[1:], *c.context))  # [1:]: rule 1's
         best: tuple[int, str, str] | None = None
         for slug, prefix in self._prefix.items():
             if len(prefix) < 3 or not c.entry.startswith(prefix):
                 continue
             for nid in self.talents[slug]:
-                core = nid[len(prefix) :]
+                core = nid[len(prefix) :].lower()
                 hit = len(core) >= 6 and any(core in v for v in where)
                 if hit and (best is None or len(core) > best[0]):
                     best = (len(core), slug, nid)
@@ -255,6 +276,86 @@ class TalentIndex:
         return {"kind": "base", "id": "base", "ko": None, "en": None}
 
 
+# --- what a number is (parser 4) ----------------------------------------------------------------
+# Owner 10-06: bare "5 → 2" lines say nothing. A number is named only where its field says what it
+# is, in the words the game's strings use (gamestrings: 피해, 사거리, 지속시간, 이동 속도, …);
+# anything else stays bare rather than guessed. Units: "s" seconds; "%" a fraction, shown ×100;
+# "x" a multiplier (a talent's MultiplyLevelModification: Anchored Core's radius ×1.5 → ×1.25).
+
+Word = tuple[dict[str, str], str]  # (label, unit)
+
+_W = lambda ko, en, unit="": ({"ko": ko, "en": en}, unit)  # noqa: E731
+_FIELD_WORDS: dict[str, Word] = {
+    "LeechFraction": _W("흡혈", "Life Steal", "%"),
+    "MultiplicativeModifierArray@Modifier": _W("피해 배율", "Damage Modifier", "%"),
+    "UnifiedMoveSpeedFactor": _W("이동 속도", "Movement Speed", "%"),
+    "CastIntroTime": _W("시전 시간", "Cast Time", "s"),
+    "HealDealtAdditiveMultiplier": _W("주는 치유량", "Healing Dealt", "%"),
+    "DamageDealtFraction": _W("주는 피해", "Damage Dealt", "%"),
+    "Radius": _W("범위", "Radius"),
+    "Range": _W("사거리", "Range"),
+    "FlightTime": _W("투사체 비행 시간", "Missile Flight Time", "s"),
+}
+_DAMAGE = _W("피해량", "Damage")
+_DURATION = _W("지속시간", "Duration", "s")
+_COOLDOWN = _W("재사용 대기시간", "Cooldown", "s")
+_COOLDOWN_CUT = _W("재사용 대기시간 감소", "Cooldown Reduction", "s")
+_COST = _W("소모량", "Cost")
+
+
+def _slot(c: NumericChange) -> tuple[str, str]:
+    """ "…/AreaArray[0]/Radius[0]@value" → ("Radius", "value")."""
+    last, attr = c.path.rsplit("/", 1)[-1].rsplit("@", 1)
+    return last.split("[", 1)[0], attr
+
+
+# not balance: what the game draws (actors), where things sit (offsets, coordinates) and how often
+# a behavior looks again (Void Step's triangle and Void Eruption's guides, 98348)
+_PLACE = {"PeriodicOffsetArray", "VertexArray", "LocalOffset", "PeriodicPeriodArray"}
+
+
+def _noise(c: NumericChange) -> bool:
+    leaf, attr = _slot(c)
+    return (
+        c.tag.startswith("CActor")
+        or c.catalog == "Actor"
+        or attr in {"X", "Y", "Z"}
+        or leaf in _PLACE
+        or (c.tag.startswith("CBehavior") and leaf == "Period")
+    )
+
+
+def _word(c: NumericChange) -> Word | None:
+    word = _stat(c)
+    if word is not None and "Multiply" in c.how:
+        return word[0], "x"
+    return word
+
+
+def _stat(c: NumericChange) -> Word | None:
+    leaf, attr = _slot(c)
+    if c.field:  # a talent's modification: its own Field names the number
+        leaf, attr, catalog = re.sub(r"\[\d*\]", "", c.field).split(".")[-1], "value", c.catalog
+    else:
+        catalog = re.sub(r"^C([A-Z][a-z]+).*", r"\1", c.tag)  # CBehaviorBuff → Behavior
+    if any("Cooldown" in v for v in (c.field, *c.context)):
+        # Double Trouble: Operation Subtract on Cost.Cooldown.TimeUse — a cut, not the cooldown
+        return _COOLDOWN_CUT if "Subtract" in c.context else _COOLDOWN
+    if leaf == "Amount" and catalog == "Effect" and "Damage" in (c.tag + c.field + c.entry):
+        return _DAMAGE
+    if leaf == "Duration" and catalog == "Behavior":
+        return _DURATION
+    if c.tag == "CEffectModifyCatalogNumeric" and "Cost" in c.entry:
+        return _COST
+    return _FIELD_WORDS.get(f"{leaf}@{attr}") or (
+        _FIELD_WORDS.get(leaf) if attr == "value" else None
+    )
+
+
+def _in_unit(v: str, unit: str) -> str:
+    return _fmt(float(v) * 100) if unit == "%" else v
+
+
 def _same(c: NumericChange) -> tuple[str, str, str]:
     return (c.path.rsplit("/", 1)[-1], c.old, c.new)
 
@@ -271,7 +372,7 @@ def hero_changes(
     heroes: dict[str, dict[tuple[str, str], dict[str, Any]]] = {}
     for old, new in files:
         effects = index.weapon_effects(new)
-        changes = [(c, index.owner(c, effects)) for c in numeric_changes(old, new)]
+        changes = [(c, index.owner(c, effects)) for c in numeric_changes(old, new) if not _noise(c)]
         # the same number changed the same way outside every owner too (Mal'Ganis's leech on
         # every damage effect): the hero's trait changed, not the talents or abilities
         shared = {_same(c) for c, own in changes if own is None}
@@ -286,8 +387,21 @@ def hero_changes(
                 if _leaf(c) == "Period":  # the game shows attack speed as attacks per second
                     pair = {"old": _per_second(c.old), "new": _per_second(c.new)}
                 pair["label"] = own.label
+            elif (word := _word(c)) is not None:
+                label, unit = word
+                pair = {"old": _in_unit(c.old, unit), "new": _in_unit(c.new, unit), "label": label}
+                if unit:
+                    pair["unit"] = unit
             if pair not in item["changes"]:
                 item["changes"].append(pair)
+    for items in heroes.values():
+        for item in items.values():
+            # the same old → new under a word elsewhere in the item (a cost and its tooltip
+            # copy): shown once, named
+            named = {(p["old"], p["new"]) for p in item["changes"] if "label" in p}
+            item["changes"] = [
+                p for p in item["changes"] if "label" in p or (p["old"], p["new"]) not in named
+            ]
     return {
         hero: sorted(items.values(), key=lambda i: _KIND_ORDER[i["kind"]])
         for hero, items in heroes.items()
