@@ -1,15 +1,20 @@
-"""팀운 (#90, owner 2026-10-06): how strong the player's teammates were against the opponents.
+"""팀운 (#90, owner 2026-10-06): how strong the player's team was against the opponents.
 
-Per game: the mean MMR of the four teammates minus the mean of the five opponents, each before
-the game. A replay answer carries the MMR after it (`player_conservative_rating` and
+Per game: the mean MMR of the player's whole team (the player too) minus the opponents', each
+before the game. The player is in it because matchmaking balances whole teams: the four
+teammates alone are weaker the better the player is, and a strong player read 극악 every week
+(a 24-player sample, 2026-10-06; teammates-only gap vs the player's lead over them: r = −0.33).
+The whole team against the opponents is the matchmaker's luck.
+
+A replay answer carries the MMR after the game (`player_conservative_rating` and
 `player_change` match the match list's after-each-game row, replay 65597227), so before =
 mmr − mmr_change. Measured on the MMR after, a won game would make the winners look stronger and
 팀운 would only restate the record. Performance (teammates' KDA, damage) is circular for the same
 reason and is not used.
 
 Over the newest `games` of a mode from the match list, one replay each (cached as one game in
-full is, shared with the ▾ on a game card). Private players are left out of a replay answer: a side
-needs two known teammates and three known opponents to count. When the Replays bucket is spent,
+full is, shared with the ▾ on a game card). Private players are left out of a replay answer: each
+side needs three known players to count. When the Replays bucket is spent,
 the answer has the games so far and says it is partial.
 """
 
@@ -54,7 +59,7 @@ def _team(players: list[dict[str, Any]], me: str) -> list[dict[str, Any]]:
 
 # a game is good or bad luck beyond this many MMR points either way
 GOOD = 50.0
-MIN_MATES, MIN_OPPS = 2, 3
+MIN_KNOWN = 3
 
 
 def _pre(p: dict[str, Any]) -> float | None:
@@ -65,7 +70,7 @@ def _pre(p: dict[str, Any]) -> float | None:
 
 
 def game_gap(game: dict[str, Any], battletag: str) -> dict[str, Any] | None:
-    """One game's teammates-minus-opponents MMR before it, or None if it cannot be told."""
+    """One game's team-minus-opponents MMR before it, or None if it cannot be told."""
     me = battletag.casefold()
     teams = game.get("teams") or []
     mine = next(
@@ -78,15 +83,11 @@ def game_gap(game: dict[str, Any], battletag: str) -> dict[str, Any] | None:
     )
     if mine is None:
         return None
-    mates = [
-        v
-        for p in mine["players"]
-        if (p.get("battletag") or "").casefold() != me and (v := _pre(p)) is not None
-    ]
+    ours = [v for p in mine["players"] if (v := _pre(p)) is not None]
     opps = [v for t in teams if t is not mine for p in t["players"] if (v := _pre(p)) is not None]
-    if len(mates) < MIN_MATES or len(opps) < MIN_OPPS:
+    if len(ours) < MIN_KNOWN or len(opps) < MIN_KNOWN:
         return None
-    team, opp = statistics.fmean(mates), statistics.fmean(opps)
+    team, opp = statistics.fmean(ours), statistics.fmean(opps)
     hero = next(
         (p.get("hero") for p in mine["players"] if (p.get("battletag") or "").casefold() == me),
         None,
