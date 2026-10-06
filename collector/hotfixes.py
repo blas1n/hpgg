@@ -16,7 +16,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-HOTFIX_PARSER = 4
+HOTFIX_PARSER = 5
 
 # attributes that name a slot rather than hold a value
 _KEY_ATTRS = {"id", "index", "parent"}
@@ -356,6 +356,23 @@ def _stat(c: NumericChange) -> Word | None:
     )
 
 
+# which way helps the hero: more of a stat, except these (a shorter flight is a faster missile)
+_LESS_IS_BETTER = {"Cast Time", "Missile Flight Time", "Cooldown", "Cost"}
+# below zero these are the hero's debuffs on enemies, judged by size as the notes' lines are (a slow
+# −30% → −20% is weaker: Chen 97650, Garrosh's Oppressor 98285 ▼). Any other negative is the
+# hero's own penalty: −55% → −50% echo damage is a buff (Chromie 97650).
+_DEBUFFS = {"Movement Speed", "Damage Dealt", "Healing Dealt"}
+
+
+def _direction(label: dict[str, str], old: str, new: str) -> str | None:
+    a, b = float(old), float(new)
+    if label["en"] in _DEBUFFS and a < 0 and b < 0:
+        a, b = -a, -b
+    if a == b:
+        return None
+    return "up" if (b > a) != (label["en"] in _LESS_IS_BETTER) else "down"
+
+
 def _in_unit(v: str, unit: str) -> str:
     return _fmt(float(v) * 100) if unit == "%" else v
 
@@ -396,6 +413,9 @@ def hero_changes(
                 pair = {"old": _in_unit(c.old, unit), "new": _in_unit(c.new, unit), "label": label}
                 if unit:
                     pair["unit"] = unit
+            # as shown: attack speed is per second, the period's inverse
+            if "label" in pair and (way := _direction(pair["label"], pair["old"], pair["new"])):
+                pair["direction"] = way
             if pair not in item["changes"]:
                 item["changes"].append(pair)
     for items in heroes.values():

@@ -72,14 +72,15 @@ export function noteGroups(groups: PatchGroup[], locale: Locale, untranslated = 
     .filter((g) => g.changes.length > 0);
 }
 
-/** A hotfix build's items for one hero: the game data's numbers, old → new (no direction is judged). */
+/** A hotfix build's items for one hero: the game data's numbers, old → new; ▲▼ only where the collector named the
+ *  stat (parser 5), a bare number stays neutral. */
 export function hotfixGroups(items: HotfixItem[], locale: Locale): ChangeGroup[] {
   return items.flatMap((t) => {
     const name = t.kind === "base" ? null : pick(locale, t);
     if (t.kind !== "base" && !name) return [];
     const changes = t.changes.map((c) => ({
       text: `${c.label ? `${c.label[locale]} ` : ""}${inUnit(c.old, c.unit, locale)} → ${inUnit(c.new, c.unit, locale)}`,
-      direction: "neutral" as const,
+      direction: c.direction ?? ("neutral" as const),
     }));
     const ability = name && t.key ? `${name} [${t.key}]` : name;
     return [{ section: t.kind === "talent" ? ("talents" as const) : ("base" as const), level: null, ability, changes }];
