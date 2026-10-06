@@ -152,3 +152,17 @@ describe("a hotfix number says which stat it is (parser 4)", () => {
     expect(lines("en")).toEqual(["Damage 90 → 72", "Missile Flight Time 0.7s → 0.65s", "Movement Speed −30% → −20%", "Radius ×1.5 → ×1.25"]);
   });
 });
+
+describe("a named hotfix number carries its direction (owner 10-06: the arrows were gone on Korean pages)", () => {
+  const one: HotfixesFile = { builds: [{ build: "2.57.0.99999", previous: "2.57.0.98348", first_seen: "2026-10-10T00:00:00Z", parser: 5, heroes: {
+    "Xal'atath": [
+      { kind: "ability", id: "XalatathVoidVolley", ko: "공허 화살", en: "Void Volley", key: "D", changes: [{ old: "90", new: "72", label: { ko: "피해량", en: "Damage" }, direction: "down" }] },
+      { kind: "talent", id: "XalatathSilenceOfTheLamb", ko: "양의 침묵", en: "Silence of the Lamb", changes: [{ old: "1", new: "1.5", label: { ko: "지속시간", en: "Duration" }, unit: "s", direction: "up" }, { old: "3", new: "4" }] },
+    ],
+  } }] };
+
+  it("▲▼ as the collector judged it; a bare number stays unjudged", () => {
+    const g = heroPatchNotes(null, "Xal'atath", REF, "ko", one).notes[0]!.groups;
+    expect(g.flatMap((x) => x.changes.map((c) => c.direction))).toEqual(["down", "up", "neutral"]);
+  });
+});
