@@ -276,3 +276,58 @@ def load_week(snapshot_dir: Path, week: str) -> dict[str, list[Game]]:
                         out[kind].append(g)
         out[kind].sort(key=lambda g: g["id"])
     return out
+
+
+def _build_key(version: str) -> tuple[int, ...]:
+    return tuple(int(x) for x in version.split(".") if x.isdigit())
+
+
+def split_by_build(games: list[Game], build: str) -> tuple[list[Game], list[Game]]:
+    """Games before `build` and from it on (a hotfix in the middle of a week)."""
+    cut = _build_key(build)
+    old = [g for g in games if _build_key(str(g.get("version") or "0")) < cut]
+    new = [g for g in games if _build_key(str(g.get("version") or "0")) >= cut]
+    return old, new
+
+
+def talent_picks(games: list[Game], hero: str) -> dict[str, list[dict[str, Any]]]:
+    """The hero's own talents per level in these games: share of its games and win rate, most
+    picked first."""
+    played = [(g, p) for g in games if (p := _player(g, hero)) is not None]
+    out: dict[str, list[dict[str, Any]]] = {}
+    for i, level in enumerate(LEVELS):
+        count: Counter[str] = Counter()
+        wins: Counter[str] = Counter()
+        for g, p in played:
+            t = (p.get("talents") or [None] * 7)[i]
+            if t:
+                count[t] += 1
+                wins[t] += int(g["winner"] == p["team"])
+        total = sum(count.values())
+        if total:
+            out[str(level)] = [
+                {
+                    "talent": t,
+                    "games": n,
+                    "share": n / total * 100,
+                    "win_rate": _rate(wins[t], n),
+                }
+                for t, n in count.most_common()
+            ]
+    return out
+
+
+def ban_rates(games: list[Game]) -> list[dict[str, Any]]:
+    """Where the ban slots go: each hero's share of games it is banned in, and banned in the
+    first ban phase (the first four bans), most banned first."""
+    banned: Counter[str] = Counter()
+    first: Counter[str] = Counter()
+    for g in games:
+        bans = [d for d in g.get("draft") or [] if d[0] == "b"]
+        banned.update({d[2] for d in bans if d[2]})
+        first.update({d[2] for d in bans[:4] if d[2]})
+    n = len(games)
+    return [
+        {"hero": h, "ban_rate": k / n * 100, "first_phase_rate": first[h] / n * 100}
+        for h, k in banned.most_common()
+    ]
