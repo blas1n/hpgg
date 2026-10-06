@@ -5,7 +5,10 @@ import { assetUrl, loadAwards, loadTalents, type AwardTable, type HeroTable, typ
 import { useLocale, useT } from "@/i18n/client";
 import type { AwardView } from "@/lib/awards";
 import { briefing, matchRows, type Briefing, type MatchesResponse, type MatchTalent, type MatchView } from "@/lib/matches";
+import { FEATURES } from "@/features";
+import type { Region } from "@/lib/players";
 import { fetchReplay, replayView, type ReplayResponse } from "@/lib/replays";
+import { fetchTeamLuck, luckGrade, type LuckGrade } from "@/lib/teamLuck";
 import { Card, CardHeader, cx, Portrait } from "../ui";
 
 const PAGE = 20;
@@ -16,7 +19,7 @@ const wrClass = (wr: number | null) => (wr === null ? "text-muted" : wr >= 50 ? 
 const pct = (n: number | null) => (n === null ? "–" : `${n.toFixed(0)}%`);
 
 /** 전적 검색 below the profile: the briefing over the newest games, the MMR line, and every loaded game. */
-export function MatchHistory({ data, heroes, maps, me }: { data: MatchesResponse; heroes: HeroTable; maps: MapTable; me: string }) {
+export function MatchHistory({ data, heroes, maps, me, region }: { data: MatchesResponse; heroes: HeroTable; maps: MapTable; me: string; region: Region }) {
   const locale = useLocale();
   const t = useT().players.games;
   const [shown, setShown] = useState(PAGE);
@@ -25,6 +28,17 @@ export function MatchHistory({ data, heroes, maps, me }: { data: MatchesResponse
   const [awards, setAwards] = useState<AwardTable | null>(null);
   const b = useMemo(() => briefing(data.matches, heroes, locale), [data, heroes, locale]);
   const rows = useMemo(() => matchRows(data.matches, heroes, maps, talents, locale, new Date(), awards), [data, heroes, maps, talents, locale, awards]);
+
+  // 팀운 (#90): one line in the briefing; "loading" until the server has opened the games' replays
+  const [luck, setLuck] = useState<LuckGrade | null | "loading">(FEATURES.teamluck ? "loading" : null);
+  useEffect(() => {
+    if (!FEATURES.teamluck) return;
+    let live = true;
+    void fetchTeamLuck(me, region, "all").then((r) => live && setLuck(r.kind === "ok" ? luckGrade(r.data.summary.gap_avg) : null));
+    return () => {
+      live = false;
+    };
+  }, [me, region]);
 
   useEffect(() => {
     let live = true;
@@ -59,7 +73,7 @@ export function MatchHistory({ data, heroes, maps, me }: { data: MatchesResponse
           {t.basic}
         </p>
       )}
-      <BriefingCard b={b} />
+      <BriefingCard b={b} luck={luck} />
       <Card aria-labelledby="h-games">
         <CardHeader id="h-games" title={t.listTitle} sub={t.listSub(String(rows.length))} />
         <ul id="player-matches" className="divide-y divide-line">
@@ -82,7 +96,15 @@ export function MatchHistory({ data, heroes, maps, me }: { data: MatchesResponse
   );
 }
 
-function BriefingCard({ b }: { b: Briefing }) {
+const LUCK_TONE: Record<LuckGrade, string> = {
+  best: "text-pos font-extrabold",
+  good: "text-pos",
+  normal: "text-fg",
+  bad: "text-neg",
+  worst: "text-neg font-extrabold",
+};
+
+function BriefingCard({ b, luck }: { b: Briefing; luck: LuckGrade | null | "loading" }) {
   const t = useT().players;
   const g = t.games;
   return (
@@ -117,6 +139,12 @@ function BriefingCard({ b }: { b: Briefing }) {
                 <Avg label={g.stat.damageTaken} value={int(b.avg.damageTaken)} />
                 <Avg label={g.stat.experience} value={int(b.avg.experience)} />
                 {b.avg.healing !== null && <Avg label={g.stat.healing} value={int(b.avg.healing)} />}
+                {luck !== null && (
+                  <div id="brief-luck" data-luck={luck} title={t.teamLuck.help} className="flex justify-between gap-2 border-b border-line/60 py-0.5">
+                    <dt className="truncate text-fg-2">{t.teamLuck.label}</dt>
+                    <dd className={luck === "loading" ? "text-muted" : LUCK_TONE[luck]}>{luck === "loading" ? t.teamLuck.loading : t.teamLuck.grades[luck]}</dd>
+                  </div>
+                )}
               </dl>
             </div>
           )}

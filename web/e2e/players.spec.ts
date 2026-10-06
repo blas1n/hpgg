@@ -63,8 +63,8 @@ test("players: a shared link runs the search on load", async ({ page }) => {
   const seen = await mockApi(page, (route) => json(route, 200, fixture));
   await page.goto("./players/?tag=Zemill%231940&region=NA");
   await expect(page.locator("#player-result")).toHaveAttribute("data-state", "ok");
-  // one profile call and one game-list call
-  expect(seen.map((u) => u.pathname).sort()).toEqual(["/v1/players", "/v1/players/matches"]);
+  // one profile call and one game-list call (팀운, when on, asks its own: tests/e2e teamluck.spec.ts)
+  expect(seen.map((u) => u.pathname).filter((p) => p !== "/v1/players/teamluck").sort()).toEqual(["/v1/players", "/v1/players/matches"]);
   await expect(page.locator("#player-search-tag")).toHaveValue("Zemill#1940");
   await expect(page.locator("#player-search-region")).toHaveValue("NA");
 });
