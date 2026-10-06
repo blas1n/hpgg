@@ -41,7 +41,7 @@ export function MatchHistory({ data, heroes, maps, me, region }: { data: Matches
     const yardstickP = FEATURES.carry ? loadCarryBaselines().catch(() => null) : Promise.resolve(null);
     void Promise.all([fetchTeamLuck(me, region, "all"), yardstickP]).then(([r, yardstick]) => {
       if (!live) return;
-      setLuck(r.kind === "ok" ? luckGrade(r.data.summary.gap_avg) : null);
+      setLuck(r.kind === "ok" ? luckGrade(r.data.summary.gap_avg, r.data.summary.games) : null);
       if (r.kind !== "ok") return;
       const rows = r.data.games.flatMap((g) => {
         const c = carryOf(g.team ?? [], g.length_s ?? null, yardstick);
