@@ -21,10 +21,13 @@ from typing import Any
 from collector.replay_insights import (
     LEVELS,
     answered_by,
+    ban_rates,
     build_split,
     draft_profile,
     game_shape,
     load_week,
+    split_by_build,
+    talent_picks,
     win_loss_contrast,
 )
 
@@ -37,7 +40,24 @@ def centre_of(games: list[dict[str, Any]]) -> str:
     return seen.most_common(1)[0][0]
 
 
-def analyse(week: str, snapshots: Path, *, centre: str | None, answers: int) -> dict[str, Any]:
+def _phase(games: list[dict[str, Any]], c: str) -> dict[str, Any]:
+    return {
+        "games": len(games),
+        "draft": draft_profile(games, c),
+        "shape": game_shape(games, c),
+        "talents": talent_picks(games, c),
+        "bans": ban_rates(games)[:10] if games else [],
+    }
+
+
+def _hotfix(sl: list[dict[str, Any]], c: str, build: str) -> dict[str, Any]:
+    before, after = split_by_build(sl, build)
+    return {"build": build, "before": _phase(before, c), "after": _phase(after, c)}
+
+
+def analyse(
+    week: str, snapshots: Path, *, centre: str | None, answers: int, hotfix: str | None = None
+) -> dict[str, Any]:
     games = load_week(snapshots, week)
     sl, qm = games["sl"], games["qm"]
     c = centre or centre_of(sl)
@@ -50,6 +70,10 @@ def analyse(week: str, snapshots: Path, *, centre: str | None, answers: int) -> 
         "draft": draft_profile(sl, c),
         "shape": game_shape(sl, c),
         "answered_by": drafted,
+        "bans": ban_rates(sl)[:12],
+        "talents": talent_picks(sl, c),
+        # a hotfix to the centre in the week: before and after it, apart
+        "hotfix": _hotfix(sl, c, hotfix) if hotfix else None,
         "answers": {
             a: {
                 "sl": {str(lv): build_split(sl, c, a, level=lv) for lv in LEVELS},
@@ -76,6 +100,7 @@ def summary(r: dict[str, Any]) -> str:
         f"pick round {d['pick_round']}",
         f"with: {s['with']}",
         f"without: {s['without']}",
+        "bans: " + ", ".join(f"{b['hero']} {b['ban_rate']:.0f}%" for b in r["bans"]),
         "answered by (lift):",
     ]
     for a in r["answered_by"][:12]:
@@ -83,6 +108,26 @@ def summary(r: dict[str, Any]) -> str:
             f"  {a['hero']}: {a['games']}g share {_pct(a['share'])} vs base "
             f"{_pct(a['baseline_share'])} lift {a['lift'] or 0:.2f} wr {_pct(a['win_rate'])}"
         )
+    if r.get("hotfix"):
+        h = r["hotfix"]
+        lines.append(f"== hotfix {h['build']}")
+        for side in ("before", "after"):
+            p = h[side]
+            d2 = p["draft"]
+            lines.append(
+                f"  {side}: {p['games']}g ban {_pct(d2['ban_rate'])} pick {_pct(d2['pick_rate'])} "
+                f"({d2['picked']}g wr {_pct(d2['win_rate'])})"
+            )
+            for lv, ts in p["talents"].items():
+                lines.append(
+                    f"    L{lv}: "
+                    + "; ".join(
+                        f"{t['talent']} {t['share']:.0f}% wr {_pct(t['win_rate'])}" for t in ts[:3]
+                    )
+                )
+            lines.append(
+                "    bans: " + ", ".join(f"{b['hero']} {b['ban_rate']:.0f}%" for b in p["bans"][:6])
+            )
     for a, x in r["answers"].items():
         lines.append(f"== {a} vs {r['centre']}")
         for kind in ("sl", "qm"):
@@ -109,9 +154,16 @@ def main() -> None:
     ap.add_argument("--snapshots", required=True)
     ap.add_argument("--centre")
     ap.add_argument("--answers", type=int, default=4)
+    ap.add_argument("--hotfix", help="a build that changed the centre this week, e.g. 2.57.0.98348")
     ap.add_argument("--out")
     args = ap.parse_args()
-    r = analyse(args.week, Path(args.snapshots), centre=args.centre, answers=args.answers)
+    r = analyse(
+        args.week,
+        Path(args.snapshots),
+        centre=args.centre,
+        answers=args.answers,
+        hotfix=args.hotfix,
+    )
     out = Path(args.out or f"data/weekly/{args.week}.replays.json")
     out.write_text(json.dumps(r, ensure_ascii=False, indent=1), encoding="utf-8")
     print(summary(r))

@@ -188,3 +188,48 @@ def test_a_week_is_the_games_played_monday_to_sunday_kst(tmp_path: Any) -> None:
     week = load_week(tmp_path, "2026-w41")
     assert [g["id"] for g in week["sl"]] == [2, 3]
     assert [g["id"] for g in week["qm"]] == [9]
+
+
+def test_a_hotfix_splits_the_week_and_the_centres_own_build_is_read_per_level() -> None:
+    from collector.replay_insights import split_by_build, talent_picks
+
+    w = ["XW1", "XW4", "XW7", "XR", "XW13", "XW16", "XW20"]
+    q = ["XQ1", "XQ4", "XQ7", "XR", "XQ13", "XQ16", "XQ20"]
+    before = [
+        {
+            **game(i, a=[X, *FILL[:4]], b=FILL[4:9], winner=0, talents={X: w}),
+            "version": "2.57.0.98304",
+        }
+        for i in (1, 2, 3)
+    ]
+    after = [
+        {
+            **game(4, a=[X, *FILL[:4]], b=FILL[4:9], winner=1, talents={X: q}),
+            "version": "2.57.0.98348",
+        },
+        {
+            **game(5, a=[X, *FILL[:4]], b=FILL[4:9], winner=0, talents={X: w}),
+            "version": "2.57.0.98348",
+        },
+    ]
+    old, new = split_by_build(before + after, "2.57.0.98348")
+    assert [g["id"] for g in old] == [1, 2, 3] and [g["id"] for g in new] == [4, 5]
+    picks = talent_picks(new, X)
+    first = {t["talent"]: t for t in picks["1"]}
+    assert first["XQ1"] == {"talent": "XQ1", "games": 1, "share": 50.0, "win_rate": 0.0}
+    assert first["XW1"]["win_rate"] == 100.0
+    assert talent_picks(old, X)["1"][0]["share"] == 100.0
+
+
+def test_ban_rates_show_where_the_ban_slots_go() -> None:
+    from collector.replay_insights import ban_rates
+
+    g1 = game(1, a=FILL[:5], b=FILL[4:9], winner=0)
+    g1["draft"][:4] = [["b", 0, X], ["b", 1, "Qhira"], ["b", 0, "Johanna"], ["b", 1, None]]
+    g1["draft"].append(["b", 0, "Qhira"])  # a second-phase ban (not in the first four)
+    g2 = game(2, a=FILL[:5], b=FILL[4:9], winner=0)
+    g2["draft"][:4] = [["b", 0, "Qhira"], ["b", 1, X], ["b", 0, None], ["b", 1, None]]
+    rows = {r["hero"]: r for r in ban_rates([g1, g2])}
+    assert rows["Qhira"]["ban_rate"] == 100.0 and rows["Qhira"]["first_phase_rate"] == 100.0
+    assert rows["Johanna"] == {"hero": "Johanna", "ban_rate": 50.0, "first_phase_rate": 50.0}
+    assert list(rows)[0] in {X, "Qhira"}
