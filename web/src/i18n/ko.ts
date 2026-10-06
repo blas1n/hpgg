@@ -497,6 +497,12 @@ export const ko = {
       error: "영웅별 통계를 불러오지 못했습니다.",
       stale: "조회 한도 때문에 마지막으로 받은 통계를 보여줍니다",
     },
+    teamLuck: {
+      label: "팀운",
+      grades: { best: "최고", good: "좋음", normal: "보통", bad: "나쁨", worst: "극악" },
+      loading: "계산 중…",
+      help: "최근 20경기에서 판마다 경기 전 MMR로 아군 4명 평균 − 적 5명 평균을 내 평균한 값으로 정합니다. 재미로 보세요.",
+    },
     rolesTitle: "역할별 승률",
     mapsTitle: "많이 한 전장",
     gamesWr: (games: string) => `${games}게임 · `,

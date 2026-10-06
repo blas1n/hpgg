@@ -48,8 +48,10 @@ class Settings(BaseSettings):
     mmr_history_daily_budget: int = 3500
     # One game in full (`server/players/replays.py`): /replay/{id}, 25,000/week on Intermediate. A
     # game never changes, but it names ten players, so it is kept no longer than stale_max_seconds.
+    # The bucket is shared with the weekly report's sampler (collector/replay_sample.py, ~1,500 a
+    # day, 2026-10-06): 2,000 a day here leaves both room. 팀운 (teamluck.py) spends from it too.
     replay_quota_floor: int = 50
-    replay_daily_budget: int = 3500
+    replay_daily_budget: int = 2000
     # Stats per hero (`server/players/heroes.py`): /players/heroes, bucket player_hero_all (25/week
     # on Basic, 500 on Intermediate) ≈ (500 − floor) / 7 a day; one call per player and mode.
     hero_stats_ttl_seconds: int = 6 * 3600

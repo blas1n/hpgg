@@ -21,14 +21,19 @@ describe("features", () => {
     expect(sectionEnabled("meta")).toBe(false);
   });
 
+  it("팀운 is built but off until the owner turns it on (#90, 2026-10-06); it owns no section", () => {
+    expect(FEATURES.teamluck).toBe(false);
+    expect(navIds({ draft: false, weekly: false, teamluck: true })).toEqual(navIds({ draft: false, weekly: false, teamluck: false }));
+  });
+
   it("a section without a feature is always on", () => {
     for (const s of ["tier", "heroes", "maps", "players"]) expect(sectionEnabled(s)).toBe(true);
   });
 
   it("the menu leaves out a switched-off section and keeps the order", () => {
-    expect(navIds({ draft: false, weekly: true })).toEqual(["home", "tier", "meta", "heroes", "maps", "patches", "players"]);
-    expect(navIds({ draft: true, weekly: true })).toEqual(["home", "tier", "meta", "heroes", "draft", "maps", "patches", "players"]);
-    expect(navIds({ draft: false, weekly: false })).toEqual(["home", "tier", "heroes", "maps", "patches", "players"]);
+    expect(navIds({ draft: false, weekly: true, teamluck: false })).toEqual(["home", "tier", "meta", "heroes", "maps", "patches", "players"]);
+    expect(navIds({ draft: true, weekly: true, teamluck: false })).toEqual(["home", "tier", "meta", "heroes", "draft", "maps", "patches", "players"]);
+    expect(navIds({ draft: false, weekly: false, teamluck: false })).toEqual(["home", "tier", "heroes", "maps", "patches", "players"]);
   });
 
   it("the export loses a switched-off section in every language and keeps the rest", () => {
@@ -40,13 +45,13 @@ describe("features", () => {
           writeFileSync(join(dist, l, "hots", s, "index.html"), "x");
         }
       }
-      const removed = pruneDisabled(dist, { draft: false, weekly: true });
+      const removed = pruneDisabled(dist, { draft: false, weekly: true, teamluck: false });
       expect(removed.sort()).toEqual(LOCALES.map((l) => `${l}/hots/draft`).sort());
       for (const l of LOCALES) {
         expect(existsSync(join(dist, l, "hots", "draft"))).toBe(false);
         expect(existsSync(join(dist, l, "hots", "tier", "index.html"))).toBe(true);
       }
-      expect(pruneDisabled(dist, { draft: true, weekly: true })).toEqual([]);
+      expect(pruneDisabled(dist, { draft: true, weekly: true, teamluck: false })).toEqual([]);
     } finally {
       rmSync(dist, { recursive: true, force: true });
     }

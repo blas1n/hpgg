@@ -493,6 +493,12 @@ The same data gives different tiers under a different formula. This site always 
       error: "Could not load the stats per hero.",
       stale: "The lookup limit is reached, so these are the last stats we got",
     },
+    teamLuck: {
+      label: "Team luck",
+      grades: { best: "Blessed", good: "Good", normal: "Fair", bad: "Bad", worst: "Cursed" },
+      loading: "Working it out…",
+      help: "From the newest 20 games: per game, the 4 teammates' mean MMR − the 5 opponents', before the game, averaged. Just for fun.",
+    },
     rolesTitle: "Win rate per role",
     mapsTitle: "Most played battlegrounds",
     gamesWr: (games: string) => `${plural(games, "game", "games")} · `,
