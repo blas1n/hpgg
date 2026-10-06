@@ -5,16 +5,18 @@ import { luckGrade } from "../src/lib/teamLuck";
 // just 최고 / 좋음 / 보통 / 나쁨 / 극악) from the newest games' mean of teammates − opponents MMR before each game.
 
 describe("luckGrade", () => {
+  // the whole team against the opponents (server/players/teamluck.py); ±20 / ±50 over 20 games gave 10 / 21 / 39 / 20 / 10 %
+  // on 200 player-games' gaps (owner 2026-10-06: "다 보통만 나오면 재미 없잖아")
   it("grades the mean gap into five words", () => {
     expect(luckGrade(120)).toBe("best");
-    expect(luckGrade(80)).toBe("best");
-    expect(luckGrade(45)).toBe("good");
-    expect(luckGrade(30)).toBe("good");
-    expect(luckGrade(29)).toBe("normal");
-    expect(luckGrade(-29)).toBe("normal");
-    expect(luckGrade(-30)).toBe("bad");
-    expect(luckGrade(-79)).toBe("bad");
-    expect(luckGrade(-80)).toBe("worst");
+    expect(luckGrade(50)).toBe("best");
+    expect(luckGrade(49)).toBe("good");
+    expect(luckGrade(20)).toBe("good");
+    expect(luckGrade(19)).toBe("normal");
+    expect(luckGrade(-19)).toBe("normal");
+    expect(luckGrade(-20)).toBe("bad");
+    expect(luckGrade(-49)).toBe("bad");
+    expect(luckGrade(-50)).toBe("worst");
   });
 
   it("no game counted is no grade", () => {

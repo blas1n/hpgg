@@ -5,8 +5,8 @@ teammates minus the mean of the five opponents, before the game, over the newest
   `player_change` match the match list's "after each game" row for the same replay (checked on
   tests/server/fixtures, replay 65597227). Before = mmr − mmr_change. With the MMR after, a won
   game would make the winners look stronger and 팀운 would restate the record.
-- A side needs at least two known teammates or three known opponents (private players are left
-  out of a replay answer); otherwise the game is not counted.
+- A side needs at least three known players (private players are left out of a replay answer);
+  otherwise the game is not counted.
 - One replay call per game not cached (the Replays bucket, shared with the weekly report's
   sampler); when the bucket is spent the answer is partial and says so.
 """
@@ -45,19 +45,30 @@ def _pre(p: dict[str, Any]) -> float:
     return p["mmr"] - p["mmr_change"]
 
 
-def test_a_games_gap_is_teammates_minus_opponents_before_the_game() -> None:
+def test_a_games_gap_is_the_whole_team_against_the_opponents_before_the_game() -> None:
+    """The player is in their team's mean (owner 2026-10-06, a 24-player sample): matchmaking
+    balances whole teams, so the four teammates alone are weaker the better the player is — a
+    strong player read 극악 every week (teammates-only gap vs the player's lead over them: r = −0.33
+    on 200 player-games). The whole team against the opponents is the matchmaker's luck."""
     game = _game()
     me = _me(game)
     mine = next(t for t in game["teams"] if any(p["battletag"] == me for p in t["players"]))
     theirs = next(t for t in game["teams"] if t is not mine)
-    mates = [_pre(p) for p in mine["players"] if p["battletag"] != me]
+    ours = [_pre(p) for p in mine["players"]]
     opps = [_pre(p) for p in theirs["players"]]
     g = game_gap(game, me)
     assert g is not None
-    assert g["team_mmr"] == pytest.approx(sum(mates) / len(mates), abs=0.5)
+    assert g["team_mmr"] == pytest.approx(sum(ours) / len(ours), abs=0.5)
     assert g["opp_mmr"] == pytest.approx(sum(opps) / len(opps), abs=0.5)
     assert g["gap"] == pytest.approx(g["team_mmr"] - g["opp_mmr"], abs=0.5)
     assert g["win"] is True and g["replay_id"] == RID
+
+
+def test_both_teammates_of_one_game_get_the_same_gap() -> None:
+    game = _game()
+    mine = next(t for t in game["teams"] if any(p["battletag"] == _me(game) for p in t["players"]))
+    gaps = {game_gap(game, p["battletag"])["gap"] for p in mine["players"]}  # type: ignore[index]
+    assert len(gaps) == 1
 
 
 def test_the_player_is_found_whatever_the_case_of_the_tag() -> None:
