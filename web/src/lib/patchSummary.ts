@@ -6,7 +6,7 @@ import { computeTiers, type Snapshot } from "../formula";
 import type { HeroTable, HotfixesFile, Mode, PatchNotesFile, PatchVerdict } from "../data";
 import type { Locale } from "../i18n/locale";
 import type { HeroRef } from "./home";
-import { announcedHotfixes, hotfixGroups, noteGroups, unannounced, type ChangeGroup } from "./patchnotes";
+import { announcedGroups, announcedHotfixes, hotfixGroups, noteGroups, unannounced, type ChangeGroup } from "./patchnotes";
 
 /** One mode's rank and win rate on the previous patch → this one (tier formula on each). */
 export interface PatchImpact {
@@ -79,7 +79,20 @@ export function patchSummary({ patch, notes, hotfixes, modes, heroes, minGames, 
     .filter((b) => Object.keys(b.heroes).length > 0);
 
   // newest first: a note's hotfixes before the note itself
-  const official = patchNotes.flatMap((n) => [...announced.filter((a) => a.note === n).map((a) => ({ heroes: a.fix.heroes, untranslated: true })), { heroes: n.heroes, untranslated: false }]);
+  type Lines = (ChangeGroup & { source: "note" | "hotfix" })[];
+  const official = patchNotes.flatMap((n) => [
+    ...announced
+      .filter((a) => a.note === n)
+      .map((a) => ({
+        heroes: a.fix.heroes,
+        // not written in the page language yet: the build's numbers, as the hotfix lines they are
+        lines: (name: string): Lines => {
+          const { groups, original } = announcedGroups(a, name, locale, hotfixes);
+          return groups.map((g) => ({ ...g, source: original ? ("hotfix" as const) : ("note" as const) }));
+        },
+      })),
+    { heroes: n.heroes, lines: (name: string): Lines => (n.heroes[name] ? noteGroups(n.heroes[name].groups, locale).map((g) => ({ ...g, source: "note" as const })) : []) },
+  ]);
   const verdict = new Map<string, PatchVerdict>();
   for (const n of official) {
     for (const [name, entry] of Object.entries(n.heroes)) {
@@ -110,7 +123,7 @@ export function patchSummary({ patch, notes, hotfixes, modes, heroes, minGames, 
     const hero = refs.get(name);
     if (!hero) return [];
     const groups = [
-      ...official.flatMap((n) => (n.heroes[name] ? noteGroups(n.heroes[name].groups, locale, n.untranslated).map((g) => ({ ...g, source: "note" as const })) : [])),
+      ...official.flatMap((n) => n.lines(name)),
       ...hotfixBuilds.flatMap((b) => hotfixGroups(b.heroes[name] ?? [], locale).map((g) => ({ ...g, source: "hotfix" as const }))),
     ];
     return [{ hero, verdict: verdict.get(name) ?? null, hotfix: hotfixed.has(name), isNew: isNew(name), qm: impact("qm", name), sl: impact("sl", name), groups }];
