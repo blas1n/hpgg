@@ -13,9 +13,9 @@ export const FEATURES = {
    *  Storm League analysis (#130), off again 2026-10-06 (owner: still hypotheses and lists). Back once it reads like
    *  a meta analysis built on per-game replay data: the central pick, how it changes games, how its counters work. */
   weekly: false,
-  /** 팀운 on 전적 검색 (#90) — built 2026-10-06 (owner: "미리 준비해두고"), off until the owner turns it on. A card on
-   *  the player page, not a section. */
-  teamluck: false,
+  /** 팀운 on 전적 검색 (#90) — built 2026-10-06 (owner: "미리 준비해두고") and on the same day ("이미 된거면 지금
+   *  공개"): one line in the 최근 20경기 panel, not a section. */
+  teamluck: true,
 } as const;
 
 export type Feature = keyof typeof FEATURES;
