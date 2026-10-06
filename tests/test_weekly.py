@@ -262,3 +262,23 @@ def test_build_weekly_writes_each_issue_once_and_an_index(tmp_path: Path) -> Non
     (data / "weekly" / "2026-w40.json").write_text(json.dumps({**issue, "kept": True}))
     assert build_weekly(data) == []
     assert json.loads((data / "weekly" / "2026-w40.json").read_text())["kept"] is True
+
+
+def test_the_index_lists_issues_only_not_their_analysis_evidence_or_talents(
+    tmp_path: Path,
+) -> None:
+    # 2026-10-06: data/weekly/2026-w40.analysis.json matched the issue glob and the dawn run
+    # failed on its missing "start"
+    data = tmp_path / "data"
+    (data / "history").mkdir(parents=True)
+    (data / "latest").mkdir()
+    (data / "weekly").mkdir()
+    (data / "history" / "2026-10-05.json").write_text(json.dumps(_entry("2026-10-05", 5)))
+    (data / "latest" / "meta.json").write_text(json.dumps({"current_patch": "2.57.0"}))
+    issue = {"week": "2026-w40", "kind": "patch_start", "start": "s", "end": "e", "patch": "p"}
+    (data / "weekly" / "2026-w40.json").write_text(json.dumps(issue))
+    for extra in ("analysis", "evidence", "talents"):
+        (data / "weekly" / f"2026-w40.{extra}.json").write_text(json.dumps({"week": "2026-w40"}))
+    build_weekly(data)
+    index = json.loads((data / "weekly" / "index.json").read_text())
+    assert [i["week"] for i in index["issues"]] == ["2026-w40"]
