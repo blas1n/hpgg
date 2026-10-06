@@ -1,3 +1,4 @@
+import type { CarryBaselines } from "./lib/carry";
 import type { Snapshot } from "./formula";
 import { localizedPath, type Locale } from "./i18n/locale";
 import { knownOnly } from "./lib/known";
@@ -120,6 +121,9 @@ export interface AwardTable {
   awards: Record<string, { ko: string; en: string; icon: string }>;
 }
 export const loadAwards = (): Promise<AwardTable> => getJson<AwardTable>("awards.json");
+
+/** 몇인분's yardstick: each hero's usual output per minute (data/carry_baselines.json, collector/carry_baselines.py). */
+export const loadCarryBaselines = (): Promise<CarryBaselines> => getJson<CarryBaselines>("carry_baselines.json");
 
 /** A hero's talent names, icons and tooltips (data/talents/<slug>.json), or null when the hero has none. */
 export async function loadTalents(slug: string): Promise<TalentTable | null> {

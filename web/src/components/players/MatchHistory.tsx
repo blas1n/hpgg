@@ -1,13 +1,14 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { assetUrl, loadAwards, loadTalents, type AwardTable, type HeroTable, type MapTable, type TalentTable } from "@/data";
+import { assetUrl, loadAwards, loadCarryBaselines, loadTalents, type AwardTable, type HeroTable, type MapTable, type TalentTable } from "@/data";
 import { useLocale, useT } from "@/i18n/client";
 import type { AwardView } from "@/lib/awards";
 import { briefing, matchRows, type Briefing, type MatchesResponse, type MatchTalent, type MatchView } from "@/lib/matches";
 import { FEATURES } from "@/features";
 import type { Region } from "@/lib/players";
 import { fetchReplay, replayView, type ReplayResponse } from "@/lib/replays";
+import { carryOf } from "@/lib/carry";
 import { carryTone, fetchTeamLuck, luckGrade, type CarryTone, type LuckGrade } from "@/lib/teamLuck";
 import { Card, CardHeader, cx, Portrait } from "../ui";
 
@@ -36,10 +37,15 @@ export function MatchHistory({ data, heroes, maps, me, region }: { data: Matches
   useEffect(() => {
     if (!FEATURES.teamluck) return;
     let live = true;
-    void fetchTeamLuck(me, region, "all").then((r) => {
+    void Promise.all([fetchTeamLuck(me, region, "all"), loadCarryBaselines().catch(() => null)]).then(([r, yardstick]) => {
       if (!live) return;
       setLuck(r.kind === "ok" ? luckGrade(r.data.summary.gap_avg) : null);
-      if (r.kind === "ok") setCarries(new Map(r.data.games.flatMap((g) => (g.carry === null || g.carry === undefined ? [] : [[g.replay_id, g.carry] as const]))));
+      if (r.kind !== "ok") return;
+      const rows = r.data.games.flatMap((g) => {
+        const c = carryOf(g.team ?? [], g.length_s ?? null, yardstick);
+        return c === null ? [] : [[g.replay_id, c] as const];
+      });
+      setCarries(new Map(rows));
     });
     return () => {
       live = false;
