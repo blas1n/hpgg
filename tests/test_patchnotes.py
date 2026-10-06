@@ -20,6 +20,7 @@ from collector.patchnotes import (
     direction,
     is_patch_note,
     parse_balance,
+    parse_hotfixes,
     verdict,
 )
 
@@ -104,6 +105,59 @@ def test_a_balance_section_without_anchors_ends_at_the_next_heading() -> None:
         "실바나스",
         "굴단",
     ]  # not the maps
+
+
+# --- hotfix sections Blizzard adds to the top of a live note (Hotfix - 10/5/2026) ---------------
+
+
+def _hotfix_html(locale: str) -> str:
+    return (FIX / f"24303007_{locale}_hotfix.html").read_text(encoding="utf-8")
+
+
+def test_a_hotfix_section_is_dated_and_keeps_its_balance_changes() -> None:
+    sections = parse_hotfixes(_hotfix_html("en-us"), "en-us")
+    # 9/29 fixed bugs only: no hero balance change, no section
+    assert [s.date for s in sections] == ["2026-10-05"]
+    [xal] = sections[0].heroes
+    assert xal.name == "Xal'atath"
+    heads = [(g.section, g.level, g.ability) for g in xal.groups]
+    assert heads == [
+        ("base", None, "Shadow Mark [Q]"),
+        ("base", None, "Void Step [E]"),
+        ("base", None, "Void Volley [D]"),
+        ("base", None, "Void Eruption [R]"),
+        ("talents", 1, "Anchored Core"),
+        ("talents", 4, "Dark Barrier"),
+        ("talents", 7, "Silence of the Lamb"),
+        ("talents", 13, "Dark Heart's Protection"),
+        ("talents", 20, "Rift Invasion"),
+    ]
+    step = xal.groups[1].changes
+    assert [c.text for c in step][:2] == [
+        "Targeting range reduced from 5 to 2.",
+        "Distance between teleport points reduced from 7 to 6.5.",
+    ]
+    assert step[0].direction == "down"
+
+
+def test_bug_fixes_in_a_hotfix_are_not_balance_changes() -> None:
+    [xal] = parse_hotfixes(_hotfix_html("en-us"), "en-us")[0].heroes
+    lines = [c.text for g in xal.groups for c in g.changes]
+    assert not any("Time Stop" in t or "Fixed" in t for t in lines)
+
+
+def test_a_note_without_hotfix_sections_has_none() -> None:
+    assert parse_hotfixes(_html("24303007", "en-us"), "en-us") == []
+    # the Korean article is not updated yet
+    assert parse_hotfixes(_hotfix_html("ko-kr"), "ko-kr") == []
+
+
+def test_hotfix_section_dates_in_both_languages() -> None:
+    from collector.patchnotes import _hotfix_date
+
+    assert _hotfix_date("Hotfix - 10/5/2026") == "2026-10-05"
+    assert _hotfix_date("핫픽스 - 2026년 10월 5일") == "2026-10-05"
+    assert _hotfix_date("Bug Fixes") is None
 
 
 @pytest.mark.parametrize("note", SHAPES)
@@ -283,7 +337,7 @@ async def test_collects_each_note_once_in_both_languages_keyed_by_hero() -> None
 @respx.mock
 async def test_known_notes_are_not_fetched_again() -> None:
     _mock_blizzard()
-    now = datetime(2026, 9, 30, tzinfo=UTC)
+    now = datetime(2026, 12, 30, tzinfo=UTC)  # past the window Blizzard adds hotfixes in
     async with httpx.AsyncClient() as http:
         first = await collect_patchnotes(http, PATCHES, HEROES, existing=None, now=now, limit=3)
         calls = respx.calls.call_count
@@ -333,3 +387,49 @@ async def test_a_new_parser_version_reparses_every_note() -> None:
         }
         again = await collect_patchnotes(http, PATCHES, HEROES, existing=stale, now=now, limit=1)
     assert again["notes"][0]["heroes"] == first["notes"][0]["heroes"]
+
+
+@respx.mock
+async def test_a_recent_note_is_read_again_for_the_hotfixes_added_to_it() -> None:
+    _mock_blizzard()
+    async with httpx.AsyncClient() as http:
+        first = await collect_patchnotes(
+            http, PATCHES, HEROES, existing=None, now=datetime(2026, 9, 30, tzinfo=UTC), limit=1
+        )
+        assert first["notes"][0]["hotfixes"] == []
+        for loc in ("ko-kr", "en-us"):
+            respx.get(f"https://news.blizzard.com/{loc}/article/24303007/").mock(
+                return_value=httpx.Response(200, text=_hotfix_html(loc))
+            )
+        later = await collect_patchnotes(
+            http, PATCHES, HEROES, existing=first, now=datetime(2026, 10, 6, tzinfo=UTC), limit=1
+        )
+    note = later["notes"][0]
+    assert (note["published"], note["build"]) == (first["notes"][0]["published"], "2.57.0.98285")
+    assert note["heroes"] == first["notes"][0]["heroes"]
+    [fix] = note["hotfixes"]
+    assert fix["date"] == "2026-10-05"
+    xal = fix["heroes"]["Xal'atath"]  # keyed by API name
+    assert xal["verdict"] == "mixed"
+    step = xal["groups"][1]
+    assert step["ability"] == {"ko": None, "en": "Void Step [E]"}
+    # Korean is not out yet: the English line, its own direction
+    assert step["changes"][0] == {
+        "ko": None,
+        "en": "Targeting range reduced from 5 to 2.",
+        "direction": "down",
+    }
+
+
+@respx.mock
+async def test_a_reparse_keeps_the_build_a_note_was_given_when_hp_lists_none() -> None:
+    _mock_blizzard()
+    now = datetime(2026, 12, 30, tzinfo=UTC)
+    async with httpx.AsyncClient() as http:
+        first = await collect_patchnotes(http, PATCHES, HEROES, existing=None, now=now, limit=1)
+        stale = {**first, "parser": PARSER_VERSION - 1}
+        # HP's /patches failed that night: the run passes no builds
+        again = await collect_patchnotes(
+            http, {"patches": []}, HEROES, existing=stale, now=now, limit=1
+        )
+    assert again["notes"][0]["build"] == "2.57.0.98285"

@@ -1,6 +1,6 @@
 /** The hero page's patch changes (#62): the hero's entries in Blizzard's official notes, in the page language.
  *  Pure: computed at build time from data/patchnotes.json. */
-import type { HotfixesFile, HotfixItem, PatchDirection, PatchGroup, PatchNotesFile, PatchVerdict } from "../data";
+import type { Hotfix, HotfixesFile, HotfixItem, NoteHotfix, PatchDirection, PatchGroup, PatchNote, PatchNotesFile, PatchVerdict } from "../data";
 import type { Locale } from "../i18n/locale";
 
 export const PATCH_NOTES_SHOWN = 3;
@@ -11,6 +11,8 @@ export type PatchStatus = "current" | "collecting" | null;
 export interface PatchNoteView {
   /** note = an official note; hotfix = a build shipped without one (title = the build) */
   kind: "note" | "hotfix";
+  /** a hotfix section Blizzard added to the note: its date (title and link are the note's) */
+  hotfix: string | null;
   id: string;
   published: string;
   title: string;
@@ -45,16 +47,19 @@ const newer = (a: string, b: string) => {
 const num = (v: string) => v.replace(/^-/, "\u2212");
 
 const pick = (locale: Locale, v: { ko: string | null; en: string | null }) => (locale === "ko" ? v.ko : v.en);
+const pickOrOther = (locale: Locale, v: { ko: string | null; en: string | null }) => pick(locale, v) ?? (locale === "ko" ? v.en : v.ko);
 
-/** An official note's groups for one hero, in the page language; lines without text in that language are left out. */
-export function noteGroups(groups: PatchGroup[], locale: Locale): ChangeGroup[] {
+/** An official note's groups for one hero, in the page language; lines without text in that language are left out —
+ *  or, for a hotfix section Blizzard has not translated yet (`untranslated`), shown in the language it has. */
+export function noteGroups(groups: PatchGroup[], locale: Locale, untranslated = false): ChangeGroup[] {
+  const text = untranslated ? pickOrOther : pick;
   return groups
     .map((g) => ({
       section: g.section,
       level: g.level,
-      ability: g.ability ? pick(locale, g.ability) : null,
+      ability: g.ability ? text(locale, g.ability) : null,
       changes: g.changes.flatMap((c) => {
-        const t = pick(locale, c);
+        const t = text(locale, c);
         return t ? [{ text: t, direction: c.direction }] : [];
       }),
     }))
@@ -73,6 +78,43 @@ export function hotfixGroups(items: HotfixItem[], locale: Locale): ChangeGroup[]
     const ability = name && t.key ? `${name} [${t.key}]` : name;
     return [{ section: t.kind === "talent" ? ("talents" as const) : ("base" as const), level: null, ability, changes }];
   });
+}
+
+/** A hotfix section Blizzard added to a note, and the build that shipped it (null until the watcher has seen one). */
+export interface AnnouncedHotfix {
+  note: PatchNote;
+  fix: NoteHotfix;
+  build: string | null;
+}
+
+// Blizzard heads a hotfix with its US date (10/5); the build that shipped it is the note's patch's build first seen
+// nearest that day's US noon, within a day and a half (98348: 10-05 17:12Z for "Hotfix - 10/5/2026")
+const HOTFIX_WINDOW_MS = 36 * 3600 * 1000;
+const usNoon = (date: string) => Date.parse(`${date}T19:00:00Z`);
+const patchOf = (build: string) => build.split(".").slice(0, 3).join(".");
+
+export function announcedHotfixes(notes: PatchNote[], hotfixes: HotfixesFile | null): AnnouncedHotfix[] {
+  const out: AnnouncedHotfix[] = [];
+  for (const note of notes) {
+    for (const fix of note.hotfixes ?? []) {
+      if (Object.keys(fix.heroes).length === 0) continue;
+      const at = usNoon(fix.date);
+      const off = (b: Hotfix) => Math.abs(Date.parse(b.first_seen) - at);
+      const near = note.build
+        ? (hotfixes?.builds ?? [])
+            .filter((b) => patchOf(b.build) === patchOf(note.build!) && newer(b.build, note.build!) && off(b) <= HOTFIX_WINDOW_MS)
+            .sort((a, b) => off(a) - off(b))
+        : [];
+      out.push({ note, fix, build: near[0]?.build ?? null });
+    }
+  }
+  return out;
+}
+
+/** A hotfix build's heroes that no hotfix section of a note names: what is still unannounced in it. */
+export function unannounced(build: Hotfix, announced: AnnouncedHotfix[]): Record<string, HotfixItem[]> {
+  const named = new Set(announced.filter((a) => a.build === build.build).flatMap((a) => Object.keys(a.fix.heroes)));
+  return Object.fromEntries(Object.entries(build.heroes).filter(([hero]) => !named.has(hero)));
 }
 
 type Item = { at: string; build: string | null; view: () => PatchNoteView | null };
@@ -94,20 +136,37 @@ export function heroPatchNotes(
         const entry = n.heroes[hero];
         if (!entry) return null;
         const groups = noteGroups(entry.groups, locale);
-        return { kind: "note", id: n.id, published: n.published, title: n.title[locale], url: n.url[locale], status: null, verdict: entry.verdict, groups };
+        return { kind: "note", hotfix: null, id: n.id, published: n.published, title: n.title[locale], url: n.url[locale], status: null, verdict: entry.verdict, groups };
       },
     });
   }
   // a build that changed no hero's numbers (98025, cosmetic) is on no page and takes no mark;
   // a build an official note belongs to is shown as the note
+  // a hotfix Blizzard added to a note is shown with the note's words, the build that shipped it as its place in time
+  const announced = announcedHotfixes(file?.notes ?? [], hotfixes);
+  const firstSeen = new Map((hotfixes?.builds ?? []).map((b) => [b.build, b.first_seen]));
+  for (const { note, fix, build } of announced) {
+    const at = (build && firstSeen.get(build)) || `${fix.date}T19:00:00Z`;
+    items.push({
+      at,
+      build,
+      view: () => {
+        const entry = fix.heroes[hero];
+        if (!entry) return null;
+        const groups = noteGroups(entry.groups, locale, true);
+        return { kind: "note", hotfix: fix.date, id: `${note.id}#${fix.date}`, published: at, title: note.title[locale], url: note.url[locale], status: null, verdict: entry.verdict, groups };
+      },
+    });
+  }
   const noted = new Set((file?.notes ?? []).map((n) => n.build));
-  for (const h of (hotfixes?.builds ?? []).filter((b) => Object.keys(b.heroes).length > 0 && !noted.has(b.build))) {
+  for (const b of (hotfixes?.builds ?? []).filter((b) => Object.keys(b.heroes).length > 0 && !noted.has(b.build))) {
+    const h = { ...b, heroes: unannounced(b, announced) };
     items.push({
       at: h.first_seen,
       build: h.build,
       view: () => {
         const groups = hotfixGroups(h.heroes[hero] ?? [], locale);
-        return groups.length ? { kind: "hotfix", id: h.build, published: h.first_seen, title: h.build, url: null, status: null, verdict: null, groups } : null;
+        return groups.length ? { kind: "hotfix", hotfix: null, id: h.build, published: h.first_seen, title: h.build, url: null, status: null, verdict: null, groups } : null;
       },
     });
   }

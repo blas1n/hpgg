@@ -301,7 +301,8 @@ def build_weekly(data_dir: Path) -> list[str]:
                 )
         week = iso_week((week_monday(week) + timedelta(days=7)).isoformat())
     issues = []
-    for p in sorted(out_dir.glob("20*-w*.json"), reverse=True):
+    # an issue is <yyyy>-w<ww>.json; its analysis, evidence and talents sit beside it
+    for p in sorted(out_dir.glob("20[0-9][0-9]-w[0-9][0-9].json"), reverse=True):
         i = json.loads(p.read_text(encoding="utf-8"))
         issues.append(
             {

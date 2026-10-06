@@ -268,6 +268,22 @@ test("hero detail: an unannounced hotfix shows the talent and its numbers old �
   await expect(en).toContainText("Once Again the First Time");
 });
 
+test("hero detail: a hotfix Blizzard added to a note is the note's, in Blizzard's words, not unannounced numbers", async ({ page }) => {
+  // owner 2026-10-06: the 10/5 Xal'atath hotfix in the 2.57 live note showed as "공지 없는 핫픽스" with bare numbers
+  await page.goto("./heroes/auriel/");
+  const fix = page.locator("#patches [data-note='24303007#2026-09-29']");
+  await expect(fix).toHaveAttribute("data-kind", "note");
+  await expect(fix.locator("a[href='https://news.blizzard.com/ko-kr/article/24303007/']")).toHaveText(/^핫픽스 9월 29일 · /);
+  await expect(fix.locator("[data-verdict]")).toHaveText("버프");
+  // not translated yet: Blizzard's English line
+  await expect(fix).toContainText("Bonus damage increased from 10% to 15%.");
+  await expect(page.locator("#patches [data-note='2.57.0.98304']")).toHaveCount(0);
+  await expect(page.locator("#patches")).not.toContainText("공지 없는 핫픽스");
+
+  await page.goto("/en/hots/heroes/auriel/");
+  await expect(page.locator("#patches [data-note='24303007#2026-09-29'] a")).toHaveText(/^Hotfix Sep 29 · Heroes of the Storm Live Patch Notes/);
+});
+
 test("hero detail: unknown slug is a 404 page with a way back", async ({ page }) => {
   await page.goto("./heroes/nobody/");
   await expect(page.locator("#meta-line")).toContainText("영웅이 없습니다");

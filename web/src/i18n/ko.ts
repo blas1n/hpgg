@@ -235,6 +235,7 @@ export const ko = {
     patchVerdict: { buff: "버프", nerf: "너프", mixed: "조정" },
     hotfixBadge: "핫픽스",
     hotfixTitle: (build: string) => `공지 없는 핫픽스 ${build}`,
+    noteHotfixTitle: (month: string, day: string, title: string) => `핫픽스 ${month}월 ${day}일 · ${title}`,
     patchStatus: { current: "현재 통계 기준", collecting: "표본 쌓는 중" },
     patchSection: { base: "기본", talents: "특성" },
     patchLevel: (n: string) => `${n}레벨`,
