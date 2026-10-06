@@ -231,6 +231,8 @@ The same data gives different tiers under a different formula. This site always 
     patchVerdict: { buff: "Buff", nerf: "Nerf", mixed: "Mixed" },
     hotfixBadge: "Hotfix",
     hotfixTitle: (build: string) => `Unannounced hotfix ${build}`,
+    noteHotfixTitle: (month: string, day: string, title: string) =>
+      `Hotfix ${["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][Number(month) - 1]} ${day} · ${title}`,
     patchStatus: { current: "Current stats", collecting: "Collecting games" },
     patchSection: { base: "Base", talents: "Talents" },
     patchLevel: (n: string) => `Level ${n}`,
