@@ -146,3 +146,62 @@ async def test_a_private_player_has_no_team_luck() -> None:
     svc = TeamLuckService(matches=FakeMatches(outcome="private"), replays=FakeReplays(_game()))  # type: ignore[arg-type]
     r = await svc.lookup("someone#1234", "KR", mode="sl", games=10)
     assert r.outcome == "private"
+
+
+def test_a_game_says_how_many_players_worth_the_player_did() -> None:
+    """몇인분 (owner 2026-10-06: "졌을 때도 1.5인분 했다면서 웃을 수 있잖아").
+
+    Each player is judged on the three of five things they did most of against the team's mean
+    (takedowns, hero damage, siege damage, experience, healing + damage taken), so a tank and a
+    healer count by what they do. The team's mean of that is 1.0: an average teammate. On 4,010
+    Storm League player-games (w41 so far) the middle 90 % is 0.76–1.35; 1.5 or more is 1.5 %."""
+    from server.players.teamluck import carry
+
+    game = _game()
+    me = _me(game)
+    mine = next(t for t in game["teams"] if any(p["battletag"] == me for p in t["players"]))
+    p = next(x for x in mine["players"] if x["battletag"] == me)
+    shown = [carry(mine["players"], x) for x in mine["players"]]
+    assert sum(shown) / 5 == pytest.approx(1.0, abs=0.05)  # the team averages one each
+    g = game_gap(game, me)
+    assert g is not None and g["carry"] == carry(mine["players"], p)
+
+
+def test_an_average_team_is_one_each_and_a_standout_is_more() -> None:
+    from server.players.teamluck import carry
+
+    team = [
+        {
+            "takedowns": 10,
+            "hero_damage": 100,
+            "siege_damage": 100,
+            "experience": 100,
+            "healing": 0,
+            "damage_taken": 100,
+        }
+        for _ in range(5)
+    ]
+    assert carry(team, team[0]) == 1.0
+    star = {**team[0], "hero_damage": 300, "siege_damage": 300}
+    others = team[1:]
+    assert carry([star, *others], star) >= 1.4
+    assert all(carry([star, *others], o) < 1.0 for o in others)
+    assert carry([], team[0]) is None
+
+
+def test_a_healer_counts_by_what_a_healer_does() -> None:
+    # the healer heals 400 and deals little; averaging all five stats would call this 1.0인분
+    from server.players.teamluck import carry
+
+    def p(dmg: int, heal: int) -> dict:
+        return {
+            "takedowns": 10,
+            "hero_damage": dmg,
+            "siege_damage": dmg,
+            "experience": 100,
+            "healing": heal,
+            "damage_taken": 100,
+        }
+
+    healer, dps = p(20, 400), [p(120, 0) for _ in range(4)]
+    assert carry([healer, *dps], healer) >= 1.25

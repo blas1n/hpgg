@@ -15,6 +15,8 @@ export interface TeamLuckGame {
   team_mmr: number;
   opp_mmr: number;
   gap: number;
+  /** 몇인분: the player's three best of five stats against the team's, an average teammate 1.0 */
+  carry: number | null;
 }
 interface Cell {
   games: number;
@@ -46,4 +48,15 @@ export function luckGrade(gapAvg: number | null): LuckGrade | null {
   if (gapAvg <= -80) return "worst";
   if (gapAvg <= -30) return "bad";
   return "normal";
+}
+
+export type CarryTone = "carry" | "share" | "light";
+
+/** 몇인분 (owner 2026-10-06: "졌을 때도 1.5인분 했다면서 웃을 수 있잖아"): 1.3 or more stands out (the top ~8 % of
+ *  Storm League player-games), 0.7 or less was a light game. */
+export function carryTone(carry: number | null): CarryTone | null {
+  if (carry === null) return null;
+  if (carry >= 1.3) return "carry";
+  if (carry <= 0.7) return "light";
+  return "share";
 }
