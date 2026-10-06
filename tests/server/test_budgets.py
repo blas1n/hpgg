@@ -17,9 +17,21 @@ PLAN = {
 }
 
 
+def _shared(bucket: str, cap: int) -> int:
+    """The server's share of a bucket another job also spends: the weekly report's replay sampler
+    (collector/replay_sample.py) opens its games from replay_data every day (2026-10-06)."""
+    if bucket != "replay_data":
+        return cap
+    from collector.config import Settings as CollectorSettings
+
+    c = CollectorSettings(_env_file=None, hp_api_token="x")  # type: ignore[call-arg]
+    return cap - (c.replay_sl_per_run + c.replay_qm_per_run) * 7
+
+
 @pytest.mark.parametrize("bucket", sorted(PLAN))
 def test_each_budget_fits_the_week_and_uses_the_plan(bucket: str) -> None:
     cap, budget_f, floor_f = PLAN[bucket]
+    cap = _shared(bucket, cap)
     s = Settings(_env_file=None, hp_api_token="x")  # type: ignore[call-arg]
     week = getattr(s, budget_f) * 7 + getattr(s, floor_f)
     assert week <= cap, bucket

@@ -1,5 +1,6 @@
 """GET /v1/players?battletag=Name%231234&region=KR — one player's profile; /matches — games;
-/heroes — stats per hero (?mode=all|qm|sl)."""
+/heroes — stats per hero (?mode=all|qm|sl); /teamluck — 팀운 over the newest games
+(?mode, ?games)."""
 
 from __future__ import annotations
 
@@ -15,6 +16,7 @@ from server.errors import error
 from server.players.heroes import HeroMode, HeroStatsService
 from server.players.matches import MatchService
 from server.players.service import Outcome, PlayerService
+from server.players.teamluck import GOOD, TeamLuckService
 from server.ratelimit import SlidingWindowLimiter, client_ip
 
 router = APIRouter(prefix="/v1/players", tags=["players"])
@@ -39,6 +41,12 @@ class PlayerQuery(BaseModel):
 
 class HeroesQuery(PlayerQuery):
     mode: HeroMode = "all"
+
+
+class TeamLuckQuery(PlayerQuery):
+    mode: HeroMode = "all"
+    # one replay call per game not cached: 10 or 20 (#90)
+    games: int = Field(default=20, ge=5, le=20)
 
 
 def _iso(ts: float | None) -> str | None:
@@ -118,5 +126,27 @@ async def get_heroes(request: Request, q: Annotated[HeroesQuery, Query()]) -> JS
         "fetched_at": _iso(r.fetched_at),
         "stale": r.stale,
         "notice": r.notice,
+    }
+    return JSONResponse(body, headers={"Cache-Control": "public, max-age=300"})
+
+
+@router.get("/teamluck")
+async def get_team_luck(request: Request, q: Annotated[TeamLuckQuery, Query()]) -> JSONResponse:
+    if (limited := rate_limited(request)) is not None:
+        return limited
+    service: TeamLuckService = request.app.state.teamluck
+    r = await service.lookup(q.battletag, q.region.value, mode=q.mode, games=q.games)
+    if (failed := _failure(r.outcome, r.retry_after)) is not None:  # type: ignore[arg-type]
+        return failed
+    body: dict[str, Any] = {
+        "mode": q.mode,
+        "games": r.games,
+        "summary": r.summary,
+        "partial": r.partial,
+        # printed on the page like the tier formula
+        "formula": {
+            "gap": "mean MMR of the 4 teammates − mean MMR of the 5 opponents, before the game",
+            "good": GOOD,
+        },
     }
     return JSONResponse(body, headers={"Cache-Control": "public, max-age=300"})
