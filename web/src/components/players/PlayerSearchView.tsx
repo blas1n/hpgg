@@ -9,9 +9,7 @@ import { useLocale, useT } from "@/i18n/client";
 import { fetchPlayer, isRegion, parseBattletag, playersHref, playerView, REGIONS, startRegion, type PlayerResult, type PlayerView, type Region } from "@/lib/players";
 import { Card, CardHeader, cx, Portrait } from "../ui";
 import { fetchMatches, type MatchesResult } from "@/lib/matches";
-import { FEATURES } from "@/features";
 import { HeroStats } from "./HeroStats";
-import { TeamLuck } from "./TeamLuck";
 import { MatchHistory } from "./MatchHistory";
 import { PlayerSearchForm } from "./PlayerSearchForm";
 
@@ -299,7 +297,7 @@ function Profile({ v, games, me, region, heroes, maps }: { v: PlayerView; games:
       <div className="grid gap-4 lg:grid-cols-12">
         {games.kind === "ok" ? (
           <div className="lg:col-span-8">
-            <MatchHistory data={games.data} heroes={heroes} maps={maps} me={me} />
+            <MatchHistory data={games.data} heroes={heroes} maps={maps} me={me} region={region} />
           </div>
         ) : (
         <Card aria-labelledby="h-matches" className="lg:col-span-7">
@@ -374,7 +372,6 @@ function Profile({ v, games, me, region, heroes, maps }: { v: PlayerView; games:
       </div>
 
       <HeroStats key={`${me}|${region}`} tag={me} region={region} heroes={heroes} />
-      {FEATURES.teamluck && <TeamLuck key={`luck|${me}|${region}`} tag={me} region={region} heroes={heroes} />}
     </div>
   );
 }
