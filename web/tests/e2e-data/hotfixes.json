@@ -1,0 +1,456 @@
+{
+ "builds": [
+  {
+   "build": "2.57.0.98304",
+   "previous": "2.57.0.98297",
+   "first_seen": "2026-09-29T21:46:46Z",
+   "parser": 3,
+   "heroes": {
+    "Auriel": [
+     {
+      "kind": "talent",
+      "id": "AurielWrathofHeavenBestowHopeTalent",
+      "ko": "천상의 분노",
+      "en": "Wrath of Heaven",
+      "changes": [
+       {
+        "old": "0.1",
+        "new": "0.15"
+       }
+      ]
+     }
+    ]
+   }
+  },
+  {
+   "build": "2.57.0.98297",
+   "previous": "2.57.0.98285",
+   "first_seen": "2026-09-29T04:03:15Z",
+   "parser": 3,
+   "heroes": {}
+  },
+  {
+   "build": "2.57.0.98285",
+   "previous": "2.55.17.98025",
+   "first_seen": "2026-09-28T17:38:57Z",
+   "parser": 3,
+   "heroes": {
+    "Alexstrasza": [
+     {
+      "kind": "base",
+      "id": "base",
+      "ko": null,
+      "en": null,
+      "changes": [
+       {
+        "old": "1698",
+        "new": "1780",
+        "label": {
+         "ko": "생명력",
+         "en": "Health"
+        }
+       }
+      ]
+     },
+     {
+      "kind": "talent",
+      "id": "AlexstraszaOverprotectiveAbundance",
+      "ko": "과보호",
+      "en": "Overprotective",
+      "changes": [
+       {
+        "old": "0.7",
+        "new": "0.5"
+       }
+      ]
+     }
+    ],
+    "Garrosh": [
+     {
+      "kind": "ability",
+      "id": "GarroshArmorUp",
+      "ko": "방어력 증가",
+      "en": "Armor Up",
+      "key": "D",
+      "changes": [
+       {
+        "old": "3",
+        "new": "5"
+       }
+      ]
+     },
+     {
+      "kind": "ability",
+      "id": "GarroshBloodthirst",
+      "ko": "피의 갈증",
+      "en": "Bloodthirst",
+      "key": "W",
+      "changes": [
+       {
+        "old": "0.0375",
+        "new": "0.03"
+       }
+      ]
+     },
+     {
+      "kind": "talent",
+      "id": "GarroshBloodthirstBloodcraze",
+      "ko": "피의 광기",
+      "en": "Bloodcraze",
+      "changes": [
+       {
+        "old": "3",
+        "new": "4"
+       }
+      ]
+     },
+     {
+      "kind": "talent",
+      "id": "GarroshOppressor",
+      "ko": "폭군",
+      "en": "Oppressor ",
+      "changes": [
+       {
+        "old": "-0.3",
+        "new": "-0.25"
+       }
+      ]
+     },
+     {
+      "kind": "talent",
+      "id": "GarroshBloodthirstInFortheKill",
+      "ko": "살상의 기회",
+      "en": "In For the Kill",
+      "changes": [
+       {
+        "old": "0.7",
+        "new": "1"
+       }
+      ]
+     },
+     {
+      "kind": "talent",
+      "id": "GarroshWreckingBallUnrivaledStrength",
+      "ko": "비할 데 없는 힘",
+      "en": "Unrivaled Strength",
+      "changes": [
+       {
+        "old": "1.25",
+        "new": "0.75"
+       }
+      ]
+     }
+    ],
+    "Mal'Ganis": [
+     {
+      "kind": "ability",
+      "id": "MalGanisFelClaws",
+      "ko": "지옥 발톱",
+      "en": "Fel Claws",
+      "key": "Q",
+      "changes": [
+       {
+        "old": "0.2",
+        "new": "0.15"
+       }
+      ]
+     },
+     {
+      "kind": "ability",
+      "id": "MalGanisNightRush",
+      "ko": "밤의 질주",
+      "en": "Night Rush",
+      "key": "E",
+      "changes": [
+       {
+        "old": "0.75",
+        "new": "0.625"
+       }
+      ]
+     },
+     {
+      "kind": "ability",
+      "id": "MalGanisNecroticEmbrace",
+      "ko": "괴저 기운",
+      "en": "Necrotic Embrace",
+      "key": "W",
+      "changes": [
+       {
+        "old": "0.2",
+        "new": "0.3"
+       }
+      ]
+     }
+    ],
+    "Qhira": [
+     {
+      "kind": "ability",
+      "id": "NexusHunterBloodRage",
+      "ko": "피의 분노",
+      "en": "Blood Rage",
+      "key": "W",
+      "changes": [
+       {
+        "old": "8",
+        "new": "7"
+       }
+      ]
+     },
+     {
+      "kind": "talent",
+      "id": "NexusHunterRevolvingSweepLingeringAilment",
+      "ko": "만성 통증",
+      "en": "Lingering Ailment",
+      "changes": [
+       {
+        "old": "-35",
+        "new": "-25"
+       }
+      ]
+     },
+     {
+      "kind": "talent",
+      "id": "NexusHunterFatalWounds",
+      "ko": "치명상",
+      "en": "Fatal Wounds",
+      "changes": [
+       {
+        "old": "0.5",
+        "new": "0.7"
+       }
+      ]
+     },
+     {
+      "kind": "talent",
+      "id": "NexusHunterPulsingPain",
+      "ko": "고동치는 고통",
+      "en": "Pulsing Pain",
+      "changes": [
+       {
+        "old": "135",
+        "new": "150"
+       }
+      ]
+     }
+    ],
+    "Whitemane": [
+     {
+      "kind": "ability",
+      "id": "WhitemaneDesperatePlea",
+      "ko": "절박한 기도",
+      "en": "Desperate Plea",
+      "key": "Q",
+      "changes": [
+       {
+        "old": "40",
+        "new": "45"
+       }
+      ]
+     },
+     {
+      "kind": "talent",
+      "id": "WhitemaneIntercession",
+      "ko": "중재",
+      "en": "Intercession",
+      "changes": [
+       {
+        "old": "60",
+        "new": "75"
+       }
+      ]
+     },
+     {
+      "kind": "talent",
+      "id": "WhitemaneDesperatePleaRadiance",
+      "ko": "광휘",
+      "en": "Radiance",
+      "changes": [
+       {
+        "old": "175",
+        "new": "190"
+       }
+      ]
+     }
+    ],
+    "Yrel": [
+     {
+      "kind": "ability",
+      "id": "YrelVindication",
+      "ko": "비호",
+      "en": "Vindication",
+      "key": "Q",
+      "changes": [
+       {
+        "old": "50",
+        "new": "65"
+       }
+      ]
+     },
+     {
+      "kind": "talent",
+      "id": "YrelSeraphim",
+      "ko": "고위 천사",
+      "en": "Seraphim",
+      "changes": [
+       {
+        "old": "20",
+        "new": "30"
+       }
+      ]
+     },
+     {
+      "kind": "talent",
+      "id": "YrelVelensChosen",
+      "ko": "벨렌의 선택",
+      "en": "Velen's Chosen",
+      "changes": [
+       {
+        "old": "0.1",
+        "new": "0.075"
+       },
+       {
+        "old": "3",
+        "new": "4"
+       }
+      ]
+     },
+     {
+      "kind": "talent",
+      "id": "YrelVindicationAldorPeacekeeper",
+      "ko": "알도르 평화감시자",
+      "en": "Aldor Peacekeeper",
+      "changes": [
+       {
+        "old": "3",
+        "new": "4"
+       },
+       {
+        "old": "-0.4",
+        "new": "-0.5"
+       }
+      ]
+     }
+    ]
+   }
+  },
+  {
+   "build": "2.55.17.98025",
+   "previous": "2.55.17.97771",
+   "first_seen": "2026-09-12T17:56:02Z",
+   "parser": 3,
+   "heroes": {}
+  },
+  {
+   "build": "2.55.17.97771",
+   "previous": "2.55.17.97650",
+   "first_seen": "2026-08-12T18:13:03Z",
+   "parser": 5,
+   "heroes": {
+    "Chromie": [
+     {
+      "kind": "talent",
+      "id": "ChromieSandBlastOnceAgainTheFirstTime",
+      "ko": "다시 처음으로",
+      "en": "Once Again the First Time",
+      "changes": [
+       {
+        "old": "-55",
+        "new": "-50",
+        "label": {
+         "ko": "피해 배율",
+         "en": "Damage Modifier"
+        },
+        "unit": "%",
+        "direction": "up"
+       }
+      ]
+     }
+    ]
+   }
+  },
+  {
+   "build": "2.55.17.97650",
+   "previous": "2.55.17.97605",
+   "first_seen": "2026-07-24T17:21:04Z",
+   "parser": 3,
+   "heroes": {
+    "Chen": [
+     {
+      "kind": "talent",
+      "id": "ChenMasteryKegSmashATouchOfHoney",
+      "ko": "꿀 바르기",
+      "en": "A Touch of Honey",
+      "changes": [
+       {
+        "old": "-0.3",
+        "new": "-0.2"
+       }
+      ]
+     }
+    ],
+    "Gall": [
+     {
+      "kind": "talent",
+      "id": "GallDoubleTrouble",
+      "ko": "이중고",
+      "en": "Double Trouble",
+      "changes": [
+       {
+        "old": "0.5",
+        "new": "1"
+       }
+      ]
+     }
+    ],
+    "Chromie": [
+     {
+      "kind": "talent",
+      "id": "ChromieTimeTrapChronicConditions",
+      "ko": "만성적인 현상",
+      "en": "Chronic Conditions",
+      "changes": [
+       {
+        "old": "0.2",
+        "new": "0.25"
+       },
+       {
+        "old": "-0.2",
+        "new": "-0.25"
+       }
+      ]
+     },
+     {
+      "kind": "talent",
+      "id": "ChromieSandBlastOnceAgainTheFirstTime",
+      "ko": "다시 처음으로",
+      "en": "Once Again the First Time",
+      "changes": [
+       {
+        "old": "-0.55",
+        "new": "-0.5"
+       }
+      ]
+     }
+    ],
+    "Yrel": [
+     {
+      "kind": "talent",
+      "id": "YrelVindicationLightOfKarabor",
+      "ko": "카라보르의 빛",
+      "en": "Light of Karabor",
+      "changes": [
+       {
+        "old": "0.45",
+        "new": "0.4"
+       },
+       {
+        "old": "0.9",
+        "new": "0.8"
+       }
+      ]
+     }
+    ]
+   }
+  }
+ ]
+}

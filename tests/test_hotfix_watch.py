@@ -120,7 +120,15 @@ async def test_first_run_seeds_then_a_new_build_is_recorded(settings: HotfixSett
     assert rec["build"] == "2.55.17.97650"
     assert rec["previous"] == "2.55.17.97605"
     assert rec["first_seen"] == "2026-07-24T17:21:04Z"
-    assert rec["heroes"]["Chen"][0]["changes"] == [{"old": "-0.3", "new": "-0.2"}]
+    assert rec["heroes"]["Chen"][0]["changes"] == [
+        {
+            "old": "-30",
+            "new": "-20",
+            "label": {"ko": "이동 속도", "en": "Movement Speed"},
+            "unit": "%",
+            "direction": "down",
+        }
+    ]
 
 
 @respx.mock

@@ -458,9 +458,22 @@ function PatchNote({ n }: { n: PatchNoteView }) {
           </span>
         )}
       </header>
+      {n.original && (
+        <p data-untranslated className="mt-1 text-2xs text-muted">
+          {t.hero.untranslatedHotfix}
+        </p>
+      )}
       <div className="mt-1.5">
         <ChangeGroups groups={n.groups} />
       </div>
+      {n.original && (
+        <details data-original className="mt-1.5">
+          <summary className="cursor-pointer text-2xs text-muted hover:text-fg-2">{t.hero.hotfixOriginal}</summary>
+          <div className="mt-1.5">
+            <ChangeGroups groups={n.original} />
+          </div>
+        </details>
+      )}
     </article>
   );
 }
