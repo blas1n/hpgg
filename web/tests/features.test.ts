@@ -21,8 +21,8 @@ describe("features", () => {
     expect(sectionEnabled("meta")).toBe(false);
   });
 
-  it("팀운 is built but off until the owner turns it on (#90, 2026-10-06); it owns no section", () => {
-    expect(FEATURES.teamluck).toBe(false);
+  it("팀운 is on (#90, owner 2026-10-06); it owns no section", () => {
+    expect(FEATURES.teamluck).toBe(true);
     expect(navIds({ draft: false, weekly: false, teamluck: true })).toEqual(navIds({ draft: false, weekly: false, teamluck: false }));
   });
 
