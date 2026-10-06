@@ -4,7 +4,7 @@
    "build": "2.57.0.98348",
    "previous": "2.57.0.98304",
    "first_seen": "2026-10-05T17:12:19Z",
-   "parser": 3,
+   "parser": 4,
    "heroes": {
     "Whitemane": [
      {
@@ -16,7 +16,11 @@
       "changes": [
        {
         "old": "40",
-        "new": "45"
+        "new": "45",
+        "label": {
+         "ko": "소모량",
+         "en": "Cost"
+        }
        }
       ]
      }
@@ -31,7 +35,12 @@
       "changes": [
        {
         "old": "0.7",
-        "new": "0.65"
+        "new": "0.65",
+        "label": {
+         "ko": "투사체 비행 시간",
+         "en": "Missile Flight Time"
+        },
+        "unit": "s"
        }
       ]
      },
@@ -44,39 +53,11 @@
       "changes": [
        {
         "old": "5",
-        "new": "2"
-       },
-       {
-        "old": "-1",
-        "new": "-1.08"
-       },
-       {
-        "old": "-5.5",
-        "new": "-4.5"
-       },
-       {
-        "old": "5.5",
-        "new": "4.5"
-       },
-       {
-        "old": "3.5",
-        "new": "2.85"
-       },
-       {
-        "old": "0.0625",
-        "new": "0"
-       },
-       {
-        "old": "-5.5",
-        "new": "2.85"
-       },
-       {
-        "old": "3.5",
-        "new": "-4.5"
-       },
-       {
-        "old": "-5.5",
-        "new": "4.5"
+        "new": "2",
+        "label": {
+         "ko": "사거리",
+         "en": "Range"
+        }
        }
       ]
      },
@@ -89,11 +70,20 @@
       "changes": [
        {
         "old": "0.125",
-        "new": "1.1"
+        "new": "1.1",
+        "label": {
+         "ko": "지속시간",
+         "en": "Duration"
+        },
+        "unit": "s"
        },
        {
         "old": "4",
-        "new": "3"
+        "new": "3",
+        "label": {
+         "ko": "범위",
+         "en": "Radius"
+        }
        }
       ]
      },
@@ -106,52 +96,28 @@
       "changes": [
        {
         "old": "90",
-        "new": "72"
-       }
-      ]
-     },
-     {
-      "kind": "ability",
-      "id": "XalatathVoidEruption",
-      "ko": "공허 폭발",
-      "en": "Void Eruption",
-      "key": "R",
-      "changes": [
-       {
-        "old": "1.25",
-        "new": "2.5"
-       },
-       {
-        "old": "3",
-        "new": "5.5"
-       },
-       {
-        "old": "6",
-        "new": "9.75"
-       },
-       {
-        "old": "0.0125",
-        "new": "0.0625"
+        "new": "72",
+        "label": {
+         "ko": "피해량",
+         "en": "Damage"
+        }
        }
       ]
      },
      {
       "kind": "talent",
-      "id": "XalatathParadoxLoop",
-      "ko": "역설의 고리",
-      "en": "Paradox Loop",
+      "id": "XalatathSilenceOfTheLamb",
+      "ko": "양의 침묵",
+      "en": "Silence of the Lamb",
       "changes": [
        {
-        "old": "5.5",
-        "new": "4.5"
-       },
-       {
-        "old": "3.5",
-        "new": "2.85"
-       },
-       {
-        "old": "-5.5",
-        "new": "-4.5"
+        "old": "1",
+        "new": "1.5",
+        "label": {
+         "ko": "지속시간",
+         "en": "Duration"
+        },
+        "unit": "s"
        }
       ]
      },
@@ -163,7 +129,11 @@
       "changes": [
        {
         "old": "4",
-        "new": "3"
+        "new": "3",
+        "label": {
+         "ko": "범위",
+         "en": "Radius"
+        }
        }
       ]
      },
@@ -175,7 +145,12 @@
       "changes": [
        {
         "old": "1.5",
-        "new": "1.25"
+        "new": "1.25",
+        "label": {
+         "ko": "범위",
+         "en": "Radius"
+        },
+        "unit": "x"
        }
       ]
      },
@@ -187,19 +162,35 @@
       "changes": [
        {
         "old": "400",
-        "new": "320"
+        "new": "320",
+        "label": {
+         "ko": "피해량",
+         "en": "Damage"
+        }
        },
        {
         "old": "500",
-        "new": "425"
+        "new": "425",
+        "label": {
+         "ko": "피해량",
+         "en": "Damage"
+        }
        },
        {
         "old": "600",
-        "new": "540"
+        "new": "540",
+        "label": {
+         "ko": "피해량",
+         "en": "Damage"
+        }
        },
        {
         "old": "700",
-        "new": "665"
+        "new": "665",
+        "label": {
+         "ko": "피해량",
+         "en": "Damage"
+        }
        }
       ]
      }
@@ -210,7 +201,7 @@
    "build": "2.57.0.98304",
    "previous": "2.57.0.98297",
    "first_seen": "2026-09-29T21:46:46Z",
-   "parser": 3,
+   "parser": 4,
    "heroes": {
     "Auriel": [
      {
@@ -232,14 +223,64 @@
    "build": "2.57.0.98297",
    "previous": "2.57.0.98285",
    "first_seen": "2026-09-29T04:03:15Z",
-   "parser": 3,
-   "heroes": {}
+   "parser": 4,
+   "heroes": {
+    "Xal'atath": [
+     {
+      "kind": "ability",
+      "id": "XalatathShadowMark",
+      "ko": "그림자 표식",
+      "en": "Shadow Mark",
+      "key": "Q",
+      "changes": [
+       {
+        "old": "1.55",
+        "new": "1",
+        "label": {
+         "ko": "사거리",
+         "en": "Range"
+        }
+       }
+      ]
+     },
+     {
+      "kind": "ability",
+      "id": "XalatathVoidEruption",
+      "ko": "공허 폭발",
+      "en": "Void Eruption",
+      "key": "R",
+      "changes": [
+       {
+        "old": "10",
+        "new": "75"
+       }
+      ]
+     },
+     {
+      "kind": "talent",
+      "id": "XalatathAnchoredCore",
+      "ko": "고정 핵",
+      "en": "Anchored Core",
+      "changes": [
+       {
+        "old": "1.25",
+        "new": "1.5",
+        "label": {
+         "ko": "범위",
+         "en": "Radius"
+        },
+        "unit": "x"
+       }
+      ]
+     }
+    ]
+   }
   },
   {
    "build": "2.57.0.98285",
    "previous": "2.55.17.98025",
    "first_seen": "2026-09-28T17:38:57Z",
-   "parser": 3,
+   "parser": 4,
    "heroes": {
     "Alexstrasza": [
      {
@@ -281,7 +322,12 @@
       "changes": [
        {
         "old": "3",
-        "new": "5"
+        "new": "5",
+        "label": {
+         "ko": "지속시간",
+         "en": "Duration"
+        },
+        "unit": "s"
        }
       ]
      },
@@ -306,7 +352,12 @@
       "changes": [
        {
         "old": "3",
-        "new": "4"
+        "new": "4",
+        "label": {
+         "ko": "지속시간",
+         "en": "Duration"
+        },
+        "unit": "s"
        }
       ]
      },
@@ -317,8 +368,22 @@
       "en": "Oppressor ",
       "changes": [
        {
-        "old": "-0.3",
-        "new": "-0.25"
+        "old": "-30",
+        "new": "-25",
+        "label": {
+         "ko": "주는 치유량",
+         "en": "Healing Dealt"
+        },
+        "unit": "%"
+       },
+       {
+        "old": "-30",
+        "new": "-25",
+        "label": {
+         "ko": "주는 피해",
+         "en": "Damage Dealt"
+        },
+        "unit": "%"
        }
       ]
      },
@@ -329,8 +394,13 @@
       "en": "In For the Kill",
       "changes": [
        {
-        "old": "0.7",
-        "new": "1"
+        "old": "70",
+        "new": "100",
+        "label": {
+         "ko": "피해 배율",
+         "en": "Damage Modifier"
+        },
+        "unit": "%"
        }
       ]
      },
@@ -341,8 +411,13 @@
       "en": "Unrivaled Strength",
       "changes": [
        {
-        "old": "1.25",
-        "new": "0.75"
+        "old": "125",
+        "new": "75",
+        "label": {
+         "ko": "피해 배율",
+         "en": "Damage Modifier"
+        },
+        "unit": "%"
        }
       ]
      }
@@ -370,7 +445,12 @@
       "changes": [
        {
         "old": "0.75",
-        "new": "0.625"
+        "new": "0.625",
+        "label": {
+         "ko": "시전 시간",
+         "en": "Cast Time"
+        },
+        "unit": "s"
        }
       ]
      },
@@ -382,8 +462,13 @@
       "key": "W",
       "changes": [
        {
-        "old": "0.2",
-        "new": "0.3"
+        "old": "20",
+        "new": "30",
+        "label": {
+         "ko": "흡혈",
+         "en": "Life Steal"
+        },
+        "unit": "%"
        }
       ]
      }
@@ -398,7 +483,11 @@
       "changes": [
        {
         "old": "8",
-        "new": "7"
+        "new": "7",
+        "label": {
+         "ko": "피해량",
+         "en": "Damage"
+        }
        }
       ]
      },
@@ -421,8 +510,13 @@
       "en": "Fatal Wounds",
       "changes": [
        {
-        "old": "0.5",
-        "new": "0.7"
+        "old": "50",
+        "new": "70",
+        "label": {
+         "ko": "피해 배율",
+         "en": "Damage Modifier"
+        },
+        "unit": "%"
        }
       ]
      },
@@ -434,7 +528,11 @@
       "changes": [
        {
         "old": "135",
-        "new": "150"
+        "new": "150",
+        "label": {
+         "ko": "피해량",
+         "en": "Damage"
+        }
        }
       ]
      }
@@ -488,7 +586,11 @@
       "changes": [
        {
         "old": "50",
-        "new": "65"
+        "new": "65",
+        "label": {
+         "ko": "소모량",
+         "en": "Cost"
+        }
        }
       ]
      },
@@ -528,11 +630,21 @@
       "changes": [
        {
         "old": "3",
-        "new": "4"
+        "new": "4",
+        "label": {
+         "ko": "지속시간",
+         "en": "Duration"
+        },
+        "unit": "s"
        },
        {
-        "old": "-0.4",
-        "new": "-0.5"
+        "old": "-40",
+        "new": "-50",
+        "label": {
+         "ko": "주는 피해",
+         "en": "Damage Dealt"
+        },
+        "unit": "%"
        }
       ]
      }
@@ -543,14 +655,14 @@
    "build": "2.55.17.98025",
    "previous": "2.55.17.97771",
    "first_seen": "2026-09-12T17:56:02Z",
-   "parser": 3,
+   "parser": 4,
    "heroes": {}
   },
   {
    "build": "2.55.17.97771",
    "previous": "2.55.17.97650",
    "first_seen": "2026-08-12T18:13:03Z",
-   "parser": 3,
+   "parser": 4,
    "heroes": {
     "Chromie": [
      {
@@ -560,8 +672,13 @@
       "en": "Once Again the First Time",
       "changes": [
        {
-        "old": "-0.55",
-        "new": "-0.5"
+        "old": "-55",
+        "new": "-50",
+        "label": {
+         "ko": "피해 배율",
+         "en": "Damage Modifier"
+        },
+        "unit": "%"
        }
       ]
      }
@@ -572,7 +689,7 @@
    "build": "2.55.17.97650",
    "previous": "2.55.17.97605",
    "first_seen": "2026-07-24T17:21:04Z",
-   "parser": 3,
+   "parser": 4,
    "heroes": {
     "Chen": [
      {
@@ -582,8 +699,13 @@
       "en": "A Touch of Honey",
       "changes": [
        {
-        "old": "-0.3",
-        "new": "-0.2"
+        "old": "-30",
+        "new": "-20",
+        "label": {
+         "ko": "이동 속도",
+         "en": "Movement Speed"
+        },
+        "unit": "%"
        }
       ]
      }
@@ -597,7 +719,12 @@
       "changes": [
        {
         "old": "0.5",
-        "new": "1"
+        "new": "1",
+        "label": {
+         "ko": "재사용 대기시간 감소",
+         "en": "Cooldown Reduction"
+        },
+        "unit": "s"
        }
       ]
      }
@@ -610,12 +737,22 @@
       "en": "Chronic Conditions",
       "changes": [
        {
-        "old": "0.2",
-        "new": "0.25"
+        "old": "20",
+        "new": "25",
+        "label": {
+         "ko": "이동 속도",
+         "en": "Movement Speed"
+        },
+        "unit": "%"
        },
        {
-        "old": "-0.2",
-        "new": "-0.25"
+        "old": "-20",
+        "new": "-25",
+        "label": {
+         "ko": "이동 속도",
+         "en": "Movement Speed"
+        },
+        "unit": "%"
        }
       ]
      },
@@ -626,8 +763,13 @@
       "en": "Once Again the First Time",
       "changes": [
        {
-        "old": "-0.55",
-        "new": "-0.5"
+        "old": "-55",
+        "new": "-50",
+        "label": {
+         "ko": "피해 배율",
+         "en": "Damage Modifier"
+        },
+        "unit": "%"
        }
       ]
      }
