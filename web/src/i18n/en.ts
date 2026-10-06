@@ -497,6 +497,8 @@ The same data gives different tiers under a different formula. This site always 
       label: "Team luck",
       grades: { best: "Blessed", good: "Good", normal: "Fair", bad: "Bad", worst: "Cursed" },
       loading: "Working it out…",
+      carry: (n: string) => `${n}× share`,
+      carryHelp: "How many players' worth you did this game: against the same hero's usual output per minute — damage, takedowns, experience, healing + damage taken, crowd control, shields, camps and towers, staying alive — what matters most for that hero counting most. The team adds up to 5; the hero's usual is 1.",
       help: "From the newest 20 games: per game, the 4 teammates' mean MMR − the 5 opponents', before the game, averaged. Just for fun.",
     },
     rolesTitle: "Win rate per role",

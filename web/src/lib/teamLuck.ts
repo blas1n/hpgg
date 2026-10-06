@@ -1,6 +1,7 @@
 /** 팀운 (#90, owner 2026-10-06): GET /v1/players/teamluck?mode=all|qm|sl (server/players/teamluck.py) — per game, the
  *  mean MMR of the player's 4 teammates minus the 5 opponents' before the game, over the newest games of a mode. Pure
  *  but for the fetch. */
+import type { CarryPlayer } from "./carry";
 import { apiGet, type ApiResult, type FetchOptions, type Region } from "./players";
 
 export type TeamLuckMode = "all" | "qm" | "sl";
@@ -15,6 +16,9 @@ export interface TeamLuckGame {
   team_mmr: number;
   opp_mmr: number;
   gap: number;
+  /** the game's length and the player's team, for 몇인분 (lib/carry.ts) */
+  length_s: number | null;
+  team: CarryPlayer[];
 }
 interface Cell {
   games: number;
@@ -46,4 +50,15 @@ export function luckGrade(gapAvg: number | null): LuckGrade | null {
   if (gapAvg <= -80) return "worst";
   if (gapAvg <= -30) return "bad";
   return "normal";
+}
+
+export type CarryTone = "carry" | "share" | "light";
+
+/** 몇인분 (owner 2026-10-06: "졌을 때도 1.5인분 했다면서 웃을 수 있잖아"): 1.3 or more stands out (the top ~8 % of
+ *  Storm League player-games), 0.7 or less was a light game. */
+export function carryTone(carry: number | null): CarryTone | null {
+  if (carry === null) return null;
+  if (carry >= 1.3) return "carry";
+  if (carry <= 0.7) return "light";
+  return "share";
 }

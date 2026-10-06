@@ -16,6 +16,9 @@ export const FEATURES = {
   /** 팀운 on 전적 검색 (#90) — built 2026-10-06 (owner: "미리 준비해두고") and on the same day ("이미 된거면 지금
    *  공개"): one line in the 최근 20경기 panel, not a section. */
   teamluck: true,
+  /** 몇인분 on each game (PR #144) — built 2026-10-06, off until every hero has its own yardstick (owner: "안정 되고
+   *  오픈을 하자 — 일부만 나오는건 오히려 이상해"): data/carry_baselines.json fills from the daily replay sample. */
+  carry: false,
 } as const;
 
 export type Feature = keyof typeof FEATURES;

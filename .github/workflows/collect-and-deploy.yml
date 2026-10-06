@@ -89,6 +89,7 @@ jobs:
             data/history
             data/weekly
             data/replays
+            data/carry_baselines.json
             data/patchnotes.json
             data/.snapshot_out
           include-hidden-files: true
@@ -122,7 +123,7 @@ jobs:
           fetch-depth: 1
           ssh-key: ${{ secrets.DATA_DEPLOY_KEY }}
       # the collect job's data/ exactly: a file the collector removed is removed here too
-      - run: rm -rf data/latest data/previous data/matchups data/history data/weekly data/replays data/patchnotes.json
+      - run: rm -rf data/latest data/previous data/matchups data/history data/weekly data/replays data/carry_baselines.json data/patchnotes.json
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           name: collected-data
@@ -139,6 +140,8 @@ jobs:
           if [ -d data/weekly ]; then git add data/weekly; fi
           # the per-game records' cursor (collector/replay_sample.py); the records are archived below
           if [ -d data/replays ]; then git add data/replays; fi
+          # 몇인분's yardstick (collector/carry_baselines.py), served as /carry_baselines.json
+          if [ -f data/carry_baselines.json ]; then git add data/carry_baselines.json; fi
           if [ -f data/patchnotes.json ]; then git add data/patchnotes.json; fi
           git commit -m "data: $(TZ=Asia/Seoul date +%F) $(python3 -c 'import json;print(json.load(open("data/latest/meta.json"))["current_patch"])')" || echo "nothing to commit"
           git pull --rebase --autostash origin main

@@ -21,6 +21,37 @@ from typing import Any, Protocol
 
 from server.players.replays import ReplayLookup
 
+# 몇인분 (owner 2026-10-06): the page judges each teammate against the same hero's usual output
+# (web/src/lib/carry.ts, data/carry_baselines.json); a game carries the team's output for it
+CARRY_STATS = (
+    "takedowns",
+    "hero_damage",
+    "siege_damage",
+    "experience",
+    "healing",
+    "damage_taken",
+    "stuns",
+    "roots",
+    "silences",
+    "shields",
+    "merc_camps",
+    "towers",
+    "time_spent_dead",
+)
+
+
+def _team(players: list[dict[str, Any]], me: str) -> list[dict[str, Any]]:
+    return [
+        {
+            "hero": p.get("hero"),
+            "role": p.get("role"),
+            "me": (p.get("battletag") or "").casefold() == me,
+            "stats": {s: p.get(s) or 0 for s in CARRY_STATS},
+        }
+        for p in players
+    ]
+
+
 # a game is good or bad luck beyond this many MMR points either way
 GOOD = 50.0
 MIN_MATES, MIN_OPPS = 2, 3
@@ -69,6 +100,8 @@ def game_gap(game: dict[str, Any], battletag: str) -> dict[str, Any] | None:
         "team_mmr": round(team, 1),
         "opp_mmr": round(opp, 1),
         "gap": round(team - opp, 1),
+        "length_s": game.get("length_s"),
+        "team": _team(mine["players"], me),
     }
 
 

@@ -23,7 +23,11 @@ describe("features", () => {
 
   it("팀운 is on (#90, owner 2026-10-06); it owns no section", () => {
     expect(FEATURES.teamluck).toBe(true);
-    expect(navIds({ draft: false, weekly: false, teamluck: true })).toEqual(navIds({ draft: false, weekly: false, teamluck: false }));
+    expect(navIds({ draft: false, weekly: false, teamluck: true, carry: false })).toEqual(navIds({ draft: false, weekly: false, teamluck: false, carry: false }));
+  });
+
+  it("몇인분 waits until every hero has its own yardstick (owner 2026-10-06)", () => {
+    expect(FEATURES.carry).toBe(false);
   });
 
   it("a section without a feature is always on", () => {
@@ -31,9 +35,9 @@ describe("features", () => {
   });
 
   it("the menu leaves out a switched-off section and keeps the order", () => {
-    expect(navIds({ draft: false, weekly: true, teamluck: false })).toEqual(["home", "tier", "meta", "heroes", "maps", "patches", "players"]);
-    expect(navIds({ draft: true, weekly: true, teamluck: false })).toEqual(["home", "tier", "meta", "heroes", "draft", "maps", "patches", "players"]);
-    expect(navIds({ draft: false, weekly: false, teamluck: false })).toEqual(["home", "tier", "heroes", "maps", "patches", "players"]);
+    expect(navIds({ draft: false, weekly: true, teamluck: false, carry: false })).toEqual(["home", "tier", "meta", "heroes", "maps", "patches", "players"]);
+    expect(navIds({ draft: true, weekly: true, teamluck: false, carry: false })).toEqual(["home", "tier", "meta", "heroes", "draft", "maps", "patches", "players"]);
+    expect(navIds({ draft: false, weekly: false, teamluck: false, carry: false })).toEqual(["home", "tier", "heroes", "maps", "patches", "players"]);
   });
 
   it("the export loses a switched-off section in every language and keeps the rest", () => {
@@ -45,13 +49,13 @@ describe("features", () => {
           writeFileSync(join(dist, l, "hots", s, "index.html"), "x");
         }
       }
-      const removed = pruneDisabled(dist, { draft: false, weekly: true, teamluck: false });
+      const removed = pruneDisabled(dist, { draft: false, weekly: true, teamluck: false, carry: false });
       expect(removed.sort()).toEqual(LOCALES.map((l) => `${l}/hots/draft`).sort());
       for (const l of LOCALES) {
         expect(existsSync(join(dist, l, "hots", "draft"))).toBe(false);
         expect(existsSync(join(dist, l, "hots", "tier", "index.html"))).toBe(true);
       }
-      expect(pruneDisabled(dist, { draft: true, weekly: true, teamluck: false })).toEqual([]);
+      expect(pruneDisabled(dist, { draft: true, weekly: true, teamluck: false, carry: false })).toEqual([]);
     } finally {
       rmSync(dist, { recursive: true, force: true });
     }

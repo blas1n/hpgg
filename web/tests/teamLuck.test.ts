@@ -21,3 +21,15 @@ describe("luckGrade", () => {
     expect(luckGrade(null)).toBeNull();
   });
 });
+
+describe("carryTone (몇인분, owner 2026-10-06)", async () => {
+  const { carryTone } = await import("../src/lib/teamLuck");
+  it("1.3 or more is a carry, 0.7 or less is light, the rest is a share", () => {
+    expect(carryTone(1.5)).toBe("carry");
+    expect(carryTone(1.3)).toBe("carry");
+    expect(carryTone(1.2)).toBe("share");
+    expect(carryTone(0.8)).toBe("share");
+    expect(carryTone(0.7)).toBe("light");
+    expect(carryTone(null)).toBeNull();
+  });
+});

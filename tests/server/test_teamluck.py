@@ -146,3 +146,33 @@ async def test_a_private_player_has_no_team_luck() -> None:
     svc = TeamLuckService(matches=FakeMatches(outcome="private"), replays=FakeReplays(_game()))  # type: ignore[arg-type]
     r = await svc.lookup("someone#1234", "KR", mode="sl", games=10)
     assert r.outcome == "private"
+
+
+def test_a_game_carries_the_players_team_for_its_몇인분() -> None:
+    """몇인분 (owner 2026-10-06): the page judges each teammate against the same hero's usual output
+    (data/carry_baselines.json), so a game carries the player's team — heroes, roles, the length and
+    each one's output — and no BattleTag."""
+    game = _game()
+    g = game_gap(game, _me(game))
+    assert g is not None
+    team = g["team"]
+    assert len(team) == 5 and sum(1 for p in team if p["me"]) == 1
+    assert g["length_s"] == game["length_s"]
+    first = team[0]
+    assert {"hero", "role", "me", "stats"} <= set(first)
+    assert set(first["stats"]) == {
+        "takedowns",
+        "hero_damage",
+        "siege_damage",
+        "experience",
+        "healing",
+        "damage_taken",
+        "stuns",
+        "roots",
+        "silences",
+        "shields",
+        "merc_camps",
+        "towers",
+        "time_spent_dead",
+    }
+    assert "battletag" not in json.dumps(team)

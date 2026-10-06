@@ -15,6 +15,7 @@ import httpx
 import structlog
 
 from collector.averages import collect_averages, due
+from collector.carry_baselines import update_baselines
 from collector.client import HPClient, HPError, SleepFn
 from collector.config import Settings
 from collector.matchups import collect_matchups, load_hero_list
@@ -519,6 +520,19 @@ async def _run_replays(
                 for r in records:
                     f.write(json.dumps(r, ensure_ascii=False, separators=(",", ":")) + "\n")
     save_cursor(settings.data_dir, out.cursor, patch=patch, collected_at=collected_at)
+    # 몇인분's yardstick: each hero's usual output per minute, from the same games
+    table = _load_json(settings.data_dir / "heroes_ko.json") or {}
+    roles = {h["name"]: h["role"] for h in table.get("heroes", [])}
+    games = [g for records in out.records.values() for g in records]
+    try:
+        update_baselines(
+            settings.data_dir / "carry_baselines.json",
+            games,
+            roles=roles,
+            day=snapshot_day(collected_at),
+        )
+    except Exception as e:  # noqa: BLE001 — a game list badge never fails the daily run
+        log.warning("carry.baselines_failed", error=f"{type(e).__name__}: {e}")
     log.info("replays.done", **{k: len(v) for k, v in out.records.items()})
 
 
