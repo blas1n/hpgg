@@ -1,0 +1,9 @@
+{
+ "patch": "2.57.0",
+ "collected_at": "2026-10-06T01:40:00Z",
+ "cursor": {
+  "sl": 65716000,
+  "qm": 65716000
+ },
+ "note": "set by hand: replay ids uploaded from about 2026-10-05 00:00 KST, so the first run covers the 2026-w41 report"
+}
