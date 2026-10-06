@@ -37,7 +37,9 @@ export function MatchHistory({ data, heroes, maps, me, region }: { data: Matches
   useEffect(() => {
     if (!FEATURES.teamluck) return;
     let live = true;
-    void Promise.all([fetchTeamLuck(me, region, "all"), loadCarryBaselines().catch(() => null)]).then(([r, yardstick]) => {
+    // 몇인분 stays off until every hero has its own yardstick (FEATURES.carry)
+    const yardstickP = FEATURES.carry ? loadCarryBaselines().catch(() => null) : Promise.resolve(null);
+    void Promise.all([fetchTeamLuck(me, region, "all"), yardstickP]).then(([r, yardstick]) => {
       if (!live) return;
       setLuck(r.kind === "ok" ? luckGrade(r.data.summary.gap_avg) : null);
       if (r.kind !== "ok") return;
