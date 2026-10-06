@@ -344,7 +344,7 @@
    "build": "2.55.17.97771",
    "previous": "2.55.17.97650",
    "first_seen": "2026-08-12T18:13:03Z",
-   "parser": 3,
+   "parser": 5,
    "heroes": {
     "Chromie": [
      {
@@ -354,8 +354,14 @@
       "en": "Once Again the First Time",
       "changes": [
        {
-        "old": "-0.55",
-        "new": "-0.5"
+        "old": "-55",
+        "new": "-50",
+        "label": {
+         "ko": "피해 배율",
+         "en": "Damage Modifier"
+        },
+        "unit": "%",
+        "direction": "up"
        }
       ]
      }

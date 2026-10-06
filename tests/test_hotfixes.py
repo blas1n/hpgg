@@ -101,7 +101,16 @@ def test_a_change_belongs_to_the_talent_its_entry_is_named_after() -> None:
             "id": "ChenMasteryKegSmashATouchOfHoney",
             "ko": "꿀 바르기",
             "en": "A Touch of Honey",
-            "changes": [{"old": "-0.3", "new": "-0.2"}],  # the same pair once
+            # the same pair once; a slow is a movement speed, in percent
+            "changes": [
+                {
+                    "old": "-30",
+                    "new": "-20",
+                    "label": {"ko": "이동 속도", "en": "Movement Speed"},
+                    "unit": "%",
+                    "direction": "down",
+                }
+            ],
         }
     ]
     assert got["Yrel"][0]["id"] == "YrelVindicationLightOfKarabor"
@@ -115,10 +124,30 @@ def test_a_change_on_a_shared_effect_belongs_to_the_talent_its_validator_names()
     # ChromieSandEchoWeaponDamage is the ability; the modifier is gated on the talent's quest
     got = hero_changes([(_xml("97605", "chromie"), _xml("97650", "chromie"))], INDEX)
     by_talent = {t["id"]: t["changes"] for t in got["Chromie"]}
-    assert by_talent["ChromieSandBlastOnceAgainTheFirstTime"] == [{"old": "-0.55", "new": "-0.5"}]
+    assert by_talent["ChromieSandBlastOnceAgainTheFirstTime"] == [
+        {
+            "old": "-55",
+            "new": "-50",
+            "label": {"ko": "피해 배율", "en": "Damage Modifier"},
+            "unit": "%",
+            "direction": "up",
+        }
+    ]
     assert by_talent["ChromieTimeTrapChronicConditions"] == [
-        {"old": "0.2", "new": "0.25"},
-        {"old": "-0.2", "new": "-0.25"},
+        {
+            "old": "20",
+            "new": "25",
+            "label": {"ko": "이동 속도", "en": "Movement Speed"},
+            "unit": "%",
+            "direction": "up",
+        },
+        {
+            "old": "-20",
+            "new": "-25",
+            "label": {"ko": "이동 속도", "en": "Movement Speed"},
+            "unit": "%",
+            "direction": "up",
+        },
     ]
 
 
@@ -183,7 +212,16 @@ def test_a_talent_named_inside_an_ability_entry_claims_it() -> None:
                 "id": "GallDoubleTrouble",
                 "ko": "이중 난관",
                 "en": "Double Trouble",
-                "changes": [{"old": "0.5", "new": "1"}],
+                # Operation Subtract on the cooldown: a cut, not the cooldown itself
+                "changes": [
+                    {
+                        "old": "0.5",
+                        "new": "1",
+                        "label": {"ko": "재사용 대기시간 감소", "en": "Cooldown Reduction"},
+                        "unit": "s",
+                        "direction": "up",
+                    }
+                ],
             }
         ]
     }
@@ -263,7 +301,7 @@ def test_a_base_stat_is_named_by_the_games_own_word_once_for_every_form() -> Non
     items = _got("alexstrasza")
     base = _item(items, "base")
     assert base["changes"] == [
-        {"old": "1698", "new": "1780", "label": {"ko": "생명력", "en": "Health"}}
+        {"old": "1698", "new": "1780", "label": {"ko": "생명력", "en": "Health"}, "direction": "up"}
     ]
     assert _item(items, "talent", "과보호")["changes"] == [{"old": "0.7", "new": "0.5"}]
     assert [i["kind"] for i in items][0] == "base"  # base first, as the notes do
@@ -273,7 +311,11 @@ def test_an_ability_is_named_with_its_hotkey() -> None:
     # note: 밤의 질주 [E] "시전 시간이 0.75초에서 0.625초로 감소"
     items = _got("malganis")
     rush = _item(items, "ability", "밤의 질주")
-    assert (rush["key"], rush["changes"]) == ("E", [{"old": "0.75", "new": "0.625"}])
+    cast = {"ko": "시전 시간", "en": "Cast Time"}
+    assert (rush["key"], rush["changes"]) == (
+        "E",
+        [{"old": "0.75", "new": "0.625", "label": cast, "unit": "s", "direction": "up"}],
+    )
     # the leech on every damage effect is still nobody's: the trait's number is not shown as
     # a Fel Claws or talent change
     claws = next((i for i in items if i["ko"] == "지옥 발톱"), None)
@@ -284,8 +326,26 @@ def test_an_ability_is_named_with_its_hotkey() -> None:
 def test_talents_still_win_over_the_ability_their_entry_starts_with() -> None:
     # GarroshWreckingBallUnrivaledStrengthDamage starts with the ability GarroshWreckingBall
     items = _got("garrosh")
-    assert _item(items, "talent", "비할 데 없는 힘")["changes"] == [{"old": "1.25", "new": "0.75"}]
-    assert _item(items, "talent", "살상의 기회")["changes"] == [{"old": "0.7", "new": "1"}]
+    # note: "공격력 증가량이 125%에서 75%로 감소"
+    assert _item(items, "talent", "비할 데 없는 힘")["changes"] == [
+        {
+            "old": "125",
+            "new": "75",
+            "label": {"ko": "피해 배율", "en": "Damage Modifier"},
+            "unit": "%",
+            "direction": "down",
+        }
+    ]
+    # note: "공격력 증가량이 70%에서 100%로 증가"
+    assert _item(items, "talent", "살상의 기회")["changes"] == [
+        {
+            "old": "70",
+            "new": "100",
+            "label": {"ko": "피해 배율", "en": "Damage Modifier"},
+            "unit": "%",
+            "direction": "up",
+        }
+    ]
     assert not any(i["kind"] == "ability" and i["ko"] == "파쇄추" for i in items)
 
 
@@ -303,7 +363,172 @@ def test_weapon_period_is_shown_as_attacks_per_second() -> None:
             "old": "1.3",
             "new": "1.5",
             "label": {"ko": "일반 공격 사거리", "en": "Basic Attack Range"},
+            "direction": "up",
         },
-        {"old": "0.91", "new": "1", "label": {"ko": "공격 속도", "en": "Attack Speed"}},
-        {"old": "96", "new": "100", "label": {"ko": "일반 공격력", "en": "Basic Attack Damage"}},
+        {
+            "old": "0.91",
+            "new": "1",
+            "label": {"ko": "공격 속도", "en": "Attack Speed"},
+            "direction": "up",
+        },
+        {
+            "old": "96",
+            "new": "100",
+            "label": {"ko": "일반 공격력", "en": "Basic Attack Damage"},
+            "direction": "up",
+        },
     ]
+
+
+# --- what each number is (parser 4): checked against the 10/5 Xal'atath hotfix note -----------
+
+XAL = ["xalatath", "xalatathvoideruption", "xalatathmover"]
+
+
+def _xal() -> list[dict]:
+    got = hero_changes([(_xml("98304", n), _xml("98348", n)) for n in XAL], REAL)
+    return got["Xal'atath"]
+
+
+def _changes(items: list[dict], ko: str) -> list[dict] | None:
+    return next((i["changes"] for i in items if i["ko"] == ko), None)
+
+
+def test_a_number_says_which_stat_it_is() -> None:
+    items = _xal()
+    # note: Void Volley "Base damage per missile reduced from 90 to 72"
+    assert _changes(items, "공허 화살") == [
+        {"old": "90", "new": "72", "label": {"ko": "피해량", "en": "Damage"}, "direction": "down"}
+    ]
+    # note: Void Step "Targeting range reduced from 5 to 2"
+    assert _changes(items, "공허 걸음") == [
+        {"old": "5", "new": "2", "label": {"ko": "사거리", "en": "Range"}, "direction": "down"}
+    ]
+    # note: Shadow Mark "Void Orb speed slightly increased" — the orb's flight time
+    assert _changes(items, "그림자 표식") == [
+        {
+            "old": "0.7",
+            "new": "0.65",
+            "label": {"ko": "투사체 비행 시간", "en": "Missile Flight Time"},
+            "unit": "s",
+            "direction": "up",
+        }
+    ]
+
+
+def test_coordinates_visuals_and_internal_ticks_are_not_balance() -> None:
+    items = _xal()
+    lines = [c for i in items for c in i["changes"]]
+    # Void Step's teleport triangle (X/Y offsets), Void Eruption's guide widths (actors) and its
+    # targeting tick: none of it is a number a player reads
+    assert not any(
+        c["old"] in {"-5.5", "5.5", "3.5", "-1", "1.25", "0.0125", "0.0625"} for c in lines
+    )
+    assert _changes(items, "공허 폭발") is None
+    # Anchored Core's splat sizes (Catalog Actor) go; its radius multiplier stays —
+    # note: "Radius bonus reduced from 50% to 25%"
+    assert _changes(items, "고정 핵") == [
+        {
+            "old": "1.5",
+            "new": "1.25",
+            "label": {"ko": "범위", "en": "Radius"},
+            "unit": "x",
+            "direction": "down",
+        }
+    ]
+
+
+def test_a_talent_id_is_matched_whatever_its_capitals() -> None:
+    # XalatathSilenceOftheLambSilenceEnemyBehavior; the talent is XalatathSilenceOfTheLamb
+    # note: "Silence duration increased from 1 to 1.5 seconds"
+    assert _changes(_xal(), "양의 침묵") == [
+        {
+            "old": "1",
+            "new": "1.5",
+            "label": {"ko": "지속시간", "en": "Duration"},
+            "unit": "s",
+            "direction": "up",
+        }
+    ]
+
+
+def test_a_talents_modification_is_named_by_the_field_it_modifies() -> None:
+    # Chen's A Touch of Honey: Modifications Field="Modification.UnifiedMoveSpeedFactor"
+    got = hero_changes([(_xml("97605", "chen"), _xml("97650", "chen"))], REAL)["Chen"]
+    honey = next(i for i in got if i["id"] == "ChenMasteryKegSmashATouchOfHoney")
+    assert honey["changes"] == [
+        {
+            "old": "-30",
+            "new": "-20",
+            "label": {"ko": "이동 속도", "en": "Movement Speed"},
+            "unit": "%",
+            "direction": "down",
+        }
+    ]
+
+
+def test_a_cost_entry_is_a_cost() -> None:
+    got = hero_changes([(_xml("98304", "whitemane"), _xml("98348", "whitemane"))], REAL)
+    assert _changes(got["Whitemane"], "절박한 기도") == [
+        {"old": "40", "new": "45", "label": {"ko": "소모량", "en": "Cost"}, "direction": "down"}
+    ]
+
+
+def test_a_bare_pair_the_same_as_a_named_one_is_shown_once_named() -> None:
+    # 98285 Yrel's Sanctification: its cost and another field of it both 50 → 65
+    cost = (
+        '<CEffectModifyCatalogNumeric id="YrelSanctificationUpdateCost">'
+        '<CatalogModifications><Value value="50"/></CatalogModifications>'
+        "</CEffectModifyCatalogNumeric>"
+    )
+    other = '<CBehaviorBuff id="YrelSanctificationAura"><Something value="50"/></CBehaviorBuff>'
+    abilities = {"YrelSanctification": {"ko": "비호", "en": "Sanctification", "key": "R"}}
+    index = TalentIndex({}, {"yrel": "Yrel"}, {"yrel": {"abilities": abilities}})
+    for body in (cost + other, other + cost):  # whichever comes first
+        old = f"<Catalog>{body}</Catalog>"
+        got = hero_changes([(old, old.replace('"50"', '"65"'))], index)["Yrel"][0]["changes"]
+        assert got == [
+            {"old": "50", "new": "65", "label": {"ko": "소모량", "en": "Cost"}, "direction": "down"}
+        ]
+
+
+# --- which way a named number moved (owner 10-06: the arrows were gone on Korean pages) ---------
+
+
+def _dirs(items: list[dict], ko: str) -> list[str | None]:
+    return [c.get("direction") for c in _changes(items, ko) or []]
+
+
+def test_a_named_number_says_whether_it_helps_the_hero() -> None:
+    items = _xal()
+    assert _dirs(items, "공허 화살") == ["down"]  # damage 90 → 72
+    assert _dirs(items, "공허 걸음") == ["down"]  # range 5 → 2
+    assert _dirs(items, "양의 침묵") == ["up"]  # silence 1s → 1.5s
+    assert _dirs(items, "고정 핵") == ["down"]  # radius ×1.5 → ×1.25
+    # less is better: a shorter flight is a faster orb (note: "speed slightly increased")
+    assert _dirs(items, "그림자 표식") == ["up"]
+    whitemane = hero_changes([(_xml("98304", "whitemane"), _xml("98348", "whitemane"))], REAL)
+    assert _dirs(whitemane["Whitemane"], "절박한 기도") == ["down"]  # cost 40 → 45
+
+
+def test_a_negative_number_is_judged_by_its_size() -> None:
+    # Chen's A Touch of Honey: an enemy slow −30% → −20% is weaker — the notes' rule too
+    got = hero_changes([(_xml("97605", "chen"), _xml("97650", "chen"))], REAL)["Chen"]
+    honey = next(i for i in got if i["id"] == "ChenMasteryKegSmashATouchOfHoney")
+    assert [c["direction"] for c in honey["changes"]] == ["down"]
+
+
+def test_a_base_stat_more_is_better_and_a_bare_number_is_not_judged() -> None:
+    items = _got("alexstrasza")
+    assert _item(items, "base")["changes"][0]["direction"] == "up"  # health 1698 → 1780
+    assert "direction" not in _item(items, "talent", "과보호")["changes"][0]  # no word, no way
+
+
+def test_a_penalty_on_the_heros_own_damage_is_judged_by_its_sign() -> None:
+    # Chromie's Once Again the First Time: echo damage −55% → −50% is a smaller penalty, a buff;
+    # only an enemy debuff (slow, damage or healing dealt) is judged by its size
+    got = hero_changes([(_xml("97605", "chromie"), _xml("97650", "chromie"))], INDEX)
+    by_talent = {t["id"]: t["changes"] for t in got["Chromie"]}
+    assert [c["direction"] for c in by_talent["ChromieSandBlastOnceAgainTheFirstTime"]] == ["up"]
+    # Chronic Conditions: her speed +20% → +25% and the enemy slow −20% → −25%, both up
+    assert [c["direction"] for c in by_talent["ChromieTimeTrapChronicConditions"]] == ["up", "up"]

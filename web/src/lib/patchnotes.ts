@@ -2,6 +2,7 @@
  *  Pure: computed at build time from data/patchnotes.json. */
 import type { Hotfix, HotfixesFile, HotfixItem, NoteHotfix, PatchDirection, PatchGroup, PatchNote, PatchNotesFile, PatchVerdict } from "../data";
 import type { Locale } from "../i18n/locale";
+import { messages } from "../i18n/messages";
 
 export const PATCH_NOTES_SHOWN = 3;
 
@@ -13,6 +14,9 @@ export interface PatchNoteView {
   kind: "note" | "hotfix";
   /** a hotfix section Blizzard added to the note: its date (title and link are the note's) */
   hotfix: string | null;
+  /** Blizzard has not written it in the page language yet: `groups` are the build's numbers, this is Blizzard's
+   *  text in the language it has (shown folded) */
+  original: ChangeGroup[] | null;
   id: string;
   published: string;
   title: string;
@@ -45,6 +49,8 @@ const newer = (a: string, b: string) => {
 
 // hotfix numbers as the game data has them, with a typographic minus
 const num = (v: string) => v.replace(/^-/, "\u2212");
+const inUnit = (v: string, unit: "s" | "%" | "x" | undefined, locale: Locale) =>
+  unit === "x" ? `×${num(v)}` : unit === "s" ? messages[locale].hero.hotfixSeconds(num(v)) : `${num(v)}${unit ?? ""}`;
 
 const pick = (locale: Locale, v: { ko: string | null; en: string | null }) => (locale === "ko" ? v.ko : v.en);
 const pickOrOther = (locale: Locale, v: { ko: string | null; en: string | null }) => pick(locale, v) ?? (locale === "ko" ? v.en : v.ko);
@@ -66,14 +72,15 @@ export function noteGroups(groups: PatchGroup[], locale: Locale, untranslated = 
     .filter((g) => g.changes.length > 0);
 }
 
-/** A hotfix build's items for one hero: the game data's numbers, old → new (no direction is judged). */
+/** A hotfix build's items for one hero: the game data's numbers, old → new; ▲▼ only where the collector named the
+ *  stat (parser 5), a bare number stays neutral. */
 export function hotfixGroups(items: HotfixItem[], locale: Locale): ChangeGroup[] {
   return items.flatMap((t) => {
     const name = t.kind === "base" ? null : pick(locale, t);
     if (t.kind !== "base" && !name) return [];
     const changes = t.changes.map((c) => ({
-      text: `${c.label ? `${c.label[locale]} ` : ""}${num(c.old)} → ${num(c.new)}`,
-      direction: "neutral" as const,
+      text: `${c.label ? `${c.label[locale]} ` : ""}${inUnit(c.old, c.unit, locale)} → ${inUnit(c.new, c.unit, locale)}`,
+      direction: c.direction ?? ("neutral" as const),
     }));
     const ability = name && t.key ? `${name} [${t.key}]` : name;
     return [{ section: t.kind === "talent" ? ("talents" as const) : ("base" as const), level: null, ability, changes }];
@@ -111,6 +118,17 @@ export function announcedHotfixes(notes: PatchNote[], hotfixes: HotfixesFile | n
   return out;
 }
 
+/** One hero's lines of an announced hotfix. Until Blizzard writes it in the page language (owner 10-06: Korean pages
+ *  showed English), the build's numbers in that language, Blizzard's own text kept as `original`; without numbers to
+ *  show, Blizzard's text stands in. */
+export function announcedGroups(a: AnnouncedHotfix, hero: string, locale: Locale, hotfixes: HotfixesFile | null): { groups: ChangeGroup[]; original: ChangeGroup[] | null } {
+  const entry = a.fix.heroes[hero];
+  if (!entry) return { groups: [], original: null };
+  const translated = entry.groups.every((g) => g.changes.every((c) => pick(locale, c) !== null));
+  const numbers = translated ? [] : hotfixGroups(hotfixes?.builds.find((b) => b.build === a.build)?.heroes[hero] ?? [], locale);
+  return numbers.length ? { groups: numbers, original: noteGroups(entry.groups, locale, true) } : { groups: noteGroups(entry.groups, locale, true), original: null };
+}
+
 /** A hotfix build's heroes that no hotfix section of a note names: what is still unannounced in it. */
 export function unannounced(build: Hotfix, announced: AnnouncedHotfix[]): Record<string, HotfixItem[]> {
   const named = new Set(announced.filter((a) => a.build === build.build).flatMap((a) => Object.keys(a.fix.heroes)));
@@ -136,7 +154,7 @@ export function heroPatchNotes(
         const entry = n.heroes[hero];
         if (!entry) return null;
         const groups = noteGroups(entry.groups, locale);
-        return { kind: "note", hotfix: null, id: n.id, published: n.published, title: n.title[locale], url: n.url[locale], status: null, verdict: entry.verdict, groups };
+        return { kind: "note", hotfix: null, original: null, id: n.id, published: n.published, title: n.title[locale], url: n.url[locale], status: null, verdict: entry.verdict, groups };
       },
     });
   }
@@ -145,7 +163,8 @@ export function heroPatchNotes(
   // a hotfix Blizzard added to a note is shown with the note's words, the build that shipped it as its place in time
   const announced = announcedHotfixes(file?.notes ?? [], hotfixes);
   const firstSeen = new Map((hotfixes?.builds ?? []).map((b) => [b.build, b.first_seen]));
-  for (const { note, fix, build } of announced) {
+  for (const a of announced) {
+    const { note, fix, build } = a;
     const at = (build && firstSeen.get(build)) || `${fix.date}T19:00:00Z`;
     items.push({
       at,
@@ -153,8 +172,8 @@ export function heroPatchNotes(
       view: () => {
         const entry = fix.heroes[hero];
         if (!entry) return null;
-        const groups = noteGroups(entry.groups, locale, true);
-        return { kind: "note", hotfix: fix.date, id: `${note.id}#${fix.date}`, published: at, title: note.title[locale], url: note.url[locale], status: null, verdict: entry.verdict, groups };
+        const { groups, original } = announcedGroups(a, hero, locale, hotfixes);
+        return { kind: "note", hotfix: fix.date, original, id: `${note.id}#${fix.date}`, published: at, title: note.title[locale], url: note.url[locale], status: null, verdict: entry.verdict, groups };
       },
     });
   }
@@ -166,7 +185,7 @@ export function heroPatchNotes(
       build: h.build,
       view: () => {
         const groups = hotfixGroups(h.heroes[hero] ?? [], locale);
-        return groups.length ? { kind: "hotfix", hotfix: null, id: h.build, published: h.first_seen, title: h.build, url: null, status: null, verdict: null, groups } : null;
+        return groups.length ? { kind: "hotfix", hotfix: null, original: null, id: h.build, published: h.first_seen, title: h.build, url: null, status: null, verdict: null, groups } : null;
       },
     });
   }
