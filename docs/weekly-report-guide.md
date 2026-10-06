@@ -27,7 +27,10 @@ Basis: Storm League. Quick Match is used only to check how a build fares in the 
     - its record against the centre by talent at each level, overall and in high/low-MMR games (`sl`; `qm` apart);
     - what differs between its wins and losses: the centre's deaths, deaths while outnumbered, time dead, damage; the answer's teamfight damage, stuns, roots, silences; game length (`contrast_*`).
   - `hotfix` (when the centre was changed during the week): the same before and after the build, plus its record against teams with more or less control (`vs_control`: roots, stuns, silences).
-- **Patch and hotfix changes:** use only the official notes (`data/patchnotes.json`, `notes[].hotfixes`, Blizzard's words). Do not use `data/hotfixes.json` for the report. It is a diff of game data, and on 2026-10-06 it named changes the official hotfix does not have.
+- **Patch and hotfix changes:** Blizzard's notes first (`data/patchnotes.json`, `notes[].hotfixes`).
+  - `data/hotfixes.json` (a diff of the game data) can add changes the note leaves out. 98348 had three: the Dark Heart's detonation radius 4→3, Unstable Core's radius 4→3, and how long Xal'atath reveals herself when the Dark Heart lands, 0.125→1.1 s.
+  - Name those as "공지 외 변경" (not in the notes).
+  - Where the two disagree, say what the data shows. The 10/5 note puts "Void Eruption damage −20% / −5%" under the ability. In the data, only the split orbs of the level-20 talent 전령의 소모 changed (400→320 … 700→665); the base explosion is still 400–700.
 - **Kit:** `data/talents/<slug>.json` → `game.abilities` (tooltip, cooldown, cost) and `talents` (names, tooltips).
 - **Tier and matchup aggregates:** `data/weekly/<week>.evidence.json` (`tools/weekly_evidence.py`), for the rank context only.
 
