@@ -9,10 +9,10 @@ export const FEATURES = {
   /** 밴픽 시뮬레이터 — off 2026-10-02 (owner): it sorts by score with a matchup correction and ignores the roles a
    *  team needs (tank, healer…); back once the suggestions account for them. */
   draft: false,
-  /** 주간 메타 리포트 — off 2026-10-05 (owner: a top 10 and a diff is not a report), back on the same day with an
-   *  analysis on Storm League (PR #128): the meta's centre, its specs and average stats, who answers it — drafted
-   *  from the evidence and reviewed by the owner each week. */
-  weekly: true,
+  /** 주간 메타 리포트 — off 2026-10-05 (owner: a top 10 and a diff is not a report), on again the same day with a
+   *  Storm League analysis (#130), off again 2026-10-06 (owner: still hypotheses and lists). Back once it reads like
+   *  a meta analysis built on per-game replay data: the central pick, how it changes games, how its counters work. */
+  weekly: false,
 } as const;
 
 export type Feature = keyof typeof FEATURES;
