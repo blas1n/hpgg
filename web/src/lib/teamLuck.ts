@@ -1,6 +1,7 @@
 /** 팀운 (#90, owner 2026-10-06): GET /v1/players/teamluck?mode=all|qm|sl (server/players/teamluck.py) — per game, the
  *  mean MMR of the player's 4 teammates minus the 5 opponents' before the game, over the newest games of a mode. Pure
  *  but for the fetch. */
+import type { CarryPlayer } from "./carry";
 import { apiGet, type ApiResult, type FetchOptions, type Region } from "./players";
 
 export type TeamLuckMode = "all" | "qm" | "sl";
@@ -15,8 +16,9 @@ export interface TeamLuckGame {
   team_mmr: number;
   opp_mmr: number;
   gap: number;
-  /** 몇인분: the player's three best of five stats against the team's, an average teammate 1.0 */
-  carry: number | null;
+  /** the game's length and the player's team, for 몇인분 (lib/carry.ts) */
+  length_s: number | null;
+  team: CarryPlayer[];
 }
 interface Cell {
   games: number;
