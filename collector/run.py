@@ -21,6 +21,7 @@ from collector.matchups import collect_matchups, load_hero_list
 from collector.models import JobSpec
 from collector.party import apply_party_correction
 from collector.patchnotes import collect_patchnotes
+from collector.replay_sample import load_cursor, sample_replays, save_cursor
 from collector.snapshot import (
     CELL_SOLO_SPECS,
     CELL_SPECS,
@@ -496,6 +497,31 @@ async def _run_weekly_talents(
         log.warning("talents.failed", error=f"{type(e).__name__}: {e}")
 
 
+async def _run_replays(
+    c: HPClient, settings: Settings, *, patch: str, collected_at: str, sleep: SleepFn
+) -> None:
+    """The weekly report's per-game records (collector/replay_sample.py): into the day's snapshot
+    folder, the cursor into data/replays. A failure keeps the cursor and never fails the run."""
+    if not settings.replay_sample:
+        return
+    try:
+        out = await sample_replays(
+            c, settings, patch=patch, cursor=load_cursor(settings.data_dir), sleep=sleep
+        )
+    except Exception as e:  # noqa: BLE001 — supplementary data never fails the daily run
+        log.warning("replays.failed", error=f"{type(e).__name__}: {e}")
+        return
+    day_dir = settings.snapshot_out_dir / snapshot_day(collected_at)
+    for kind, records in out.records.items():
+        if records:
+            day_dir.mkdir(parents=True, exist_ok=True)
+            with gzip.open(day_dir / f"replays_{kind}.jsonl.gz", "at", encoding="utf-8") as f:
+                for r in records:
+                    f.write(json.dumps(r, ensure_ascii=False, separators=(",", ":")) + "\n")
+    save_cursor(settings.data_dir, out.cursor, patch=patch, collected_at=collected_at)
+    log.info("replays.done", **{k: len(v) for k, v in out.records.items()})
+
+
 async def _run_stats(
     c: HPClient,
     settings: Settings,
@@ -582,6 +608,9 @@ async def _run_stats(
         at=at,
         collected_at=collected_at,
         sleep=sleep,
+    )
+    await _run_replays(
+        c, settings, patch=meta["reference_patch"], collected_at=collected_at, sleep=sleep
     )
     if builds_result is not None:
         day_dir_b = settings.snapshot_out_dir / snapshot_day(collected_at)

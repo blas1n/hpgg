@@ -23,6 +23,13 @@ class Settings(BaseSettings):
     average_stats: bool = True
     # the weekly report: talent picks of the heroes a new issue cites (collector/talent_details.py)
     weekly_talents: bool = True
+    # the weekly report's per-game records (collector/replay_sample.py, owner 2026-10-06)
+    replay_sample: bool = True
+    replay_sl_per_run: int = 1200
+    replay_qm_per_run: int = 300
+    replay_lookback_ids: int = 5000
+    replay_minutes: float = 35.0
+    replay_call_spacing_seconds: float = 1.05
     # /heroes/matchups without group_by_map allows 60 requests/minute (measured 2026-09-29)
     matchups_call_spacing_seconds: float = 2.0
     # a matchups round stops starting new calls after this long (cache misses poll); the rest
