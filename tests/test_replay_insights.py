@@ -233,3 +233,60 @@ def test_ban_rates_show_where_the_ban_slots_go() -> None:
     assert rows["Qhira"]["ban_rate"] == 100.0 and rows["Qhira"]["first_phase_rate"] == 100.0
     assert rows["Johanna"] == {"hero": "Johanna", "ban_rate": 50.0, "first_phase_rate": 50.0}
     assert list(rows)[0] in {X, "Qhira"}
+
+
+def test_by_enemy_trait_compares_its_record_against_teams_with_more_and_less_of_a_stat() -> None:
+    # 10/5 hotfix: Void Step is now stopped by Immobilize — does a rooting team beat her more?
+    from collector.replay_insights import by_enemy_trait
+
+    def g(gid: int, roots: float, xal_wins: bool) -> dict[str, Any]:
+        return game(
+            gid,
+            a=[X, *FILL[:4]],
+            b=FILL[4:9],
+            winner=0 if xal_wins else 1,
+            score={h: {"rooting_enemies": roots} for h in FILL[4:9]},
+        )
+
+    games = [g(1, 0, True), g(2, 0, True), g(3, 2, True), g(4, 10, False), g(5, 12, False)]
+    r = by_enemy_trait(games, X, "rooting_enemies")
+    assert r["cut"] == 10.0  # the opposing team's total, split at its median
+    assert r["more"] == {"games": 3, "win_rate": pytest.approx(100 / 3)}
+    assert r["less"] == {"games": 2, "win_rate": 100.0}
+
+
+def test_a_stat_most_teams_lack_splits_into_some_and_none() -> None:
+    from collector.replay_insights import by_enemy_trait
+
+    def g(gid: int, roots: float, xal_wins: bool) -> dict[str, Any]:
+        return game(
+            gid,
+            a=[X, *FILL[:4]],
+            b=FILL[4:9],
+            winner=0 if xal_wins else 1,
+            score={"Johanna": {"rooting_enemies": roots}},
+        )
+
+    games = [g(1, 0, True), g(2, 0, True), g(3, 0, False), g(4, 30, False), g(5, 40, True)]
+    # Johanna is not in b; put the rooter in b
+    for x in games:
+        for p in x["players"]:
+            if p["team"] == 1 and p["hero"] == FILL[4]:
+                p["score"]["rooting_enemies"] = 30 if x["id"] >= 4 else 0
+    r = by_enemy_trait(games, X, "rooting_enemies")
+    assert r["cut"] == 0
+    assert r["more"] == {"games": 2, "win_rate": 50.0}  # teams with any
+    assert r["less"]["games"] == 3  # teams with none
+
+
+def test_the_build_a_hotfix_shipped_in_is_the_first_new_build_after_its_date() -> None:
+    from collector.replay_insights import build_after
+
+    games = [
+        {"version": "2.57.0.98304", "date": "2026-10-05 10:00:00"},
+        {"version": "2.57.0.98348", "date": "2026-10-05 18:30:00"},
+        {"version": "2.57.0.98304", "date": "2026-10-05 19:00:00"},  # a late upload of the old one
+        {"version": "2.57.0.98348", "date": "2026-10-06 02:00:00"},
+    ]
+    assert build_after(games, "2026-10-05") == "2.57.0.98348"
+    assert build_after(games, "2026-10-07") is None
