@@ -1,5 +1,5 @@
 {
- "parser": 1,
+ "parser": 3,
  "fetched_at": "2026-09-30T05:40:00Z",
  "notes": [
   {
@@ -412,7 +412,34 @@
       }
      ]
     }
-   }
+   },
+   "hotfixes": [
+    {
+     "date": "2026-09-29",
+     "heroes": {
+      "Auriel": {
+       "verdict": "buff",
+       "groups": [
+        {
+         "section": "talents",
+         "level": 13,
+         "ability": {
+          "ko": null,
+          "en": "Wrath of Heaven"
+         },
+         "changes": [
+          {
+           "ko": null,
+           "en": "Bonus damage increased from 10% to 15%.",
+           "direction": "up"
+          }
+         ]
+        }
+       ]
+      }
+     }
+    }
+   ]
   },
   {
    "id": "24291432",
@@ -1852,7 +1879,8 @@
       }
      ]
     }
-   }
+   },
+   "hotfixes": []
   },
   {
    "id": "24276959",
@@ -2192,7 +2220,8 @@
       }
      ]
     }
-   }
+   },
+   "hotfixes": []
   }
  ]
 }
