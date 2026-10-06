@@ -1,5 +1,5 @@
 /** 팀운 (#90, owner 2026-10-06): GET /v1/players/teamluck?mode=all|qm|sl (server/players/teamluck.py) — per game, the
- *  mean MMR of the player's 4 teammates minus the 5 opponents' before the game, over the newest games of a mode. Pure
+ *  mean MMR of the player's whole team minus the 5 opponents' before the game, over the newest games of a mode. Pure
  *  but for the fetch. */
 import type { CarryPlayer } from "./carry";
 import { apiGet, type ApiResult, type FetchOptions, type Region } from "./players";
@@ -41,14 +41,15 @@ export const fetchTeamLuck = (battletag: string, region: Region, mode: TeamLuckM
 
 export type LuckGrade = "best" | "good" | "normal" | "bad" | "worst";
 
-/** 팀운 in five words (owner 2026-10-06: a light line, no MMR numbers): the newest games' mean of teammates − opponents
- *  MMR before each game. ±30 is noise over 20 games; ±80 is a team well above or below yours most games. */
+/** 팀운 in five words (owner 2026-10-06: a light line, no MMR numbers): the newest games' mean of the whole team −
+ *  the opponents' MMR before each game. ±20 / ±50 grade 20 games about 10 / 21 / 39 / 20 / 10 % (200 player-games'
+ *  gaps, 2026-10-06): every word turns up ("다 보통만 나오면 재미 없잖아"). */
 export function luckGrade(gapAvg: number | null): LuckGrade | null {
   if (gapAvg === null) return null;
-  if (gapAvg >= 80) return "best";
-  if (gapAvg >= 30) return "good";
-  if (gapAvg <= -80) return "worst";
-  if (gapAvg <= -30) return "bad";
+  if (gapAvg >= 50) return "best";
+  if (gapAvg >= 20) return "good";
+  if (gapAvg <= -50) return "worst";
+  if (gapAvg <= -20) return "bad";
   return "normal";
 }
 
