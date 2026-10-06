@@ -258,7 +258,9 @@ export interface HotfixItem {
   en: string | null;
   /** abilities: Q W E R D */
   key?: string;
-  changes: { old: string; new: string; label?: Words }[];
+  /** label: the stat's word (parser 4: any field the data names); unit: s = seconds, % = percent (already ×100),
+   *  x = a multiplier */
+  changes: { old: string; new: string; label?: Words; unit?: "s" | "%" | "x" }[];
 }
 /** data/matchups/<slug>.json — Storm League, one hero per file, collected every other day (collector/matchups.py). */
 export interface MatchupsFile {
