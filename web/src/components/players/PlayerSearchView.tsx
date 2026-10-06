@@ -297,7 +297,7 @@ function Profile({ v, games, me, region, heroes, maps }: { v: PlayerView; games:
       <div className="grid gap-4 lg:grid-cols-12">
         {games.kind === "ok" ? (
           <div className="lg:col-span-8">
-            <MatchHistory data={games.data} heroes={heroes} maps={maps} me={me} />
+            <MatchHistory data={games.data} heroes={heroes} maps={maps} me={me} region={region} />
           </div>
         ) : (
         <Card aria-labelledby="h-matches" className="lg:col-span-7">

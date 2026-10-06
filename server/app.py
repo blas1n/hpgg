@@ -34,6 +34,7 @@ from server.players.replays import ReplayService
 from server.players.router import router as players_router
 from server.players.service import PlayerService
 from server.players.store import HPStore
+from server.players.teamluck import TeamLuckService
 from server.ratelimit import SlidingWindowLimiter
 
 log = structlog.get_logger(__name__)
@@ -65,6 +66,7 @@ def create_app(
             hp=hp, store=store, players=app.state.players, settings=settings, clock=clock
         )
         app.state.replays = ReplayService(hp=hp, store=store, settings=settings, clock=clock)
+        app.state.teamluck = TeamLuckService(matches=app.state.matches, replays=app.state.replays)
         app.state.heroes = HeroStatsService(hp=hp, store=store, settings=settings, clock=clock)
         app.state.privacy = PrivacyFeed(hp=hp, store=store, settings=settings, clock=clock)
         poller = asyncio.create_task(app.state.privacy.run_forever()) if privacy_poll else None

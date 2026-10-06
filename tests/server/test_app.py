@@ -317,3 +317,26 @@ def test_unknown_replay_is_404(client: TestClient, fake_hp: FakeHP) -> None:
     fake_hp.responder = lambda r: httpx.Response(404, json={"error": {"code": "not_found"}})
     r = client.get("/v1/replays/1")
     assert r.status_code == 404 and r.json()["error"]["code"] == "replay_not_found"
+
+
+def test_team_luck(client: TestClient, fake_hp: FakeHP) -> None:
+    """팀운 (#90): the newest games' teammates-minus-opponents MMR before each game."""
+    from tests.server.conftest import hp_response
+
+    def respond(r: httpx.Request) -> httpx.Response:
+        if r.url.path.endswith("/players/matches"):
+            return hp_response("v1_players_matches_200.json")
+        if "/replay/" in r.url.path:
+            return hp_response("v1_replay_200.json")
+        return hp_response("v1_players_200.json")
+
+    fake_hp.responder = respond
+    r = client.get(URL + "/teamluck", params={"battletag": "blAs1N#3479", "region": "KR"})
+    assert r.status_code == 200
+    body = r.json()
+    assert body["mode"] == "all" and body["partial"] is False
+    assert body["summary"]["games"] == 3 and isinstance(body["summary"]["gap_avg"], float)
+    assert {"replay_id", "gap", "team_mmr", "opp_mmr", "win", "hero"} <= set(body["games"][0])
+    assert body["formula"]["good"] == 50
+    bad = client.get(URL + "/teamluck", params={"battletag": "x#1", "region": "KR", "games": 99})
+    assert bad.status_code == 422
