@@ -16,7 +16,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-HOTFIX_PARSER = 5
+HOTFIX_PARSER = 6
 
 # attributes that name a slot rather than hold a value
 _KEY_ATTRS = {"id", "index", "parent"}
@@ -305,6 +305,9 @@ _DURATION = _W("지속시간", "Duration", "s")
 _COOLDOWN = _W("재사용 대기시간", "Cooldown", "s")
 _COOLDOWN_CUT = _W("재사용 대기시간 감소", "Cooldown Reduction", "s")
 _COST = _W("소모량", "Cost")
+# a behavior that reveals the hero herself (98348: XalatathDarkHeartRitualImpactSelfReveal): how
+# long she is seen, not the ability's duration — longer is worse for her
+_SELF_REVEAL = _W("자신이 드러나는 시간", "Self-Reveal Duration", "s")
 
 
 def _slot(c: NumericChange) -> tuple[str, str]:
@@ -348,7 +351,7 @@ def _stat(c: NumericChange) -> Word | None:
     if leaf == "Amount" and catalog == "Effect" and "Damage" in (c.tag + c.field + c.entry):
         return _DAMAGE
     if leaf == "Duration" and catalog == "Behavior":
-        return _DURATION
+        return _SELF_REVEAL if "SelfReveal" in c.entry else _DURATION
     if c.tag == "CEffectModifyCatalogNumeric" and "Cost" in c.entry:
         return _COST
     return _FIELD_WORDS.get(f"{leaf}@{attr}") or (
@@ -357,7 +360,7 @@ def _stat(c: NumericChange) -> Word | None:
 
 
 # which way helps the hero: more of a stat, except these (a shorter flight is a faster missile)
-_LESS_IS_BETTER = {"Cast Time", "Missile Flight Time", "Cooldown", "Cost"}
+_LESS_IS_BETTER = {"Cast Time", "Missile Flight Time", "Cooldown", "Cost", "Self-Reveal Duration"}
 # below zero these are the hero's debuffs on enemies, judged by size as the notes' lines are (a slow
 # −30% → −20% is weaker: Chen 97650, Garrosh's Oppressor 98285 ▼). Any other negative is the
 # hero's own penalty: −55% → −50% echo damage is a buff (Chromie 97650).

@@ -4,7 +4,7 @@
    "build": "2.57.0.98348",
    "previous": "2.57.0.98304",
    "first_seen": "2026-10-05T17:12:19Z",
-   "parser": 5,
+   "parser": 6,
    "heroes": {
     "Whitemane": [
      {
@@ -75,11 +75,11 @@
         "old": "0.125",
         "new": "1.1",
         "label": {
-         "ko": "지속시간",
-         "en": "Duration"
+         "ko": "자신이 드러나는 시간",
+         "en": "Self-Reveal Duration"
         },
         "unit": "s",
-        "direction": "up"
+        "direction": "down"
        },
        {
         "old": "4",

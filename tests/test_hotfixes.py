@@ -532,3 +532,17 @@ def test_a_penalty_on_the_heros_own_damage_is_judged_by_its_sign() -> None:
     assert [c["direction"] for c in by_talent["ChromieSandBlastOnceAgainTheFirstTime"]] == ["up"]
     # Chronic Conditions: her speed +20% → +25% and the enemy slow −20% → −25%, both up
     assert [c["direction"] for c in by_talent["ChromieTimeTrapChronicConditions"]] == ["up", "up"]
+
+
+def test_a_self_reveal_is_how_long_the_hero_is_seen_and_longer_is_worse() -> None:
+    # 98348: XalatathDarkHeartRitualImpactSelfReveal 0.125 → 1.1 — Xal'atath is revealed for
+    # longer when the Dark Heart lands. Not the Dark Heart's duration, and not a buff (it read
+    # "검은 심장의 의식 지속시간 0.125 → 1.1 ▲" on the Korean pages, 2026-10-06)
+    reveal = next(c for c in _changes(_xal(), "검은 심장의 의식") or [] if c["old"] == "0.125")
+    assert reveal == {
+        "old": "0.125",
+        "new": "1.1",
+        "label": {"ko": "자신이 드러나는 시간", "en": "Self-Reveal Duration"},
+        "unit": "s",
+        "direction": "down",
+    }
