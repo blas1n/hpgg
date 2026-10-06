@@ -40,12 +40,14 @@ export const fetchTeamLuck = (battletag: string, region: Region, mode: TeamLuckM
   apiGet("/v1/players/teamluck", { battletag, region, mode, games: "20" }, isTeamLuck, { timeoutMs: 60_000, ...opts });
 
 export type LuckGrade = "best" | "good" | "normal" | "bad" | "worst";
+/** fewer games swing too far to grade (one game read −421 in the 2026-10-06 sample) */
+export const MIN_GAMES = 10;
 
 /** 팀운 in five words (owner 2026-10-06: a light line, no MMR numbers): the newest games' mean of the whole team −
  *  the opponents' MMR before each game. ±20 / ±50 grade 20 games about 10 / 21 / 39 / 20 / 10 % (200 player-games'
  *  gaps, 2026-10-06): every word turns up ("다 보통만 나오면 재미 없잖아"). */
-export function luckGrade(gapAvg: number | null): LuckGrade | null {
-  if (gapAvg === null) return null;
+export function luckGrade(gapAvg: number | null, games = MIN_GAMES): LuckGrade | null {
+  if (gapAvg === null || games < MIN_GAMES) return null;
   if (gapAvg >= 50) return "best";
   if (gapAvg >= 20) return "good";
   if (gapAvg <= -50) return "worst";
