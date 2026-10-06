@@ -284,7 +284,11 @@ class TalentIndex:
 
 Word = tuple[dict[str, str], str]  # (label, unit)
 
-_W = lambda ko, en, unit="": ({"ko": ko, "en": en}, unit)  # noqa: E731
+
+def _W(ko: str, en: str, unit: str = "") -> Word:  # noqa: N802
+    return {"ko": ko, "en": en}, unit
+
+
 _FIELD_WORDS: dict[str, Word] = {
     "LeechFraction": _W("흡혈", "Life Steal", "%"),
     "MultiplicativeModifierArray@Modifier": _W("피해 배율", "Damage Modifier", "%"),
