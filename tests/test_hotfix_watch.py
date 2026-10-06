@@ -126,6 +126,7 @@ async def test_first_run_seeds_then_a_new_build_is_recorded(settings: HotfixSett
             "new": "-20",
             "label": {"ko": "이동 속도", "en": "Movement Speed"},
             "unit": "%",
+            "direction": "down",
         }
     ]
 

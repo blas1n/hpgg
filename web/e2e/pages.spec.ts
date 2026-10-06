@@ -260,6 +260,8 @@ test("hero detail: an unannounced hotfix shows the talent and its numbers old �
   await expect(hotfix).toContainText("다시 처음으로");
   // the number says which stat it is, in its unit (parser 4, owner 2026-10-06)
   await expect(hotfix.locator("[data-change]").first()).toHaveText(/피해 배율 −55% → −50%/);
+  // a smaller penalty on her own damage: a buff, marked as one (parser 5)
+  await expect(hotfix.locator("[data-change]").first()).toHaveAttribute("data-change", "up");
   await expect(page.locator("#patches [data-note='2.55.17.97650']")).toContainText("만성적인 현상");
 
   await page.goto("/en/hots/heroes/chromie/");

@@ -344,7 +344,7 @@
    "build": "2.55.17.97771",
    "previous": "2.55.17.97650",
    "first_seen": "2026-08-12T18:13:03Z",
-   "parser": 4,
+   "parser": 5,
    "heroes": {
     "Chromie": [
      {
@@ -360,7 +360,8 @@
          "ko": "피해 배율",
          "en": "Damage Modifier"
         },
-        "unit": "%"
+        "unit": "%",
+        "direction": "up"
        }
       ]
      }
