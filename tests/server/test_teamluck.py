@@ -187,3 +187,15 @@ def test_a_game_carries_the_players_team_for_its_몇인분() -> None:
         "time_spent_dead",
     }
     assert "battletag" not in json.dumps(team)
+
+
+async def test_all_modes_means_the_matchmade_ones() -> None:
+    """ARAM and custom games are not matched on MMR the same way: "all" is Quick Match, Storm League
+    and Unranked Draft (and the retired ranked modes)."""
+    game = _game()
+    modes = ["ar", "qm", "sl", "ud", "ar", "cu"]
+    rows = [{"replay_id": i, "mode": m} for i, m in enumerate(modes, 1)]
+    replays = FakeReplays(game)
+    svc = TeamLuckService(matches=FakeMatches(matches=rows), replays=replays)  # type: ignore[arg-type]
+    await svc.lookup(_me(game), "KR", mode="all", games=20)
+    assert replays.asked == [2, 3, 4]

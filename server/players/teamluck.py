@@ -60,6 +60,8 @@ def _team(players: list[dict[str, Any]], me: str) -> list[dict[str, Any]]:
 # a game is good or bad luck beyond this many MMR points either way
 GOOD = 50.0
 MIN_KNOWN = 3
+# "all" is the modes matched on MMR: ARAM and custom games are not (owner sample 2026-10-06)
+MATCHMADE = {"qm", "sl", "ud", "hl", "tl"}
 
 
 def _pre(p: dict[str, Any]) -> float | None:
@@ -148,7 +150,8 @@ class TeamLuckService:
         ids = [
             int(r["replay_id"])
             for r in m.matches
-            if r.get("replay_id") and (mode == "all" or r.get("mode") == mode)
+            if r.get("replay_id")
+            and (r.get("mode") in MATCHMADE if mode == "all" else r.get("mode") == mode)
         ][:games]
         rows: list[dict[str, Any]] = []
         partial = False

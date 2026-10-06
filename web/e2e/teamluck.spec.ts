@@ -53,7 +53,7 @@ const luck = {
   mode: "all",
   // the newest two games of the match list fixture: a big game in a win, a light one in a loss
   games: [game(65597227, "Illidan", true, 120, 2.5), game(65597225, "Illidan", false, -90, 0.2), game(1, "Valla", true, 10)],
-  summary: { games: 3, gap_avg: 13.3, good: { games: 1, wins: 1 }, bad: { games: 1, wins: 0 }, even: { games: 1, wins: 1 } },
+  summary: { games: 20, gap_avg: 13.3, good: { games: 1, wins: 1 }, bad: { games: 1, wins: 0 }, even: { games: 1, wins: 1 } },
   partial: false,
   formula: { gap: "…", good: 50 },
 };

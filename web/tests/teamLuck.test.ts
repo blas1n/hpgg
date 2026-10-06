@@ -22,6 +22,12 @@ describe("luckGrade", () => {
   it("no game counted is no grade", () => {
     expect(luckGrade(null)).toBeNull();
   });
+
+  it("under 10 games is no grade: a few games swing too far (one game read −421, 2026-10-06)", () => {
+    expect(luckGrade(-421, 1)).toBeNull();
+    expect(luckGrade(-60, 9)).toBeNull();
+    expect(luckGrade(-60, 10)).toBe("worst");
+  });
 });
 
 describe("carryTone (몇인분, owner 2026-10-06)", async () => {
