@@ -9,7 +9,9 @@ import { useLocale, useT } from "@/i18n/client";
 import { fetchPlayer, isRegion, parseBattletag, playersHref, playerView, REGIONS, startRegion, type PlayerResult, type PlayerView, type Region } from "@/lib/players";
 import { Card, CardHeader, cx, Portrait } from "../ui";
 import { fetchMatches, type MatchesResult } from "@/lib/matches";
+import { FEATURES } from "@/features";
 import { HeroStats } from "./HeroStats";
+import { TeamLuck } from "./TeamLuck";
 import { MatchHistory } from "./MatchHistory";
 import { PlayerSearchForm } from "./PlayerSearchForm";
 
@@ -372,6 +374,7 @@ function Profile({ v, games, me, region, heroes, maps }: { v: PlayerView; games:
       </div>
 
       <HeroStats key={`${me}|${region}`} tag={me} region={region} heroes={heroes} />
+      {FEATURES.teamluck && <TeamLuck key={`luck|${me}|${region}`} tag={me} region={region} heroes={heroes} />}
     </div>
   );
 }

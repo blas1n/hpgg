@@ -13,20 +13,23 @@ export const FEATURES = {
    *  Storm League analysis (#130), off again 2026-10-06 (owner: still hypotheses and lists). Back once it reads like
    *  a meta analysis built on per-game replay data: the central pick, how it changes games, how its counters work. */
   weekly: false,
+  /** 팀운 on 전적 검색 (#90) — built 2026-10-06 (owner: "미리 준비해두고"), off until the owner turns it on. A card on
+   *  the player page, not a section. */
+  teamluck: false,
 } as const;
 
 export type Feature = keyof typeof FEATURES;
 export type Flags = Record<Feature, boolean>;
 
-/** The section under /<locale>/hots/ each feature owns. */
-const SECTION_OF: Record<Feature, string> = { draft: "draft", weekly: "meta" };
+/** The section under /<locale>/hots/ a feature owns; a feature inside a page (팀운) owns none. */
+const SECTION_OF: Partial<Record<Feature, string>> = { draft: "draft", weekly: "meta" };
 
 export const sectionEnabled = (section: string, flags: Flags = FEATURES): boolean =>
   (Object.keys(SECTION_OF) as Feature[]).every((f) => SECTION_OF[f] !== section || flags[f]);
 
 /** Sections of switched-off features (the export drops them). */
 export const disabledSections = (flags: Flags = FEATURES): string[] =>
-  (Object.keys(SECTION_OF) as Feature[]).filter((f) => !flags[f]).map((f) => SECTION_OF[f]);
+  (Object.keys(SECTION_OF) as Feature[]).filter((f) => !flags[f]).map((f) => SECTION_OF[f]!);
 
 const NAV_IDS = ["home", "tier", "meta", "heroes", "draft", "maps", "patches", "players"] as const;
 export type NavId = (typeof NAV_IDS)[number];
