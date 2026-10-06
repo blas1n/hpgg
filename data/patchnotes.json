@@ -1,6 +1,6 @@
 {
- "parser": 2,
- "fetched_at": "2026-10-04T18:20:20Z",
+ "parser": 3,
+ "fetched_at": "2026-10-06T01:41:06.685095Z",
  "notes": [
   {
    "id": "24303007",
@@ -412,7 +412,174 @@
       }
      ]
     }
-   }
+   },
+   "hotfixes": [
+    {
+     "date": "2026-10-05",
+     "heroes": {
+      "Xal'atath": {
+       "verdict": "mixed",
+       "groups": [
+        {
+         "section": "base",
+         "level": null,
+         "ability": {
+          "ko": null,
+          "en": "Shadow Mark [Q]"
+         },
+         "changes": [
+          {
+           "ko": null,
+           "en": "Void Orb speed slightly increased.",
+           "direction": "neutral"
+          }
+         ]
+        },
+        {
+         "section": "base",
+         "level": null,
+         "ability": {
+          "ko": null,
+          "en": "Void Step [E]"
+         },
+         "changes": [
+          {
+           "ko": null,
+           "en": "Targeting range reduced from 5 to 2.",
+           "direction": "down"
+          },
+          {
+           "ko": null,
+           "en": "Distance between teleport points reduced from 7 to 6.5.",
+           "direction": "down"
+          },
+          {
+           "ko": null,
+           "en": "Now prevented and interrupted by Immobilize.",
+           "direction": "neutral"
+          }
+         ]
+        },
+        {
+         "section": "base",
+         "level": null,
+         "ability": {
+          "ko": null,
+          "en": "Void Volley [D]"
+         },
+         "changes": [
+          {
+           "ko": null,
+           "en": "Base damage per missile reduced from 90 to 72.",
+           "direction": "down"
+          },
+          {
+           "ko": null,
+           "en": "Now generates 1 charge for every Basic Attack against enemy Heroes and every 2 Basic Attacks against non-Heroes.",
+           "direction": "neutral"
+          }
+         ]
+        },
+        {
+         "section": "base",
+         "level": null,
+         "ability": {
+          "ko": null,
+          "en": "Void Eruption [R]"
+         },
+         "changes": [
+          {
+           "ko": null,
+           "en": "Uncharged damage reduced by 20%.",
+           "direction": "down"
+          },
+          {
+           "ko": null,
+           "en": "Fully charged damage reduced by 5%.",
+           "direction": "down"
+          }
+         ]
+        },
+        {
+         "section": "talents",
+         "level": 1,
+         "ability": {
+          "ko": null,
+          "en": "Anchored Core"
+         },
+         "changes": [
+          {
+           "ko": null,
+           "en": "Radius bonus reduced from 50% to 25%.",
+           "direction": "down"
+          }
+         ]
+        },
+        {
+         "section": "talents",
+         "level": 4,
+         "ability": {
+          "ko": null,
+          "en": "Dark Barrier"
+         },
+         "changes": [
+          {
+           "ko": null,
+           "en": "Now only triggers when enemy Heroes are hit",
+           "direction": "neutral"
+          }
+         ]
+        },
+        {
+         "section": "talents",
+         "level": 7,
+         "ability": {
+          "ko": null,
+          "en": "Silence of the Lamb"
+         },
+         "changes": [
+          {
+           "ko": null,
+           "en": "Silence duration increased from 1 to 1.5 seconds.",
+           "direction": "up"
+          }
+         ]
+        },
+        {
+         "section": "talents",
+         "level": 13,
+         "ability": {
+          "ko": null,
+          "en": "Dark Heart's Protection"
+         },
+         "changes": [
+          {
+           "ko": null,
+           "en": "Detonating the Dark Heart on a target affected by Shadow Mark now Silences all enemies hit. Previously silenced on cast.",
+           "direction": "neutral"
+          }
+         ]
+        },
+        {
+         "section": "talents",
+         "level": 20,
+         "ability": {
+          "ko": null,
+          "en": "Rift Invasion"
+         },
+         "changes": [
+          {
+           "ko": null,
+           "en": "Portals now have non-lethal Health decay, stopping at 4 Health.",
+           "direction": "neutral"
+          }
+         ]
+        }
+       ]
+      }
+     }
+    }
+   ]
   },
   {
    "id": "24291432",
@@ -1852,7 +2019,8 @@
       }
      ]
     }
-   }
+   },
+   "hotfixes": []
   },
   {
    "id": "24276959",
@@ -2192,7 +2360,8 @@
       }
      ]
     }
-   }
+   },
+   "hotfixes": []
   },
   {
    "id": "24261475",
@@ -3412,7 +3581,8 @@
       }
      ]
     }
-   }
+   },
+   "hotfixes": []
   },
   {
    "id": "24244471",
@@ -3657,7 +3827,8 @@
       }
      ]
     }
-   }
+   },
+   "hotfixes": []
   },
   {
    "id": "24244446",
@@ -4825,7 +4996,8 @@
       }
      ]
     }
-   }
+   },
+   "hotfixes": []
   },
   {
    "id": "24252009",
@@ -5035,7 +5207,8 @@
       }
      ]
     }
-   }
+   },
+   "hotfixes": []
   },
   {
    "id": "24246292",
@@ -5907,7 +6080,8 @@
       }
      ]
     }
-   }
+   },
+   "hotfixes": []
   },
   {
    "id": "24229032",
@@ -6249,7 +6423,8 @@
       }
      ]
     }
-   }
+   },
+   "hotfixes": []
   },
   {
    "id": "24224135",
@@ -7076,7 +7251,8 @@
       }
      ]
     }
-   }
+   },
+   "hotfixes": []
   },
   {
    "id": "24206703",
@@ -7090,7 +7266,8 @@
     "ko": "https://news.blizzard.com/ko-kr/article/24206703/",
     "en": "https://news.blizzard.com/en-us/article/24206703/"
    },
-   "heroes": {}
+   "heroes": {},
+   "hotfixes": []
   },
   {
    "id": "24205005",
@@ -7680,7 +7857,8 @@
       }
      ]
     }
-   }
+   },
+   "hotfixes": []
   }
  ]
 }
