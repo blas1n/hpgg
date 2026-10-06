@@ -21,6 +21,41 @@ from typing import Any, Protocol
 
 from server.players.replays import ReplayLookup
 
+# 몇인분 (owner 2026-10-06): five things every role does some of; "sustain" = healing + damage
+# taken, so a tank's soaking and a healer's healing count as a damage dealer's damage does
+CARRY_STATS = ("takedowns", "hero_damage", "siege_damage", "experience", "sustain")
+TOP = 3
+
+
+def _stat(p: dict[str, Any], s: str) -> float:
+    if s == "sustain":
+        return float((p.get("healing") or 0) + (p.get("damage_taken") or 0))
+    return float(p.get(s) or 0)
+
+
+def _top(team: list[dict[str, Any]], me: dict[str, Any]) -> float | None:
+    ratios = []
+    for s in CARRY_STATS:
+        mean = sum(_stat(p, s) for p in team) / len(team)
+        if mean > 0:
+            ratios.append(_stat(me, s) / mean)
+    return statistics.fmean(sorted(ratios)[-TOP:]) if ratios else None
+
+
+def carry(team: list[dict[str, Any]], me: dict[str, Any]) -> float | None:
+    """How many players' worth: the three of CARRY_STATS the player did most of against the team's
+    mean, averaged, then against the team's mean of that — an average teammate is 1.0, and a tank
+    or a healer counts by what they do (on 4,010 Storm League player-games the middle 90 % is
+    0.76–1.35; 1.5 or more is 1.5 %)."""
+    if not team:
+        return None
+    mine = _top(team, me)
+    tops = [t for p in team if (t := _top(team, p)) is not None]
+    if mine is None or not tops or statistics.fmean(tops) == 0:
+        return None
+    return round(mine / statistics.fmean(tops), 1)
+
+
 # a game is good or bad luck beyond this many MMR points either way
 GOOD = 50.0
 MIN_MATES, MIN_OPPS = 2, 3
@@ -56,10 +91,8 @@ def game_gap(game: dict[str, Any], battletag: str) -> dict[str, Any] | None:
     if len(mates) < MIN_MATES or len(opps) < MIN_OPPS:
         return None
     team, opp = statistics.fmean(mates), statistics.fmean(opps)
-    hero = next(
-        (p.get("hero") for p in mine["players"] if (p.get("battletag") or "").casefold() == me),
-        None,
-    )
+    player = next(p for p in mine["players"] if (p.get("battletag") or "").casefold() == me)
+    hero = player.get("hero")
     return {
         "replay_id": game.get("replay_id"),
         "date": game.get("date"),
@@ -69,6 +102,7 @@ def game_gap(game: dict[str, Any], battletag: str) -> dict[str, Any] | None:
         "team_mmr": round(team, 1),
         "opp_mmr": round(opp, 1),
         "gap": round(team - opp, 1),
+        "carry": carry(mine["players"], player),
     }
 
 

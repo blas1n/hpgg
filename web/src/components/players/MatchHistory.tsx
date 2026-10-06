@@ -8,7 +8,7 @@ import { briefing, matchRows, type Briefing, type MatchesResponse, type MatchTal
 import { FEATURES } from "@/features";
 import type { Region } from "@/lib/players";
 import { fetchReplay, replayView, type ReplayResponse } from "@/lib/replays";
-import { fetchTeamLuck, luckGrade, type LuckGrade } from "@/lib/teamLuck";
+import { carryTone, fetchTeamLuck, luckGrade, type CarryTone, type LuckGrade } from "@/lib/teamLuck";
 import { Card, CardHeader, cx, Portrait } from "../ui";
 
 const PAGE = 20;
@@ -30,11 +30,17 @@ export function MatchHistory({ data, heroes, maps, me, region }: { data: Matches
   const rows = useMemo(() => matchRows(data.matches, heroes, maps, talents, locale, new Date(), awards), [data, heroes, maps, talents, locale, awards]);
 
   // 팀운 (#90): one line in the briefing; "loading" until the server has opened the games' replays
+  // and 몇인분 per game from the same games' replays
   const [luck, setLuck] = useState<LuckGrade | null | "loading">(FEATURES.teamluck ? "loading" : null);
+  const [carries, setCarries] = useState<Map<number, number>>(new Map());
   useEffect(() => {
     if (!FEATURES.teamluck) return;
     let live = true;
-    void fetchTeamLuck(me, region, "all").then((r) => live && setLuck(r.kind === "ok" ? luckGrade(r.data.summary.gap_avg) : null));
+    void fetchTeamLuck(me, region, "all").then((r) => {
+      if (!live) return;
+      setLuck(r.kind === "ok" ? luckGrade(r.data.summary.gap_avg) : null);
+      if (r.kind === "ok") setCarries(new Map(r.data.games.flatMap((g) => (g.carry === null || g.carry === undefined ? [] : [[g.replay_id, g.carry] as const]))));
+    });
     return () => {
       live = false;
     };
@@ -78,7 +84,7 @@ export function MatchHistory({ data, heroes, maps, me, region }: { data: Matches
         <CardHeader id="h-games" title={t.listTitle} sub={t.listSub(String(rows.length))} />
         <ul id="player-matches" className="divide-y divide-line">
           {visible.map((m) => (
-            <MatchItem key={m.key} m={m} me={me} heroes={heroes} awards={awards} talents={talents} need={need} />
+            <MatchItem key={m.key} m={m} me={me} heroes={heroes} awards={awards} talents={talents} need={need} carry={carries.get(m.replayId) ?? null} />
           ))}
         </ul>
         {rows.length > shown && (
@@ -95,6 +101,12 @@ export function MatchHistory({ data, heroes, maps, me, region }: { data: Matches
     </div>
   );
 }
+
+const CARRY_TONE: Record<CarryTone, string> = {
+  carry: "bg-pos/15 font-bold text-pos",
+  share: "bg-surface-2 text-fg-2",
+  light: "bg-neg/10 text-neg",
+};
 
 const LUCK_TONE: Record<LuckGrade, string> = {
   best: "text-pos font-extrabold",
@@ -312,8 +324,10 @@ function MatchItem({
   awards,
   talents,
   need,
+  carry,
 }: {
   m: MatchView;
+  carry: number | null;
   me: string;
   heroes: HeroTable;
   awards: AwardTable | null;
@@ -323,6 +337,7 @@ function MatchItem({
   const t = useT().players;
   const g = t.games;
   const [open, setOpen] = useState(false);
+  const carried = carryTone(carry);
   const panel = `game-${m.key}`;
   const tone = m.win === null ? "border-l-line" : m.win ? "border-l-pos" : "border-l-neg";
   return (
@@ -369,6 +384,11 @@ function MatchItem({
               {m.kda.kills} / <span className="text-neg">{m.kda.deaths}</span> / {m.kda.assists}
             </span>
             <span className="block text-2xs text-muted">{m.kda.perfect ? g.perfect : `${kda(m.kda.ratio)} ${g.kda}`}</span>
+            {carry !== null && carried && (
+              <span data-carry={carried} title={t.teamLuck.carryHelp} className={cx("mt-0.5 inline-block rounded px-1 text-2xs", CARRY_TONE[carried])}>
+                {t.teamLuck.carry(carry.toFixed(1))}
+              </span>
+            )}
           </span>
         )}
       </div>
