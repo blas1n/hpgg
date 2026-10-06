@@ -79,7 +79,11 @@ test("팀운 is one line in the 최근 20경기 panel: a grade, no numbers", asy
   await expect(page.locator("#brief-luck")).toHaveAttribute("data-luck", "normal"); // mean gap +13.3
   await expect(page.locator("#brief-luck")).toContainText("팀운");
   await expect(page.locator("#brief-luck")).toContainText("보통");
-  // 몇인분 on each game the same replays cover
+  // 몇인분 on each game the same replays cover — once it is on (FEATURES.carry)
+  if (!FEATURES.carry) {
+    await expect(page.locator("#player-matches > li [data-carry]")).toHaveCount(0);
+    return;
+  }
   await expect(page.locator("#player-matches > li").nth(0).locator("[data-carry]")).toHaveText(/^\d\.\d인분$/);
   await expect(page.locator("#player-matches > li").nth(0).locator("[data-carry]")).toHaveAttribute("data-carry", "carry");
   await expect(page.locator("#player-matches > li").nth(1).locator("[data-carry]")).toHaveAttribute("data-carry", "light");
