@@ -4,7 +4,7 @@
    "build": "2.57.0.98348",
    "previous": "2.57.0.98304",
    "first_seen": "2026-10-05T17:12:19Z",
-   "parser": 4,
+   "parser": 5,
    "heroes": {
     "Whitemane": [
      {
@@ -20,7 +20,8 @@
         "label": {
          "ko": "소모량",
          "en": "Cost"
-        }
+        },
+        "direction": "down"
        }
       ]
      }
@@ -40,7 +41,8 @@
          "ko": "투사체 비행 시간",
          "en": "Missile Flight Time"
         },
-        "unit": "s"
+        "unit": "s",
+        "direction": "up"
        }
       ]
      },
@@ -57,7 +59,8 @@
         "label": {
          "ko": "사거리",
          "en": "Range"
-        }
+        },
+        "direction": "down"
        }
       ]
      },
@@ -75,7 +78,8 @@
          "ko": "지속시간",
          "en": "Duration"
         },
-        "unit": "s"
+        "unit": "s",
+        "direction": "up"
        },
        {
         "old": "4",
@@ -83,7 +87,8 @@
         "label": {
          "ko": "범위",
          "en": "Radius"
-        }
+        },
+        "direction": "down"
        }
       ]
      },
@@ -100,7 +105,8 @@
         "label": {
          "ko": "피해량",
          "en": "Damage"
-        }
+        },
+        "direction": "down"
        }
       ]
      },
@@ -117,7 +123,8 @@
          "ko": "지속시간",
          "en": "Duration"
         },
-        "unit": "s"
+        "unit": "s",
+        "direction": "up"
        }
       ]
      },
@@ -133,7 +140,8 @@
         "label": {
          "ko": "범위",
          "en": "Radius"
-        }
+        },
+        "direction": "down"
        }
       ]
      },
@@ -150,7 +158,8 @@
          "ko": "범위",
          "en": "Radius"
         },
-        "unit": "x"
+        "unit": "x",
+        "direction": "down"
        }
       ]
      },
@@ -166,7 +175,8 @@
         "label": {
          "ko": "피해량",
          "en": "Damage"
-        }
+        },
+        "direction": "down"
        },
        {
         "old": "500",
@@ -174,7 +184,8 @@
         "label": {
          "ko": "피해량",
          "en": "Damage"
-        }
+        },
+        "direction": "down"
        },
        {
         "old": "600",
@@ -182,7 +193,8 @@
         "label": {
          "ko": "피해량",
          "en": "Damage"
-        }
+        },
+        "direction": "down"
        },
        {
         "old": "700",
@@ -190,7 +202,8 @@
         "label": {
          "ko": "피해량",
          "en": "Damage"
-        }
+        },
+        "direction": "down"
        }
       ]
      }
@@ -201,7 +214,7 @@
    "build": "2.57.0.98304",
    "previous": "2.57.0.98297",
    "first_seen": "2026-09-29T21:46:46Z",
-   "parser": 4,
+   "parser": 5,
    "heroes": {
     "Auriel": [
      {
@@ -223,7 +236,7 @@
    "build": "2.57.0.98297",
    "previous": "2.57.0.98285",
    "first_seen": "2026-09-29T04:03:15Z",
-   "parser": 4,
+   "parser": 5,
    "heroes": {
     "Xal'atath": [
      {
@@ -239,7 +252,8 @@
         "label": {
          "ko": "사거리",
          "en": "Range"
-        }
+        },
+        "direction": "down"
        }
       ]
      },
@@ -269,7 +283,8 @@
          "ko": "범위",
          "en": "Radius"
         },
-        "unit": "x"
+        "unit": "x",
+        "direction": "up"
        }
       ]
      }
@@ -280,7 +295,7 @@
    "build": "2.57.0.98285",
    "previous": "2.55.17.98025",
    "first_seen": "2026-09-28T17:38:57Z",
-   "parser": 4,
+   "parser": 5,
    "heroes": {
     "Alexstrasza": [
      {
@@ -295,7 +310,8 @@
         "label": {
          "ko": "생명력",
          "en": "Health"
-        }
+        },
+        "direction": "up"
        }
       ]
      },
@@ -327,7 +343,8 @@
          "ko": "지속시간",
          "en": "Duration"
         },
-        "unit": "s"
+        "unit": "s",
+        "direction": "up"
        }
       ]
      },
@@ -357,7 +374,8 @@
          "ko": "지속시간",
          "en": "Duration"
         },
-        "unit": "s"
+        "unit": "s",
+        "direction": "up"
        }
       ]
      },
@@ -374,7 +392,8 @@
          "ko": "주는 치유량",
          "en": "Healing Dealt"
         },
-        "unit": "%"
+        "unit": "%",
+        "direction": "down"
        },
        {
         "old": "-30",
@@ -383,7 +402,8 @@
          "ko": "주는 피해",
          "en": "Damage Dealt"
         },
-        "unit": "%"
+        "unit": "%",
+        "direction": "down"
        }
       ]
      },
@@ -400,7 +420,8 @@
          "ko": "피해 배율",
          "en": "Damage Modifier"
         },
-        "unit": "%"
+        "unit": "%",
+        "direction": "up"
        }
       ]
      },
@@ -417,7 +438,8 @@
          "ko": "피해 배율",
          "en": "Damage Modifier"
         },
-        "unit": "%"
+        "unit": "%",
+        "direction": "down"
        }
       ]
      }
@@ -450,7 +472,8 @@
          "ko": "시전 시간",
          "en": "Cast Time"
         },
-        "unit": "s"
+        "unit": "s",
+        "direction": "up"
        }
       ]
      },
@@ -468,7 +491,8 @@
          "ko": "흡혈",
          "en": "Life Steal"
         },
-        "unit": "%"
+        "unit": "%",
+        "direction": "up"
        }
       ]
      }
@@ -487,7 +511,8 @@
         "label": {
          "ko": "피해량",
          "en": "Damage"
-        }
+        },
+        "direction": "down"
        }
       ]
      },
@@ -516,7 +541,8 @@
          "ko": "피해 배율",
          "en": "Damage Modifier"
         },
-        "unit": "%"
+        "unit": "%",
+        "direction": "up"
        }
       ]
      },
@@ -532,7 +558,8 @@
         "label": {
          "ko": "피해량",
          "en": "Damage"
-        }
+        },
+        "direction": "up"
        }
       ]
      }
@@ -590,7 +617,8 @@
         "label": {
          "ko": "소모량",
          "en": "Cost"
-        }
+        },
+        "direction": "down"
        }
       ]
      },
@@ -635,7 +663,8 @@
          "ko": "지속시간",
          "en": "Duration"
         },
-        "unit": "s"
+        "unit": "s",
+        "direction": "up"
        },
        {
         "old": "-40",
@@ -644,7 +673,8 @@
          "ko": "주는 피해",
          "en": "Damage Dealt"
         },
-        "unit": "%"
+        "unit": "%",
+        "direction": "up"
        }
       ]
      }
@@ -655,14 +685,14 @@
    "build": "2.55.17.98025",
    "previous": "2.55.17.97771",
    "first_seen": "2026-09-12T17:56:02Z",
-   "parser": 4,
+   "parser": 5,
    "heroes": {}
   },
   {
    "build": "2.55.17.97771",
    "previous": "2.55.17.97650",
    "first_seen": "2026-08-12T18:13:03Z",
-   "parser": 4,
+   "parser": 5,
    "heroes": {
     "Chromie": [
      {
@@ -678,7 +708,8 @@
          "ko": "피해 배율",
          "en": "Damage Modifier"
         },
-        "unit": "%"
+        "unit": "%",
+        "direction": "up"
        }
       ]
      }
@@ -689,7 +720,7 @@
    "build": "2.55.17.97650",
    "previous": "2.55.17.97605",
    "first_seen": "2026-07-24T17:21:04Z",
-   "parser": 4,
+   "parser": 5,
    "heroes": {
     "Chen": [
      {
@@ -705,7 +736,8 @@
          "ko": "이동 속도",
          "en": "Movement Speed"
         },
-        "unit": "%"
+        "unit": "%",
+        "direction": "down"
        }
       ]
      }
@@ -724,7 +756,8 @@
          "ko": "재사용 대기시간 감소",
          "en": "Cooldown Reduction"
         },
-        "unit": "s"
+        "unit": "s",
+        "direction": "up"
        }
       ]
      }
@@ -743,7 +776,8 @@
          "ko": "이동 속도",
          "en": "Movement Speed"
         },
-        "unit": "%"
+        "unit": "%",
+        "direction": "up"
        },
        {
         "old": "-20",
@@ -752,7 +786,8 @@
          "ko": "이동 속도",
          "en": "Movement Speed"
         },
-        "unit": "%"
+        "unit": "%",
+        "direction": "up"
        }
       ]
      },
@@ -769,7 +804,8 @@
          "ko": "피해 배율",
          "en": "Damage Modifier"
         },
-        "unit": "%"
+        "unit": "%",
+        "direction": "up"
        }
       ]
      }
