@@ -28,7 +28,7 @@ log = structlog.get_logger(__name__)
 
 BUCKET = "replay_data"
 # Bump when the normalised game changes shape: cached games in another format are fetched again.
-REPLAY_VERSION = 2  # 2 = HP's award id/title/icon kept, named when served
+REPLAY_VERSION = 3  # 2 = HP's award id/title/icon kept; 3 = crowd control, shields, towers (몇인분)
 REGIONS = {1: "NA", 2: "EU", 3: "KR", 5: "CN"}
 MODES = {
     "Quick Match": "qm",
@@ -55,6 +55,12 @@ SCORE = {
     "time_spent_dead": "time_spent_dead",
     "time_cc": "time_cc_enemy_heroes",
     "merc_camps": "merc_camp_captures",
+    # 몇인분 (owner 2026-10-06): what a hero does that damage does not show
+    "stuns": "stunning_enemies",
+    "roots": "rooting_enemies",
+    "silences": "silencing_enemies",
+    "shields": "protection_allies",
+    "towers": "watch_tower_captures",
 }
 
 

@@ -828,7 +828,18 @@ async def test_a_run_samples_replays_into_the_days_snapshot_and_keeps_the_cursor
     async def fake_sample(c: Any, s: Any, **kw: Any) -> SampleResult:
         seen.append(kw)
         return SampleResult(
-            records={"sl": [{"id": 7, "type": "sl"}], "qm": []}, cursor={"sl": 7, "qm": 9}
+            records={
+                "sl": [
+                    {
+                        "id": 7,
+                        "type": "sl",
+                        "length": 600,
+                        "players": [{"hero": "Valla", "score": {}}],
+                    }
+                ],
+                "qm": [],
+            },
+            cursor={"sl": 7, "qm": 9},
         )
 
     monkeypatch.setattr(run_mod, "sample_replays", fake_sample)
@@ -843,6 +854,8 @@ async def test_a_run_samples_replays_into_the_days_snapshot_and_keeps_the_cursor
     assert not (day / "replays_qm.jsonl.gz").exists()
     cursor = json.loads((s.data_dir / "replays" / "cursor.json").read_text())
     assert cursor["cursor"] == {"sl": 7, "qm": 9}
+    # 몇인분's yardstick is updated from the same games (collector/carry_baselines.py)
+    assert (s.data_dir / "carry_baselines.json").exists()
     # the next run starts from it
     assert await run(s, sleep=fake_sleep, now=lambda: "2026-09-29T18:25:00Z") == 0
     assert seen[1]["cursor"] == {"sl": 7, "qm": 9}
