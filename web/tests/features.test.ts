@@ -16,9 +16,9 @@ describe("features", () => {
     expect(sectionEnabled("draft")).toBe(false);
   });
 
-  it("주간 메타 리포트 is on again with its Storm League analysis (owner 2026-10-05, PR #128 reviewed)", () => {
-    expect(FEATURES.weekly).toBe(true);
-    expect(sectionEnabled("meta")).toBe(true);
+  it("주간 메타 리포트 is off on the live site (owner 2026-10-06: until it is built on per-game replay data)", () => {
+    expect(FEATURES.weekly).toBe(false);
+    expect(sectionEnabled("meta")).toBe(false);
   });
 
   it("a section without a feature is always on", () => {
