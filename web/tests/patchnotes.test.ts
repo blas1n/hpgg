@@ -135,3 +135,20 @@ describe("heroPatchNotes", () => {
     expect(en.groups[1]!.ability).toBe("Night Rush [E]");
   });
 });
+
+describe("a hotfix number says which stat it is (parser 4)", () => {
+  const one: HotfixesFile = { builds: [{ build: "2.57.0.99999", previous: "2.57.0.98348", first_seen: "2026-10-10T00:00:00Z", parser: 4, heroes: {
+    "Xal'atath": [
+      { kind: "ability", id: "XalatathVoidVolley", ko: "공허 화살", en: "Void Volley", key: "D", changes: [{ old: "90", new: "72", label: { ko: "피해량", en: "Damage" } }] },
+      { kind: "ability", id: "XalatathShadowMark", ko: "그림자 표식", en: "Shadow Mark", key: "Q", changes: [{ old: "0.7", new: "0.65", label: { ko: "투사체 비행 시간", en: "Missile Flight Time" }, unit: "s" }] },
+      { kind: "talent", id: "ChenMasteryKegSmashATouchOfHoney", ko: "꿀 바르기", en: "A Touch of Honey", changes: [{ old: "-30", new: "-20", label: { ko: "이동 속도", en: "Movement Speed" }, unit: "%" }] },
+      { kind: "talent", id: "XalatathAnchoredCore", ko: "고정 핵", en: "Anchored Core", changes: [{ old: "1.5", new: "1.25", label: { ko: "범위", en: "Radius" }, unit: "x" }] },
+    ],
+  } }] };
+  const lines = (locale: "ko" | "en") => heroPatchNotes(null, "Xal'atath", REF, locale, one).notes[0]!.groups.map((g) => g.changes[0]!.text);
+
+  it("the stat's word, then its numbers in the stat's unit", () => {
+    expect(lines("ko")).toEqual(["피해량 90 → 72", "투사체 비행 시간 0.7초 → 0.65초", "이동 속도 −30% → −20%", "범위 ×1.5 → ×1.25"]);
+    expect(lines("en")).toEqual(["Damage 90 → 72", "Missile Flight Time 0.7s → 0.65s", "Movement Speed −30% → −20%", "Radius ×1.5 → ×1.25"]);
+  });
+});

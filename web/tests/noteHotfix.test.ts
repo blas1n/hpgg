@@ -56,10 +56,31 @@ describe("a hotfix Blizzard adds to a note (hero page)", () => {
     ]);
     const n = v.notes[0]!;
     expect(n).toMatchObject({ hotfix: "2026-10-05", verdict: "mixed", url: "https://news.blizzard.com/ko-kr/article/24303007/", status: "current" });
+  });
+
+  it("in the language Blizzard wrote it, its lines as they are", () => {
+    const n = heroPatchNotes(notes, "Xal'atath", "2.57.0", "en", hotfixes).notes[0]!;
+    expect(n.original).toBeNull();
     expect(n.groups).toEqual([
       { section: "base", level: null, ability: "Void Step [E]", changes: [{ text: "Targeting range reduced from 5 to 2.", direction: "down" }] },
-      { section: "talents", level: 7, ability: "어린 양의 침묵", changes: [{ text: "침묵 지속시간이 1초에서 1.5초로 증가했습니다.", direction: "up" }] },
+      { section: "talents", level: 7, ability: "Silence of the Lamb", changes: [{ text: "Silence duration increased from 1 to 1.5 seconds.", direction: "up" }] },
     ]);
+  });
+
+  it("not translated yet: the build's numbers in the page language, Blizzard's original kept folded (owner 10-06)", () => {
+    const n = heroPatchNotes(notes, "Xal'atath", "2.57.0", "ko", hotfixes).notes[0]!;
+    // the official verdict and link stay; the lines are the game data's, in Korean
+    expect(n).toMatchObject({ hotfix: "2026-10-05", verdict: "mixed", url: "https://news.blizzard.com/ko-kr/article/24303007/" });
+    expect(n.groups).toEqual([{ section: "base", level: null, ability: "공허 걸음 [E]", changes: [{ text: "5 → 2", direction: "neutral" }] }]);
+    // Blizzard's own text, in the page language wherever Blizzard has it
+    expect(n.original!.map((g) => g.ability)).toEqual(["Void Step [E]", "어린 양의 침묵"]);
+    expect(n.original![0]!.changes[0]!.text).toBe("Targeting range reduced from 5 to 2.");
+  });
+
+  it("not translated and no numbers to show (build not seen): the original stands in, unfolded", () => {
+    const n = heroPatchNotes(notes, "Xal'atath", "2.57.0", "ko", null).notes[0]!;
+    expect(n.original).toBeNull();
+    expect(n.groups[0]!.changes[0]!.text).toBe("Targeting range reduced from 5 to 2.");
   });
 
   it("a hero the build changed and the hotfix does not name is still unannounced", () => {
@@ -89,12 +110,23 @@ describe("a hotfix Blizzard adds to a note (patch summary)", () => {
   const s = patchSummary({ patch: "2.57.0", notes, hotfixes, modes, heroes, minGames: 1, locale: "ko" });
   const by = (name: string) => s.rows.find((r) => r.hero.name === name)!;
 
-  it("the hero it names takes its verdict and lines, and the build's numbers for that hero are not shown", () => {
+  it("the hero it names takes its verdict and Blizzard's lines", () => {
+    const en = patchSummary({ patch: "2.57.0", notes, hotfixes, modes, heroes, minGames: 1, locale: "en" });
+    const row = en.rows.find((r) => r.hero.name === "Xal'atath")!;
+    expect(row.verdict).toBe("mixed");
+    expect(row.groups.filter((x) => x.source === "note").map((x) => x.ability)).toEqual(["Void Step [E]", "Silence of the Lamb"]);
+    // the 98304 numbers are another build's, still unannounced
+    expect(row.groups.filter((x) => x.source === "hotfix")).toHaveLength(1);
+  });
+
+  it("not translated yet: the build's numbers in the page language, as hotfix lines; the verdict stays official", () => {
     expect(by("Xal'atath").verdict).toBe("mixed");
     const g = by("Xal'atath").groups;
-    expect(g.filter((x) => x.source === "note").map((x) => x.ability)).toEqual(["Void Step [E]", "어린 양의 침묵"]);
-    // the 98304 numbers are another build's, still unannounced
-    expect(g.filter((x) => x.source === "hotfix")).toHaveLength(1);
+    expect(g.filter((x) => x.source === "note")).toEqual([]);
+    expect(g.map((x) => [x.source, x.ability, x.changes[0]!.text])).toEqual([
+      ["hotfix", "공허 걸음 [E]", "5 → 2"], // 98348, announced
+      ["hotfix", "공허 걸음 [E]", "5 → 2"], // 98304
+    ]);
   });
 
   it("the build stays a hotfix build for the heroes the note does not name", () => {
