@@ -60,6 +60,10 @@ Basis: Storm League. Quick Match is used only to check how a build fares in the 
 - **No hypotheses scattered through the text.** Interpretation is allowed only when it names the data it explains and the kit fact behind it (ability, number, cooldown). Unsupported guesses go nowhere; open questions go in section 7.
 - **The patch is not the meta.** A hero the patch changed moves for that reason first. Say so, and do not credit the central pick.
 - **Popularity is not strength.** A talent most players take is the consensus, not proof it is best. Compare win rates only where the samples allow it, and within the same MMR band where possible.
+- **Names are the game's own, never from memory.**
+  - Owner 2026-10-06: "퀴라가 아니라 키히라". A wrong name is the first thing readers notice.
+  - Take every hero, ability and talent name from `names` in `<week>.replays.json` (from `data/heroes_ko.json` and `data/talents/`).
+  - Then run `uv run python tools/check_names.py <week>`. It must print `names ok`.
 - **Plain, direct sentences.** Korean first; the English says the same.
 - **Check every number.** After writing, check every number, rank and "most" against `<week>.replays.json`, `<week>.evidence.json` and the patch note, one by one.
 

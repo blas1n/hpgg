@@ -82,6 +82,28 @@ def official_hotfix_day(patchnotes: Path, week: str, hero: str) -> str | None:
     return min(hits) if hits else None
 
 
+def official_names(data: Path, heroes: list[str]) -> dict[str, Any]:
+    """Every hero's Korean name, and the Korean names of the given heroes' talents and abilities:
+    a report writes names from here, never from memory (owner 2026-10-06: 키히라, not 퀴라)."""
+    table = json.loads((data / "heroes_ko.json").read_text(encoding="utf-8"))["heroes"]
+    slug = {h["name"]: h["slug"] for h in table}
+    talents: dict[str, str] = {}
+    abilities: dict[str, str] = {}
+    for hero in heroes:
+        path = data / "talents" / f"{slug.get(hero, '')}.json"
+        if hero in slug and path.exists():
+            kit = json.loads(path.read_text(encoding="utf-8"))
+            talents.update({k: v["ko"] for k, v in (kit.get("talents") or {}).items()})
+            abilities.update(
+                {a["en"]: a["ko"] for a in (kit.get("game") or {}).get("abilities", {}).values()}
+            )
+    return {
+        "heroes": {h["name"]: h["ko"] for h in table},
+        "talents": talents,
+        "abilities": abilities,
+    }
+
+
 def analyse(
     week: str, snapshots: Path, *, centre: str | None, answers: int, hotfix: str | None = None
 ) -> dict[str, Any]:
@@ -95,6 +117,7 @@ def analyse(
     top = [r["hero"] for r in drafted[:answers]]
     return {
         "week": week,
+        "names": official_names(Path("data"), [c, *top]),
         "games": {"sl": len(sl), "qm": len(qm)},
         "centre": c,
         "draft": draft_profile(sl, c),
@@ -122,20 +145,25 @@ def _pct(v: float | None) -> str:
 
 def summary(r: dict[str, Any]) -> str:
     d, s = r["draft"], r["shape"]
+    ko = r.get("names", {}).get("heroes", {})
+
+    def n(hero: str) -> str:
+        return f"{hero}({ko.get(hero, '?')})"
+
     lines = [
         f"# {r['week']} · games: SL {r['games']['sl']}, QM {r['games']['qm']}",
-        f"centre {r['centre']}",
+        f"centre {n(r['centre'])}",
         f"draft: ban {_pct(d['ban_rate'])} (first ban {_pct(d['first_ban_rate'])}), "
         f"pick {_pct(d['pick_rate'])} ({d['picked']} games, wr {_pct(d['win_rate'])}), "
         f"pick round {d['pick_round']}",
         f"with: {s['with']}",
         f"without: {s['without']}",
-        "bans: " + ", ".join(f"{b['hero']} {b['ban_rate']:.0f}%" for b in r["bans"]),
+        "bans: " + ", ".join(f"{n(b['hero'])} {b['ban_rate']:.0f}%" for b in r["bans"]),
         "answered by (lift):",
     ]
     for a in r["answered_by"][:12]:
         lines.append(
-            f"  {a['hero']}: {a['games']}g share {_pct(a['share'])} vs base "
+            f"  {n(a['hero'])}: {a['games']}g share {_pct(a['share'])} vs base "
             f"{_pct(a['baseline_share'])} lift {a['lift'] or 0:.2f} wr {_pct(a['win_rate'])}"
         )
     if r.get("hotfix"):
