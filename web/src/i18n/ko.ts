@@ -327,6 +327,7 @@ export const ko = {
     weekLabel: (year: string, week: string, from: string, to: string) => `${year}년 ${week}주 · ${from} – ${to}`,
     vsWeek: (week: string) => `지난주(${week}주) 대비`,
     vsPatch: (patch: string, started: string) => `패치 ${patch} 첫 주 (${started} 시작) · 직전 패치 대비`,
+    cardsLabel: "카드로 보는 이번 주 메타",
     vsHotfix: "밸런스 핫픽스 이후 · 핫픽스 전 대비",
     vsNone: "비교할 지난 데이터 없음",
     olderIssue: "← 지난 호",
