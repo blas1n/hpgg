@@ -282,3 +282,58 @@ def test_the_index_lists_issues_only_not_their_analysis_evidence_or_talents(
     build_weekly(data)
     index = json.loads((data / "weekly" / "index.json").read_text())
     assert [i["week"] for i in index["issues"]] == ["2026-w40"]
+
+
+def test_records_of_two_count_windows_are_not_subtracted() -> None:
+    """A settled balance hotfix restarts the count (owner 2026-10-07): the counts shrink that day,
+    so a week whose records span two windows has no rank issue (the replay report still has it)."""
+    history = {d: _entry(d, s) for d, s in (("2026-10-06", 6), ("2026-10-13", 13))}
+    history["2026-10-13"]["window"] = "2.57.0.98348"
+    issue = build_issue(
+        "2026-w41",
+        history,
+        previous=PREVIOUS,
+        previous_patch="2.55.17",
+        patch_started_at="2026-09-29",
+    )
+    assert issue is None
+    history["2026-10-06"]["window"] = "2.57.0.98348"
+    same = build_issue(
+        "2026-w41",
+        history,
+        previous=PREVIOUS,
+        previous_patch="2.55.17",
+        patch_started_at="2026-09-29",
+    )
+    assert same is not None and same["kind"] == "week"
+
+
+def test_the_week_a_hotfix_window_began_counts_from_it_against_the_patch_before_it() -> None:
+    """Like a patch's first week: the games since the hotfix (the closing record's count, which
+    restarted with the window) against the whole patch up to the last record before it."""
+    history = {
+        "2026-10-05": _entry("2026-10-05", 5),
+        "2026-10-07": _entry("2026-10-07", 7),
+        "2026-10-08": _entry("2026-10-08", 1),  # the count restarted at the hotfix
+        "2026-10-12": _entry("2026-10-12", 5),
+    }
+    for d in ("2026-10-08", "2026-10-12"):
+        history[d]["window"] = "2.57.0.98348"
+    issue = build_issue(
+        "2026-w41",
+        history,
+        previous=PREVIOUS,
+        previous_patch="2.55.17",
+        patch_started_at="2026-09-29",
+    )
+    assert issue is not None
+    assert issue["kind"] == "hotfix_start" and issue["start"] == "2026-10-08"
+    assert issue["baseline"] == {
+        "kind": "before_hotfix",
+        "until": "2026-10-07",
+        "build": "2.57.0.98348",
+    }
+    xal = next(r for r in issue["views"]["qm"]["window"]["rows"] if r["hero"] == "Xal'atath")
+    assert xal["games"] == 500  # everything since the hotfix: the closing record as it stands
+    base = next(r for r in issue["views"]["qm"]["baseline"]["rows"] if r["hero"] == "Xal'atath")
+    assert base["games"] == 700  # the whole patch until the day before the window

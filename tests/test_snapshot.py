@@ -607,3 +607,49 @@ def test_a_full_view_keeps_games_over_ten() -> None:
         collected_at="t",
     )
     assert snap.matches == 10
+
+
+# --- a balance hotfix restarts the count (owner 2026-10-07) -------------------------------------
+# Xal'atath read 70 % on the site while Heroes Profile's post-hotfix numbers read 56 %: a patch
+# summed with its hotfixes kept her pre-nerf games. A build that changed heroes' numbers starts
+# the window once it has been out two days; before that the whole patch stands, said as pending.
+
+
+def _hotfixes(*builds: tuple[str, str, int]) -> dict:
+    return {
+        "builds": [
+            {"build": b, "first_seen": seen, "heroes": {f"H{i}": [] for i in range(n)}}
+            for b, seen, n in builds
+        ]
+    }
+
+
+def test_the_window_starts_at_the_newest_balance_hotfix_two_days_on() -> None:
+    from datetime import UTC, datetime
+
+    from collector.snapshot import balance_window
+
+    hf = _hotfixes(
+        ("2.57.0.98285", "2026-09-28T17:38:57Z", 6),  # the patch's own build: not a hotfix
+        ("2.57.0.98304", "2026-09-29T21:46:46Z", 1),
+        ("2.57.0.98321", "2026-10-01T00:00:00Z", 0),  # cosmetic: no hero changed
+        ("2.57.0.98348", "2026-10-05T17:12:19Z", 9),
+        ("2.55.17.98025", "2026-09-12T17:56:02Z", 3),  # another patch
+    )
+    first = "2.57.0.98285"
+    at = lambda s: datetime.fromisoformat(s).replace(tzinfo=UTC)  # noqa: E731
+    w = balance_window(hf, "2.57.0", first_build=first, now=at("2026-10-07T18:20:00"))
+    assert w == {"since": "2.57.0.98348", "since_at": "2026-10-05T17:12:19Z", "pending": None}
+    early = balance_window(hf, "2.57.0", first_build=first, now=at("2026-10-06T18:20:00"))
+    assert early == {
+        "since": "2.57.0.98304",
+        "since_at": "2026-09-29T21:46:46Z",
+        "pending": {"build": "2.57.0.98348", "first_seen": "2026-10-05T17:12:19Z"},
+    }
+    none = balance_window(_hotfixes(), "2.57.0", first_build=first, now=at("2026-10-07T00:00:00"))
+    assert none == {"since": None, "since_at": None, "pending": None}
+
+
+def test_timeframe_of_a_window_lists_the_builds_from_its_start(patches_payload) -> None:
+    assert timeframe_of(patches_payload, "2.55.17", since="2.55.17.97771") == "2.55.17.97771"
+    assert timeframe_of(patches_payload, "2.55.17", since=None) == "2.55.17.97650,2.55.17.97771"

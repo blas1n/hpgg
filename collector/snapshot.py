@@ -121,15 +121,70 @@ def choose_patch(patches_payload: dict[str, Any], now: datetime | None = None) -
     return patch_line(max(candidates, key=_version_key))
 
 
-def timeframe_of(patches_payload: dict[str, Any], patch: str, now: datetime | None = None) -> str:
-    """HP `timeframe` for a patch: its settled builds, comma-joined, oldest first (HP sums them).
-    A four-part id is one build (data collected before 2026-10-01) and is its own timeframe."""
+def timeframe_of(
+    patches_payload: dict[str, Any],
+    patch: str,
+    now: datetime | None = None,
+    *,
+    since: str | None = None,
+) -> str:
+    """HP `timeframe` for a patch: its settled builds, comma-joined, oldest first (HP sums them),
+    from `since` on when a balance hotfix started a window (`balance_window`). A four-part id is
+    one build (data collected before 2026-10-01) and is its own timeframe."""
     if patch.count(".") >= 3:
         return patch
-    builds = [b for b in _settled_builds(patches_payload, now) if patch_line(b) == patch]
+    builds = [
+        b
+        for b in _settled_builds(patches_payload, now)
+        if patch_line(b) == patch and (since is None or _version_key(b) >= _version_key(since))
+    ]
     if not builds:
         raise ValueError(f"no queryable build of patch {patch} in /patches")
     return ",".join(sorted(set(builds), key=_version_key))
+
+
+# a balance hotfix starts the count once it has been out this long (owner 2026-10-07): before
+# that its games are too few, and the whole patch stands, said as pending
+WINDOW_SETTLE = timedelta(days=2)
+
+
+def balance_window(
+    hotfixes: dict[str, Any],
+    patch: str,
+    *,
+    first_build: str | None,
+    now: datetime,
+) -> dict[str, Any]:
+    """The build the stats count from: the newest build of `patch` that changed heroes' numbers
+    (data/hotfixes.json, collector/hotfixes.py) and has been out WINDOW_SETTLE; `pending` names a
+    newer one still settling. A patch summed with its hotfixes kept a nerfed hero's earlier games
+    (Xal'atath, 2.57.0.98348: 70 % on the site, 56 % after the hotfix; owner 2026-10-07)."""
+    fixes = sorted(
+        (
+            b
+            for b in hotfixes.get("builds") or []
+            if patch_line(str(b.get("build") or "")) == patch
+            and b.get("build") != first_build
+            and b.get("heroes")
+            and b.get("first_seen")
+        ),
+        key=lambda b: _version_key(b["build"]),
+    )
+
+    def seen(b: dict[str, Any]) -> datetime:
+        return datetime.fromisoformat(str(b["first_seen"]).replace("Z", "+00:00"))
+
+    settled = [b for b in fixes if seen(b) <= now - WINDOW_SETTLE]
+    newer = [b for b in fixes if seen(b) > now - WINDOW_SETTLE]
+    since = settled[-1] if settled else None
+    pending = newer[-1] if newer else None
+    return {
+        "since": since["build"] if since else None,
+        "since_at": since["first_seen"] if since else None,
+        "pending": {"build": pending["build"], "first_seen": pending["first_seen"]}
+        if pending
+        else None,
+    }
 
 
 def _rows_of(map_payload: Any) -> list[dict[str, Any]]:

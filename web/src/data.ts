@@ -1,3 +1,4 @@
+import type { MetaWindow } from "./lib/window";
 import type { CarryBaselines } from "./lib/carry";
 import type { Snapshot } from "./formula";
 import { localizedPath, type Locale } from "./i18n/locale";
@@ -17,6 +18,8 @@ export interface Meta {
   /** The same for the files in previous/ on previous_patch (regions arrive there on their own days and by backfill).
    *  Absent in meta from before 2026-09-30. */
   previous_modes?: Record<string, ModeSample>;
+  /** The games the current patch's stats count (lib/window.ts). Absent in meta from before 2026-10-07. */
+  window?: MetaWindow;
 }
 export interface ModeSample {
   matches: number;
