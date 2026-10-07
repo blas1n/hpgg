@@ -8,6 +8,7 @@ import type { Locale } from "@/i18n/locale";
 import type { Messages } from "@/i18n/messages";
 import { formulaDetail, formulaLine, FORMULA, type Party, type Snapshot } from "@/formula";
 import { bracketMatches, regionMatches } from "@/lib/shown";
+import { windowNote } from "@/lib/window";
 import { DEFAULT_TIER_STATE, formatScore, nextSort, parseTierState, resolvePatch, tierSearch, tierTable, visibleRows, type SortKey, type TierRow, type TierState, type TierTable } from "@/lib/tier";
 import { Card, cx, Portrait, SELECT, Segmented, TierBadge, wrTone } from "../ui";
 
@@ -425,6 +426,15 @@ function Delta({ rank, prev }: { rank: number; prev: number | null }) {
 function PatchBanner({ meta, patch, auto, onCurrent }: { meta: Meta; patch: "current" | "previous"; auto: boolean; onCurrent: () => void }) {
   const t = useT();
   const note = patch === "previous" || (!auto && referencePatch(meta) === "previous");
+  // which games the current patch counts: from a settled balance hotfix, or the whole patch while one settles
+  const win = patch === "current" ? windowNote(meta) : null;
+  if (!note && win) {
+    return (
+      <p id="window-note" data-window={win.kind} className="rounded-lg border border-line bg-surface px-3 py-2 text-[13px] text-fg-2">
+        {win.kind === "since" ? t.tier.windowSince(win.day) : t.tier.windowPending(win.day)}
+      </p>
+    );
+  }
   if (!note) return null;
   return (
     <div id="patch-banner" className="rounded-lg border border-warn-line bg-warn-bg px-3 py-2 text-[13px] text-warn-fg">
