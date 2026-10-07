@@ -21,8 +21,8 @@ describe("features", () => {
     expect(sectionEnabled("meta")).toBe(false);
   });
 
-  it("팀운 is on (#90, owner 2026-10-06); it owns no section", () => {
-    expect(FEATURES.teamluck).toBe(true);
+  it("팀운 is on hold (#90, owner 2026-10-07: HP's MMR is not the matchmaker's); it owns no section", () => {
+    expect(FEATURES.teamluck).toBe(false);
     expect(navIds({ draft: false, weekly: false, teamluck: true, carry: false })).toEqual(navIds({ draft: false, weekly: false, teamluck: false, carry: false }));
   });
 
