@@ -3,6 +3,7 @@
  *  the previous patch. Numbers only; nothing is said about cause. Pure: computed at build time. */
 import { computeTiers, type Row, type Snapshot, type Tier } from "../formula";
 import type { HeroTable, Mode } from "../data";
+import type { Card } from "./cards";
 import type { HeroRef } from "./home";
 
 export interface WeeklyIssue {
@@ -33,6 +34,8 @@ export interface WeeklyAnalysis {
   title: Record<"ko" | "en", string>;
   paragraphs: Record<"ko" | "en", string[]>;
   notes: Record<"ko" | "en", string>;
+  /** 카드뉴스 (owner 2026-10-07): rendered by web/scripts/render-cards.mjs to weekly/cards/<week>/NN.png */
+  cards?: Card[];
 }
 
 export interface WeeklyIndex {
@@ -77,7 +80,13 @@ export interface WeeklyModel {
   older: string | null;
   newer: string | null;
   /** the week's prose in the page language; null until one is written */
-  analysis: { title: string; paragraphs: string[]; notes: string; status: WeeklyAnalysis["status"] } | null;
+  analysis: {
+    title: string;
+    paragraphs: string[];
+    notes: string;
+    status: WeeklyAnalysis["status"];
+    cards: { src: string; alt: string }[];
+  } | null;
 }
 
 export const TOP_N = 10;
@@ -156,7 +165,18 @@ export function weeklyModel(
     modes,
     newer: at > 0 ? weeks[at - 1]! : null,
     older: at >= 0 && at < weeks.length - 1 ? weeks[at + 1]! : null,
-    analysis: analysis ? { title: analysis.title[locale], paragraphs: analysis.paragraphs[locale], notes: analysis.notes[locale], status: analysis.status } : null,
+    analysis: analysis
+      ? {
+          title: analysis.title[locale],
+          paragraphs: analysis.paragraphs[locale],
+          notes: analysis.notes[locale],
+          status: analysis.status,
+          cards: (analysis.cards ?? []).map((c, i) => ({
+            src: `weekly/cards/${issue.week}/${String(i + 1).padStart(2, "0")}.png`,
+            alt: c.title.replace(/<\/?em>/g, "").replace(/\n/g, " "),
+          })),
+        }
+      : null,
   };
 }
 
