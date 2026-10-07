@@ -47,6 +47,7 @@ def history_entry(
     patch: str,
     snapshots: dict[str, dict[str, Any]],
     solos: dict[str, dict[str, Any]],
+    window: str | None = None,
 ) -> dict[str, Any]:
     """One day's record: per whole view, matches and each hero's [games, wins, bans] and solo
     [games, wins], cumulative over the patch (the "all maps" rows only)."""
@@ -63,7 +64,13 @@ def history_entry(
             },
             "solo": {r["hero"]: [int(r["games"]), int(r["wins"])] for r in solo},
         }
-    return {"day": day, "collected_at": collected_at, "patch": patch, "views": views}
+    return {
+        "day": day,
+        "collected_at": collected_at,
+        "patch": patch,
+        "window": window,
+        "views": views,
+    }
 
 
 def write_history(data_dir: Path, entry: dict[str, Any]) -> Path:
@@ -73,11 +80,15 @@ def write_history(data_dir: Path, entry: dict[str, Any]) -> Path:
     return path
 
 
+_ANY = object()
+
+
 def _first_day(
     history: dict[str, dict[str, Any]],
     frm: date,
     *,
     patch: str | None = None,
+    window: Any = _ANY,
     before: str | None = None,
 ) -> str | None:
     for i in range(SLACK_DAYS + 1):
@@ -85,6 +96,8 @@ def _first_day(
         if (
             d in history
             and (patch is None or history[d]["patch"] == patch)
+            # a settled balance hotfix restarts the count: records of two windows don't subtract
+            and (window is _ANY or history[d].get("window") == window)
             and (before is None or d < before)
         ):
             return d
@@ -157,6 +170,7 @@ def _daily(
             today
             and yesterday
             and today["patch"] == patch == yesterday["patch"]
+            and today.get("window") == yesterday.get("window")
             and view in today["views"]
             and view in yesterday["views"]
         ):
@@ -173,6 +187,16 @@ def _daily(
             )
         d += timedelta(days=1)
     return out
+
+
+def _window_start(history: dict[str, dict[str, Any]], patch: str, window: str) -> str | None:
+    """The first record of a count window (a settled balance hotfix) in a patch."""
+    days = [
+        d
+        for d in sorted(history)
+        if history[d]["patch"] == patch and history[d].get("window") == window
+    ]
+    return days[0] if days else None
 
 
 def build_issue(
@@ -192,26 +216,47 @@ def build_issue(
         return None
     end = history[end_day]
     patch = end["patch"]
-    start_day = _first_day(history, mon, patch=patch, before=end_day)
+    window = end.get("window")
+    start_day = _first_day(history, mon, patch=patch, window=window, before=end_day)
     if start_day is not None:
         kind = "week"
         start: dict[str, Any] | None = history[start_day]
         frm = date.fromisoformat(start_day)
-    elif patch_started_at and mon <= date.fromisoformat(patch_started_at[:10]) < nxt:
+    elif (
+        window is None
+        and patch_started_at
+        and mon <= date.fromisoformat(patch_started_at[:10]) < nxt
+    ):
         kind, start, start_day = "patch_start", None, patch_started_at[:10]
         frm = mon - timedelta(days=1)
+    elif (
+        window is not None
+        and (w_day := _window_start(history, patch, window)) is not None
+        and (mon <= date.fromisoformat(w_day) < nxt)
+    ):
+        # a settled balance hotfix restarted the count this week: like a patch's first week, the
+        # games since it (the closing record as it stands) against the patch before it
+        kind, start, start_day = "hotfix_start", None, w_day
+        frm = date.fromisoformat(w_day)
     else:
         return None
 
     prev_start_day = (
-        _first_day(history, mon - timedelta(days=7), patch=patch, before=start_day)
+        _first_day(history, mon - timedelta(days=7), patch=patch, window=window, before=start_day)
         if kind == "week"
         else None
     )
     views: dict[str, Any] = {}
     baseline: dict[str, Any] | None
+    before = (
+        max((d for d in history if d < start_day and history[d]["patch"] == patch), default=None)
+        if kind == "hotfix_start"
+        else None
+    )
     if kind == "week" and prev_start_day is not None:
         baseline = {"kind": "week", "week": iso_week((mon - timedelta(days=7)).isoformat())}
+    elif kind == "hotfix_start" and before is not None:
+        baseline = {"kind": "before_hotfix", "until": before, "build": window}
     elif previous and previous_patch:
         baseline = {"kind": "previous_patch", "patch": previous_patch}
     else:
@@ -222,6 +267,9 @@ def build_issue(
         base = None
         if baseline and baseline["kind"] == "week":
             base = _corrected(history[start_day], history[prev_start_day], view)  # type: ignore[index]
+        elif baseline and baseline["kind"] == "before_hotfix":
+            prior = history[baseline["until"]]
+            base = _corrected(prior, None, view) if view in prior["views"] else None
         elif baseline and previous and view in previous:
             # the report reads "all maps" only (per-map rows were 90 % of the file)
             base = {

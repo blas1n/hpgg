@@ -60,7 +60,8 @@ def mock_api(
             return httpx.Response(200, json={"average_total_filter_type": 1000.0, "data": [row]})
         assert q["group_by_map"] == "true"
         # regions follow the reference patch (#14): the previous one while the new one is thin
-        allowed = {CUR_TF, OLD_TF} if q.get("region") else {CUR_TF}
+        # a settled balance hotfix narrows the current patch to its builds (snapshot.balance_window)
+        allowed = ({CUR_TF, OLD_TF} if q.get("region") else {CUR_TF}) | {"2.55.17.97771"}
         assert q["timeframe_type"] == "minor" and q["timeframe"] in allowed
         if fail_key == "sl_high" and q.get("league_tier") == "5,6":
             return httpx.Response(500, json={"error": {"code": "server_error", "message": "x"}})
@@ -876,3 +877,48 @@ async def test_failed_replay_sampling_never_fails_the_run(
     s = settings(tmp_path, replay_sample=True)
     assert await run(s, sleep=fake_sleep, now=lambda: "2026-09-28T18:25:00Z") == 0
     assert not (s.data_dir / "replays" / "cursor.json").exists()
+
+
+@respx.mock
+async def test_a_settled_balance_hotfix_starts_the_window_for_every_stat(
+    tmp_path: Path, raw_by_map, patches_payload, fake_sleep
+) -> None:
+    """owner 2026-10-07: a patch summed with its hotfixes kept a nerfed hero's earlier games."""
+    mock_api(raw_by_map, patches_payload)
+    s = settings(tmp_path)
+    s.data_dir.mkdir(parents=True, exist_ok=True)
+    (s.data_dir / "hotfixes.json").write_text(
+        json.dumps(
+            {
+                "builds": [
+                    {
+                        "build": "2.55.17.97771",
+                        "first_seen": "2026-09-25T00:00:00Z",
+                        "heroes": {"Chen": [{"kind": "talent"}]},
+                    }
+                ]
+            }
+        )
+    )
+    assert await run(s, sleep=fake_sleep, now=lambda: "2026-09-28T18:25:00Z") == 0
+    frames = {
+        dict(httpx.QueryParams(c.request.url.query)).get("timeframe")
+        for c in respx.calls
+        if "/heroes/stats" in str(c.request.url)
+    }
+    assert frames == {"2.55.17.97771"}
+    meta = json.loads((s.data_dir / "latest" / "meta.json").read_text())
+    assert meta["window"]["since"] == "2.55.17.97771"
+    hist = json.loads((s.data_dir / "history" / "2026-09-29.json").read_text())
+    assert hist["window"] == "2.55.17.97771"
+
+
+@respx.mock
+async def test_without_a_balance_hotfix_the_whole_patch_counts(
+    tmp_path: Path, raw_by_map, patches_payload, fake_sleep
+) -> None:
+    mock_api(raw_by_map, patches_payload)
+    s = settings(tmp_path)
+    assert await run(s, sleep=fake_sleep, now=lambda: "2026-09-28T18:25:00Z") == 0
+    meta = json.loads((s.data_dir / "latest" / "meta.json").read_text())
+    assert meta["window"] == {"since": None, "since_at": None, "pending": None}
