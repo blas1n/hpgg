@@ -70,6 +70,37 @@ Basis: Storm League. Quick Match is used only to check how a build fares in the 
 - **Plain, direct sentences.** Korean first; the English says the same.
 - **Check every number.** After writing, check every number, rank and "most" against `<week>.replays.json`, `<week>.evidence.json` and the patch note, one by one.
 
+## Cards (카드뉴스)
+
+The owner approved the mock on 2026-10-07: "카드 뉴스는 이대로 가져가고".
+
+**Where they go:** the report also goes out as 6–7 cards (1080×1350). They are attached to the community post and swiped through above the prose on the report page.
+
+**Rules:**
+- One claim and one figure per card.
+- Every claim on a card is a claim of the prose, with its sample in the card's `foot` or `note`. The same rules apply (30+ games, differences beyond the margin, official notes for changes).
+- Names: only names that appear in the checked Korean paragraphs.
+- A title may set one phrase apart with `<em>…</em>`; `\n` breaks a line. Korean only.
+
+**Order:**
+1. `cover` — the thesis.
+2. `stat` — the central pick's defining number.
+3. `bars` — the bans or the game shape.
+4. `compare` — the week's change before and after.
+5. `compare` or `list` — the answers and their builds.
+6. `list` — what to watch, or how to play.
+7. `closing` — "전체 분석은 hpgg.win에서" and a call for comments.
+
+**Shapes** (`web/src/lib/cards.ts`). Every card has `section` and `foot`:
+- `{type:"cover", tag?, title, lede}`
+- `{type:"stat", big, unit?, title, lede}`
+- `{type:"bars", title, bars:[{name, value, hl?}]}`
+- `{type:"compare", title, boxes:[{k, from?, to, s, dir?}], note?}`
+- `{type:"list", title, items:[{text, chip?}], note?}`
+- `{type:"closing", title, lede}`
+
+**Render:** `cd web && npm run cards -- <week>` writes `data/weekly/cards/<week>/01.png …`. Look at every image before the PR: no text may run off the card.
+
 ## The file
 
 Write the report to `data/weekly/<week>.analysis.json`, shaped like `2026-w40.analysis.json`:
@@ -81,7 +112,8 @@ Write the report to `data/weekly/<week>.analysis.json`, shaped like `2026-w40.an
   "basis": "sl",
   "title": {"ko": "...", "en": "..."},
   "paragraphs": {"ko": ["..."], "en": ["..."]},
-  "notes": {"ko": "...", "en": "..."}
+  "notes": {"ko": "...", "en": "..."},
+  "cards": [{"type": "cover", "section": "...", "title": "...", "lede": "...", "foot": "..."}]
 }
 ```
 

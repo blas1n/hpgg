@@ -323,6 +323,7 @@ The same data gives different tiers under a different formula. This site always 
     weekLabel: (year: string, week: string, from: string, to: string) => `${year} week ${week} · ${from} – ${to}`,
     vsWeek: (week: string) => `against week ${week}`,
     vsPatch: (patch: string, started: string) => `Patch ${patch}'s first week (from ${started}) · against the previous patch`,
+    cardsLabel: "This week's meta in cards",
     vsHotfix: "since the balance hotfix · against before it",
     vsNone: "nothing earlier to compare with",
     olderIssue: "← Previous issue",

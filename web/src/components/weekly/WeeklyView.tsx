@@ -1,6 +1,6 @@
 "use client";
 
-import { hotsHref, type Mode } from "@/data";
+import { assetUrl, hotsHref, type Mode } from "@/data";
 import { useLocale, useT } from "@/i18n/client";
 import type { CentreCard, CentreGap, WeeklyModeModel, WeeklyModel, WeeklyRow } from "@/lib/weekly";
 import { DAILY_MIN_GAMES } from "@/lib/weekly";
@@ -62,6 +62,7 @@ export function WeeklyView({ model, centre }: { model: WeeklyModel | null; centr
         </nav>
       </PageHead>
 
+      {model.analysis && model.analysis.cards.length > 0 && <Cards cards={model.analysis.cards} />}
       {model.analysis && <Analysis a={model.analysis} />}
       {centre && <Evidence c={centre} />}
       {!m ? (
@@ -231,6 +232,22 @@ function Spark({ days, wr }: { days: string[]; wr: (number | null)[] }) {
         ))}
       </div>
     </div>
+  );
+}
+
+/** 카드뉴스 (owner 2026-10-07): the week in 6–7 cards, swiped through above the prose that backs them. */
+function Cards({ cards }: { cards: { src: string; alt: string }[] }) {
+  const t = useT();
+  return (
+    <section aria-label={t.weekly.cardsLabel}>
+      <ol id="weekly-cards" className="flex snap-x snap-mandatory gap-3 overflow-x-auto pb-2">
+        {cards.map((c) => (
+          <li key={c.src} className="w-[min(78vw,300px)] shrink-0 snap-start">
+            <img src={assetUrl(c.src)} alt={c.alt} width={1080} height={1350} loading="lazy" className="aspect-[4/5] h-auto w-full rounded-lg border border-line" />
+          </li>
+        ))}
+      </ol>
+    </section>
   );
 }
 
