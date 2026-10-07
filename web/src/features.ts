@@ -13,9 +13,11 @@ export const FEATURES = {
    *  Storm League analysis (#130), off again 2026-10-06 (owner: still hypotheses and lists). Back once it reads like
    *  a meta analysis built on per-game replay data: the central pick, how it changes games, how its counters work. */
   weekly: false,
-  /** 팀운 on 전적 검색 (#90) — built 2026-10-06 (owner: "미리 준비해두고") and on the same day ("이미 된거면 지금
-   *  공개"): one line in the 최근 20경기 panel, not a section. */
-  teamluck: true,
+  /** 팀운 on 전적 검색 (#90) — on 2026-10-06, off again 2026-10-07 (owner: "공식 API가 없어서 애매한 부분이 너무 많아"):
+   *  a sample of 18 searched players read 6 최고 / 6 극악 and nothing between — each player's 20-game mean sat ±80–355
+   *  from zero, the same way every week, where game-to-game luck would leave about ±40. It measures how far Heroes
+   *  Profile's MMR is from Blizzard's matchmaking for the player and their group, not luck. */
+  teamluck: false,
   /** 몇인분 on each game (PR #144) — built 2026-10-06, off until every hero has its own yardstick (owner: "안정 되고
    *  오픈을 하자 — 일부만 나오는건 오히려 이상해"): data/carry_baselines.json fills from the daily replay sample. */
   carry: false,
