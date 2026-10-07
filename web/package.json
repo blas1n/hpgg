@@ -9,7 +9,8 @@
     "preview": "vite preview --port 4173 --strictPort",
     "test": "vitest run",
     "test:cov": "vitest run --coverage",
-    "e2e": "DATA_DIR=tests/e2e-data NEXT_DIST_DIR=dist-e2e npm run build && playwright test; s=$?; node --experimental-strip-types --disable-warning=ExperimentalWarning scripts/sync-data.mjs; exit $s"
+    "e2e": "DATA_DIR=tests/e2e-data NEXT_DIST_DIR=dist-e2e npm run build && playwright test; s=$?; node --experimental-strip-types --disable-warning=ExperimentalWarning scripts/sync-data.mjs; exit $s",
+    "cards": "node --experimental-strip-types --disable-warning=ExperimentalWarning scripts/render-cards.mjs"
   },
   "devDependencies": {
     "@playwright/test": "^1.48.0",

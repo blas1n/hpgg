@@ -94,8 +94,15 @@ describe("weeklyModel", () => {
       notes: { ko: "기준", en: "Basis" },
     };
     const ko = weeklyModel(issue, heroes, 50, ["2026-w41"], { analysis, locale: "ko" });
-    expect(ko.analysis).toEqual({ title: "제목", paragraphs: ["첫 문단", "둘째 문단"], notes: "기준", status: "reviewed" });
+    expect(ko.analysis).toEqual({ title: "제목", paragraphs: ["첫 문단", "둘째 문단"], notes: "기준", status: "reviewed", cards: [] });
     expect(weeklyModel(issue, heroes, 50, ["2026-w41"], { analysis, locale: "en" }).analysis?.title).toBe("Title");
+    // 카드뉴스 (owner 2026-10-07): the cards' images, in order, alt text from each card's claim
+    const withCards = weeklyModel(issue, heroes, 50, ["2026-w41"], {
+      analysis: { ...analysis, cards: [{ type: "closing", section: "s", title: "전체 분석은 <em>hpgg.win</em>에서", lede: "", foot: "" }] },
+      locale: "ko",
+    });
+    expect(withCards.analysis?.cards).toEqual([{ src: "weekly/cards/2026-w41/01.png", alt: "전체 분석은 hpgg.win에서" }]);
+    expect(ko.analysis?.cards).toEqual([]);
     expect(m.analysis).toBeNull();
   });
 
