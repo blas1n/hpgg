@@ -7,13 +7,18 @@ import type { HeroRef } from "./home";
 
 export interface WeeklyIssue {
   week: string;
-  /** week = two Monday records of one patch; patch_start = the week a patch began, counted from its start */
-  kind: "week" | "patch_start";
+  /** week = two Monday records of one patch; patch_start = the week a patch began, counted from its start;
+   *  hotfix_start = the week a balance hotfix restarted the count, counted from it (collector/weekly.py) */
+  kind: "week" | "patch_start" | "hotfix_start";
   start: string;
   end: string;
   patch: string;
   collected_at: string;
-  baseline: { kind: "week"; week: string } | { kind: "previous_patch"; patch: string } | null;
+  baseline:
+    | { kind: "week"; week: string }
+    | { kind: "previous_patch"; patch: string }
+    | { kind: "before_hotfix"; until: string; build: string }
+    | null;
   views: Partial<Record<Mode, { window: Snapshot; baseline: Snapshot | null }>>;
   /** each day of the week: hero → [games, wins] that day */
   daily: Partial<Record<Mode, { day: string; heroes: Record<string, [number, number]> }[]>>;

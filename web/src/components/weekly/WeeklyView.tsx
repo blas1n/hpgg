@@ -33,7 +33,14 @@ export function WeeklyView({ model, centre }: { model: WeeklyModel | null; centr
   }
   const m = model.modes[mode] ?? null;
   const [year, week] = model.week.split("-w");
-  const vs = model.baseline?.kind === "week" ? t.weekly.vsWeek(String(Number(model.baseline.week.split("-w")[1]))) : model.baseline?.kind === "previous_patch" ? t.weekly.vsPatch(model.patch, md(model.start)) : t.weekly.vsNone;
+  const vs =
+    model.baseline?.kind === "week"
+      ? t.weekly.vsWeek(String(Number(model.baseline.week.split("-w")[1])))
+      : model.baseline?.kind === "previous_patch"
+        ? t.weekly.vsPatch(model.patch, md(model.start))
+        : model.baseline?.kind === "before_hotfix"
+          ? t.weekly.vsHotfix
+          : t.weekly.vsNone;
 
   return (
     <main className="page-x mt-6 space-y-6">

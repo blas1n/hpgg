@@ -29,6 +29,7 @@ from collector.snapshot import (
     REFERENCE_MODES,
     SPECS,
     VIEWS,
+    balance_window,
     build_meta,
     choose_patch,
     commit_atomic,
@@ -232,9 +233,16 @@ def _view_of(cell_key: str) -> str:
     return cell_key.rsplit("_", 1)[0]
 
 
-async def _timeframe(c: HPClient, patch: str) -> str:
+async def _timeframe(c: HPClient, patch: str, since: str | None = None) -> str:
     """HP `timeframe` for a patch (its builds) from `/patches` (1,000,000/week)."""
-    return timeframe_of(await c.get_json("/patches"), patch)
+    return timeframe_of(await c.get_json("/patches"), patch, since=since)
+
+
+def _since(meta: dict[str, Any] | None, patch: str) -> str | None:
+    """The build the current patch's stats count from (a settled balance hotfix), if any."""
+    if not meta or patch != meta.get("current_patch"):
+        return None
+    return (meta.get("window") or {}).get("since")
 
 
 def _write_atomic(path: Path, obj: Any) -> None:
@@ -415,7 +423,7 @@ async def _run_matchups(
         return
     patch = str(meta.get("reference_patch") or meta["current_patch"])  # decided once, in build_meta
     try:
-        timeframe = await _timeframe(c, patch)
+        timeframe = await _timeframe(c, patch, _since(meta, patch))
     except (HPError, ValueError) as e:
         log.warning("matchups.skipped", reason="no builds for the patch", error=str(e))
         return
@@ -457,7 +465,7 @@ async def _run_averages(
             c,
             settings,
             patch=patch,
-            timeframe=timeframe_of(patches, patch, now=at),
+            timeframe=timeframe_of(patches, patch, now=at, since=_since(meta, patch)),
             collected_at=collected_at,
             sleep=sleep,
         )
@@ -490,7 +498,7 @@ async def _run_weekly_talents(
             settings,
             weeks=weeks,
             patch=patch,
-            timeframe=timeframe_of(patches, patch, now=at),
+            timeframe=timeframe_of(patches, patch, now=at, since=_since(meta, patch)),
             collected_at=collected_at,
             sleep=sleep,
         )
@@ -548,8 +556,17 @@ async def _run_stats(
         patches = await c.get_json("/patches")
         at = datetime.fromisoformat(collected_at.replace("Z", "+00:00"))
         patch = choose_patch(patches, now=at)
-        timeframe = timeframe_of(patches, patch, now=at)
-        log.info("run.patch", patch=patch, builds=timeframe, collected_at=collected_at)
+        # a settled balance hotfix starts the count (owner 2026-10-07)
+        window = balance_window(
+            _load_json(settings.data_dir / "hotfixes.json") or {},
+            patch,
+            first_build=timeframe_of(patches, patch, now=at).split(",")[0],
+            now=at,
+        )
+        timeframe = timeframe_of(patches, patch, now=at, since=window["since"])
+        log.info(
+            "run.patch", patch=patch, builds=timeframe, window=window, collected_at=collected_at
+        )
         raw_by_key, snapshots, wholes_solo = await _collect_cube(
             c,
             settings,
@@ -561,12 +578,18 @@ async def _run_stats(
         )
         prev_meta = load_meta(settings.data_dir)
         meta = build_meta(prev_meta, patch=patch, collected_at=collected_at, snapshots=snapshots)
+        meta["window"] = window
         # builds follow the one reference patch, like every page (thin new patch → previous)
         builds_result = await _collect_builds(
             c,
             settings,
             patch=meta["reference_patch"],
-            timeframe=timeframe_of(patches, meta["reference_patch"], now=at),
+            timeframe=timeframe_of(
+                patches,
+                meta["reference_patch"],
+                now=at,
+                since=_since(meta, meta["reference_patch"]),
+            ),
             collected_at=collected_at,
             sleep=sleep,
         )
@@ -607,6 +630,7 @@ async def _run_stats(
             patch=patch,
             snapshots=snapshots,
             solos=wholes_solo,
+            window=window["since"],
         ),
     )
     weeks = build_weekly(settings.data_dir)
