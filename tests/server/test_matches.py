@@ -1,8 +1,9 @@
 """A player's match list: full stat lines when the small bucket allows, else the MMR history.
 
 HP `/players/matches` (bucket player_match_history, 250/week on Basic) answers up to 100 games with
-the full stat line, talents and per-game MMR; a cold query answers 202 and is polled (not
-charged). `/players/mmr/history` (player_mmr_history, 10,000/week) answers one game type's games
+the full stat line, talents and per-game MMR; a cold query answers 202 and is polled, and HP
+charges every ask (2026-10-08: one job that never finished took 11 off the week, polls included).
+`/players/mmr/history` (player_mmr_history, 10,000/week) answers one game type's games
 with hero, map id, result and MMR only. Shapes recorded 2026-10-01.
 """
 
@@ -121,7 +122,7 @@ async def test_full_stat_lines_live_then_cached(svc: MatchService, fake_hp: Fake
     assert again.source == "full" and len(calls(fake_hp, "/players/matches")) == 1
 
 
-async def test_a_cold_query_is_polled_until_ready_and_charged_once(
+async def test_a_cold_query_is_polled_until_ready_and_every_ask_is_counted(
     svc: MatchService, fake_hp: FakeHP, db: Database, sleeper: Sleeper
 ) -> None:
     answers = iter(["v1_players_matches_202.json", "v1_players_matches_202.json"])
@@ -132,7 +133,7 @@ async def test_a_cold_query_is_polled_until_ready_and_charged_once(
     assert r.outcome == "ok" and r.source == "full"
     assert len(calls(fake_hp, "/players/matches")) == 3 and len(sleeper.calls) == 2
     status = await svc.status()
-    assert status["player_match_history"]["live_calls_today"] == 1
+    assert status["player_match_history"]["live_calls_today"] == 3
 
 
 async def test_a_job_that_never_finishes_falls_back_to_the_mmr_history(
@@ -142,6 +143,9 @@ async def test_a_job_that_never_finishes_falls_back_to_the_mmr_history(
     r = await svc.lookup(TAG, REGION)
     assert r.outcome == "ok" and r.source == "basic"
     assert sum(sleeper.calls) <= settings.hp_job_wait_seconds
+    asked = len(calls(fake_hp, "/players/matches"))
+    status = await svc.status()
+    assert status["player_match_history"]["live_calls_today"] == asked
 
 
 async def test_basic_rows_come_from_the_mmr_history_of_the_most_played_mode(

@@ -3,8 +3,8 @@
 Order: fresh cache → one refresh per player at a time (coalesced):
 1. `/players/matches` (bucket `player_match_history`, 250/week on Basic) when its quota guard
    allows — up to 100 games with the stat line, talents and per-game MMR. A cold query answers
-   202; it is asked again every `hp_job_poll_seconds` for up to `hp_job_wait_seconds` (polls are
-   not charged). Cached `match_ttl_seconds`.
+   202; it is asked again every `hp_job_poll_seconds` for up to `hp_job_wait_seconds` (HP
+   charges every ask, polls included; each is counted). Cached `match_ttl_seconds`.
 2. Otherwise a cached full list HP returned less than `stale_max_seconds` ago, marked stale.
 3. Otherwise `/players/mmr/history` (bucket `player_mmr_history`, 10,000/week) for the player's
    most played game type — the games with hero, map, result and MMR, no stat line. Cached
@@ -108,7 +108,6 @@ class MatchService:
             now = self._clock()
             exhausted = await quota.record(self._store, FULL, up, now)
             if up.status == 200 and isinstance(up.body, dict):
-                await self._store.count_live_call(quota.day(now), FULL)
                 rows = full_rows(up.body)
                 return await self._keep(key, "full", rows, now, s.match_ttl_seconds)
             if up.status == 404:
@@ -169,6 +168,7 @@ class MatchService:
         waited = 0.0
         while True:
             up = await self._hp.get(path, params)
+            await quota.charge(self._store, FULL, up, self._clock())
             if up.status != 202:
                 return up
             if waited + self._settings.hp_job_poll_seconds > self._settings.hp_job_wait_seconds:
