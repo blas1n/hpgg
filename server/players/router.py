@@ -108,6 +108,7 @@ async def get_matches(request: Request, q: Annotated[PlayerQuery, Query()]) -> J
         "fetched_at": _iso(r.fetched_at),
         "stale": r.stale,
         "notice": r.notice,
+        "full_after": _iso(r.full_after),
     }
     return JSONResponse(body, headers={"Cache-Control": "public, max-age=300"})
 

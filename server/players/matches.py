@@ -18,7 +18,7 @@ from __future__ import annotations
 
 import asyncio
 from collections.abc import Awaitable, Callable
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from typing import Any, Literal
 
 import structlog
@@ -47,6 +47,8 @@ class MatchLookup:
     stale: bool = False
     notice: Notice | None = None
     retry_after: float | None = None
+    # a basic list while the full bucket is held back: when full stat lines may be asked again
+    full_after: float | None = None
 
 
 class MatchService:
@@ -70,6 +72,16 @@ class MatchService:
         self._inflight: dict[str, asyncio.Task[MatchLookup]] = {}
 
     async def lookup(self, battletag: str, region: str) -> MatchLookup:
+        r = await self._lookup(battletag, region)
+        if r.source != "basic":
+            return r
+        s, now = self._settings, self._clock()
+        wait = await quota.blocked_for(
+            self._store, FULL, floor=s.match_quota_floor, budget=s.match_daily_budget, now=now
+        )
+        return r if wait is None else replace(r, full_after=now + wait)
+
+    async def _lookup(self, battletag: str, region: str) -> MatchLookup:
         if await self._store.is_private(region, battletag):
             return MatchLookup("private")
         key = matches_key(region, battletag)

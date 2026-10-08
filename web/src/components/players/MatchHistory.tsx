@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { assetUrl, loadAwards, loadCarryBaselines, loadTalents, type AwardTable, type HeroTable, type MapTable, type TalentTable } from "@/data";
 import { useLocale, useT } from "@/i18n/client";
 import type { AwardView } from "@/lib/awards";
-import { briefing, matchRows, type Briefing, type MatchesResponse, type MatchTalent, type MatchView } from "@/lib/matches";
+import { briefing, fullAfterAt, matchRows, type Briefing, type MatchesResponse, type MatchTalent, type MatchView } from "@/lib/matches";
 import { FEATURES } from "@/features";
 import type { Region } from "@/lib/players";
 import { fetchReplay, replayView, type ReplayResponse } from "@/lib/replays";
@@ -82,11 +82,7 @@ export function MatchHistory({ data, heroes, maps, me, region }: { data: Matches
 
   return (
     <div id="player-games" data-source={data.source} className="space-y-4">
-      {data.source === "basic" && (
-        <p id="games-basic" className="rounded-lg border border-warn-line bg-warn-bg px-4 py-2.5 text-xs text-warn-fg">
-          {t.basic}
-        </p>
-      )}
+      {data.source === "basic" && <BasicNotice fullAfter={data.full_after ?? null} />}
       <BriefingCard b={b} luck={luck} />
       <Card aria-labelledby="h-games">
         <CardHeader id="h-games" title={t.listTitle} sub={t.listSub(String(rows.length))} />
@@ -619,6 +615,18 @@ function ReplayPanel({
           </tbody>
         </table>
       ))}
+    </div>
+  );
+}
+
+/** Why the list has results and MMR only, and when the detailed one returns (owner 2026-10-08). */
+function BasicNotice({ fullAfter }: { fullAfter: string | null }) {
+  const t = useT().players.games;
+  const at = fullAfterAt(fullAfter, new Date());
+  return (
+    <div id="games-basic" data-reason={at ? "quota" : "slow"} role="status" className="rounded-lg border border-warn-line bg-warn-bg px-4 py-3 text-warn-fg">
+      <p className="text-sm font-bold">{t.basicTitle}</p>
+      <p className="mt-1 text-xs leading-relaxed">{at ? t.basicQuota(t.when(at)) : t.basicSlow}</p>
     </div>
   );
 }

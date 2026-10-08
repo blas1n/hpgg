@@ -50,8 +50,36 @@ export interface MatchesResponse {
   fetched_at: string;
   stale: boolean;
   notice: Notice | null;
+  /** a basic list held back by the quota: when full stat lines may return (absent before 2026-10-08) */
+  full_after?: string | null;
 }
 export type MatchesResult = ApiResult<MatchesResponse>;
+
+export interface FullAfter {
+  day: "today" | "tomorrow" | "later";
+  time: string; // HH:MM in the viewer's zone
+  month: number;
+  date: number;
+}
+
+/** When the detailed list returns, as the viewer's clock reads it. */
+export function fullAfterAt(iso: string | null | undefined, now: Date, timeZone?: string): FullAfter | null {
+  const at = iso ? new Date(iso) : null;
+  if (!at || Number.isNaN(at.getTime())) return null;
+  const parts = (d: Date) => {
+    const p: Record<string, string> = Object.fromEntries(
+      new Intl.DateTimeFormat("en-CA", { timeZone, year: "numeric", month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit", hourCycle: "h23" })
+        .formatToParts(d)
+        .map((x) => [x.type, x.value]),
+    );
+    const n = (k: string) => Number(p[k] ?? 0);
+    return { y: n("year"), m: n("month"), d: n("day"), time: `${p.hour ?? "00"}:${p.minute ?? "00"}` };
+  };
+  const a = parts(at);
+  const n = parts(now);
+  const days = Math.round((Date.UTC(a.y, a.m - 1, a.d) - Date.UTC(n.y, n.m - 1, n.d)) / 86_400_000);
+  return { day: days <= 0 ? "today" : days === 1 ? "tomorrow" : "later", time: a.time, month: a.m, date: a.d };
+}
 
 const isMatches = (b: unknown): b is MatchesResponse => typeof b === "object" && b !== null && Array.isArray((b as MatchesResponse).matches);
 
