@@ -263,3 +263,43 @@ async def test_a_list_cached_by_an_older_row_format_is_refreshed(
     r = await svc.lookup(TAG, REGION)
     assert len(calls(fake_hp, "/players/matches")) == 1
     assert r.matches[0]["award"] == "MVP"
+
+
+async def test_a_list_cut_to_basic_by_the_quota_says_when_full_lines_return(
+    svc: MatchService, fake_hp: FakeHP, clock: Clock
+) -> None:
+    """The page tells the player when the detailed list opens again (owner 2026-10-08)."""
+    fake_hp.responder = route(matches=lambda r: quota_429())
+    r = await svc.lookup(TAG, REGION)
+    assert r.source == "basic" and r.full_after == pytest.approx(clock.now + 7200)
+    # served again from the cache, it still says so
+    again = await svc.lookup(TAG, REGION)
+    assert again.source == "basic" and again.full_after == pytest.approx(clock.now + 7200)
+
+
+async def test_a_list_cut_to_basic_by_a_slow_job_has_no_return_time(
+    svc: MatchService, fake_hp: FakeHP
+) -> None:
+    fake_hp.responder = route(matches=lambda r: hp_response("v1_players_matches_202.json"))
+    r = await svc.lookup(TAG, REGION)
+    assert r.source == "basic" and r.full_after is None
+
+
+async def test_a_full_list_has_no_return_time(svc: MatchService, fake_hp: FakeHP) -> None:
+    fake_hp.responder = route()
+    r = await svc.lookup(TAG, REGION)
+    assert r.source == "full" and r.full_after is None
+
+
+def test_route_sends_the_return_time(settings: Settings, fake_hp: FakeHP, clock: Clock) -> None:
+    from fastapi.testclient import TestClient
+
+    from server.app import create_app
+
+    settings.match_daily_budget = 0
+    fake_hp.responder = route()
+    app = create_app(settings, hp_transport=fake_hp.transport, clock=clock, privacy_poll=False)
+    with TestClient(app) as c:
+        body = c.get("/v1/players/matches", params={"battletag": TAG, "region": REGION}).json()
+    assert body["source"] == "basic"
+    assert body["full_after"] is not None and body["full_after"].endswith("Z")

@@ -4,6 +4,8 @@ import type { Messages } from "./ko";
 const plural = (n: string, one: string, many: string) => `${n} ${n === "1" ? one : many}`;
 
 /** English UI text (#10). Same keys as ko.ts (the type and tests/i18n.test.ts enforce it). */
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
 export const en: Messages = {
   lang: {
     name: "English",
@@ -531,7 +533,12 @@ The same data gives different tiers under a different formula. This site always 
       listSub: (n: string) => `Last ${plural(n, "game", "games")}`,
       more: (n: string) => `${plural(n, "more game", "more games")}`,
       loading: "Loading match history…",
-      basic: "Today's detailed lookups are used up: results and MMR only.",
+      basicTitle: "Showing a short history for now",
+      basicQuota: (when: string) =>
+        `Heroes Profile's detailed lookups (a rolling 7 days) are used up, so this shows results and MMR only. KDA and talents should be back around ${when}.`,
+      basicSlow: "Heroes Profile is still preparing the detailed history, so results and MMR come first. Try again in a moment.",
+      when: (a: { day: "today" | "tomorrow" | "later"; time: string; month: number; date: number }) =>
+        a.day === "today" ? `today ${a.time}` : a.day === "tomorrow" ? `tomorrow ${a.time}` : `${MONTHS[a.month - 1]} ${a.date}, ${a.time}`,
       unavailable: "Match history can't be loaded right now.",
       perfect: "Perfect",
       level: (n: string) => `Level ${n}`,
