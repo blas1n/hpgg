@@ -242,7 +242,8 @@ test("players: past the detailed budget the games come without stat lines, and t
   const basic = { ...games, source: "basic", matches: games.matches.map((m: Record<string, unknown>) => ({ ...m, kills: null, deaths: null, assists: null, talents: [] })) };
   await mockApi(page, withGames(basic));
   await page.goto("./players/?tag=blAs1N%233479&region=KR");
-  await expect(page.locator("#games-basic")).toContainText("승패와 MMR만");
+  await expect(page.locator("#games-basic")).toHaveAttribute("data-reason", "slow");
+  await expect(page.locator("#games-basic")).toContainText("잠시 뒤 다시");
   await expect(page.locator("#brief-kda")).toHaveCount(0);
   await expect(page.locator("#player-matches > li").first().locator("[data-kda]")).toHaveCount(0);
   await expect(page.locator("#brief-mmr circle")).toHaveCount(25);
@@ -331,4 +332,16 @@ test("players: stats per hero, one mode at a time, each asked once; quota says s
   expect(asked).toEqual(["all", "sl", "qm"]); // each mode once; going back to 전체 asks nothing
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
   expect(overflow).toBeLessThanOrEqual(0); // the wide table scrolls inside its card
+});
+
+test("players: a list cut short by the quota says when the detailed one returns", async ({ page }) => {
+  const at = new Date(Date.now() + 3 * 3600_000);
+  const basic = { ...games, source: "basic", full_after: at.toISOString(), matches: games.matches.map((m: Record<string, unknown>) => ({ ...m, kills: null, deaths: null, assists: null, talents: [] })) };
+  await mockApi(page, withGames(basic));
+  await page.goto("./players/?tag=blAs1N%233479&region=KR");
+  const note = page.locator("#games-basic");
+  await expect(note).toHaveAttribute("data-reason", "quota");
+  await expect(note).toContainText("간단 전적");
+  const hhmm = `${String(at.getHours()).padStart(2, "0")}:${String(at.getMinutes()).padStart(2, "0")}`;
+  await expect(note).toContainText(`${hhmm}쯤부터`);
 });

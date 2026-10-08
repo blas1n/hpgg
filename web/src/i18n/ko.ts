@@ -536,7 +536,12 @@ export const ko = {
       listSub: (n: string) => `최근 ${n}경기`,
       more: (n: string) => `${n}경기 더 보기`,
       loading: "경기 기록을 불러오는 중…",
-      basic: "오늘 상세 조회 한도를 넘어, 승패와 MMR만 보여 줍니다.",
+      basicTitle: "지금은 간단 전적만 보여요",
+      basicQuota: (when: string) =>
+        `Heroes Profile 상세 전적 조회 한도(7일 누적)를 다 써서 승패와 MMR만 보여 줍니다. ${when}쯤부터 KDA·특성까지 다시 볼 수 있어요.`,
+      basicSlow: "Heroes Profile이 상세 전적을 아직 준비하는 중이라 승패와 MMR만 먼저 보여 줍니다. 잠시 뒤 다시 열어 보세요.",
+      when: (a: { day: "today" | "tomorrow" | "later"; time: string; month: number; date: number }) =>
+        a.day === "today" ? `오늘 ${a.time}` : a.day === "tomorrow" ? `내일 ${a.time}` : `${a.month}월 ${a.date}일 ${a.time}`,
       unavailable: "경기 기록을 지금 불러올 수 없습니다.",
       perfect: "퍼펙트",
       level: (n: string) => `${n}레벨`,
