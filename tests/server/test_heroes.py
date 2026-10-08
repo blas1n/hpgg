@@ -119,6 +119,8 @@ async def test_a_cold_query_is_polled_until_hp_has_it(
     fake_hp.responder = lambda _r: next(answers)
     r = await svc.lookup(TAG, REGION, "all")
     assert r.outcome == "ok" and len(r.heroes) == 3
+    # HP charges the 202 as well (2026-10-08)
+    assert (await svc.status())["player_hero_all"]["live_calls_today"] == 2
 
 
 async def test_unknown_and_private_players(
