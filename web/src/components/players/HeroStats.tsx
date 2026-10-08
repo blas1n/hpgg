@@ -1,49 +1,35 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import type { HeroTable } from "@/data";
 import { useLocale, useT } from "@/i18n/client";
-import { fetchHeroStats, HERO_STATS_MODES, heroStatsView, type HeroStatsMode, type HeroStatsResponse } from "@/lib/heroStats";
-import type { ApiResult, Region } from "@/lib/players";
+import { HERO_STATS_MODES, heroRowsFromMatches, heroStatsView, type HeroStatsMode } from "@/lib/heroStats";
+import type { MatchesResult } from "@/lib/matches";
 import { Card, cx, Portrait, Segmented, wrTone } from "../ui";
 
-const int = (n: number) => Math.round(n).toLocaleString("ko-KR");
-const one = (n: number) => n.toFixed(1);
+const DASH = "–";
+const int = (n: number | null) => (n === null ? DASH : Math.round(n).toLocaleString("ko-KR"));
+const one = (n: number | null) => (n === null ? DASH : n.toFixed(1));
 
-/** 영웅별 통계 (#88): the player's games per hero, one mode at a time. A mode is asked for the first time it is shown,
- *  and nothing is asked until the section scrolls into view: the bucket is small (500/week on Intermediate). */
-export function HeroStats({ tag, region, heroes }: { tag: string; region: Region; heroes: HeroTable }) {
+/** 영웅별 통계 (#88): the player's newest games (the match list above) per hero, one mode at a time. Worked out on the
+ *  page, so it asks Heroes Profile nothing (owner 2026-10-09: /players/heroes spent a 500-a-week bucket). */
+export function HeroStats({ games, heroes }: { games: { kind: "loading" } | MatchesResult; heroes: HeroTable }) {
   const t = useT();
   const s = t.players.heroStats;
   const locale = useLocale();
   const [mode, setMode] = useState<HeroStatsMode>("all");
-  const [byMode, setByMode] = useState<Partial<Record<HeroStatsMode, ApiResult<HeroStatsResponse>>>>({});
-  const [seen, setSeen] = useState(false);
-  const asked = useRef(new Set<HeroStatsMode>());
-  const box = useRef<HTMLDivElement>(null);
-  const got = byMode[mode];
-  useEffect(() => {
-    const el = box.current;
-    if (!el || seen) return;
-    const io = new IntersectionObserver((es) => es.some((e) => e.isIntersecting) && setSeen(true), { rootMargin: "200px" });
-    io.observe(el);
-    return () => io.disconnect();
-  }, [seen]);
-  useEffect(() => {
-    if (!seen || asked.current.has(mode)) return;
-    asked.current.add(mode);
-    void fetchHeroStats(tag, region, mode).then((r) => setByMode((b) => ({ ...b, [mode]: r })));
-  }, [seen, mode, region, tag]);
+  const matches = games.kind === "ok" ? games.data.matches : null;
+  const rows = useMemo(() => (matches ? heroRowsFromMatches(matches, mode) : []), [matches, mode]);
+  const basic = games.kind === "ok" && games.data.source === "basic";
 
   return (
-    <div ref={box}>
     <Card aria-labelledby="h-hero-stats">
       <div className="flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-line px-4 py-3">
         <div>
           <h2 id="h-hero-stats" className="text-[15px] font-bold text-fg">
             {s.title}
           </h2>
-          <p className="text-2xs text-muted">{s.sub}</p>
+          <p className="text-2xs text-muted">{s.sub(String(matches?.length ?? 0))}</p>
         </div>
         <div className="sm:ml-auto">
           <Segmented
@@ -55,18 +41,16 @@ export function HeroStats({ tag, region, heroes }: { tag: string; region: Region
           />
         </div>
       </div>
-      <div id="hero-stats" data-state={got === undefined ? "loading" : got.kind}>
-        {got === undefined ? (
+      <div id="hero-stats" data-state={games.kind} data-source={basic ? "basic" : undefined}>
+        {games.kind === "loading" ? (
           <p className="px-4 py-3 text-xs text-muted">{s.loading}</p>
-        ) : got.kind === "quota" ? (
-          <p className="px-4 py-3 text-xs text-warn-fg">{s.quota}</p>
-        ) : got.kind !== "ok" ? (
+        ) : games.kind !== "ok" ? (
           <p className="px-4 py-3 text-xs text-muted">{s.error}</p>
-        ) : got.data.heroes.length === 0 ? (
+        ) : rows.length === 0 ? (
           <p className="px-4 py-3 text-xs text-muted">{s.empty}</p>
         ) : (
           <>
-            {got.data.stale && <p className="border-b border-line bg-warn-bg px-4 py-2 text-2xs text-warn-fg">{s.stale}</p>}
+            {basic && <p className="border-b border-line bg-warn-bg px-4 py-2 text-2xs text-warn-fg">{s.basic}</p>}
             <div className="overflow-x-auto">
               <table className="num w-full min-w-[44rem] text-xs">
                 <thead className="text-2xs text-muted">
@@ -84,7 +68,7 @@ export function HeroStats({ tag, region, heroes }: { tag: string; region: Region
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-line">
-                  {heroStatsView(got.data.heroes, heroes, locale).map((h) => (
+                  {heroStatsView(rows, heroes, locale).map((h) => (
                     <tr key={h.name} data-hero={h.slug ?? undefined}>
                       <td className="px-4 py-1.5">
                         <span className="flex items-center gap-2">
@@ -100,9 +84,9 @@ export function HeroStats({ tag, region, heroes }: { tag: string; region: Region
                       </td>
                       <td className="px-2 py-1.5 text-right text-fg-2">{int(h.games)}</td>
                       <td className={cx("px-2 py-1.5 text-right font-semibold", wrTone(h.winRate))}>{one(h.winRate)}%</td>
-                      <td className="px-2 py-1.5 text-right text-fg">{h.kda.toFixed(2)}</td>
+                      <td className="px-2 py-1.5 text-right text-fg">{h.kda === null ? DASH : h.kda.toFixed(2)}</td>
                       <td className="px-2 py-1.5 text-right text-fg-2">
-                        {one(h.kills)} / {one(h.deaths)} / {one(h.assists)}
+                        {h.kills === null ? DASH : `${one(h.kills)} / ${one(h.deaths)} / ${one(h.assists)}`}
                       </td>
                       <td className="px-2 py-1.5 text-right text-fg-2">{int(h.heroDamage)}</td>
                       <td className="px-2 py-1.5 text-right text-fg-2">{int(h.siegeDamage)}</td>
@@ -118,6 +102,5 @@ export function HeroStats({ tag, region, heroes }: { tag: string; region: Region
         )}
       </div>
     </Card>
-    </div>
   );
 }

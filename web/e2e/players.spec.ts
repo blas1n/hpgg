@@ -7,7 +7,6 @@ import { expect, test, type Page, type Route } from "@playwright/test";
 const fixture = JSON.parse(readFileSync(join(dirname(fileURLToPath(import.meta.url)), "../tests/fixtures/api_player_zemill.json"), "utf-8"));
 const games = JSON.parse(readFileSync(join(dirname(fileURLToPath(import.meta.url)), "../tests/fixtures/api_matches_blas1n.json"), "utf-8"));
 const replay = JSON.parse(readFileSync(join(dirname(fileURLToPath(import.meta.url)), "../tests/fixtures/api_replay_65597227.json"), "utf-8"));
-const heroStats = JSON.parse(readFileSync(join(dirname(fileURLToPath(import.meta.url)), "../tests/fixtures/api_heroes_blas1n.json"), "utf-8"));
 const API = "https://api.hpgg.win/v1/players**";
 
 test.beforeEach(async ({ page }) => {
@@ -299,39 +298,38 @@ test("players: a game that cannot be opened says why", async ({ page }) => {
 });
 
 
-test("players: stats per hero, one mode at a time, each asked once; quota says so", async ({ page }) => {
-  const seen = await mockApi(page, (route, url) => {
-    if (url.pathname.endsWith("/heroes")) {
-      const mode = url.searchParams.get("mode");
-      if (mode === "qm") return json(route, 429, { error: { code: "quota_exceeded" } });
-      return json(route, 200, { ...heroStats, mode, heroes: mode === "sl" ? heroStats.heroes.slice(0, 1) : heroStats.heroes });
-    }
-    return json(route, 200, url.pathname.endsWith("/matches") ? games : fixture);
-  });
+test("players: stats per hero come from the match list, per mode, asking Heroes Profile nothing more", async ({ page }) => {
+  // owner 2026-10-09: /players/heroes spent a 500-a-week bucket; the newest games already carry hero, result and stats
+  const mixed = { ...games, matches: games.matches.map((m: Record<string, unknown>, i: number) => (i < 2 ? { ...m, mode: "sl" } : m)) };
+  const seen = await mockApi(page, withGames(mixed));
   await page.goto("./players/?tag=blAs1N%233479&region=KR");
   const box = page.locator("#hero-stats");
-  await expect(page.locator("#player-result")).toHaveAttribute("data-state", "ok");
-  // nothing is asked until the section is in view (the bucket is small)
-  expect(seen.filter((u) => u.pathname.endsWith("/heroes"))).toHaveLength(0);
-  await box.scrollIntoViewIfNeeded();
   await expect(box).toHaveAttribute("data-state", "ok");
-  await expect(box.locator("tbody tr")).toHaveCount(3);
-  await expect(box.locator("tbody tr").first()).toHaveAttribute("data-hero", "alarak");
-  await expect(box.locator("tbody tr").first()).toContainText("알라라크");
-  await expect(box.locator("tbody tr").first()).toContainText("44.4%");
-  await expect(box.locator("tbody tr").first()).toContainText("5.58");
+  await expect(page.locator("#h-hero-stats + p")).toContainText("최근 25경기");
+  const first = box.locator("tbody tr").first();
+  await expect(first).toHaveAttribute("data-hero", "alarak");
+  await expect(first).toContainText("알라라크");
   await expect(box.locator('tbody tr a[href="/ko/hots/heroes/alarak/"]')).toHaveCount(1);
+  const all = await box.locator("tbody tr").count();
   await page.locator("#hero-stats-sl").click();
-  await expect(box.locator("tbody tr")).toHaveCount(1);
+  await expect(box.locator("tbody tr")).not.toHaveCount(all);
   await page.locator("#hero-stats-qm").click();
-  await expect(box).toHaveAttribute("data-state", "quota");
-  await expect(box).toContainText("조회 한도");
   await page.locator("#hero-stats-all").click();
-  await expect(box.locator("tbody tr")).toHaveCount(3);
-  const asked = seen.filter((u) => u.pathname.endsWith("/heroes")).map((u) => u.searchParams.get("mode"));
-  expect(asked).toEqual(["all", "sl", "qm"]); // each mode once; going back to 전체 asks nothing
+  await expect(box.locator("tbody tr")).toHaveCount(all);
+  expect(seen.filter((u) => u.pathname.endsWith("/heroes"))).toHaveLength(0);
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
   expect(overflow).toBeLessThanOrEqual(0); // the wide table scrolls inside its card
+});
+
+test("players: past the detailed budget the per-hero table keeps games and win rate", async ({ page }) => {
+  const basic = { ...games, source: "basic", matches: games.matches.map((m: Record<string, unknown>) => ({ ...m, kills: null, deaths: null, assists: null, hero_damage: null, siege_damage: null, healing: null, damage_taken: null, experience: null, talents: [] })) };
+  await mockApi(page, withGames(basic));
+  await page.goto("./players/?tag=blAs1N%233479&region=KR");
+  const box = page.locator("#hero-stats");
+  await expect(box).toHaveAttribute("data-source", "basic");
+  await expect(box).toContainText("판수와 승률만");
+  await expect(box.locator("tbody tr").first()).toContainText("%");
+  await expect(box.locator("tbody tr").first()).toContainText("–");
 });
 
 test("players: a list cut short by the quota says when the detailed one returns", async ({ page }) => {

@@ -481,7 +481,7 @@ The same data gives different tiers under a different formula. This site always 
     heroesTitle: "Most played heroes",
     heroStats: {
       title: "Stats per hero",
-      sub: "every game on Heroes Profile · averages per game",
+      sub: (n: string) => `Your last ${n} games · averages per game`,
       all: "All modes",
       hero: "Hero",
       games: "Games",
@@ -495,9 +495,8 @@ The same data gives different tiers under a different formula. This site always 
       experience: "Experience",
       loading: "Loading stats per hero…",
       empty: "No games in this mode.",
-      quota: "Today's lookups of stats per hero are used up. They are back tomorrow.",
       error: "Could not load the stats per hero.",
-      stale: "The lookup limit is reached, so these are the last stats we got",
+      basic: "The detailed lookups are used up, so this shows games and win rate only.",
     },
     teamLuck: {
       label: "Team luck",
