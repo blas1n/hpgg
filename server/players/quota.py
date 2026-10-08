@@ -39,6 +39,14 @@ async def blocked_for(
     return None
 
 
+async def charge(store: HPStore, endpoint: str, up: Upstream, now: float) -> None:
+    """Count one ask HP answered against today's budget. HP charges a 202 (job pending) too: one
+    cold query that never finished took 11 off the week, polls included (2026-10-08), while only
+    the final 200 had been counted. Errors are not charged (`hp.py`)."""
+    if up.status in (200, 202):
+        await store.count_live_call(day(now), endpoint)
+
+
 async def record(store: HPStore, endpoint: str, up: Upstream, now: float) -> float | None:
     """Store the quota reading; on 429 quota_exceeded mark the bucket empty and return the wait."""
     if up.quota is not None:

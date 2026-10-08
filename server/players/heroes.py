@@ -3,8 +3,8 @@
 Bucket `player_hero_all` (25/week on Basic, 500 on Intermediate). Every game type by default;
 `game_type` narrows it to Quick Match or Storm League, each its own cache entry. Order: fresh cache
 → one refresh per player and mode at a time (coalesced) → under the quota guard, HP (a cold query
-answers 202 and is asked again; polls are not charged) → past it, an answer HP gave less than
-`stale_max_seconds` ago, marked stale → else `quota_exceeded`.
+answers 202 and is asked again; HP charges every ask, each is counted) → past it, an answer HP
+gave less than `stale_max_seconds` ago, marked stale → else `quota_exceeded`.
 
 Privacy as for the profile: a private player gets `private` without a call, and HP's 403
 `player_unavailable` marks them private (which drops every cached answer about them).
@@ -135,7 +135,6 @@ class HeroStatsService:
         now = self._clock()
         exhausted = await quota.record(self._store, BUCKET, up, now)
         if up.status == 200:
-            await self._store.count_live_call(quota.day(now), BUCKET)
             body = {"heroes": hero_rows(up.body)}
             entry = CacheEntry(key, 200, body, now, now + s.hero_stats_ttl_seconds)
             await self._store.put(entry)
@@ -157,6 +156,7 @@ class HeroStatsService:
         waited = 0.0
         while True:
             up = await self._hp.get("/players/heroes", params)
+            await quota.charge(self._store, BUCKET, up, self._clock())
             if up.status != 202:
                 return up
             if waited + self._settings.hp_job_poll_seconds > self._settings.hp_job_wait_seconds:
