@@ -36,3 +36,10 @@ def test_each_budget_fits_the_week_and_uses_the_plan(bucket: str) -> None:
     week = getattr(s, budget_f) * 7 + getattr(s, floor_f)
     assert week <= cap, bucket
     assert week >= 0.9 * cap, f"{bucket}: {week} of {cap} — the budget is still the Basic plan's"
+
+
+def test_a_cold_query_costs_at_most_six_asks() -> None:
+    """HP charges each 202 poll (2026-10-08), so a job that never finishes spends 1 + wait / poll
+    asks of a 500-a-week bucket; at 2 s / 20 s that was 11."""
+    s = Settings(_env_file=None, hp_api_token="x")  # type: ignore[call-arg]
+    assert 1 + int(s.hp_job_wait_seconds // s.hp_job_poll_seconds) <= 6
