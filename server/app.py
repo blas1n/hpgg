@@ -25,7 +25,6 @@ from server.comments.service import CommentService
 from server.config import Settings
 from server.db import Database, migrate
 from server.errors import on_validation_error
-from server.players.heroes import HeroStatsService
 from server.players.hp import HPClient
 from server.players.matches import MatchService
 from server.players.privacy import PrivacyFeed
@@ -67,7 +66,6 @@ def create_app(
         )
         app.state.replays = ReplayService(hp=hp, store=store, settings=settings, clock=clock)
         app.state.teamluck = TeamLuckService(matches=app.state.matches, replays=app.state.replays)
-        app.state.heroes = HeroStatsService(hp=hp, store=store, settings=settings, clock=clock)
         app.state.privacy = PrivacyFeed(hp=hp, store=store, settings=settings, clock=clock)
         poller = asyncio.create_task(app.state.privacy.run_forever()) if privacy_poll else None
         app.state.ip_limiter = SlidingWindowLimiter(settings.ip_requests_per_minute, 60.0, clock)
@@ -139,7 +137,6 @@ def create_app(
             "quota": {
                 **await service.status(),
                 **await request.app.state.matches.status(),
-                **await request.app.state.heroes.status(),
                 **await request.app.state.replays.status(),
             },
             "privacy": await feed.status(),

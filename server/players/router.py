@@ -6,14 +6,13 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 from enum import StrEnum
-from typing import Annotated, Any
+from typing import Annotated, Any, Literal
 
 from fastapi import APIRouter, Query, Request
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ConfigDict, Field
 
 from server.errors import error
-from server.players.heroes import HeroMode, HeroStatsService
 from server.players.matches import MatchService
 from server.players.service import Outcome, PlayerService
 from server.players.teamluck import GOOD, TeamLuckService
@@ -39,12 +38,8 @@ class PlayerQuery(BaseModel):
     region: Region
 
 
-class HeroesQuery(PlayerQuery):
-    mode: HeroMode = "all"
-
-
 class TeamLuckQuery(PlayerQuery):
-    mode: HeroMode = "all"
+    mode: Literal["all", "qm", "sl"] = "all"
     # one replay call per game not cached: 10 or 20 (#90)
     games: int = Field(default=20, ge=5, le=20)
 
@@ -109,24 +104,6 @@ async def get_matches(request: Request, q: Annotated[PlayerQuery, Query()]) -> J
         "stale": r.stale,
         "notice": r.notice,
         "full_after": _iso(r.full_after),
-    }
-    return JSONResponse(body, headers={"Cache-Control": "public, max-age=300"})
-
-
-@router.get("/heroes")
-async def get_heroes(request: Request, q: Annotated[HeroesQuery, Query()]) -> JSONResponse:
-    if (limited := rate_limited(request)) is not None:
-        return limited
-    service: HeroStatsService = request.app.state.heroes
-    r = await service.lookup(q.battletag, q.region.value, q.mode)
-    if (failed := _failure(r.outcome, r.retry_after)) is not None:
-        return failed
-    body: dict[str, Any] = {
-        "mode": q.mode,
-        "heroes": r.heroes,
-        "fetched_at": _iso(r.fetched_at),
-        "stale": r.stale,
-        "notice": r.notice,
     }
     return JSONResponse(body, headers={"Cache-Control": "public, max-age=300"})
 

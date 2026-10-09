@@ -27,7 +27,7 @@ Start every session here. Operating guide and architecture: `docs/HANDOFF.md`. B
 1. `gh run list --workflow collect-and-deploy -L 3`: the nightly run is green, its commit `data: <date> 2.57.0` is on main (pushed by the deploy key), and the run has a `collected-data` artifact. If it failed, the data is in that artifact — commit it through a PR rather than re-collecting.
 2. `meta.json`: 16 views in `modes` and `previous_modes`; `reference_patch` 2.57.0. KR is thin (SL 82 matches, 다마그 0 on 10-02): KR × bracket views are mostly grey for now — expected, not a bug.
 3. Hotfix watcher: after the next new build, its push must go through (deploy key). Until then `tail ~/Library/Logs/hpgg-hotfix.log` shows `outcome=unchanged` every 30 min.
-4. `curl -s http://127.0.0.1:8800/healthz` on the Mac mini (the public URL says only ok): `privacy.last_ok_at` within the hour; `player_hero_all` live calls per day well under 68.
+4. `curl -s http://127.0.0.1:8800/healthz` on the Mac mini (the public URL says only ok): `privacy.last_ok_at` within the hour; `player_match_history` live calls per day well under 70.
 5. Do not spend Heroes/Stats calls by hand before 10-05 (18 spare).
 6. Tier floor 50 is a first setting (owner: "계속 조율하자"): look at grey heroes per view now that every region × bracket exists.
 7. Close issue **#93** (collector failed 2026-10-01 — cause and fix above) if still open.

@@ -52,12 +52,7 @@ class Settings(BaseSettings):
     # day, 2026-10-06): 2,000 a day here leaves both room. 팀운 (teamluck.py) spends from it too.
     replay_quota_floor: int = 50
     replay_daily_budget: int = 2000
-    # Stats per hero (`server/players/heroes.py`): /players/heroes, bucket player_hero_all (25/week
-    # on Basic, 500 on Intermediate) ≈ (500 − floor) / 7 a day; one call per player and mode.
-    hero_stats_ttl_seconds: int = 6 * 3600
-    hero_stats_quota_floor: int = 20
-    hero_stats_daily_budget: int = 68
-    # A cold /players/matches or /players/heroes query answers 202 and is asked again. HP charges
+    # A cold /players/matches query answers 202 and is asked again. HP charges
     # every ask, polls included (2026-10-08), so a job that never finishes costs 1 + wait / poll.
     hp_job_poll_seconds: float = 5.0
     hp_job_wait_seconds: float = 25.0
