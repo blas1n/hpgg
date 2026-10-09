@@ -371,7 +371,7 @@ function Profile({ v, games, me, region, heroes, maps }: { v: PlayerView; games:
         </div>
       </div>
 
-      <HeroStats key={`${me}|${region}`} tag={me} region={region} heroes={heroes} />
+      <HeroStats key={`${me}|${region}`} games={games} heroes={heroes} />
     </div>
   );
 }
