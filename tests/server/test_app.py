@@ -36,6 +36,14 @@ def test_healthz_reports_db_and_quota(client: TestClient) -> None:
     assert client.get("/healthz").json()["quota"]["players"]["remaining"] == 9999
 
 
+def test_stats_per_hero_are_no_longer_served(client: TestClient) -> None:
+    """The page works them out from the match list (owner 2026-10-09): HP /players/heroes spent a
+    500-a-week bucket, so the route and its bucket are gone."""
+    r = client.get("/v1/players/heroes", params={**OK, "mode": "all"})
+    assert r.status_code == 404
+    assert "player_hero_all" not in client.get("/healthz").json()["quota"]
+
+
 def test_player_lookup(client: TestClient) -> None:
     r = client.get(URL, params=OK)
     assert r.status_code == 200
