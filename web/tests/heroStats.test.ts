@@ -9,7 +9,7 @@ import { heroStatsView, type HeroStatsRow } from "../src/lib/heroStats";
 const here = dirname(fileURLToPath(import.meta.url));
 const json = <T>(rel: string): T => JSON.parse(readFileSync(join(here, rel), "utf-8")) as T;
 const heroes = localizeHeroes(json<HeroTable>("e2e-data/heroes_ko.json"), "ko");
-// the server's answer for blAs1N#3479 KR (server/players/heroes.py over HP's 2026-10-02 /players/heroes)
+// rows in the page's shape (from HP's 2026-10-02 /players/heroes for blAs1N#3479 KR, before the table came from the match list)
 const data = json<{ heroes: HeroStatsRow[] }>("fixtures/api_heroes_blas1n.json");
 describe("heroStatsView", () => {
   it("the page's hero names, portraits and links; the API's order (most played first)", () => {
