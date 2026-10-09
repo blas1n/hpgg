@@ -1,33 +1,16 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import type { HeroTable } from "../src/data";
 import { localizeHeroes } from "../src/i18n/names";
-import { fetchHeroStats, heroStatsView, type HeroStatsResponse } from "../src/lib/heroStats";
+import { heroStatsView, type HeroStatsRow } from "../src/lib/heroStats";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const json = <T>(rel: string): T => JSON.parse(readFileSync(join(here, rel), "utf-8")) as T;
 const heroes = localizeHeroes(json<HeroTable>("e2e-data/heroes_ko.json"), "ko");
 // the server's answer for blAs1N#3479 KR (server/players/heroes.py over HP's 2026-10-02 /players/heroes)
-const data = json<HeroStatsResponse>("fixtures/api_heroes_blas1n.json");
-const res = (status: number, body: unknown) => new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json" } });
-
-describe("fetchHeroStats", () => {
-  it("asks /v1/players/heroes for the player and the mode", async () => {
-    const f = vi.fn().mockResolvedValue(res(200, data));
-    const r = await fetchHeroStats("blAs1N#3479", "KR", "sl", { fetchImpl: f, base: "https://api.test" });
-    expect(r.kind).toBe("ok");
-    const url = new URL(f.mock.calls[0]![0] as string);
-    expect(url.pathname).toBe("/v1/players/heroes");
-    expect(Object.fromEntries(url.searchParams)).toEqual({ battletag: "blAs1N#3479", region: "KR", mode: "sl" });
-  });
-  it("quota and an answer of another shape are not data", async () => {
-    expect((await fetchHeroStats("A#1234", "KR", "all", { fetchImpl: vi.fn().mockResolvedValue(res(429, { error: { code: "quota_exceeded" } })) })).kind).toBe("quota");
-    expect((await fetchHeroStats("A#1234", "KR", "all", { fetchImpl: vi.fn().mockResolvedValue(res(200, { player: {} })) })).kind).not.toBe("ok");
-  });
-});
-
+const data = json<{ heroes: HeroStatsRow[] }>("fixtures/api_heroes_blas1n.json");
 describe("heroStatsView", () => {
   it("the page's hero names, portraits and links; the API's order (most played first)", () => {
     const v = heroStatsView(data.heroes, heroes, "ko");

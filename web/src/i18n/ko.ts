@@ -483,7 +483,7 @@ export const ko = {
     heroesTitle: "많이 한 영웅",
     heroStats: {
       title: "영웅별 통계",
-      sub: "Heroes Profile에 올라온 모든 경기 · 경기당 평균",
+      sub: (n: string) => `최근 ${n}경기 기준 · 경기당 평균`,
       all: "전체 모드",
       hero: "영웅",
       games: "게임",
@@ -497,9 +497,8 @@ export const ko = {
       experience: "경험치",
       loading: "영웅별 통계를 불러오는 중…",
       empty: "이 모드의 경기가 없습니다.",
-      quota: "오늘 영웅별 통계 조회 한도를 모두 썼습니다. 내일 다시 볼 수 있습니다.",
       error: "영웅별 통계를 불러오지 못했습니다.",
-      stale: "조회 한도 때문에 마지막으로 받은 통계를 보여줍니다",
+      basic: "상세 전적 조회 한도 때문에 판수와 승률만 보여 줍니다.",
     },
     teamLuck: {
       label: "팀운",
