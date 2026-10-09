@@ -13,7 +13,6 @@ PLAN = {
     "player_match_history": (500, "match_daily_budget", "match_quota_floor"),
     "player_mmr_history": (25_000, "mmr_history_daily_budget", "mmr_history_quota_floor"),
     "replay_data": (25_000, "replay_daily_budget", "replay_quota_floor"),
-    "player_hero_all": (500, "hero_stats_daily_budget", "hero_stats_quota_floor"),
 }
 
 
