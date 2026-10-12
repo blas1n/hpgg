@@ -89,7 +89,7 @@ async def test_run_writes_five_files_meta_and_raw_gz(
         f"{m}{r}" for m in ("qm", "sl", "sl_low", "sl_high") for r in ("", "_kr", "_na", "_eu")
     ]
     assert sorted(p.name for p in latest.iterdir()) == sorted(
-        ["builds.json", "meta.json", *(f"{v}.json" for v in views)]
+        ["builds.json", "meta.json", "sl_length.json", *(f"{v}.json" for v in views)]
     )
     meta = json.loads((latest / "meta.json").read_text())
     assert meta["current_patch"] == "2.55.17" and meta["collected_at"] == "2026-09-28T01:02:03Z"
@@ -877,6 +877,58 @@ async def test_failed_replay_sampling_never_fails_the_run(
     s = settings(tmp_path, replay_sample=True)
     assert await run(s, sleep=fake_sleep, now=lambda: "2026-09-28T18:25:00Z") == 0
     assert not (s.data_dir / "replays" / "cursor.json").exists()
+
+
+@respx.mock
+async def test_a_run_counts_game_length_rates_from_the_archive_and_the_days_games(
+    tmp_path: Path, raw_by_map, patches_payload, fake_sleep, monkeypatch
+) -> None:
+    """게임 시간대별 승률 (collector/hero_length.py): every archived day plus today's sample."""
+    import gzip
+
+    import collector.run as run_mod
+    from collector.replay_sample import SampleResult
+
+    mock_api(raw_by_map, patches_payload)
+
+    def game(gid: int, length: int) -> dict[str, Any]:
+        return {
+            "id": gid,
+            "version": "2.55.17.97771",
+            "length": length,
+            "winner": 0,
+            "players": [
+                {"team": 0, "hero": "Valla", "win": True, "score": {}},
+                {"team": 1, "hero": "Muradin", "win": False, "score": {}},
+            ],
+        }
+
+    async def fake_sample(c: Any, s: Any, **kw: Any) -> SampleResult:
+        return SampleResult(records={"sl": [game(2, 1500)], "qm": []}, cursor={"sl": 2})
+
+    monkeypatch.setattr(run_mod, "sample_replays", fake_sample)
+    archive = tmp_path / "archive"
+    (archive / "2026-09-28").mkdir(parents=True)
+    with gzip.open(archive / "2026-09-28" / "replays_sl.jsonl.gz", "wt", encoding="utf-8") as f:
+        f.write(json.dumps(game(1, 600)) + "\n")
+    s = settings(tmp_path, replay_sample=True, replay_archive_dir=archive)
+    assert await run(s, sleep=fake_sleep, now=lambda: "2026-09-28T18:25:00Z") == 0
+    out = json.loads((s.data_dir / "latest" / "sl_length.json").read_text())
+    assert out["patch"] == "2.55.17" and out["games"] == 2
+    assert out["heroes"]["Valla"]["short"] == {"games": 1, "wins": 1}
+    assert out["heroes"]["Valla"]["long"] == {"games": 1, "wins": 1}
+
+
+@respx.mock
+async def test_game_length_rates_stand_on_the_archive_when_the_days_sampling_fails(
+    tmp_path: Path, raw_by_map, patches_payload, fake_sleep
+) -> None:
+    mock_api(raw_by_map, patches_payload)
+    # no archive either (a local run): the file says no games rather than going missing
+    s = settings(tmp_path, replay_archive_dir=tmp_path / "missing")
+    assert await run(s, sleep=fake_sleep, now=lambda: "2026-09-28T18:25:00Z") == 0
+    out = json.loads((s.data_dir / "latest" / "sl_length.json").read_text())
+    assert out["games"] == 0 and out["heroes"] == {}
 
 
 @respx.mock

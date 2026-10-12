@@ -590,7 +590,8 @@ def commit_atomic(
     stage_previous: Path | None = None
     if promoted and latest.exists():
         stage_previous = stage / "previous"
-        shutil.copytree(latest, stage_previous)
+        # 게임 시간대별 승률 is counted afresh every run (collector/hero_length.py)
+        shutil.copytree(latest, stage_previous, ignore=shutil.ignore_patterns("sl_length.json"))
 
     # swap: keep the old trees around until the new ones are in place, then delete
     data_dir.mkdir(parents=True, exist_ok=True)
