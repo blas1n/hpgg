@@ -71,3 +71,12 @@ def test_deploy_runs_whenever_build_succeeded() -> None:
     jobs = _jobs(Path(__file__).parent.parent / ".github/workflows/collect-and-deploy.yml")
     cond = jobs["deploy"].get("if", "")
     assert "always()" in cond and "needs.build.result == 'success'" in cond
+
+
+def test_publish_runs_after_a_plain_manual_dispatch() -> None:
+    """2026-10-12: a plain `gh workflow run` skips `gate`; publish's condition had no always(),
+    so GitHub skipped it with its skipped ancestor — the collected data never reached main (the
+    Mac mini's dispatch passes if_stale and runs the gate, which hid it)."""
+    jobs = _jobs(Path(__file__).parent.parent / ".github/workflows/collect-and-deploy.yml")
+    cond = jobs["publish"].get("if", "")
+    assert "always()" in cond and "needs.collect.result == 'success'" in cond
