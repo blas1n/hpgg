@@ -19,6 +19,7 @@ from collector.carry_baselines import update_baselines
 from collector.client import HPClient, HPError, SleepFn
 from collector.config import Settings
 from collector.hero_length import length_rates, load_archive
+from collector.identity_stats import identity_stats
 from collector.matchups import collect_matchups, load_hero_list
 from collector.models import JobSpec
 from collector.party import apply_party_correction
@@ -558,6 +559,30 @@ def _run_length(settings: Settings, *, patch: str, since: str | None, collected_
         log.warning("length.failed", error=f"{type(e).__name__}: {e}")
 
 
+def _run_identity(settings: Settings, *, collected_at: str) -> None:
+    """영웅별 주요 스탯 (collector/identity_stats.py) from the archived days and today's sample.
+    With no game in the window (no archive checked out) yesterday's file stays: an empty one
+    would take the stats off every card. A failure never fails the run."""
+    try:
+        games = load_archive([settings.replay_archive_dir, settings.snapshot_out_dir])
+        out = identity_stats(
+            games,
+            collected_at=collected_at,
+            days=settings.identity_days,
+            min_games=settings.identity_min_games,
+        )
+        if not out["games"]:
+            log.info("identity.kept", reason="no games in the window")
+            return
+        path = settings.data_dir / "identity_stats.json"
+        tmp = path.with_suffix(".tmp")
+        tmp.write_text(json.dumps(out, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
+        tmp.replace(path)
+        log.info("identity.done", games=out["games"], heroes=len(out["heroes"]))
+    except Exception as e:  # noqa: BLE001 — supplementary numbers never fail the daily run
+        log.warning("identity.failed", error=f"{type(e).__name__}: {e}")
+
+
 async def _run_stats(
     c: HPClient,
     settings: Settings,
@@ -667,6 +692,7 @@ async def _run_stats(
     _run_length(
         settings, patch=meta["reference_patch"], since=window["since"], collected_at=collected_at
     )
+    _run_identity(settings, collected_at=collected_at)
     if builds_result is not None:
         day_dir_b = settings.snapshot_out_dir / snapshot_day(collected_at)
         _write_gz(day_dir_b / "raw_builds.json.gz", builds_result[0])

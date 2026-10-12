@@ -1,9 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { assetUrl, loadAwards, loadCarryBaselines, loadTalents, type AwardTable, type HeroTable, type MapTable, type TalentTable } from "@/data";
+import { assetUrl, loadAwards, loadCarryBaselines, loadIdentityStats, loadTalents, type AwardTable, type HeroTable, type IdentityStats, type MapTable, type TalentTable } from "@/data";
 import { useLocale, useT } from "@/i18n/client";
 import type { AwardView } from "@/lib/awards";
+import { identityValue, type IdentityView } from "@/lib/identity";
 import { briefing, fullAfterAt, matchRows, type Briefing, type MatchesResponse, type MatchTalent, type MatchView } from "@/lib/matches";
 import { FEATURES } from "@/features";
 import type { Region } from "@/lib/players";
@@ -27,8 +28,9 @@ export function MatchHistory({ data, heroes, maps, me, region }: { data: Matches
   const [talents, setTalents] = useState<Record<string, TalentTable | null>>({});
   const [opened, setOpened] = useState<string[]>([]); // heroes of opened games, for their talents
   const [awards, setAwards] = useState<AwardTable | null>(null);
+  const [identity, setIdentity] = useState<IdentityStats | null>(null);
   const b = useMemo(() => briefing(data.matches, heroes, locale), [data, heroes, locale]);
-  const rows = useMemo(() => matchRows(data.matches, heroes, maps, talents, locale, new Date(), awards), [data, heroes, maps, talents, locale, awards]);
+  const rows = useMemo(() => matchRows(data.matches, heroes, maps, talents, locale, new Date(), awards, identity), [data, heroes, maps, talents, locale, awards, identity]);
 
   // 팀운 (#90): one line in the briefing; "loading" until the server has opened the games' replays
   // and 몇인분 per game from the same games' replays
@@ -59,6 +61,9 @@ export function MatchHistory({ data, heroes, maps, me, region }: { data: Matches
     loadAwards()
       .then((a) => live && setAwards(a))
       .catch(() => {}); // no badges, the rest of the page stands
+    loadIdentityStats()
+      .then((s) => live && setIdentity(s))
+      .catch(() => {}); // no signature stats, the rest of the card stands
     return () => {
       live = false;
     };
@@ -410,6 +415,8 @@ function MatchItem({
         </dl>
       )}
 
+      {m.identity.length > 0 && <Identity list={m.identity} />}
+
       <div className="col-span-2 flex flex-wrap items-center gap-2 sm:col-span-2 sm:col-start-2">
         {m.talents.length > 0 && <Talents list={m.talents} label={g.talentsAria(m.hero)} size={26} />}
         {m.award && <AwardBadge a={m.award} />}
@@ -469,6 +476,28 @@ function Talents({ list, label, size }: { list: MatchTalent[]; label: string; si
 }
 
 /** An end-of-match award with the game's icon; MVP stands out in gold as in the game. */
+/** 영웅별 주요 스탯: this game's value of each stat the hero stands out on, against the hero's average per game. */
+function Identity({ list }: { list: IdentityView[] }) {
+  const locale = useLocale();
+  const g = useT().players.games.identity;
+  return (
+    <ul data-identity aria-label={g.label} className="num col-span-2 flex flex-wrap gap-1.5 text-2xs sm:col-span-2 sm:col-start-2">
+      {list.map((s) => (
+        <li key={s.stat} data-stat={s.stat} className="inline-flex items-baseline gap-1 rounded-md border border-line bg-surface-2 px-1.5 py-0.5">
+          <span className="text-fg-2">{g.stat[s.stat]}</span>
+          <span className="font-semibold text-fg">{identityValue(s.stat, s.value, locale)}</span>
+          {s.vs !== null && (
+            <span title={g.vs} className={cx(s.vs > 0 ? "text-pos" : s.vs < 0 ? "text-neg" : "text-muted")}>
+              {s.vs > 0 ? "+" : ""}
+              {s.vs}%
+            </span>
+          )}
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 function AwardBadge({ a, compact }: { a: AwardView; compact?: boolean }) {
   const g = useT().players.games;
   return (

@@ -932,6 +932,56 @@ async def test_game_length_rates_stand_on_the_archive_when_the_days_sampling_fai
 
 
 @respx.mock
+async def test_a_run_picks_each_heros_identity_stats_from_the_archive_and_the_days_games(
+    tmp_path: Path, raw_by_map, patches_payload, fake_sleep, monkeypatch
+) -> None:
+    """영웅별 주요 스탯 (collector/identity_stats.py): the archived days in the window + today."""
+    import gzip
+
+    import collector.run as run_mod
+    from collector.replay_sample import SampleResult
+
+    mock_api(raw_by_map, patches_payload)
+
+    def game(gid: int) -> dict[str, Any]:
+        return {
+            "id": gid,
+            "date": "2026-09-27 12:00:00",
+            "length": 600,
+            "players": [{"hero": "Ana", "score": {"stunning_enemies": 60}}]
+            + [{"hero": "Valla", "score": {}}] * 9,
+        }
+
+    async def fake_sample(c: Any, s: Any, **kw: Any) -> SampleResult:
+        return SampleResult(records={"sl": [game(2)], "qm": []}, cursor={"sl": 2})
+
+    monkeypatch.setattr(run_mod, "sample_replays", fake_sample)
+    archive = tmp_path / "archive"
+    (archive / "2026-09-27").mkdir(parents=True)
+    with gzip.open(archive / "2026-09-27" / "replays_sl.jsonl.gz", "wt", encoding="utf-8") as f:
+        f.write(json.dumps(game(1)) + "\n")
+    s = settings(tmp_path, replay_sample=True, replay_archive_dir=archive, identity_min_games=2)
+    assert await run(s, sleep=fake_sleep, now=lambda: "2026-09-28T18:25:00Z") == 0
+    out = json.loads((s.data_dir / "identity_stats.json").read_text())
+    assert out["games"] == 2
+    assert [x["stat"] for x in out["heroes"]["Ana"]["stats"]] == ["stuns"]
+
+
+@respx.mock
+async def test_with_no_games_in_the_window_yesterdays_identity_stats_stay(
+    tmp_path: Path, raw_by_map, patches_payload, fake_sleep
+) -> None:
+    """A run without the archive (a failed checkout, a local run) must not blank every card."""
+    mock_api(raw_by_map, patches_payload)
+    s = settings(tmp_path, replay_archive_dir=tmp_path / "missing")
+    s.data_dir.mkdir(parents=True, exist_ok=True)
+    kept = {"games": 5000, "heroes": {"Ana": {"games": 400, "stats": []}}}
+    (s.data_dir / "identity_stats.json").write_text(json.dumps(kept))
+    assert await run(s, sleep=fake_sleep, now=lambda: "2026-09-28T18:25:00Z") == 0
+    assert json.loads((s.data_dir / "identity_stats.json").read_text()) == kept
+
+
+@respx.mock
 async def test_a_settled_balance_hotfix_starts_the_window_for_every_stat(
     tmp_path: Path, raw_by_map, patches_payload, fake_sleep
 ) -> None:

@@ -125,6 +125,15 @@ export interface AwardTable {
 }
 export const loadAwards = (): Promise<AwardTable> => getJson<AwardTable>("awards.json");
 
+/** 영웅별 주요 스탯 (data/identity_stats.json, collector/identity_stats.py). */
+export interface IdentityStats {
+  collected_at: string;
+  since: string;
+  games: number;
+  heroes: Record<string, { games: number; stats: { stat: string; avg: number; ratio: number }[] }>;
+}
+export const loadIdentityStats = (): Promise<IdentityStats> => getJson<IdentityStats>("identity_stats.json");
+
 /** 몇인분's yardstick: each hero's usual output per minute (data/carry_baselines.json, collector/carry_baselines.py). */
 export const loadCarryBaselines = (): Promise<CarryBaselines> => getJson<CarryBaselines>("carry_baselines.json");
 
