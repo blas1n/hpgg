@@ -8,6 +8,7 @@ import { ChangeGroups } from "@/components/patches/ChangeGroups";
 import { CommentThread } from "@/components/comments/CommentThread";
 import { useLocale, useT } from "@/i18n/client";
 import { descParts, type BuildTalentView, type BuildView, type GridRow, type HeroSummary, type MapRow } from "@/lib/hero";
+import { LENGTH_MIN_GAMES, type LengthView } from "@/lib/length";
 import { matchupRule, type MatchupRow, type MatchupsView } from "@/lib/matchups";
 import type { HeroPatchNotes, PatchNoteView } from "@/lib/patchnotes";
 import { Card, cx, Portrait, Segmented, TierBadge, wrTone } from "../ui";
@@ -37,6 +38,7 @@ export function HeroView({
   builds,
   buildsPatch,
   matchups,
+  length,
   patches,
   minGames,
 }: {
@@ -46,6 +48,8 @@ export function HeroView({
   buildsPatch: string | null;
   /** Storm League counters/synergies; null until the first matchups collection. */
   matchups: MatchupsView | null;
+  /** Storm League win rate by game length (lib/length.ts); null when the replay sample does not have the hero. */
+  length: LengthView | null;
   /** This hero in Blizzard's official patch notes (#62); the same in both modes. */
   patches: HeroPatchNotes;
   minGames: number;
@@ -105,6 +109,7 @@ export function HeroView({
     { id: "maps-title", label: tab.maps },
     { id: "grid-title", label: tab.grid, nav: "nav-grid" },
     ...(matchups ? [{ id: "matchups-title", label: tab.matchups, nav: "nav-matchups" }] : []),
+    ...(length ? [{ id: "length-title", label: tab.length, nav: "nav-length" }] : []),
     ...(builds.length ? [{ id: "builds-title", label: tab.builds, nav: "nav-builds" }] : []),
     // long and not what people come for first: last, below both columns
     ...(patches.notes.length || patches.since ? [{ id: "patches-title", label: tab.patches, nav: "nav-patches" }] : []),
@@ -197,6 +202,8 @@ export function HeroView({
       <Grid grid={m.grid} region={region} bracket={bracket} onPick={(r, b) => change({ region: r, bracket: b })} />
 
       <Matchups hero={hero} v={matchups} wholeOnly={filtered} />
+
+      {length && <GameLength v={length} wholeOnly={filtered} />}
 
       {builds.length > 0 && (
         <>
@@ -508,6 +515,44 @@ function Matchups({ hero, v, wholeOnly }: { hero: HeroInfo; v: MatchupsView | nu
           </>
         )}
       </div>
+    </>
+  );
+}
+
+/** 게임 시간대별 승률 — Storm League replays, whatever the mode toggle says (like 상성). */
+function GameLength({ v, wholeOnly }: { v: LengthView; wholeOnly: boolean }) {
+  const t = useT();
+  return (
+    <>
+      <h2 id="length-title" className={SECTION}>
+        {t.hero.lengthTitle(t.common.modes.sl)}{" "}
+        {v.lean && (
+          <span id="length-lean" className="ml-1 rounded-md border border-line bg-surface px-1.5 py-0.5 align-middle text-2xs font-bold text-fg">
+            {t.hero.lengthLean[v.lean]}
+          </span>
+        )}{" "}
+        <span id="length-sub" className="num text-xs font-normal text-muted">
+          {t.hero.lengthSub(v.patch, v.sinceDay, int(v.sample))}
+          {wholeOnly && ` · ${t.hero.wholeOnly}`}
+        </span>
+      </h2>
+      <Card as="div" id="length" className="flex flex-col gap-2.5 px-3 py-3">
+        {v.bands.map((b) => (
+          <div key={b.band} data-band={b.band} className="grid grid-cols-[5.5rem_minmax(0,1fr)_3.5rem_4.5rem] items-center gap-2 text-[13px]">
+            <span className="text-fg-2">{t.hero.lengthBands[b.band]}</span>
+            <span className="relative h-2 overflow-hidden rounded-full bg-line" aria-hidden>
+              {b.winRate !== null && <span className={cx("absolute inset-y-0 left-0 rounded-full", b.winRate >= 50 ? "bg-pos" : "bg-neg")} style={{ width: `${b.winRate}%` }} />}
+              {/* 50% */}
+              <span className="absolute inset-y-0 left-1/2 w-px bg-fg/40" />
+            </span>
+            <span className={cx("num text-right font-bold", b.winRate === null ? "text-muted" : wrTone(b.winRate))}>{b.winRate === null ? "–" : pct(b.winRate)}</span>
+            <span className="num text-right text-xs text-muted">{t.hero.lengthGames(int(b.games))}</span>
+          </div>
+        ))}
+      </Card>
+      <p id="length-rule" className="num mt-2 text-2xs leading-relaxed text-muted">
+        {t.hero.lengthRule(String(LENGTH_MIN_GAMES))}
+      </p>
     </>
   );
 }
