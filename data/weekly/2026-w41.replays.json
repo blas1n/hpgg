@@ -1,0 +1,4372 @@
+{
+ "week": "2026-w41",
+ "names": {
+  "heroes": {
+   "Abathur": "아바투르",
+   "Alarak": "알라라크",
+   "Alexstrasza": "알렉스트라자",
+   "Ana": "아나",
+   "Anduin": "안두인",
+   "Anub'arak": "아눕아락",
+   "Artanis": "아르타니스",
+   "Arthas": "아서스",
+   "Auriel": "아우리엘",
+   "Azmodan": "아즈모단",
+   "Blaze": "블레이즈",
+   "Brightwing": "빛나래",
+   "Cassia": "카시아",
+   "Chen": "첸",
+   "Cho": "초",
+   "Chromie": "크로미",
+   "D.Va": "D.Va",
+   "Deathwing": "데스윙",
+   "Deckard": "데커드",
+   "Dehaka": "데하카",
+   "Diablo": "디아블로",
+   "E.T.C.": "정예 타우렌 족장",
+   "Falstad": "폴스타트",
+   "Fenix": "피닉스",
+   "Gall": "갈",
+   "Garrosh": "가로쉬",
+   "Gazlowe": "가즈로",
+   "Genji": "겐지",
+   "Greymane": "그레이메인",
+   "Gul'dan": "굴단",
+   "Hanzo": "한조",
+   "Hogger": "들창코",
+   "Illidan": "일리단",
+   "Imperius": "임페리우스",
+   "Jaina": "제이나",
+   "Johanna": "요한나",
+   "Junkrat": "정크랫",
+   "Kael'thas": "캘타스",
+   "Kel'Thuzad": "켈투자드",
+   "Kerrigan": "케리건",
+   "Kharazim": "카라짐",
+   "Leoric": "레오릭",
+   "Li Li": "리 리",
+   "Li-Ming": "리밍",
+   "Lt. Morales": "모랄레스 중위",
+   "Lunara": "루나라",
+   "Lúcio": "루시우",
+   "Maiev": "마이에브",
+   "Mal'Ganis": "말가니스",
+   "Malfurion": "말퓨리온",
+   "Malthael": "말티엘",
+   "Medivh": "메디브",
+   "Mei": "메이",
+   "Mephisto": "메피스토",
+   "Muradin": "무라딘",
+   "Murky": "머키",
+   "Nazeebo": "나지보",
+   "Nova": "노바",
+   "Orphea": "오르피아",
+   "Probius": "프로비우스",
+   "Qhira": "키히라",
+   "Ragnaros": "라그나로스",
+   "Raynor": "레이너",
+   "Rehgar": "레가르",
+   "Rexxar": "렉사르",
+   "Samuro": "사무로",
+   "Sgt. Hammer": "해머 상사",
+   "Sonya": "소냐",
+   "Stitches": "누더기",
+   "Stukov": "스투코프",
+   "Sylvanas": "실바나스",
+   "Tassadar": "태사다르",
+   "The Butcher": "도살자",
+   "The Lost Vikings": "길 잃은 바이킹",
+   "Thrall": "스랄",
+   "Tracer": "트레이서",
+   "Tychus": "타이커스",
+   "Tyrael": "티리엘",
+   "Tyrande": "티란데",
+   "Uther": "우서",
+   "Valeera": "발리라",
+   "Valla": "발라",
+   "Varian": "바리안",
+   "Whitemane": "화이트메인",
+   "Xal'atath": "잘아타스",
+   "Xul": "줄",
+   "Yrel": "이렐",
+   "Zagara": "자가라",
+   "Zarya": "자리야",
+   "Zeratul": "제라툴",
+   "Zul'jin": "줄진"
+  },
+  "talents": {
+   "XalatathVoidAdept": "공허의 달인",
+   "XalatathAnchoredCore": "고정 핵",
+   "XalatathCloakOfShadows": "그림자 망토",
+   "XalatathFrozenMark": "겁먹은 걸음",
+   "XalatathDarkBarrier": "검은 방벽",
+   "XalatathVoidAcolyte": "공허의 수행사제",
+   "XalatathToxicMark": "맹독 표식",
+   "XalatathSilenceOfTheLamb": "양의 침묵",
+   "XalatathVoidSummoner": "공허의 소환자",
+   "XalatathHeroicAbilityVoidEruption": "공허 폭발",
+   "XalatathHeroicAbilityVoidConvergence": "공허 집결",
+   "XalatathPullOfTheDarkHeart": "검은 심장의 인력",
+   "XalatathDarkHeartsProtection": "검은 심장의 가호",
+   "XalatathCrushingCascade": "파괴의 폭포",
+   "XalatathMarkedResilience": "표식의 생존력",
+   "XalatathPummelingStep": "끊임없는 속삭임",
+   "XalatathFracturedReality": "조각난 현실",
+   "XalatathOrbitalEruption": "전령의 소모",
+   "XalatathRiftInvasion": "균열 침입",
+   "XalatathDuelingOrbs": "결투의 보주",
+   "XalatathUnstableCore": "불안정한 핵",
+   "XalatathParadoxLoop": "역설의 고리",
+   "AnubarakNerubianArmor": "네루비안 껍질",
+   "AnubarakCombatStyleLegionOfBeetles": "딱정벌레 군단",
+   "GenericTalentRegenerationMaster": "재생 전문가",
+   "AnubarakMasteryBedOfBarbs": "가시 무덤",
+   "AnubarakMasteryShedExoskeletonHardenCarapace": "탈피",
+   "AnubarakMasteryUnderkingBurrowCharge": "지하의 왕",
+   "AnubarakCombatStyleChitinousPlating": "키틴질 껍질",
+   "AnubarakSubterraneanShield": "지하군주의 보호막",
+   "AnubarakMasteryLeechingScarabs": "착취 풍뎅이",
+   "AnubarakLocustSwarm": "착취의 무리",
+   "AnubarakHeroicAbilityCocoon": "고치",
+   "AnubarakMasteryUrticatingSpines": "쐐기 돌출",
+   "AnubarakBurningBeetles": "불타는 딱정벌레",
+   "AnubarakAcidDrenchedMandibles": "산에 흠뻑 젖은 턱",
+   "AnubarakMasteryEpicenterBurrowCharge": "진앙",
+   "AnubarakDebilitation": "쇠약",
+   "AnubarakScarabHostBeetleJuiced": "딱정벌레 축제",
+   "AnubarakLocustSwarmHiveMaster": "곤충 지배자",
+   "AnubarakCocoonCryptweave": "미라 휘감기",
+   "AnubarakTheTraitorKing": "배신자 왕",
+   "GenericTalentRewind": "되돌리기",
+   "WizardForceArmor": "힘의 갑옷",
+   "WizardAetherWalker": "구름밟이",
+   "WizardPowerHungry": "비전력 갈구",
+   "WizardMagicMissilesChargedBlast": "마력 작렬",
+   "WizardArcaneOrbTriumvirate": "삼중구",
+   "WizardDominance": "우월",
+   "WizardMagicMissilesSeeker": "집중탄",
+   "WizardArcaneOrbZeisVengeance": "제이의 복수",
+   "WizardTeleportCalamity": "재앙",
+   "WizardHeroicAbilityDisintegrate": "파열",
+   "WizardHeroicAbilityWaveOfForce": "힘의 파동",
+   "WizardTeleportIllusionist": "환영술사",
+   "WizardCannoneer": "포병",
+   "WizardGlassCannon": "유리 대포",
+   "WizardFireflies": "불꽃탄",
+   "WizardMagicMissilesMirrorball": "거울공",
+   "WizardArcaneOrbArcaneOrbit": "공전 보주",
+   "WizardTeleportDiamondSkin": "다이아몬드 피부",
+   "WizardDisintegrateTemporalFlux": "시간 유동",
+   "WizardWaveOfForceRepulsion": "반발력",
+   "WizardTalRashasElements": "탈 라샤의 덕목",
+   "WizardArchonPurePower": "마인: 순수한 힘",
+   "TyraelSalvation": "구원",
+   "TyraelJusticeForAll": "모두에게 정의를",
+   "TyraelArdentRestoration": "열렬한 재생",
+   "TyraelStalwartAngel": "굳건한 천사",
+   "TyraelMasteryRighteousnessReciprocate": "화답",
+   "TyraelDivineVigor": "신성한 활력",
+   "TyraelBurningHalo": "불타는 광륜",
+   "TyraelMasteryPurgeEvil": "징악",
+   "TyraelMasterySwiftRetribution": "신속한 응징",
+   "TyraelHeroicAbilityJudgement": "심판",
+   "TyraelHeroicAbilitySanctification": "축성",
+   "TyraelMasteryElDruinsMightSwordOfJustice": "정의의 칼날",
+   "TyraelMasteryHolyGround": "신성한 땅",
+   "TyraelMasteryLawAndOrder": "법과 질서",
+   "TyraelElDruinsMightBoundByLaw": "법의 구속력",
+   "TyraelHoradricReforging": "호라드림의 재련술",
+   "TyraelSmiteTheWicked": "믿음으로 벌하노라",
+   "TyraelMasteryJudgmentAngelofJustice": "정의의 천사",
+   "TyraelMasterySanctificationHolyArena": "신성한 투기장",
+   "TyraelSealOfElDruin": "엘드루인의 인장",
+   "TyraelDefenseOfTheAngels": "천사들의 가호",
+   "TyraelAspectofJustice": "정의의 화신",
+   "NexusHunterCarnageMaximumEffort": "분투",
+   "NexusHunterFatalWounds": "치명상",
+   "NexusHunterFinishingTouch": "화룡점정",
+   "NexusHunterUpstage": "무대 체질",
+   "NexusHunterEnsnaringSwing": "옭아매기",
+   "NexusHunterBloodRageYourPainMyGain": "너의 고통은 나의 기쁨",
+   "NexusHunterTheThirst": "갈망",
+   "NexusHunterBloodRageHealmonger": "생기 탐식자",
+   "NexusHunterSiphoningLink": "흡수의 휩쓸기",
+   "NexusHunterUnrelentingStrikes": "무자비한 난도",
+   "NexusHunterFinalStrike": "최후의 일격",
+   "NexusHunterChainsaw": "사슬톱날",
+   "NexusHunterPulsingPain": "고동치는 고통",
+   "NexusHunterTheHunted": "사냥감",
+   "NexusHunterRevolvingSweepBoomingKick": "괴력 발차기",
+   "NexusHunterRevolvingSweepLingeringAilment": "만성 통증",
+   "NexusHunterRevolvingSweepSwingLifeAway": "다시 돌고",
+   "NexusHunterUnrelentingStrikesSilentKiller": "침묵의 암살자",
+   "NexusHunterFinalStrikeUnleashedPotential": "잠재력 방출",
+   "NexusHunterGrapplingHookUtilityBelt": "만능 도구",
+   "NexusHunterHuntersVengeanceNoSanctuary": "숨을 곳은 없다"
+  },
+  "abilities": {
+   "Shadow Mark": "그림자 표식",
+   "Dark Heart Ritual": "검은 심장의 의식",
+   "Void Step": "공허 걸음",
+   "Void Eruption": "공허 폭발",
+   "Void Convergence": "공허 집결",
+   "Void Volley": "공허 화살",
+   "Impale": "꿰뚫기",
+   "Harden Carapace": "강화 갑피",
+   "Burrow Charge": "잠복 돌진",
+   "Locust Swarm": "착취의 무리",
+   "Cocoon": "고치",
+   "Scarab Host": "풍뎅이 숙주",
+   "Magic Missiles": "마력탄",
+   "Arcane Orb": "비전 보주",
+   "Teleport": "순간이동",
+   "Disintegrate": "파열",
+   "Wave of Force": "힘의 파동",
+   "Critical Mass": "극대화 반응",
+   "El'druin's Might": "엘드루인의 힘",
+   "Righteousness": "정의",
+   "Smite": "강타",
+   "Judgment": "심판",
+   "Sanctification": "축성",
+   "Archangel's Wrath": "대천사의 분노",
+   "Carnage": "살육",
+   "Blood Rage": "피의 분노",
+   "Revolving Sweep": "회전 휩쓸기",
+   "Unrelenting Strikes": "무자비한 난도",
+   "Final Strike": "최후의 일격",
+   "Grappling Hook": "고정 갈고리"
+  }
+ },
+ "games": {
+  "sl": 5712,
+  "qm": 779
+ },
+ "centre": "Xal'atath",
+ "draft": {
+  "games": 5712,
+  "ban_rate": 89.93347338935574,
+  "first_ban_rate": 22.163865546218485,
+  "pick_rate": 7.965686274509803,
+  "picked": 455,
+  "win_rate": 58.24175824175825,
+  "pick_round": {
+   "first": 350,
+   "middle": 105,
+   "last": 0
+  }
+ },
+ "shape": {
+  "with": {
+   "games": 455,
+   "length_min": 18.363443223443223,
+   "lead_at_10": 0.10596026490066225,
+   "by_length": {
+    "short": {
+     "games": 113,
+     "win_rate": 70.79646017699115
+    },
+    "mid": {
+     "games": 193,
+     "win_rate": 53.8860103626943
+    },
+    "long": {
+     "games": 149,
+     "win_rate": 54.36241610738255
+    }
+   }
+  },
+  "without": {
+   "games": 5257,
+   "length_min": 18.662954156362947
+  }
+ },
+ "answered_by": [
+  {
+   "hero": "Anub'arak",
+   "games": 37,
+   "share": 8.131868131868131,
+   "baseline_share": 11.051930758988016,
+   "lift": 0.7357871044618032,
+   "win_rate": 40.54054054054054
+  },
+  {
+   "hero": "Li-Ming",
+   "games": 64,
+   "share": 14.065934065934066,
+   "baseline_share": 21.76146090926384,
+   "lift": 0.6463690155997848,
+   "win_rate": 37.5
+  },
+  {
+   "hero": "Tyrael",
+   "games": 45,
+   "share": 9.89010989010989,
+   "baseline_share": 17.0439414114514,
+   "lift": 0.5802712912087912,
+   "win_rate": 62.22222222222222
+  },
+  {
+   "hero": "Qhira",
+   "games": 42,
+   "share": 9.230769230769232,
+   "baseline_share": 15.978695073235686,
+   "lift": 0.5776923076923077,
+   "win_rate": 38.095238095238095
+  },
+  {
+   "hero": "Chen",
+   "games": 32,
+   "share": 7.032967032967033,
+   "baseline_share": 12.174243865322428,
+   "lift": 0.5776923076923076,
+   "win_rate": 43.75
+  },
+  {
+   "hero": "Diablo",
+   "games": 41,
+   "share": 9.010989010989011,
+   "baseline_share": 15.921628305116986,
+   "lift": 0.5659590111203014,
+   "win_rate": 41.46341463414634
+  },
+  {
+   "hero": "Raynor",
+   "games": 39,
+   "share": 8.571428571428571,
+   "baseline_share": 15.331938367890432,
+   "lift": 0.5590570719602977,
+   "win_rate": 41.02564102564102
+  },
+  {
+   "hero": "Li Li",
+   "games": 38,
+   "share": 8.35164835164835,
+   "baseline_share": 15.008560015217807,
+   "lift": 0.5564590036072924,
+   "win_rate": 44.73684210526316
+  },
+  {
+   "hero": "E.T.C.",
+   "games": 36,
+   "share": 7.9120879120879115,
+   "baseline_share": 14.837359710861708,
+   "lift": 0.5332544378698224,
+   "win_rate": 52.77777777777778
+  },
+  {
+   "hero": "Abathur",
+   "games": 31,
+   "share": 6.813186813186813,
+   "baseline_share": 12.840022826707248,
+   "lift": 0.5306210826210825,
+   "win_rate": 32.25806451612903
+  },
+  {
+   "hero": "Nazeebo",
+   "games": 55,
+   "share": 12.087912087912088,
+   "baseline_share": 23.644664257180903,
+   "lift": 0.5112321307011573,
+   "win_rate": 50.90909090909091
+  },
+  {
+   "hero": "Anduin",
+   "games": 60,
+   "share": 13.186813186813188,
+   "baseline_share": 26.916492295986306,
+   "lift": 0.4899157379722751,
+   "win_rate": 45.0
+  },
+  {
+   "hero": "Varian",
+   "games": 35,
+   "share": 7.6923076923076925,
+   "baseline_share": 15.80749476887959,
+   "lift": 0.48662408590206424,
+   "win_rate": 34.285714285714285
+  },
+  {
+   "hero": "Muradin",
+   "games": 47,
+   "share": 10.329670329670328,
+   "baseline_share": 21.22883774015598,
+   "lift": 0.4865867107802591,
+   "win_rate": 42.5531914893617
+  },
+  {
+   "hero": "Brightwing",
+   "games": 56,
+   "share": 12.307692307692308,
+   "baseline_share": 26.11755754232452,
+   "lift": 0.47124208639139453,
+   "win_rate": 42.857142857142854
+  },
+  {
+   "hero": "Stitches",
+   "games": 39,
+   "share": 8.571428571428571,
+   "baseline_share": 18.337454822141904,
+   "lift": 0.46742738589211624,
+   "win_rate": 30.76923076923077
+  },
+  {
+   "hero": "Valla",
+   "games": 64,
+   "share": 14.065934065934066,
+   "baseline_share": 30.96823283241392,
+   "lift": 0.45420525420525426,
+   "win_rate": 43.75
+  },
+  {
+   "hero": "Whitemane",
+   "games": 30,
+   "share": 6.593406593406594,
+   "baseline_share": 14.66615940650561,
+   "lift": 0.44956599820413057,
+   "win_rate": 46.666666666666664
+  },
+  {
+   "hero": "Falstad",
+   "games": 44,
+   "share": 9.670329670329672,
+   "baseline_share": 22.408217614609093,
+   "lift": 0.4315528274781246,
+   "win_rate": 45.45454545454545
+  },
+  {
+   "hero": "Tychus",
+   "games": 40,
+   "share": 8.791208791208792,
+   "baseline_share": 20.582081034810727,
+   "lift": 0.42712924783165085,
+   "win_rate": 45.0
+  },
+  {
+   "hero": "Sylvanas",
+   "games": 47,
+   "share": 10.329670329670328,
+   "baseline_share": 24.82404413163401,
+   "lift": 0.4161155319776009,
+   "win_rate": 48.93617021276596
+  },
+  {
+   "hero": "Kael'thas",
+   "games": 41,
+   "share": 9.010989010989011,
+   "baseline_share": 21.875594445501235,
+   "lift": 0.41191973244147156,
+   "win_rate": 39.02439024390244
+  },
+  {
+   "hero": "Thrall",
+   "games": 40,
+   "share": 8.791208791208792,
+   "baseline_share": 22.21799505421343,
+   "lift": 0.3956796628029505,
+   "win_rate": 42.5
+  },
+  {
+   "hero": "Arthas",
+   "games": 40,
+   "share": 8.791208791208792,
+   "baseline_share": 23.054974319954347,
+   "lift": 0.38131505458238135,
+   "win_rate": 45.0
+  },
+  {
+   "hero": "Rehgar",
+   "games": 33,
+   "share": 7.252747252747254,
+   "baseline_share": 21.34297127639338,
+   "lift": 0.3398190045248869,
+   "win_rate": 51.515151515151516
+  },
+  {
+   "hero": "Johanna",
+   "games": 37,
+   "share": 8.131868131868131,
+   "baseline_share": 27.163781624500665,
+   "lift": 0.299364361129067,
+   "win_rate": 40.54054054054054
+  }
+ ],
+ "bans": [
+  {
+   "hero": "Xal'atath",
+   "ban_rate": 89.93347338935574,
+   "first_phase_rate": 89.4607843137255
+  },
+  {
+   "hero": "Qhira",
+   "ban_rate": 62.65756302521008,
+   "first_phase_rate": 60.2766106442577
+  },
+  {
+   "hero": "Johanna",
+   "ban_rate": 55.129551820728295,
+   "first_phase_rate": 42.26190476190476
+  },
+  {
+   "hero": "Brightwing",
+   "ban_rate": 30.672268907563026,
+   "first_phase_rate": 19.905462184873947
+  },
+  {
+   "hero": "Garrosh",
+   "ban_rate": 27.60854341736695,
+   "first_phase_rate": 15.59873949579832
+  },
+  {
+   "hero": "Abathur",
+   "ban_rate": 23.52941176470588,
+   "first_phase_rate": 20.448179271708682
+  },
+  {
+   "hero": "Anduin",
+   "ban_rate": 20.658263305322127,
+   "first_phase_rate": 6.144957983193277
+  },
+  {
+   "hero": "Sylvanas",
+   "ban_rate": 15.161064425770308,
+   "first_phase_rate": 11.011904761904761
+  },
+  {
+   "hero": "Falstad",
+   "ban_rate": 12.587535014005603,
+   "first_phase_rate": 8.928571428571429
+  },
+  {
+   "hero": "Chen",
+   "ban_rate": 12.5,
+   "first_phase_rate": 9.226190476190476
+  },
+  {
+   "hero": "Valla",
+   "ban_rate": 12.5,
+   "first_phase_rate": 6.740196078431373
+  },
+  {
+   "hero": "Kael'thas",
+   "ban_rate": 10.97689075630252,
+   "first_phase_rate": 6.915266106442577
+  }
+ ],
+ "talents": {
+  "1": [
+   {
+    "talent": "XalatathAnchoredCore",
+    "games": 367,
+    "share": 80.65934065934066,
+    "win_rate": 60.76294277929155
+   },
+   {
+    "talent": "XalatathVoidAdept",
+    "games": 57,
+    "share": 12.527472527472527,
+    "win_rate": 42.10526315789473
+   },
+   {
+    "talent": "XalatathCloakOfShadows",
+    "games": 31,
+    "share": 6.813186813186813,
+    "win_rate": 58.06451612903226
+   }
+  ],
+  "4": [
+   {
+    "talent": "XalatathDarkBarrier",
+    "games": 318,
+    "share": 69.89010989010988,
+    "win_rate": 60.37735849056604
+   },
+   {
+    "talent": "XalatathFrozenMark",
+    "games": 70,
+    "share": 15.384615384615385,
+    "win_rate": 51.42857142857142
+   },
+   {
+    "talent": "XalatathVoidAcolyte",
+    "games": 67,
+    "share": 14.725274725274726,
+    "win_rate": 55.223880597014926
+   }
+  ],
+  "7": [
+   {
+    "talent": "XalatathToxicMark",
+    "games": 349,
+    "share": 76.70329670329672,
+    "win_rate": 57.879656160458445
+   },
+   {
+    "talent": "XalatathVoidSummoner",
+    "games": 57,
+    "share": 12.527472527472527,
+    "win_rate": 64.91228070175438
+   },
+   {
+    "talent": "XalatathSilenceOfTheLamb",
+    "games": 49,
+    "share": 10.76923076923077,
+    "win_rate": 53.06122448979592
+   }
+  ],
+  "10": [
+   {
+    "talent": "XalatathHeroicAbilityVoidEruption",
+    "games": 367,
+    "share": 80.83700440528634,
+    "win_rate": 57.49318801089919
+   },
+   {
+    "talent": "XalatathHeroicAbilityVoidConvergence",
+    "games": 87,
+    "share": 19.162995594713657,
+    "win_rate": 62.06896551724138
+   }
+  ],
+  "13": [
+   {
+    "talent": "XalatathDarkHeartsProtection",
+    "games": 203,
+    "share": 45.211581291759465,
+    "win_rate": 57.635467980295566
+   },
+   {
+    "talent": "XalatathPullOfTheDarkHeart",
+    "games": 153,
+    "share": 34.075723830734965,
+    "win_rate": 60.78431372549019
+   },
+   {
+    "talent": "XalatathCrushingCascade",
+    "games": 93,
+    "share": 20.71269487750557,
+    "win_rate": 58.06451612903226
+   }
+  ],
+  "16": [
+   {
+    "talent": "XalatathFracturedReality",
+    "games": 378,
+    "share": 88.11188811188812,
+    "win_rate": 61.904761904761905
+   },
+   {
+    "talent": "XalatathPummelingStep",
+    "games": 29,
+    "share": 6.75990675990676,
+    "win_rate": 41.37931034482759
+   },
+   {
+    "talent": "XalatathMarkedResilience",
+    "games": 22,
+    "share": 5.128205128205128,
+    "win_rate": 50.0
+   }
+  ],
+  "20": [
+   {
+    "talent": "XalatathOrbitalEruption",
+    "games": 195,
+    "share": 67.94425087108013,
+    "win_rate": 64.61538461538461
+   },
+   {
+    "talent": "XalatathRiftInvasion",
+    "games": 41,
+    "share": 14.285714285714285,
+    "win_rate": 58.536585365853654
+   },
+   {
+    "talent": "XalatathUnstableCore",
+    "games": 32,
+    "share": 11.149825783972126,
+    "win_rate": 62.5
+   },
+   {
+    "talent": "XalatathDuelingOrbs",
+    "games": 15,
+    "share": 5.2264808362369335,
+    "win_rate": 46.666666666666664
+   },
+   {
+    "talent": "XalatathParadoxLoop",
+    "games": 4,
+    "share": 1.3937282229965158,
+    "win_rate": 50.0
+   }
+  ]
+ },
+ "hotfix": {
+  "build": "2.57.0.98348",
+  "before": {
+   "games": 797,
+   "draft": {
+    "games": 797,
+    "ban_rate": 94.98117942283564,
+    "first_ban_rate": 22.208281053952323,
+    "pick_rate": 4.391468005018821,
+    "picked": 35,
+    "win_rate": 60.0,
+    "pick_round": {
+     "first": 24,
+     "middle": 11,
+     "last": 0
+    }
+   },
+   "shape": {
+    "with": {
+     "games": 35,
+     "length_min": 16.425714285714285,
+     "lead_at_10": 0.02857142857142857,
+     "by_length": {
+      "short": {
+       "games": 18,
+       "win_rate": 72.22222222222221
+      },
+      "mid": {
+       "games": 8,
+       "win_rate": 50.0
+      },
+      "long": {
+       "games": 9,
+       "win_rate": 44.44444444444444
+      }
+     }
+    },
+    "without": {
+     "games": 762,
+     "length_min": 18.786811023622047
+    }
+   },
+   "talents": {
+    "1": [
+     {
+      "talent": "XalatathAnchoredCore",
+      "games": 28,
+      "share": 80.0,
+      "win_rate": 57.14285714285714
+     },
+     {
+      "talent": "XalatathVoidAdept",
+      "games": 6,
+      "share": 17.142857142857142,
+      "win_rate": 66.66666666666666
+     },
+     {
+      "talent": "XalatathCloakOfShadows",
+      "games": 1,
+      "share": 2.857142857142857,
+      "win_rate": 100.0
+     }
+    ],
+    "4": [
+     {
+      "talent": "XalatathDarkBarrier",
+      "games": 21,
+      "share": 60.0,
+      "win_rate": 57.14285714285714
+     },
+     {
+      "talent": "XalatathVoidAcolyte",
+      "games": 10,
+      "share": 28.57142857142857,
+      "win_rate": 70.0
+     },
+     {
+      "talent": "XalatathFrozenMark",
+      "games": 4,
+      "share": 11.428571428571429,
+      "win_rate": 50.0
+     }
+    ],
+    "7": [
+     {
+      "talent": "XalatathToxicMark",
+      "games": 25,
+      "share": 71.42857142857143,
+      "win_rate": 64.0
+     },
+     {
+      "talent": "XalatathSilenceOfTheLamb",
+      "games": 6,
+      "share": 17.142857142857142,
+      "win_rate": 50.0
+     },
+     {
+      "talent": "XalatathVoidSummoner",
+      "games": 4,
+      "share": 11.428571428571429,
+      "win_rate": 50.0
+     }
+    ],
+    "10": [
+     {
+      "talent": "XalatathHeroicAbilityVoidEruption",
+      "games": 25,
+      "share": 71.42857142857143,
+      "win_rate": 52.0
+     },
+     {
+      "talent": "XalatathHeroicAbilityVoidConvergence",
+      "games": 10,
+      "share": 28.57142857142857,
+      "win_rate": 80.0
+     }
+    ],
+    "13": [
+     {
+      "talent": "XalatathDarkHeartsProtection",
+      "games": 13,
+      "share": 37.142857142857146,
+      "win_rate": 61.53846153846154
+     },
+     {
+      "talent": "XalatathPullOfTheDarkHeart",
+      "games": 13,
+      "share": 37.142857142857146,
+      "win_rate": 46.15384615384615
+     },
+     {
+      "talent": "XalatathCrushingCascade",
+      "games": 9,
+      "share": 25.71428571428571,
+      "win_rate": 77.77777777777779
+     }
+    ],
+    "16": [
+     {
+      "talent": "XalatathFracturedReality",
+      "games": 25,
+      "share": 80.64516129032258,
+      "win_rate": 72.0
+     },
+     {
+      "talent": "XalatathPummelingStep",
+      "games": 4,
+      "share": 12.903225806451612,
+      "win_rate": 50.0
+     },
+     {
+      "talent": "XalatathMarkedResilience",
+      "games": 2,
+      "share": 6.451612903225806,
+      "win_rate": 0.0
+     }
+    ],
+    "20": [
+     {
+      "talent": "XalatathOrbitalEruption",
+      "games": 9,
+      "share": 69.23076923076923,
+      "win_rate": 55.55555555555556
+     },
+     {
+      "talent": "XalatathUnstableCore",
+      "games": 3,
+      "share": 23.076923076923077,
+      "win_rate": 33.33333333333333
+     },
+     {
+      "talent": "XalatathRiftInvasion",
+      "games": 1,
+      "share": 7.6923076923076925,
+      "win_rate": 100.0
+     }
+    ]
+   },
+   "bans": [
+    {
+     "hero": "Xal'atath",
+     "ban_rate": 94.98117942283564,
+     "first_phase_rate": 94.98117942283564
+    },
+    {
+     "hero": "Qhira",
+     "ban_rate": 61.606022584692596,
+     "first_phase_rate": 58.8456712672522
+    },
+    {
+     "hero": "Johanna",
+     "ban_rate": 55.834378920953576,
+     "first_phase_rate": 42.03262233375157
+    },
+    {
+     "hero": "Brightwing",
+     "ban_rate": 31.11668757841907,
+     "first_phase_rate": 18.695106649937266
+    },
+    {
+     "hero": "Garrosh",
+     "ban_rate": 28.356336260978672,
+     "first_phase_rate": 14.052697616060225
+    },
+    {
+     "hero": "Abathur",
+     "ban_rate": 23.96486825595985,
+     "first_phase_rate": 21.580928481806776
+    },
+    {
+     "hero": "Anduin",
+     "ban_rate": 19.196988707653702,
+     "first_phase_rate": 5.395232120451694
+    },
+    {
+     "hero": "Sylvanas",
+     "ban_rate": 14.178168130489336,
+     "first_phase_rate": 9.912170639899625
+    },
+    {
+     "hero": "Falstad",
+     "ban_rate": 12.923462986198246,
+     "first_phase_rate": 9.661229611041405
+    },
+    {
+     "hero": "Chen",
+     "ban_rate": 12.421580928481808,
+     "first_phase_rate": 9.535759096612297
+    }
+   ],
+   "vs_control": {
+    "rooting_enemies": {
+     "cut": 0.0,
+     "more": {
+      "games": 14,
+      "win_rate": 64.28571428571429
+     },
+     "less": {
+      "games": 21,
+      "win_rate": 57.14285714285714
+     }
+    },
+    "stunning_enemies": {
+     "cut": 40.0,
+     "more": {
+      "games": 18,
+      "win_rate": 44.44444444444444
+     },
+     "less": {
+      "games": 17,
+      "win_rate": 76.47058823529412
+     }
+    },
+    "silencing_enemies": {
+     "cut": 22.0,
+     "more": {
+      "games": 18,
+      "win_rate": 66.66666666666666
+     },
+     "less": {
+      "games": 17,
+      "win_rate": 52.94117647058824
+     }
+    }
+   }
+  },
+  "after": {
+   "games": 4915,
+   "draft": {
+    "games": 4915,
+    "ban_rate": 89.11495422177009,
+    "first_ban_rate": 22.15666327568667,
+    "pick_rate": 8.54526958290946,
+    "picked": 420,
+    "win_rate": 58.0952380952381,
+    "pick_round": {
+     "first": 326,
+     "middle": 94,
+     "last": 0
+    }
+   },
+   "shape": {
+    "with": {
+     "games": 420,
+     "length_min": 18.524920634920637,
+     "lead_at_10": 0.11244019138755981,
+     "by_length": {
+      "short": {
+       "games": 95,
+       "win_rate": 70.52631578947368
+      },
+      "mid": {
+       "games": 185,
+       "win_rate": 54.054054054054056
+      },
+      "long": {
+       "games": 140,
+       "win_rate": 55.00000000000001
+      }
+     }
+    },
+    "without": {
+     "games": 4495,
+     "length_min": 18.641957730812013
+    }
+   },
+   "talents": {
+    "1": [
+     {
+      "talent": "XalatathAnchoredCore",
+      "games": 339,
+      "share": 80.71428571428572,
+      "win_rate": 61.06194690265486
+     },
+     {
+      "talent": "XalatathVoidAdept",
+      "games": 51,
+      "share": 12.142857142857142,
+      "win_rate": 39.21568627450981
+     },
+     {
+      "talent": "XalatathCloakOfShadows",
+      "games": 30,
+      "share": 7.142857142857142,
+      "win_rate": 56.666666666666664
+     }
+    ],
+    "4": [
+     {
+      "talent": "XalatathDarkBarrier",
+      "games": 297,
+      "share": 70.71428571428572,
+      "win_rate": 60.60606060606061
+     },
+     {
+      "talent": "XalatathFrozenMark",
+      "games": 66,
+      "share": 15.714285714285714,
+      "win_rate": 51.515151515151516
+     },
+     {
+      "talent": "XalatathVoidAcolyte",
+      "games": 57,
+      "share": 13.571428571428571,
+      "win_rate": 52.63157894736842
+     }
+    ],
+    "7": [
+     {
+      "talent": "XalatathToxicMark",
+      "games": 324,
+      "share": 77.14285714285715,
+      "win_rate": 57.407407407407405
+     },
+     {
+      "talent": "XalatathVoidSummoner",
+      "games": 53,
+      "share": 12.619047619047619,
+      "win_rate": 66.0377358490566
+     },
+     {
+      "talent": "XalatathSilenceOfTheLamb",
+      "games": 43,
+      "share": 10.238095238095237,
+      "win_rate": 53.48837209302325
+     }
+    ],
+    "10": [
+     {
+      "talent": "XalatathHeroicAbilityVoidEruption",
+      "games": 342,
+      "share": 81.62291169451073,
+      "win_rate": 57.89473684210527
+     },
+     {
+      "talent": "XalatathHeroicAbilityVoidConvergence",
+      "games": 77,
+      "share": 18.377088305489263,
+      "win_rate": 59.74025974025974
+     }
+    ],
+    "13": [
+     {
+      "talent": "XalatathDarkHeartsProtection",
+      "games": 190,
+      "share": 45.893719806763286,
+      "win_rate": 57.36842105263158
+     },
+     {
+      "talent": "XalatathPullOfTheDarkHeart",
+      "games": 140,
+      "share": 33.81642512077295,
+      "win_rate": 62.142857142857146
+     },
+     {
+      "talent": "XalatathCrushingCascade",
+      "games": 84,
+      "share": 20.28985507246377,
+      "win_rate": 55.952380952380956
+     }
+    ],
+    "16": [
+     {
+      "talent": "XalatathFracturedReality",
+      "games": 353,
+      "share": 88.69346733668341,
+      "win_rate": 61.18980169971672
+     },
+     {
+      "talent": "XalatathPummelingStep",
+      "games": 25,
+      "share": 6.281407035175879,
+      "win_rate": 40.0
+     },
+     {
+      "talent": "XalatathMarkedResilience",
+      "games": 20,
+      "share": 5.025125628140704,
+      "win_rate": 55.00000000000001
+     }
+    ],
+    "20": [
+     {
+      "talent": "XalatathOrbitalEruption",
+      "games": 186,
+      "share": 67.88321167883211,
+      "win_rate": 65.05376344086021
+     },
+     {
+      "talent": "XalatathRiftInvasion",
+      "games": 40,
+      "share": 14.5985401459854,
+      "win_rate": 57.49999999999999
+     },
+     {
+      "talent": "XalatathUnstableCore",
+      "games": 29,
+      "share": 10.583941605839415,
+      "win_rate": 65.51724137931035
+     },
+     {
+      "talent": "XalatathDuelingOrbs",
+      "games": 15,
+      "share": 5.474452554744526,
+      "win_rate": 46.666666666666664
+     },
+     {
+      "talent": "XalatathParadoxLoop",
+      "games": 4,
+      "share": 1.4598540145985401,
+      "win_rate": 50.0
+     }
+    ]
+   },
+   "bans": [
+    {
+     "hero": "Xal'atath",
+     "ban_rate": 89.11495422177009,
+     "first_phase_rate": 88.56561546286878
+    },
+    {
+     "hero": "Qhira",
+     "ban_rate": 62.828077314343844,
+     "first_phase_rate": 60.508646998982705
+    },
+    {
+     "hero": "Johanna",
+     "ban_rate": 55.01525940996949,
+     "first_phase_rate": 42.29908443540183
+    },
+    {
+     "hero": "Brightwing",
+     "ban_rate": 30.60020345879959,
+     "first_phase_rate": 20.101729399796543
+    },
+    {
+     "hero": "Garrosh",
+     "ban_rate": 27.487283825025433,
+     "first_phase_rate": 15.84944048830112
+    },
+    {
+     "hero": "Abathur",
+     "ban_rate": 23.4587995930824,
+     "first_phase_rate": 20.264496439471007
+    },
+    {
+     "hero": "Anduin",
+     "ban_rate": 20.895218718209563,
+     "first_phase_rate": 6.266531027466939
+    },
+    {
+     "hero": "Sylvanas",
+     "ban_rate": 15.320447609359105,
+     "first_phase_rate": 11.190233977619531
+    },
+    {
+     "hero": "Valla",
+     "ban_rate": 12.573753814852493,
+     "first_phase_rate": 6.8158697863682605
+    },
+    {
+     "hero": "Falstad",
+     "ban_rate": 12.533062054933877,
+     "first_phase_rate": 8.809766022380467
+    }
+   ],
+   "vs_control": {
+    "rooting_enemies": {
+     "cut": 4.0,
+     "more": {
+      "games": 211,
+      "win_rate": 56.39810426540285
+     },
+     "less": {
+      "games": 209,
+      "win_rate": 59.80861244019139
+     }
+    },
+    "stunning_enemies": {
+     "cut": 48.5,
+     "more": {
+      "games": 210,
+      "win_rate": 56.666666666666664
+     },
+     "less": {
+      "games": 210,
+      "win_rate": 59.523809523809526
+     }
+    },
+    "silencing_enemies": {
+     "cut": 6.0,
+     "more": {
+      "games": 215,
+      "win_rate": 54.418604651162795
+     },
+     "less": {
+      "games": 205,
+      "win_rate": 61.951219512195124
+     }
+    }
+   }
+  }
+ },
+ "answers": {
+  "Anub'arak": {
+   "sl": {
+    "1": {
+     "games": 37,
+     "win_rate": 40.54054054054054,
+     "mmr_cut": 2682.3,
+     "talents": [
+      {
+       "talent": "AnubarakNerubianArmor",
+       "games": 15,
+       "win_rate": 53.333333333333336,
+       "high_mmr": {
+        "games": 6,
+        "win_rate": 50.0
+       },
+       "low_mmr": {
+        "games": 9,
+        "win_rate": 55.55555555555556
+       }
+      },
+      {
+       "talent": "AnubarakCombatStyleLegionOfBeetles",
+       "games": 12,
+       "win_rate": 25.0,
+       "high_mmr": {
+        "games": 9,
+        "win_rate": 22.22222222222222
+       },
+       "low_mmr": {
+        "games": 3,
+        "win_rate": 33.33333333333333
+       }
+      },
+      {
+       "talent": "GenericTalentRegenerationMaster",
+       "games": 10,
+       "win_rate": 40.0,
+       "high_mmr": {
+        "games": 4,
+        "win_rate": 50.0
+       },
+       "low_mmr": {
+        "games": 6,
+        "win_rate": 33.33333333333333
+       }
+      }
+     ]
+    },
+    "4": {
+     "games": 37,
+     "win_rate": 40.54054054054054,
+     "mmr_cut": 2682.3,
+     "talents": [
+      {
+       "talent": "AnubarakMasteryBedOfBarbs",
+       "games": 13,
+       "win_rate": 30.76923076923077,
+       "high_mmr": {
+        "games": 8,
+        "win_rate": 25.0
+       },
+       "low_mmr": {
+        "games": 5,
+        "win_rate": 40.0
+       }
+      },
+      {
+       "talent": "AnubarakMasteryShedExoskeletonHardenCarapace",
+       "games": 13,
+       "win_rate": 46.15384615384615,
+       "high_mmr": {
+        "games": 7,
+        "win_rate": 28.57142857142857
+       },
+       "low_mmr": {
+        "games": 6,
+        "win_rate": 66.66666666666666
+       }
+      },
+      {
+       "talent": "AnubarakMasteryUnderkingBurrowCharge",
+       "games": 11,
+       "win_rate": 45.45454545454545,
+       "high_mmr": {
+        "games": 4,
+        "win_rate": 75.0
+       },
+       "low_mmr": {
+        "games": 7,
+        "win_rate": 28.57142857142857
+       }
+      }
+     ]
+    },
+    "7": {
+     "games": 37,
+     "win_rate": 40.54054054054054,
+     "mmr_cut": 2682.3,
+     "talents": [
+      {
+       "talent": "AnubarakCombatStyleChitinousPlating",
+       "games": 14,
+       "win_rate": 50.0,
+       "high_mmr": {
+        "games": 5,
+        "win_rate": 40.0
+       },
+       "low_mmr": {
+        "games": 9,
+        "win_rate": 55.55555555555556
+       }
+      },
+      {
+       "talent": "AnubarakMasteryLeechingScarabs",
+       "games": 13,
+       "win_rate": 30.76923076923077,
+       "high_mmr": {
+        "games": 9,
+        "win_rate": 22.22222222222222
+       },
+       "low_mmr": {
+        "games": 4,
+        "win_rate": 50.0
+       }
+      },
+      {
+       "talent": "AnubarakSubterraneanShield",
+       "games": 10,
+       "win_rate": 40.0,
+       "high_mmr": {
+        "games": 5,
+        "win_rate": 60.0
+       },
+       "low_mmr": {
+        "games": 5,
+        "win_rate": 20.0
+       }
+      }
+     ]
+    },
+    "10": {
+     "games": 37,
+     "win_rate": 40.54054054054054,
+     "mmr_cut": 2682.3,
+     "talents": [
+      {
+       "talent": "AnubarakHeroicAbilityCocoon",
+       "games": 32,
+       "win_rate": 43.75,
+       "high_mmr": {
+        "games": 17,
+        "win_rate": 41.17647058823529
+       },
+       "low_mmr": {
+        "games": 15,
+        "win_rate": 46.666666666666664
+       }
+      },
+      {
+       "talent": "AnubarakLocustSwarm",
+       "games": 4,
+       "win_rate": 25.0,
+       "high_mmr": {
+        "games": 1,
+        "win_rate": 0.0
+       },
+       "low_mmr": {
+        "games": 3,
+        "win_rate": 33.33333333333333
+       }
+      }
+     ]
+    },
+    "13": {
+     "games": 37,
+     "win_rate": 40.54054054054054,
+     "mmr_cut": 2682.3,
+     "talents": [
+      {
+       "talent": "AnubarakBurningBeetles",
+       "games": 18,
+       "win_rate": 38.88888888888889,
+       "high_mmr": {
+        "games": 12,
+        "win_rate": 41.66666666666667
+       },
+       "low_mmr": {
+        "games": 6,
+        "win_rate": 33.33333333333333
+       }
+      },
+      {
+       "talent": "AnubarakMasteryUrticatingSpines",
+       "games": 14,
+       "win_rate": 42.857142857142854,
+       "high_mmr": {
+        "games": 5,
+        "win_rate": 20.0
+       },
+       "low_mmr": {
+        "games": 9,
+        "win_rate": 55.55555555555556
+       }
+      },
+      {
+       "talent": "AnubarakAcidDrenchedMandibles",
+       "games": 3,
+       "win_rate": 66.66666666666666,
+       "high_mmr": {
+        "games": 1,
+        "win_rate": 100.0
+       },
+       "low_mmr": {
+        "games": 2,
+        "win_rate": 50.0
+       }
+      }
+     ]
+    },
+    "16": {
+     "games": 37,
+     "win_rate": 40.54054054054054,
+     "mmr_cut": 2682.3,
+     "talents": [
+      {
+       "talent": "AnubarakMasteryEpicenterBurrowCharge",
+       "games": 17,
+       "win_rate": 29.411764705882355,
+       "high_mmr": {
+        "games": 8,
+        "win_rate": 37.5
+       },
+       "low_mmr": {
+        "games": 9,
+        "win_rate": 22.22222222222222
+       }
+      },
+      {
+       "talent": "AnubarakDebilitation",
+       "games": 11,
+       "win_rate": 63.63636363636363,
+       "high_mmr": {
+        "games": 5,
+        "win_rate": 60.0
+       },
+       "low_mmr": {
+        "games": 6,
+        "win_rate": 66.66666666666666
+       }
+      },
+      {
+       "talent": "AnubarakScarabHostBeetleJuiced",
+       "games": 4,
+       "win_rate": 75.0,
+       "high_mmr": {
+        "games": 2,
+        "win_rate": 50.0
+       },
+       "low_mmr": {
+        "games": 2,
+        "win_rate": 100.0
+       }
+      }
+     ]
+    },
+    "20": {
+     "games": 37,
+     "win_rate": 40.54054054054054,
+     "mmr_cut": 2682.3,
+     "talents": [
+      {
+       "talent": "GenericTalentRewind",
+       "games": 11,
+       "win_rate": 54.54545454545454,
+       "high_mmr": {
+        "games": 7,
+        "win_rate": 57.14285714285714
+       },
+       "low_mmr": {
+        "games": 4,
+        "win_rate": 50.0
+       }
+      },
+      {
+       "talent": "AnubarakTheTraitorKing",
+       "games": 7,
+       "win_rate": 71.42857142857143,
+       "high_mmr": {
+        "games": 4,
+        "win_rate": 75.0
+       },
+       "low_mmr": {
+        "games": 3,
+        "win_rate": 66.66666666666666
+       }
+      },
+      {
+       "talent": "AnubarakLocustSwarmHiveMaster",
+       "games": 2,
+       "win_rate": 50.0,
+       "high_mmr": {
+        "games": 0,
+        "win_rate": null
+       },
+       "low_mmr": {
+        "games": 2,
+        "win_rate": 50.0
+       }
+      }
+     ]
+    }
+   },
+   "qm": {
+    "1": {
+     "games": 11,
+     "win_rate": 45.45454545454545,
+     "mmr_cut": 2644.4,
+     "talents": [
+      {
+       "talent": "AnubarakCombatStyleLegionOfBeetles",
+       "games": 5,
+       "win_rate": 40.0,
+       "high_mmr": {
+        "games": 2,
+        "win_rate": 0.0
+       },
+       "low_mmr": {
+        "games": 3,
+        "win_rate": 66.66666666666666
+       }
+      },
+      {
+       "talent": "GenericTalentRegenerationMaster",
+       "games": 3,
+       "win_rate": 33.33333333333333,
+       "high_mmr": {
+        "games": 2,
+        "win_rate": 50.0
+       },
+       "low_mmr": {
+        "games": 1,
+        "win_rate": 0.0
+       }
+      },
+      {
+       "talent": "AnubarakNerubianArmor",
+       "games": 3,
+       "win_rate": 66.66666666666666,
+       "high_mmr": {
+        "games": 2,
+        "win_rate": 100.0
+       },
+       "low_mmr": {
+        "games": 1,
+        "win_rate": 0.0
+       }
+      }
+     ]
+    },
+    "4": {
+     "games": 11,
+     "win_rate": 45.45454545454545,
+     "mmr_cut": 2644.4,
+     "talents": [
+      {
+       "talent": "AnubarakMasteryShedExoskeletonHardenCarapace",
+       "games": 6,
+       "win_rate": 50.0,
+       "high_mmr": {
+        "games": 3,
+        "win_rate": 66.66666666666666
+       },
+       "low_mmr": {
+        "games": 3,
+        "win_rate": 33.33333333333333
+       }
+      },
+      {
+       "talent": "AnubarakMasteryBedOfBarbs",
+       "games": 3,
+       "win_rate": 66.66666666666666,
+       "high_mmr": {
+        "games": 1,
+        "win_rate": 100.0
+       },
+       "low_mmr": {
+        "games": 2,
+        "win_rate": 50.0
+       }
+      },
+      {
+       "talent": "AnubarakMasteryUnderkingBurrowCharge",
+       "games": 2,
+       "win_rate": 0.0,
+       "high_mmr": {
+        "games": 2,
+        "win_rate": 0.0
+       },
+       "low_mmr": {
+        "games": 0,
+        "win_rate": null
+       }
+      }
+     ]
+    },
+    "7": {
+     "games": 11,
+     "win_rate": 45.45454545454545,
+     "mmr_cut": 2644.4,
+     "talents": [
+      {
+       "talent": "AnubarakMasteryLeechingScarabs",
+       "games": 5,
+       "win_rate": 40.0,
+       "high_mmr": {
+        "games": 2,
+        "win_rate": 0.0
+       },
+       "low_mmr": {
+        "games": 3,
+        "win_rate": 66.66666666666666
+       }
+      },
+      {
+       "talent": "AnubarakCombatStyleChitinousPlating",
+       "games": 4,
+       "win_rate": 75.0,
+       "high_mmr": {
+        "games": 3,
+        "win_rate": 100.0
+       },
+       "low_mmr": {
+        "games": 1,
+        "win_rate": 0.0
+       }
+      },
+      {
+       "talent": "AnubarakSubterraneanShield",
+       "games": 2,
+       "win_rate": 0.0,
+       "high_mmr": {
+        "games": 1,
+        "win_rate": 0.0
+       },
+       "low_mmr": {
+        "games": 1,
+        "win_rate": 0.0
+       }
+      }
+     ]
+    },
+    "10": {
+     "games": 11,
+     "win_rate": 45.45454545454545,
+     "mmr_cut": 2644.4,
+     "talents": [
+      {
+       "talent": "AnubarakHeroicAbilityCocoon",
+       "games": 10,
+       "win_rate": 50.0,
+       "high_mmr": {
+        "games": 6,
+        "win_rate": 50.0
+       },
+       "low_mmr": {
+        "games": 4,
+        "win_rate": 50.0
+       }
+      },
+      {
+       "talent": "AnubarakLocustSwarm",
+       "games": 1,
+       "win_rate": 0.0,
+       "high_mmr": {
+        "games": 0,
+        "win_rate": null
+       },
+       "low_mmr": {
+        "games": 1,
+        "win_rate": 0.0
+       }
+      }
+     ]
+    },
+    "13": {
+     "games": 11,
+     "win_rate": 45.45454545454545,
+     "mmr_cut": 2644.4,
+     "talents": [
+      {
+       "talent": "AnubarakBurningBeetles",
+       "games": 7,
+       "win_rate": 28.57142857142857,
+       "high_mmr": {
+        "games": 3,
+        "win_rate": 0.0
+       },
+       "low_mmr": {
+        "games": 4,
+        "win_rate": 50.0
+       }
+      },
+      {
+       "talent": "AnubarakMasteryUrticatingSpines",
+       "games": 4,
+       "win_rate": 75.0,
+       "high_mmr": {
+        "games": 3,
+        "win_rate": 100.0
+       },
+       "low_mmr": {
+        "games": 1,
+        "win_rate": 0.0
+       }
+      }
+     ]
+    },
+    "16": {
+     "games": 11,
+     "win_rate": 45.45454545454545,
+     "mmr_cut": 2644.4,
+     "talents": [
+      {
+       "talent": "AnubarakScarabHostBeetleJuiced",
+       "games": 5,
+       "win_rate": 40.0,
+       "high_mmr": {
+        "games": 2,
+        "win_rate": 0.0
+       },
+       "low_mmr": {
+        "games": 3,
+        "win_rate": 66.66666666666666
+       }
+      },
+      {
+       "talent": "AnubarakMasteryEpicenterBurrowCharge",
+       "games": 4,
+       "win_rate": 25.0,
+       "high_mmr": {
+        "games": 2,
+        "win_rate": 50.0
+       },
+       "low_mmr": {
+        "games": 2,
+        "win_rate": 0.0
+       }
+      },
+      {
+       "talent": "AnubarakDebilitation",
+       "games": 2,
+       "win_rate": 100.0,
+       "high_mmr": {
+        "games": 2,
+        "win_rate": 100.0
+       },
+       "low_mmr": {
+        "games": 0,
+        "win_rate": null
+       }
+      }
+     ]
+    },
+    "20": {
+     "games": 11,
+     "win_rate": 45.45454545454545,
+     "mmr_cut": 2644.4,
+     "talents": [
+      {
+       "talent": "GenericTalentRewind",
+       "games": 4,
+       "win_rate": 75.0,
+       "high_mmr": {
+        "games": 3,
+        "win_rate": 66.66666666666666
+       },
+       "low_mmr": {
+        "games": 1,
+        "win_rate": 100.0
+       }
+      },
+      {
+       "talent": "AnubarakCocoonCryptweave",
+       "games": 3,
+       "win_rate": 66.66666666666666,
+       "high_mmr": {
+        "games": 2,
+        "win_rate": 50.0
+       },
+       "low_mmr": {
+        "games": 1,
+        "win_rate": 100.0
+       }
+      },
+      {
+       "talent": "AnubarakTheTraitorKing",
+       "games": 1,
+       "win_rate": 0.0,
+       "high_mmr": {
+        "games": 0,
+        "win_rate": null
+       },
+       "low_mmr": {
+        "games": 1,
+        "win_rate": 0.0
+       }
+      }
+     ]
+    }
+   },
+   "contrast_sl": {
+    "wins": 15,
+    "losses": 22,
+    "length_min": {
+     "when_won": 19.073333333333334,
+     "when_lost": 17.34242424242424
+    },
+    "centre": {
+     "deaths": {
+      "when_won": 3.4,
+      "when_lost": 2.0
+     },
+     "outnumbered_deaths": {
+      "when_won": 1.5333333333333334,
+      "when_lost": 0.8181818181818182
+     },
+     "time_spent_dead": {
+      "when_won": 135.13333333333333,
+      "when_lost": 70.0909090909091
+     },
+     "hero_damage": {
+      "when_won": 68250.93333333333,
+      "when_lost": 72674.59090909091
+     },
+     "teamfight_hero_damage": {
+      "when_won": 25227.466666666667,
+      "when_lost": 34296.90909090909
+     },
+     "damage_taken": {
+      "when_won": 34029.6,
+      "when_lost": 30199.863636363636
+     },
+     "escapes": {
+      "when_won": 0.6,
+      "when_lost": 0.9090909090909091
+     }
+    },
+    "answer": {
+     "kills": {
+      "when_won": 2.6666666666666665,
+      "when_lost": 1.1818181818181819
+     },
+     "deaths": {
+      "when_won": 2.466666666666667,
+      "when_lost": 4.954545454545454
+     },
+     "hero_damage": {
+      "when_won": 29304.2,
+      "when_lost": 24753.5
+     },
+     "teamfight_hero_damage": {
+      "when_won": 18300.2,
+      "when_lost": 17447.272727272728
+     },
+     "stunning_enemies": {
+      "when_won": 40.93333333333333,
+      "when_lost": 39.54545454545455
+     },
+     "rooting_enemies": {
+      "when_won": 0.0,
+      "when_lost": 0.0
+     },
+     "silencing_enemies": {
+      "when_won": 0.0,
+      "when_lost": 0.0
+     },
+     "outnumbered_deaths": {
+      "when_won": 1.2,
+      "when_lost": 2.8181818181818183
+     }
+    }
+   },
+   "contrast_qm": {
+    "wins": 5,
+    "losses": 6,
+    "length_min": {
+     "when_won": 20.696666666666665,
+     "when_lost": 17.87222222222222
+    },
+    "centre": {
+     "deaths": {
+      "when_won": 4.4,
+      "when_lost": 2.6666666666666665
+     },
+     "outnumbered_deaths": {
+      "when_won": 2.2,
+      "when_lost": 0.8333333333333334
+     },
+     "time_spent_dead": {
+      "when_won": 177.2,
+      "when_lost": 90.66666666666667
+     },
+     "hero_damage": {
+      "when_won": 49102.6,
+      "when_lost": 68322.33333333333
+     },
+     "teamfight_hero_damage": {
+      "when_won": 14744.8,
+      "when_lost": 28322.5
+     },
+     "damage_taken": {
+      "when_won": 33688.0,
+      "when_lost": 32375.5
+     },
+     "escapes": {
+      "when_won": 1.6,
+      "when_lost": 0.8333333333333334
+     }
+    },
+    "answer": {
+     "kills": {
+      "when_won": 3.2,
+      "when_lost": 2.0
+     },
+     "deaths": {
+      "when_won": 3.0,
+      "when_lost": 6.0
+     },
+     "hero_damage": {
+      "when_won": 36653.4,
+      "when_lost": 25450.0
+     },
+     "teamfight_hero_damage": {
+      "when_won": 22478.0,
+      "when_lost": 16508.666666666668
+     },
+     "stunning_enemies": {
+      "when_won": 47.8,
+      "when_lost": 39.333333333333336
+     },
+     "rooting_enemies": {
+      "when_won": 0.0,
+      "when_lost": 0.0
+     },
+     "silencing_enemies": {
+      "when_won": 0.0,
+      "when_lost": 0.0
+     },
+     "outnumbered_deaths": {
+      "when_won": 1.6,
+      "when_lost": 3.1666666666666665
+     }
+    }
+   }
+  },
+  "Li-Ming": {
+   "sl": {
+    "1": {
+     "games": 66,
+     "win_rate": 39.39393939393939,
+     "mmr_cut": 2676.177777777778,
+     "talents": [
+      {
+       "talent": "WizardAetherWalker",
+       "games": 39,
+       "win_rate": 33.33333333333333,
+       "high_mmr": {
+        "games": 23,
+        "win_rate": 43.47826086956522
+       },
+       "low_mmr": {
+        "games": 16,
+        "win_rate": 18.75
+       }
+      },
+      {
+       "talent": "WizardForceArmor",
+       "games": 17,
+       "win_rate": 52.94117647058824,
+       "high_mmr": {
+        "games": 7,
+        "win_rate": 42.857142857142854
+       },
+       "low_mmr": {
+        "games": 10,
+        "win_rate": 60.0
+       }
+      },
+      {
+       "talent": "WizardPowerHungry",
+       "games": 10,
+       "win_rate": 40.0,
+       "high_mmr": {
+        "games": 3,
+        "win_rate": 100.0
+       },
+       "low_mmr": {
+        "games": 7,
+        "win_rate": 14.285714285714285
+       }
+      }
+     ]
+    },
+    "4": {
+     "games": 66,
+     "win_rate": 39.39393939393939,
+     "mmr_cut": 2676.177777777778,
+     "talents": [
+      {
+       "talent": "WizardArcaneOrbTriumvirate",
+       "games": 58,
+       "win_rate": 39.6551724137931,
+       "high_mmr": {
+        "games": 29,
+        "win_rate": 48.275862068965516
+       },
+       "low_mmr": {
+        "games": 29,
+        "win_rate": 31.03448275862069
+       }
+      },
+      {
+       "talent": "WizardDominance",
+       "games": 4,
+       "win_rate": 0.0,
+       "high_mmr": {
+        "games": 2,
+        "win_rate": 0.0
+       },
+       "low_mmr": {
+        "games": 2,
+        "win_rate": 0.0
+       }
+      },
+      {
+       "talent": "WizardMagicMissilesChargedBlast",
+       "games": 4,
+       "win_rate": 75.0,
+       "high_mmr": {
+        "games": 2,
+        "win_rate": 100.0
+       },
+       "low_mmr": {
+        "games": 2,
+        "win_rate": 50.0
+       }
+      }
+     ]
+    },
+    "7": {
+     "games": 66,
+     "win_rate": 39.39393939393939,
+     "mmr_cut": 2676.177777777778,
+     "talents": [
+      {
+       "talent": "WizardTeleportCalamity",
+       "games": 35,
+       "win_rate": 40.0,
+       "high_mmr": {
+        "games": 21,
+        "win_rate": 42.857142857142854
+       },
+       "low_mmr": {
+        "games": 14,
+        "win_rate": 35.714285714285715
+       }
+      },
+      {
+       "talent": "WizardArcaneOrbZeisVengeance",
+       "games": 23,
+       "win_rate": 39.130434782608695,
+       "high_mmr": {
+        "games": 8,
+        "win_rate": 62.5
+       },
+       "low_mmr": {
+        "games": 15,
+        "win_rate": 26.666666666666668
+       }
+      },
+      {
+       "talent": "WizardMagicMissilesSeeker",
+       "games": 8,
+       "win_rate": 37.5,
+       "high_mmr": {
+        "games": 4,
+        "win_rate": 50.0
+       },
+       "low_mmr": {
+        "games": 4,
+        "win_rate": 25.0
+       }
+      }
+     ]
+    },
+    "10": {
+     "games": 66,
+     "win_rate": 39.39393939393939,
+     "mmr_cut": 2676.177777777778,
+     "talents": [
+      {
+       "talent": "WizardHeroicAbilityWaveOfForce",
+       "games": 40,
+       "win_rate": 45.0,
+       "high_mmr": {
+        "games": 26,
+        "win_rate": 50.0
+       },
+       "low_mmr": {
+        "games": 14,
+        "win_rate": 35.714285714285715
+       }
+      },
+      {
+       "talent": "WizardHeroicAbilityDisintegrate",
+       "games": 26,
+       "win_rate": 30.76923076923077,
+       "high_mmr": {
+        "games": 7,
+        "win_rate": 42.857142857142854
+       },
+       "low_mmr": {
+        "games": 19,
+        "win_rate": 26.31578947368421
+       }
+      }
+     ]
+    },
+    "13": {
+     "games": 66,
+     "win_rate": 39.39393939393939,
+     "mmr_cut": 2676.177777777778,
+     "talents": [
+      {
+       "talent": "WizardTeleportIllusionist",
+       "games": 34,
+       "win_rate": 38.23529411764706,
+       "high_mmr": {
+        "games": 21,
+        "win_rate": 42.857142857142854
+       },
+       "low_mmr": {
+        "games": 13,
+        "win_rate": 30.76923076923077
+       }
+      },
+      {
+       "talent": "WizardGlassCannon",
+       "games": 29,
+       "win_rate": 34.48275862068966,
+       "high_mmr": {
+        "games": 11,
+        "win_rate": 54.54545454545454
+       },
+       "low_mmr": {
+        "games": 18,
+        "win_rate": 22.22222222222222
+       }
+      },
+      {
+       "talent": "WizardCannoneer",
+       "games": 3,
+       "win_rate": 100.0,
+       "high_mmr": {
+        "games": 1,
+        "win_rate": 100.0
+       },
+       "low_mmr": {
+        "games": 2,
+        "win_rate": 100.0
+       }
+      }
+     ]
+    },
+    "16": {
+     "games": 66,
+     "win_rate": 39.39393939393939,
+     "mmr_cut": 2676.177777777778,
+     "talents": [
+      {
+       "talent": "WizardMagicMissilesMirrorball",
+       "games": 31,
+       "win_rate": 45.16129032258064,
+       "high_mmr": {
+        "games": 18,
+        "win_rate": 61.111111111111114
+       },
+       "low_mmr": {
+        "games": 13,
+        "win_rate": 23.076923076923077
+       }
+      },
+      {
+       "talent": "WizardArcaneOrbArcaneOrbit",
+       "games": 16,
+       "win_rate": 37.5,
+       "high_mmr": {
+        "games": 5,
+        "win_rate": 60.0
+       },
+       "low_mmr": {
+        "games": 11,
+        "win_rate": 27.27272727272727
+       }
+      },
+      {
+       "talent": "WizardTeleportDiamondSkin",
+       "games": 8,
+       "win_rate": 37.5,
+       "high_mmr": {
+        "games": 4,
+        "win_rate": 25.0
+       },
+       "low_mmr": {
+        "games": 4,
+        "win_rate": 50.0
+       }
+      },
+      {
+       "talent": "WizardFireflies",
+       "games": 3,
+       "win_rate": 66.66666666666666,
+       "high_mmr": {
+        "games": 1,
+        "win_rate": 0.0
+       },
+       "low_mmr": {
+        "games": 2,
+        "win_rate": 100.0
+       }
+      }
+     ]
+    },
+    "20": {
+     "games": 66,
+     "win_rate": 39.39393939393939,
+     "mmr_cut": 2676.177777777778,
+     "talents": [
+      {
+       "talent": "WizardWaveOfForceRepulsion",
+       "games": 21,
+       "win_rate": 52.38095238095239,
+       "high_mmr": {
+        "games": 15,
+        "win_rate": 53.333333333333336
+       },
+       "low_mmr": {
+        "games": 6,
+        "win_rate": 50.0
+       }
+      },
+      {
+       "talent": "WizardTalRashasElements",
+       "games": 9,
+       "win_rate": 44.44444444444444,
+       "high_mmr": {
+        "games": 3,
+        "win_rate": 100.0
+       },
+       "low_mmr": {
+        "games": 6,
+        "win_rate": 16.666666666666664
+       }
+      },
+      {
+       "talent": "WizardArchonPurePower",
+       "games": 5,
+       "win_rate": 60.0,
+       "high_mmr": {
+        "games": 3,
+        "win_rate": 66.66666666666666
+       },
+       "low_mmr": {
+        "games": 2,
+        "win_rate": 50.0
+       }
+      },
+      {
+       "talent": "WizardDisintegrateTemporalFlux",
+       "games": 1,
+       "win_rate": 0.0,
+       "high_mmr": {
+        "games": 0,
+        "win_rate": null
+       },
+       "low_mmr": {
+        "games": 1,
+        "win_rate": 0.0
+       }
+      }
+     ]
+    }
+   },
+   "qm": {
+    "1": {
+     "games": 55,
+     "win_rate": 50.90909090909091,
+     "mmr_cut": 2655.0,
+     "talents": [
+      {
+       "talent": "WizardAetherWalker",
+       "games": 38,
+       "win_rate": 50.0,
+       "high_mmr": {
+        "games": 24,
+        "win_rate": 50.0
+       },
+       "low_mmr": {
+        "games": 14,
+        "win_rate": 50.0
+       }
+      },
+      {
+       "talent": "WizardForceArmor",
+       "games": 12,
+       "win_rate": 66.66666666666666,
+       "high_mmr": {
+        "games": 3,
+        "win_rate": 100.0
+       },
+       "low_mmr": {
+        "games": 9,
+        "win_rate": 55.55555555555556
+       }
+      },
+      {
+       "talent": "WizardPowerHungry",
+       "games": 4,
+       "win_rate": 25.0,
+       "high_mmr": {
+        "games": 0,
+        "win_rate": null
+       },
+       "low_mmr": {
+        "games": 4,
+        "win_rate": 25.0
+       }
+      }
+     ]
+    },
+    "4": {
+     "games": 55,
+     "win_rate": 50.90909090909091,
+     "mmr_cut": 2655.0,
+     "talents": [
+      {
+       "talent": "WizardArcaneOrbTriumvirate",
+       "games": 32,
+       "win_rate": 50.0,
+       "high_mmr": {
+        "games": 15,
+        "win_rate": 46.666666666666664
+       },
+       "low_mmr": {
+        "games": 17,
+        "win_rate": 52.94117647058824
+       }
+      },
+      {
+       "talent": "WizardDominance",
+       "games": 13,
+       "win_rate": 53.84615384615385,
+       "high_mmr": {
+        "games": 5,
+        "win_rate": 60.0
+       },
+       "low_mmr": {
+        "games": 8,
+        "win_rate": 50.0
+       }
+      },
+      {
+       "talent": "WizardMagicMissilesChargedBlast",
+       "games": 9,
+       "win_rate": 55.55555555555556,
+       "high_mmr": {
+        "games": 7,
+        "win_rate": 71.42857142857143
+       },
+       "low_mmr": {
+        "games": 2,
+        "win_rate": 0.0
+       }
+      }
+     ]
+    },
+    "7": {
+     "games": 55,
+     "win_rate": 50.90909090909091,
+     "mmr_cut": 2655.0,
+     "talents": [
+      {
+       "talent": "WizardTeleportCalamity",
+       "games": 36,
+       "win_rate": 52.77777777777778,
+       "high_mmr": {
+        "games": 20,
+        "win_rate": 65.0
+       },
+       "low_mmr": {
+        "games": 16,
+        "win_rate": 37.5
+       }
+      },
+      {
+       "talent": "WizardMagicMissilesSeeker",
+       "games": 10,
+       "win_rate": 50.0,
+       "high_mmr": {
+        "games": 6,
+        "win_rate": 33.33333333333333
+       },
+       "low_mmr": {
+        "games": 4,
+        "win_rate": 75.0
+       }
+      },
+      {
+       "talent": "WizardArcaneOrbZeisVengeance",
+       "games": 8,
+       "win_rate": 50.0,
+       "high_mmr": {
+        "games": 1,
+        "win_rate": 0.0
+       },
+       "low_mmr": {
+        "games": 7,
+        "win_rate": 57.14285714285714
+       }
+      }
+     ]
+    },
+    "10": {
+     "games": 55,
+     "win_rate": 50.90909090909091,
+     "mmr_cut": 2655.0,
+     "talents": [
+      {
+       "talent": "WizardHeroicAbilityWaveOfForce",
+       "games": 35,
+       "win_rate": 54.285714285714285,
+       "high_mmr": {
+        "games": 21,
+        "win_rate": 61.904761904761905
+       },
+       "low_mmr": {
+        "games": 14,
+        "win_rate": 42.857142857142854
+       }
+      },
+      {
+       "talent": "WizardHeroicAbilityDisintegrate",
+       "games": 19,
+       "win_rate": 47.368421052631575,
+       "high_mmr": {
+        "games": 6,
+        "win_rate": 33.33333333333333
+       },
+       "low_mmr": {
+        "games": 13,
+        "win_rate": 53.84615384615385
+       }
+      }
+     ]
+    },
+    "13": {
+     "games": 55,
+     "win_rate": 50.90909090909091,
+     "mmr_cut": 2655.0,
+     "talents": [
+      {
+       "talent": "WizardTeleportIllusionist",
+       "games": 30,
+       "win_rate": 56.666666666666664,
+       "high_mmr": {
+        "games": 13,
+        "win_rate": 61.53846153846154
+       },
+       "low_mmr": {
+        "games": 17,
+        "win_rate": 52.94117647058824
+       }
+      },
+      {
+       "talent": "WizardCannoneer",
+       "games": 13,
+       "win_rate": 53.84615384615385,
+       "high_mmr": {
+        "games": 10,
+        "win_rate": 60.0
+       },
+       "low_mmr": {
+        "games": 3,
+        "win_rate": 33.33333333333333
+       }
+      },
+      {
+       "talent": "WizardGlassCannon",
+       "games": 11,
+       "win_rate": 36.36363636363637,
+       "high_mmr": {
+        "games": 4,
+        "win_rate": 25.0
+       },
+       "low_mmr": {
+        "games": 7,
+        "win_rate": 42.857142857142854
+       }
+      }
+     ]
+    },
+    "16": {
+     "games": 55,
+     "win_rate": 50.90909090909091,
+     "mmr_cut": 2655.0,
+     "talents": [
+      {
+       "talent": "WizardTeleportDiamondSkin",
+       "games": 22,
+       "win_rate": 68.18181818181817,
+       "high_mmr": {
+        "games": 13,
+        "win_rate": 76.92307692307693
+       },
+       "low_mmr": {
+        "games": 9,
+        "win_rate": 55.55555555555556
+       }
+      },
+      {
+       "talent": "WizardMagicMissilesMirrorball",
+       "games": 19,
+       "win_rate": 42.10526315789473,
+       "high_mmr": {
+        "games": 10,
+        "win_rate": 40.0
+       },
+       "low_mmr": {
+        "games": 9,
+        "win_rate": 44.44444444444444
+       }
+      },
+      {
+       "talent": "WizardFireflies",
+       "games": 4,
+       "win_rate": 50.0,
+       "high_mmr": {
+        "games": 2,
+        "win_rate": 50.0
+       },
+       "low_mmr": {
+        "games": 2,
+        "win_rate": 50.0
+       }
+      },
+      {
+       "talent": "WizardArcaneOrbArcaneOrbit",
+       "games": 4,
+       "win_rate": 75.0,
+       "high_mmr": {
+        "games": 0,
+        "win_rate": null
+       },
+       "low_mmr": {
+        "games": 4,
+        "win_rate": 75.0
+       }
+      }
+     ]
+    },
+    "20": {
+     "games": 55,
+     "win_rate": 50.90909090909091,
+     "mmr_cut": 2655.0,
+     "talents": [
+      {
+       "talent": "WizardWaveOfForceRepulsion",
+       "games": 24,
+       "win_rate": 66.66666666666666,
+       "high_mmr": {
+        "games": 15,
+        "win_rate": 66.66666666666666
+       },
+       "low_mmr": {
+        "games": 9,
+        "win_rate": 66.66666666666666
+       }
+      },
+      {
+       "talent": "WizardTalRashasElements",
+       "games": 11,
+       "win_rate": 36.36363636363637,
+       "high_mmr": {
+        "games": 3,
+        "win_rate": 33.33333333333333
+       },
+       "low_mmr": {
+        "games": 8,
+        "win_rate": 37.5
+       }
+      },
+      {
+       "talent": "WizardDisintegrateTemporalFlux",
+       "games": 4,
+       "win_rate": 50.0,
+       "high_mmr": {
+        "games": 2,
+        "win_rate": 0.0
+       },
+       "low_mmr": {
+        "games": 2,
+        "win_rate": 100.0
+       }
+      },
+      {
+       "talent": "WizardArchonPurePower",
+       "games": 3,
+       "win_rate": 100.0,
+       "high_mmr": {
+        "games": 1,
+        "win_rate": 100.0
+       },
+       "low_mmr": {
+        "games": 2,
+        "win_rate": 100.0
+       }
+      }
+     ]
+    }
+   },
+   "contrast_sl": {
+    "wins": 26,
+    "losses": 40,
+    "length_min": {
+     "when_won": 17.31730769230769,
+     "when_lost": 18.368333333333332
+    },
+    "centre": {
+     "deaths": {
+      "when_won": 4.346153846153846,
+      "when_lost": 2.6
+     },
+     "outnumbered_deaths": {
+      "when_won": 1.7692307692307692,
+      "when_lost": 1.025
+     },
+     "time_spent_dead": {
+      "when_won": 155.69230769230768,
+      "when_lost": 96.225
+     },
+     "hero_damage": {
+      "when_won": 51966.57692307692,
+      "when_lost": 63429.3
+     },
+     "teamfight_hero_damage": {
+      "when_won": 23304.80769230769,
+      "when_lost": 27234.6
+     },
+     "damage_taken": {
+      "when_won": 29822.19230769231,
+      "when_lost": 33155.925
+     },
+     "escapes": {
+      "when_won": 0.9230769230769231,
+      "when_lost": 1.4
+     }
+    },
+    "answer": {
+     "kills": {
+      "when_won": 6.076923076923077,
+      "when_lost": 3.325
+     },
+     "deaths": {
+      "when_won": 1.4230769230769231,
+      "when_lost": 3.5
+     },
+     "hero_damage": {
+      "when_won": 62292.730769230766,
+      "when_lost": 58489.55
+     },
+     "teamfight_hero_damage": {
+      "when_won": 22822.69230769231,
+      "when_lost": 20764.125
+     },
+     "stunning_enemies": {
+      "when_won": 0.7692307692307693,
+      "when_lost": 0.325
+     },
+     "rooting_enemies": {
+      "when_won": 0.0,
+      "when_lost": 0.0
+     },
+     "silencing_enemies": {
+      "when_won": 0.0,
+      "when_lost": 0.0
+     },
+     "outnumbered_deaths": {
+      "when_won": 0.3076923076923077,
+      "when_lost": 1.625
+     }
+    }
+   },
+   "contrast_qm": {
+    "wins": 28,
+    "losses": 27,
+    "length_min": {
+     "when_won": 20.236904761904764,
+     "when_lost": 18.528395061728396
+    },
+    "centre": {
+     "deaths": {
+      "when_won": 5.5,
+      "when_lost": 2.5185185185185186
+     },
+     "outnumbered_deaths": {
+      "when_won": 1.8928571428571428,
+      "when_lost": 0.8518518518518519
+     },
+     "time_spent_dead": {
+      "when_won": 214.39285714285714,
+      "when_lost": 88.11111111111111
+     },
+     "hero_damage": {
+      "when_won": 53441.82142857143,
+      "when_lost": 67268.51851851853
+     },
+     "teamfight_hero_damage": {
+      "when_won": 21300.714285714286,
+      "when_lost": 31180.11111111111
+     },
+     "damage_taken": {
+      "when_won": 36416.17857142857,
+      "when_lost": 32408.925925925927
+     },
+     "escapes": {
+      "when_won": 1.1785714285714286,
+      "when_lost": 1.1481481481481481
+     }
+    },
+    "answer": {
+     "kills": {
+      "when_won": 6.75,
+      "when_lost": 4.2592592592592595
+     },
+     "deaths": {
+      "when_won": 2.9285714285714284,
+      "when_lost": 4.0
+     },
+     "hero_damage": {
+      "when_won": 54538.46428571428,
+      "when_lost": 50059.444444444445
+     },
+     "teamfight_hero_damage": {
+      "when_won": 18179.60714285714,
+      "when_lost": 18866.48148148148
+     },
+     "stunning_enemies": {
+      "when_won": 0.07142857142857142,
+      "when_lost": 0.0
+     },
+     "rooting_enemies": {
+      "when_won": 0.0,
+      "when_lost": 0.0
+     },
+     "silencing_enemies": {
+      "when_won": 0.0,
+      "when_lost": 0.0
+     },
+     "outnumbered_deaths": {
+      "when_won": 1.2142857142857142,
+      "when_lost": 1.5925925925925926
+     }
+    }
+   }
+  },
+  "Tyrael": {
+   "sl": {
+    "1": {
+     "games": 51,
+     "win_rate": 60.78431372549019,
+     "mmr_cut": 2673.1,
+     "talents": [
+      {
+       "talent": "TyraelArdentRestoration",
+       "games": 38,
+       "win_rate": 63.1578947368421,
+       "high_mmr": {
+        "games": 17,
+        "win_rate": 52.94117647058824
+       },
+       "low_mmr": {
+        "games": 21,
+        "win_rate": 71.42857142857143
+       }
+      },
+      {
+       "talent": "TyraelJusticeForAll",
+       "games": 7,
+       "win_rate": 57.14285714285714,
+       "high_mmr": {
+        "games": 4,
+        "win_rate": 50.0
+       },
+       "low_mmr": {
+        "games": 3,
+        "win_rate": 66.66666666666666
+       }
+      },
+      {
+       "talent": "TyraelSalvation",
+       "games": 6,
+       "win_rate": 50.0,
+       "high_mmr": {
+        "games": 5,
+        "win_rate": 60.0
+       },
+       "low_mmr": {
+        "games": 1,
+        "win_rate": 0.0
+       }
+      }
+     ]
+    },
+    "4": {
+     "games": 51,
+     "win_rate": 60.78431372549019,
+     "mmr_cut": 2673.1,
+     "talents": [
+      {
+       "talent": "TyraelMasteryRighteousnessReciprocate",
+       "games": 39,
+       "win_rate": 51.28205128205128,
+       "high_mmr": {
+        "games": 17,
+        "win_rate": 35.294117647058826
+       },
+       "low_mmr": {
+        "games": 22,
+        "win_rate": 63.63636363636363
+       }
+      },
+      {
+       "talent": "TyraelDivineVigor",
+       "games": 8,
+       "win_rate": 87.5,
+       "high_mmr": {
+        "games": 6,
+        "win_rate": 83.33333333333334
+       },
+       "low_mmr": {
+        "games": 2,
+        "win_rate": 100.0
+       }
+      },
+      {
+       "talent": "TyraelStalwartAngel",
+       "games": 4,
+       "win_rate": 100.0,
+       "high_mmr": {
+        "games": 3,
+        "win_rate": 100.0
+       },
+       "low_mmr": {
+        "games": 1,
+        "win_rate": 100.0
+       }
+      }
+     ]
+    },
+    "7": {
+     "games": 51,
+     "win_rate": 60.78431372549019,
+     "mmr_cut": 2673.1,
+     "talents": [
+      {
+       "talent": "TyraelBurningHalo",
+       "games": 37,
+       "win_rate": 54.054054054054056,
+       "high_mmr": {
+        "games": 15,
+        "win_rate": 40.0
+       },
+       "low_mmr": {
+        "games": 22,
+        "win_rate": 63.63636363636363
+       }
+      },
+      {
+       "talent": "TyraelMasteryPurgeEvil",
+       "games": 10,
+       "win_rate": 80.0,
+       "high_mmr": {
+        "games": 8,
+        "win_rate": 75.0
+       },
+       "low_mmr": {
+        "games": 2,
+        "win_rate": 100.0
+       }
+      },
+      {
+       "talent": "TyraelMasterySwiftRetribution",
+       "games": 4,
+       "win_rate": 75.0,
+       "high_mmr": {
+        "games": 3,
+        "win_rate": 66.66666666666666
+       },
+       "low_mmr": {
+        "games": 1,
+        "win_rate": 100.0
+       }
+      }
+     ]
+    },
+    "10": {
+     "games": 51,
+     "win_rate": 60.78431372549019,
+     "mmr_cut": 2673.1,
+     "talents": [
+      {
+       "talent": "TyraelHeroicAbilityJudgement",
+       "games": 46,
+       "win_rate": 58.69565217391305,
+       "high_mmr": {
+        "games": 22,
+        "win_rate": 50.0
+       },
+       "low_mmr": {
+        "games": 24,
+        "win_rate": 66.66666666666666
+       }
+      },
+      {
+       "talent": "TyraelHeroicAbilitySanctification",
+       "games": 5,
+       "win_rate": 80.0,
+       "high_mmr": {
+        "games": 4,
+        "win_rate": 75.0
+       },
+       "low_mmr": {
+        "games": 1,
+        "win_rate": 100.0
+       }
+      }
+     ]
+    },
+    "13": {
+     "games": 51,
+     "win_rate": 60.78431372549019,
+     "mmr_cut": 2673.1,
+     "talents": [
+      {
+       "talent": "TyraelMasteryElDruinsMightSwordOfJustice",
+       "games": 26,
+       "win_rate": 57.692307692307686,
+       "high_mmr": {
+        "games": 15,
+        "win_rate": 53.333333333333336
+       },
+       "low_mmr": {
+        "games": 11,
+        "win_rate": 63.63636363636363
+       }
+      },
+      {
+       "talent": "TyraelMasteryHolyGround",
+       "games": 16,
+       "win_rate": 75.0,
+       "high_mmr": {
+        "games": 6,
+        "win_rate": 50.0
+       },
+       "low_mmr": {
+        "games": 10,
+        "win_rate": 90.0
+       }
+      },
+      {
+       "talent": "TyraelMasteryLawAndOrder",
+       "games": 8,
+       "win_rate": 50.0,
+       "high_mmr": {
+        "games": 5,
+        "win_rate": 60.0
+       },
+       "low_mmr": {
+        "games": 3,
+        "win_rate": 33.33333333333333
+       }
+      }
+     ]
+    },
+    "16": {
+     "games": 51,
+     "win_rate": 60.78431372549019,
+     "mmr_cut": 2673.1,
+     "talents": [
+      {
+       "talent": "TyraelElDruinsMightBoundByLaw",
+       "games": 34,
+       "win_rate": 64.70588235294117,
+       "high_mmr": {
+        "games": 15,
+        "win_rate": 60.0
+       },
+       "low_mmr": {
+        "games": 19,
+        "win_rate": 68.42105263157895
+       }
+      },
+      {
+       "talent": "TyraelHoradricReforging",
+       "games": 7,
+       "win_rate": 57.14285714285714,
+       "high_mmr": {
+        "games": 5,
+        "win_rate": 40.0
+       },
+       "low_mmr": {
+        "games": 2,
+        "win_rate": 100.0
+       }
+      },
+      {
+       "talent": "TyraelSmiteTheWicked",
+       "games": 7,
+       "win_rate": 71.42857142857143,
+       "high_mmr": {
+        "games": 4,
+        "win_rate": 75.0
+       },
+       "low_mmr": {
+        "games": 3,
+        "win_rate": 66.66666666666666
+       }
+      }
+     ]
+    },
+    "20": {
+     "games": 51,
+     "win_rate": 60.78431372549019,
+     "mmr_cut": 2673.1,
+     "talents": [
+      {
+       "talent": "TyraelMasteryJudgmentAngelofJustice",
+       "games": 29,
+       "win_rate": 65.51724137931035,
+       "high_mmr": {
+        "games": 15,
+        "win_rate": 53.333333333333336
+       },
+       "low_mmr": {
+        "games": 14,
+        "win_rate": 78.57142857142857
+       }
+      },
+      {
+       "talent": "TyraelMasterySanctificationHolyArena",
+       "games": 4,
+       "win_rate": 100.0,
+       "high_mmr": {
+        "games": 3,
+        "win_rate": 100.0
+       },
+       "low_mmr": {
+        "games": 1,
+        "win_rate": 100.0
+       }
+      },
+      {
+       "talent": "TyraelAspectofJustice",
+       "games": 1,
+       "win_rate": 100.0,
+       "high_mmr": {
+        "games": 0,
+        "win_rate": null
+       },
+       "low_mmr": {
+        "games": 1,
+        "win_rate": 100.0
+       }
+      },
+      {
+       "talent": "TyraelDefenseOfTheAngels",
+       "games": 1,
+       "win_rate": 100.0,
+       "high_mmr": {
+        "games": 0,
+        "win_rate": null
+       },
+       "low_mmr": {
+        "games": 1,
+        "win_rate": 100.0
+       }
+      },
+      {
+       "talent": "TyraelSealOfElDruin",
+       "games": 1,
+       "win_rate": 0.0,
+       "high_mmr": {
+        "games": 1,
+        "win_rate": 0.0
+       },
+       "low_mmr": {
+        "games": 0,
+        "win_rate": null
+       }
+      }
+     ]
+    }
+   },
+   "qm": {
+    "1": {
+     "games": 16,
+     "win_rate": 43.75,
+     "mmr_cut": 2674.1499999999996,
+     "talents": [
+      {
+       "talent": "TyraelArdentRestoration",
+       "games": 13,
+       "win_rate": 53.84615384615385,
+       "high_mmr": {
+        "games": 6,
+        "win_rate": 50.0
+       },
+       "low_mmr": {
+        "games": 7,
+        "win_rate": 57.14285714285714
+       }
+      },
+      {
+       "talent": "TyraelSalvation",
+       "games": 2,
+       "win_rate": 0.0,
+       "high_mmr": {
+        "games": 2,
+        "win_rate": 0.0
+       },
+       "low_mmr": {
+        "games": 0,
+        "win_rate": null
+       }
+      },
+      {
+       "talent": "TyraelJusticeForAll",
+       "games": 1,
+       "win_rate": 0.0,
+       "high_mmr": {
+        "games": 0,
+        "win_rate": null
+       },
+       "low_mmr": {
+        "games": 1,
+        "win_rate": 0.0
+       }
+      }
+     ]
+    },
+    "4": {
+     "games": 16,
+     "win_rate": 43.75,
+     "mmr_cut": 2674.1499999999996,
+     "talents": [
+      {
+       "talent": "TyraelMasteryRighteousnessReciprocate",
+       "games": 9,
+       "win_rate": 55.55555555555556,
+       "high_mmr": {
+        "games": 4,
+        "win_rate": 50.0
+       },
+       "low_mmr": {
+        "games": 5,
+        "win_rate": 60.0
+       }
+      },
+      {
+       "talent": "TyraelDivineVigor",
+       "games": 5,
+       "win_rate": 40.0,
+       "high_mmr": {
+        "games": 2,
+        "win_rate": 50.0
+       },
+       "low_mmr": {
+        "games": 3,
+        "win_rate": 33.33333333333333
+       }
+      },
+      {
+       "talent": "TyraelStalwartAngel",
+       "games": 2,
+       "win_rate": 0.0,
+       "high_mmr": {
+        "games": 2,
+        "win_rate": 0.0
+       },
+       "low_mmr": {
+        "games": 0,
+        "win_rate": null
+       }
+      }
+     ]
+    },
+    "7": {
+     "games": 16,
+     "win_rate": 43.75,
+     "mmr_cut": 2674.1499999999996,
+     "talents": [
+      {
+       "talent": "TyraelBurningHalo",
+       "games": 10,
+       "win_rate": 50.0,
+       "high_mmr": {
+        "games": 5,
+        "win_rate": 40.0
+       },
+       "low_mmr": {
+        "games": 5,
+        "win_rate": 60.0
+       }
+      },
+      {
+       "talent": "TyraelMasterySwiftRetribution",
+       "games": 3,
+       "win_rate": 33.33333333333333,
+       "high_mmr": {
+        "games": 3,
+        "win_rate": 33.33333333333333
+       },
+       "low_mmr": {
+        "games": 0,
+        "win_rate": null
+       }
+      },
+      {
+       "talent": "TyraelMasteryPurgeEvil",
+       "games": 3,
+       "win_rate": 33.33333333333333,
+       "high_mmr": {
+        "games": 0,
+        "win_rate": null
+       },
+       "low_mmr": {
+        "games": 3,
+        "win_rate": 33.33333333333333
+       }
+      }
+     ]
+    },
+    "10": {
+     "games": 16,
+     "win_rate": 43.75,
+     "mmr_cut": 2674.1499999999996,
+     "talents": [
+      {
+       "talent": "TyraelHeroicAbilityJudgement",
+       "games": 16,
+       "win_rate": 43.75,
+       "high_mmr": {
+        "games": 8,
+        "win_rate": 37.5
+       },
+       "low_mmr": {
+        "games": 8,
+        "win_rate": 50.0
+       }
+      }
+     ]
+    },
+    "13": {
+     "games": 16,
+     "win_rate": 43.75,
+     "mmr_cut": 2674.1499999999996,
+     "talents": [
+      {
+       "talent": "TyraelMasteryElDruinsMightSwordOfJustice",
+       "games": 11,
+       "win_rate": 45.45454545454545,
+       "high_mmr": {
+        "games": 7,
+        "win_rate": 42.857142857142854
+       },
+       "low_mmr": {
+        "games": 4,
+        "win_rate": 50.0
+       }
+      },
+      {
+       "talent": "TyraelMasteryHolyGround",
+       "games": 3,
+       "win_rate": 33.33333333333333,
+       "high_mmr": {
+        "games": 1,
+        "win_rate": 0.0
+       },
+       "low_mmr": {
+        "games": 2,
+        "win_rate": 50.0
+       }
+      },
+      {
+       "talent": "TyraelMasteryLawAndOrder",
+       "games": 2,
+       "win_rate": 50.0,
+       "high_mmr": {
+        "games": 0,
+        "win_rate": null
+       },
+       "low_mmr": {
+        "games": 2,
+        "win_rate": 50.0
+       }
+      }
+     ]
+    },
+    "16": {
+     "games": 16,
+     "win_rate": 43.75,
+     "mmr_cut": 2674.1499999999996,
+     "talents": [
+      {
+       "talent": "TyraelElDruinsMightBoundByLaw",
+       "games": 8,
+       "win_rate": 50.0,
+       "high_mmr": {
+        "games": 2,
+        "win_rate": 50.0
+       },
+       "low_mmr": {
+        "games": 6,
+        "win_rate": 50.0
+       }
+      },
+      {
+       "talent": "TyraelHoradricReforging",
+       "games": 4,
+       "win_rate": 25.0,
+       "high_mmr": {
+        "games": 4,
+        "win_rate": 25.0
+       },
+       "low_mmr": {
+        "games": 0,
+        "win_rate": null
+       }
+      },
+      {
+       "talent": "TyraelSmiteTheWicked",
+       "games": 1,
+       "win_rate": 100.0,
+       "high_mmr": {
+        "games": 0,
+        "win_rate": null
+       },
+       "low_mmr": {
+        "games": 1,
+        "win_rate": 100.0
+       }
+      }
+     ]
+    },
+    "20": {
+     "games": 16,
+     "win_rate": 43.75,
+     "mmr_cut": 2674.1499999999996,
+     "talents": [
+      {
+       "talent": "TyraelMasteryJudgmentAngelofJustice",
+       "games": 10,
+       "win_rate": 50.0,
+       "high_mmr": {
+        "games": 5,
+        "win_rate": 40.0
+       },
+       "low_mmr": {
+        "games": 5,
+        "win_rate": 60.0
+       }
+      }
+     ]
+    }
+   },
+   "contrast_sl": {
+    "wins": 31,
+    "losses": 20,
+    "length_min": {
+     "when_won": 19.45752688172043,
+     "when_lost": 18.045833333333334
+    },
+    "centre": {
+     "deaths": {
+      "when_won": 4.419354838709677,
+      "when_lost": 2.8
+     },
+     "outnumbered_deaths": {
+      "when_won": 1.5161290322580645,
+      "when_lost": 1.0
+     },
+     "time_spent_dead": {
+      "when_won": 166.09677419354838,
+      "when_lost": 98.5
+     },
+     "hero_damage": {
+      "when_won": 71889.09677419355,
+      "when_lost": 84875.25
+     },
+     "teamfight_hero_damage": {
+      "when_won": 31816.0,
+      "when_lost": 36167.05
+     },
+     "damage_taken": {
+      "when_won": 38101.67741935484,
+      "when_lost": 36171.2
+     },
+     "escapes": {
+      "when_won": 0.9032258064516129,
+      "when_lost": 0.8
+     }
+    },
+    "answer": {
+     "kills": {
+      "when_won": 3.903225806451613,
+      "when_lost": 2.4
+     },
+     "deaths": {
+      "when_won": 2.870967741935484,
+      "when_lost": 3.85
+     },
+     "hero_damage": {
+      "when_won": 43286.16129032258,
+      "when_lost": 43168.35
+     },
+     "teamfight_hero_damage": {
+      "when_won": 30787.774193548386,
+      "when_lost": 32474.05
+     },
+     "stunning_enemies": {
+      "when_won": 9.806451612903226,
+      "when_lost": 8.25
+     },
+     "rooting_enemies": {
+      "when_won": 0.0,
+      "when_lost": 0.0
+     },
+     "silencing_enemies": {
+      "when_won": 0.0,
+      "when_lost": 0.0
+     },
+     "outnumbered_deaths": {
+      "when_won": 1.5806451612903225,
+      "when_lost": 2.55
+     }
+    }
+   },
+   "contrast_qm": {
+    "wins": 7,
+    "losses": 9,
+    "length_min": {
+     "when_won": 17.045238095238094,
+     "when_lost": 18.174074074074074
+    },
+    "centre": {
+     "deaths": {
+      "when_won": 5.428571428571429,
+      "when_lost": 4.0
+     },
+     "outnumbered_deaths": {
+      "when_won": 2.0,
+      "when_lost": 1.3333333333333333
+     },
+     "time_spent_dead": {
+      "when_won": 198.14285714285714,
+      "when_lost": 144.0
+     },
+     "hero_damage": {
+      "when_won": 51383.142857142855,
+      "when_lost": 83152.22222222222
+     },
+     "teamfight_hero_damage": {
+      "when_won": 18568.428571428572,
+      "when_lost": 36847.22222222222
+     },
+     "damage_taken": {
+      "when_won": 27878.85714285714,
+      "when_lost": 36136.444444444445
+     },
+     "escapes": {
+      "when_won": 0.5714285714285714,
+      "when_lost": 0.7777777777777778
+     }
+    },
+    "answer": {
+     "kills": {
+      "when_won": 5.714285714285714,
+      "when_lost": 3.4444444444444446
+     },
+     "deaths": {
+      "when_won": 3.0,
+      "when_lost": 5.555555555555555
+     },
+     "hero_damage": {
+      "when_won": 37070.57142857143,
+      "when_lost": 37896.11111111111
+     },
+     "teamfight_hero_damage": {
+      "when_won": 23231.571428571428,
+      "when_lost": 26317.777777777777
+     },
+     "stunning_enemies": {
+      "when_won": 7.571428571428571,
+      "when_lost": 8.444444444444445
+     },
+     "rooting_enemies": {
+      "when_won": 0.0,
+      "when_lost": 0.0
+     },
+     "silencing_enemies": {
+      "when_won": 0.0,
+      "when_lost": 0.0
+     },
+     "outnumbered_deaths": {
+      "when_won": 1.8571428571428572,
+      "when_lost": 3.0
+     }
+    }
+   }
+  },
+  "Qhira": {
+   "sl": {
+    "1": {
+     "games": 45,
+     "win_rate": 35.55555555555556,
+     "mmr_cut": 2596.9,
+     "talents": [
+      {
+       "talent": "NexusHunterCarnageMaximumEffort",
+       "games": 30,
+       "win_rate": 43.333333333333336,
+       "high_mmr": {
+        "games": 16,
+        "win_rate": 50.0
+       },
+       "low_mmr": {
+        "games": 14,
+        "win_rate": 35.714285714285715
+       }
+      },
+      {
+       "talent": "NexusHunterFatalWounds",
+       "games": 11,
+       "win_rate": 27.27272727272727,
+       "high_mmr": {
+        "games": 6,
+        "win_rate": 0.0
+       },
+       "low_mmr": {
+        "games": 5,
+        "win_rate": 60.0
+       }
+      },
+      {
+       "talent": "NexusHunterFinishingTouch",
+       "games": 4,
+       "win_rate": 0.0,
+       "high_mmr": {
+        "games": 1,
+        "win_rate": 0.0
+       },
+       "low_mmr": {
+        "games": 3,
+        "win_rate": 0.0
+       }
+      }
+     ]
+    },
+    "4": {
+     "games": 45,
+     "win_rate": 35.55555555555556,
+     "mmr_cut": 2596.9,
+     "talents": [
+      {
+       "talent": "NexusHunterUpstage",
+       "games": 30,
+       "win_rate": 43.333333333333336,
+       "high_mmr": {
+        "games": 16,
+        "win_rate": 43.75
+       },
+       "low_mmr": {
+        "games": 14,
+        "win_rate": 42.857142857142854
+       }
+      },
+      {
+       "talent": "NexusHunterBloodRageYourPainMyGain",
+       "games": 12,
+       "win_rate": 16.666666666666664,
+       "high_mmr": {
+        "games": 5,
+        "win_rate": 20.0
+       },
+       "low_mmr": {
+        "games": 7,
+        "win_rate": 14.285714285714285
+       }
+      },
+      {
+       "talent": "NexusHunterEnsnaringSwing",
+       "games": 3,
+       "win_rate": 33.33333333333333,
+       "high_mmr": {
+        "games": 2,
+        "win_rate": 0.0
+       },
+       "low_mmr": {
+        "games": 1,
+        "win_rate": 100.0
+       }
+      }
+     ]
+    },
+    "7": {
+     "games": 45,
+     "win_rate": 35.55555555555556,
+     "mmr_cut": 2596.9,
+     "talents": [
+      {
+       "talent": "NexusHunterTheThirst",
+       "games": 19,
+       "win_rate": 47.368421052631575,
+       "high_mmr": {
+        "games": 10,
+        "win_rate": 60.0
+       },
+       "low_mmr": {
+        "games": 9,
+        "win_rate": 33.33333333333333
+       }
+      },
+      {
+       "talent": "NexusHunterBloodRageHealmonger",
+       "games": 19,
+       "win_rate": 36.84210526315789,
+       "high_mmr": {
+        "games": 10,
+        "win_rate": 20.0
+       },
+       "low_mmr": {
+        "games": 9,
+        "win_rate": 55.55555555555556
+       }
+      },
+      {
+       "talent": "NexusHunterSiphoningLink",
+       "games": 7,
+       "win_rate": 0.0,
+       "high_mmr": {
+        "games": 3,
+        "win_rate": 0.0
+       },
+       "low_mmr": {
+        "games": 4,
+        "win_rate": 0.0
+       }
+      }
+     ]
+    },
+    "10": {
+     "games": 45,
+     "win_rate": 35.55555555555556,
+     "mmr_cut": 2596.9,
+     "talents": [
+      {
+       "talent": "NexusHunterUnrelentingStrikes",
+       "games": 24,
+       "win_rate": 29.166666666666668,
+       "high_mmr": {
+        "games": 12,
+        "win_rate": 25.0
+       },
+       "low_mmr": {
+        "games": 12,
+        "win_rate": 33.33333333333333
+       }
+      },
+      {
+       "talent": "NexusHunterFinalStrike",
+       "games": 21,
+       "win_rate": 42.857142857142854,
+       "high_mmr": {
+        "games": 11,
+        "win_rate": 45.45454545454545
+       },
+       "low_mmr": {
+        "games": 10,
+        "win_rate": 40.0
+       }
+      }
+     ]
+    },
+    "13": {
+     "games": 45,
+     "win_rate": 35.55555555555556,
+     "mmr_cut": 2596.9,
+     "talents": [
+      {
+       "talent": "NexusHunterChainsaw",
+       "games": 33,
+       "win_rate": 39.39393939393939,
+       "high_mmr": {
+        "games": 20,
+        "win_rate": 40.0
+       },
+       "low_mmr": {
+        "games": 13,
+        "win_rate": 38.46153846153847
+       }
+      },
+      {
+       "talent": "NexusHunterTheHunted",
+       "games": 7,
+       "win_rate": 14.285714285714285,
+       "high_mmr": {
+        "games": 1,
+        "win_rate": 0.0
+       },
+       "low_mmr": {
+        "games": 6,
+        "win_rate": 16.666666666666664
+       }
+      },
+      {
+       "talent": "NexusHunterPulsingPain",
+       "games": 5,
+       "win_rate": 40.0,
+       "high_mmr": {
+        "games": 2,
+        "win_rate": 0.0
+       },
+       "low_mmr": {
+        "games": 3,
+        "win_rate": 66.66666666666666
+       }
+      }
+     ]
+    },
+    "16": {
+     "games": 45,
+     "win_rate": 35.55555555555556,
+     "mmr_cut": 2596.9,
+     "talents": [
+      {
+       "talent": "NexusHunterRevolvingSweepBoomingKick",
+       "games": 20,
+       "win_rate": 40.0,
+       "high_mmr": {
+        "games": 8,
+        "win_rate": 25.0
+       },
+       "low_mmr": {
+        "games": 12,
+        "win_rate": 50.0
+       }
+      },
+      {
+       "talent": "NexusHunterRevolvingSweepLingeringAilment",
+       "games": 12,
+       "win_rate": 33.33333333333333,
+       "high_mmr": {
+        "games": 8,
+        "win_rate": 50.0
+       },
+       "low_mmr": {
+        "games": 4,
+        "win_rate": 0.0
+       }
+      },
+      {
+       "talent": "NexusHunterRevolvingSweepSwingLifeAway",
+       "games": 9,
+       "win_rate": 44.44444444444444,
+       "high_mmr": {
+        "games": 5,
+        "win_rate": 40.0
+       },
+       "low_mmr": {
+        "games": 4,
+        "win_rate": 50.0
+       }
+      }
+     ]
+    },
+    "20": {
+     "games": 45,
+     "win_rate": 35.55555555555556,
+     "mmr_cut": 2596.9,
+     "talents": [
+      {
+       "talent": "NexusHunterUnrelentingStrikesSilentKiller",
+       "games": 15,
+       "win_rate": 46.666666666666664,
+       "high_mmr": {
+        "games": 7,
+        "win_rate": 42.857142857142854
+       },
+       "low_mmr": {
+        "games": 8,
+        "win_rate": 50.0
+       }
+      },
+      {
+       "talent": "NexusHunterFinalStrikeUnleashedPotential",
+       "games": 6,
+       "win_rate": 16.666666666666664,
+       "high_mmr": {
+        "games": 3,
+        "win_rate": 0.0
+       },
+       "low_mmr": {
+        "games": 3,
+        "win_rate": 33.33333333333333
+       }
+      },
+      {
+       "talent": "NexusHunterGrapplingHookUtilityBelt",
+       "games": 5,
+       "win_rate": 40.0,
+       "high_mmr": {
+        "games": 3,
+        "win_rate": 33.33333333333333
+       },
+       "low_mmr": {
+        "games": 2,
+        "win_rate": 50.0
+       }
+      },
+      {
+       "talent": "NexusHunterHuntersVengeanceNoSanctuary",
+       "games": 4,
+       "win_rate": 75.0,
+       "high_mmr": {
+        "games": 4,
+        "win_rate": 75.0
+       },
+       "low_mmr": {
+        "games": 0,
+        "win_rate": null
+       }
+      }
+     ]
+    }
+   },
+   "qm": {
+    "1": {
+     "games": 47,
+     "win_rate": 36.17021276595745,
+     "mmr_cut": 2659.7,
+     "talents": [
+      {
+       "talent": "NexusHunterFatalWounds",
+       "games": 23,
+       "win_rate": 26.08695652173913,
+       "high_mmr": {
+        "games": 14,
+        "win_rate": 28.57142857142857
+       },
+       "low_mmr": {
+        "games": 9,
+        "win_rate": 22.22222222222222
+       }
+      },
+      {
+       "talent": "NexusHunterCarnageMaximumEffort",
+       "games": 19,
+       "win_rate": 52.63157894736842,
+       "high_mmr": {
+        "games": 8,
+        "win_rate": 37.5
+       },
+       "low_mmr": {
+        "games": 11,
+        "win_rate": 63.63636363636363
+       }
+      },
+      {
+       "talent": "NexusHunterFinishingTouch",
+       "games": 4,
+       "win_rate": 25.0,
+       "high_mmr": {
+        "games": 2,
+        "win_rate": 0.0
+       },
+       "low_mmr": {
+        "games": 2,
+        "win_rate": 50.0
+       }
+      }
+     ]
+    },
+    "4": {
+     "games": 47,
+     "win_rate": 36.17021276595745,
+     "mmr_cut": 2659.7,
+     "talents": [
+      {
+       "talent": "NexusHunterUpstage",
+       "games": 28,
+       "win_rate": 42.857142857142854,
+       "high_mmr": {
+        "games": 14,
+        "win_rate": 42.857142857142854
+       },
+       "low_mmr": {
+        "games": 14,
+        "win_rate": 42.857142857142854
+       }
+      },
+      {
+       "talent": "NexusHunterBloodRageYourPainMyGain",
+       "games": 12,
+       "win_rate": 16.666666666666664,
+       "high_mmr": {
+        "games": 8,
+        "win_rate": 12.5
+       },
+       "low_mmr": {
+        "games": 4,
+        "win_rate": 25.0
+       }
+      },
+      {
+       "talent": "NexusHunterEnsnaringSwing",
+       "games": 6,
+       "win_rate": 50.0,
+       "high_mmr": {
+        "games": 2,
+        "win_rate": 0.0
+       },
+       "low_mmr": {
+        "games": 4,
+        "win_rate": 75.0
+       }
+      }
+     ]
+    },
+    "7": {
+     "games": 47,
+     "win_rate": 36.17021276595745,
+     "mmr_cut": 2659.7,
+     "talents": [
+      {
+       "talent": "NexusHunterBloodRageHealmonger",
+       "games": 27,
+       "win_rate": 29.629629629629626,
+       "high_mmr": {
+        "games": 12,
+        "win_rate": 16.666666666666664
+       },
+       "low_mmr": {
+        "games": 15,
+        "win_rate": 40.0
+       }
+      },
+      {
+       "talent": "NexusHunterTheThirst",
+       "games": 14,
+       "win_rate": 57.14285714285714,
+       "high_mmr": {
+        "games": 9,
+        "win_rate": 55.55555555555556
+       },
+       "low_mmr": {
+        "games": 5,
+        "win_rate": 60.0
+       }
+      },
+      {
+       "talent": "NexusHunterSiphoningLink",
+       "games": 5,
+       "win_rate": 20.0,
+       "high_mmr": {
+        "games": 3,
+        "win_rate": 0.0
+       },
+       "low_mmr": {
+        "games": 2,
+        "win_rate": 50.0
+       }
+      }
+     ]
+    },
+    "10": {
+     "games": 47,
+     "win_rate": 36.17021276595745,
+     "mmr_cut": 2659.7,
+     "talents": [
+      {
+       "talent": "NexusHunterUnrelentingStrikes",
+       "games": 26,
+       "win_rate": 46.15384615384615,
+       "high_mmr": {
+        "games": 11,
+        "win_rate": 27.27272727272727
+       },
+       "low_mmr": {
+        "games": 15,
+        "win_rate": 60.0
+       }
+      },
+      {
+       "talent": "NexusHunterFinalStrike",
+       "games": 20,
+       "win_rate": 25.0,
+       "high_mmr": {
+        "games": 13,
+        "win_rate": 30.76923076923077
+       },
+       "low_mmr": {
+        "games": 7,
+        "win_rate": 14.285714285714285
+       }
+      }
+     ]
+    },
+    "13": {
+     "games": 47,
+     "win_rate": 36.17021276595745,
+     "mmr_cut": 2659.7,
+     "talents": [
+      {
+       "talent": "NexusHunterChainsaw",
+       "games": 27,
+       "win_rate": 44.44444444444444,
+       "high_mmr": {
+        "games": 12,
+        "win_rate": 41.66666666666667
+       },
+       "low_mmr": {
+        "games": 15,
+        "win_rate": 46.666666666666664
+       }
+      },
+      {
+       "talent": "NexusHunterPulsingPain",
+       "games": 9,
+       "win_rate": 33.33333333333333,
+       "high_mmr": {
+        "games": 4,
+        "win_rate": 25.0
+       },
+       "low_mmr": {
+        "games": 5,
+        "win_rate": 40.0
+       }
+      },
+      {
+       "talent": "NexusHunterTheHunted",
+       "games": 9,
+       "win_rate": 22.22222222222222,
+       "high_mmr": {
+        "games": 7,
+        "win_rate": 14.285714285714285
+       },
+       "low_mmr": {
+        "games": 2,
+        "win_rate": 50.0
+       }
+      }
+     ]
+    },
+    "16": {
+     "games": 47,
+     "win_rate": 36.17021276595745,
+     "mmr_cut": 2659.7,
+     "talents": [
+      {
+       "talent": "NexusHunterRevolvingSweepBoomingKick",
+       "games": 19,
+       "win_rate": 26.31578947368421,
+       "high_mmr": {
+        "games": 9,
+        "win_rate": 22.22222222222222
+       },
+       "low_mmr": {
+        "games": 10,
+        "win_rate": 30.0
+       }
+      },
+      {
+       "talent": "NexusHunterRevolvingSweepSwingLifeAway",
+       "games": 15,
+       "win_rate": 46.666666666666664,
+       "high_mmr": {
+        "games": 7,
+        "win_rate": 28.57142857142857
+       },
+       "low_mmr": {
+        "games": 8,
+        "win_rate": 62.5
+       }
+      },
+      {
+       "talent": "NexusHunterRevolvingSweepLingeringAilment",
+       "games": 9,
+       "win_rate": 44.44444444444444,
+       "high_mmr": {
+        "games": 5,
+        "win_rate": 40.0
+       },
+       "low_mmr": {
+        "games": 4,
+        "win_rate": 50.0
+       }
+      }
+     ]
+    },
+    "20": {
+     "games": 47,
+     "win_rate": 36.17021276595745,
+     "mmr_cut": 2659.7,
+     "talents": [
+      {
+       "talent": "NexusHunterUnrelentingStrikesSilentKiller",
+       "games": 14,
+       "win_rate": 57.14285714285714,
+       "high_mmr": {
+        "games": 4,
+        "win_rate": 25.0
+       },
+       "low_mmr": {
+        "games": 10,
+        "win_rate": 70.0
+       }
+      },
+      {
+       "talent": "NexusHunterHuntersVengeanceNoSanctuary",
+       "games": 5,
+       "win_rate": 20.0,
+       "high_mmr": {
+        "games": 4,
+        "win_rate": 25.0
+       },
+       "low_mmr": {
+        "games": 1,
+        "win_rate": 0.0
+       }
+      },
+      {
+       "talent": "NexusHunterGrapplingHookUtilityBelt",
+       "games": 5,
+       "win_rate": 80.0,
+       "high_mmr": {
+        "games": 4,
+        "win_rate": 75.0
+       },
+       "low_mmr": {
+        "games": 1,
+        "win_rate": 100.0
+       }
+      },
+      {
+       "talent": "NexusHunterFinalStrikeUnleashedPotential",
+       "games": 4,
+       "win_rate": 0.0,
+       "high_mmr": {
+        "games": 2,
+        "win_rate": 0.0
+       },
+       "low_mmr": {
+        "games": 2,
+        "win_rate": 0.0
+       }
+      }
+     ]
+    }
+   },
+   "contrast_sl": {
+    "wins": 16,
+    "losses": 29,
+    "length_min": {
+     "when_won": 19.289583333333333,
+     "when_lost": 18.37758620689655
+    },
+    "centre": {
+     "deaths": {
+      "when_won": 5.0,
+      "when_lost": 2.4482758620689653
+     },
+     "outnumbered_deaths": {
+      "when_won": 1.4375,
+      "when_lost": 0.7241379310344828
+     },
+     "time_spent_dead": {
+      "when_won": 193.8125,
+      "when_lost": 81.65517241379311
+     },
+     "hero_damage": {
+      "when_won": 69923.5625,
+      "when_lost": 77342.86206896552
+     },
+     "teamfight_hero_damage": {
+      "when_won": 33744.0,
+      "when_lost": 37553.58620689655
+     },
+     "damage_taken": {
+      "when_won": 34852.4375,
+      "when_lost": 32621.41379310345
+     },
+     "escapes": {
+      "when_won": 0.625,
+      "when_lost": 1.2413793103448276
+     }
+    },
+    "answer": {
+     "kills": {
+      "when_won": 7.4375,
+      "when_lost": 3.586206896551724
+     },
+     "deaths": {
+      "when_won": 4.3125,
+      "when_lost": 6.413793103448276
+     },
+     "hero_damage": {
+      "when_won": 66344.0,
+      "when_lost": 57076.862068965514
+     },
+     "teamfight_hero_damage": {
+      "when_won": 38436.0,
+      "when_lost": 36993.24137931035
+     },
+     "stunning_enemies": {
+      "when_won": 20.875,
+      "when_lost": 18.79310344827586
+     },
+     "rooting_enemies": {
+      "when_won": 0.0,
+      "when_lost": 0.0
+     },
+     "silencing_enemies": {
+      "when_won": 3.125,
+      "when_lost": 2.0
+     },
+     "outnumbered_deaths": {
+      "when_won": 2.3125,
+      "when_lost": 4.413793103448276
+     }
+    }
+   },
+   "contrast_qm": {
+    "wins": 17,
+    "losses": 30,
+    "length_min": {
+     "when_won": 17.784313725490197,
+     "when_lost": 18.453333333333333
+    },
+    "centre": {
+     "deaths": {
+      "when_won": 5.294117647058823,
+      "when_lost": 3.0
+     },
+     "outnumbered_deaths": {
+      "when_won": 2.1176470588235294,
+      "when_lost": 1.0
+     },
+     "time_spent_dead": {
+      "when_won": 187.05882352941177,
+      "when_lost": 105.83333333333333
+     },
+     "hero_damage": {
+      "when_won": 44493.58823529412,
+      "when_lost": 67041.53333333334
+     },
+     "teamfight_hero_damage": {
+      "when_won": 19483.529411764706,
+      "when_lost": 32527.133333333335
+     },
+     "damage_taken": {
+      "when_won": 30503.941176470587,
+      "when_lost": 33956.36666666667
+     },
+     "escapes": {
+      "when_won": 1.0588235294117647,
+      "when_lost": 1.1333333333333333
+     }
+    },
+    "answer": {
+     "kills": {
+      "when_won": 6.764705882352941,
+      "when_lost": 4.2
+     },
+     "deaths": {
+      "when_won": 4.0588235294117645,
+      "when_lost": 6.433333333333334
+     },
+     "hero_damage": {
+      "when_won": 48462.05882352941,
+      "when_lost": 42848.666666666664
+     },
+     "teamfight_hero_damage": {
+      "when_won": 27593.70588235294,
+      "when_lost": 25504.933333333334
+     },
+     "stunning_enemies": {
+      "when_won": 19.529411764705884,
+      "when_lost": 14.9
+     },
+     "rooting_enemies": {
+      "when_won": 0.0,
+      "when_lost": 0.0
+     },
+     "silencing_enemies": {
+      "when_won": 4.411764705882353,
+      "when_lost": 1.2
+     },
+     "outnumbered_deaths": {
+      "when_won": 2.176470588235294,
+      "when_lost": 3.9
+     }
+    }
+   }
+  }
+ }
+}

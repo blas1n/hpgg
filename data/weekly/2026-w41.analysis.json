@@ -1,0 +1,161 @@
+{
+  "week": "2026-w41",
+  "status": "draft",
+  "basis": "sl",
+  "title": {
+    "ko": "핫픽스 뒤에도 열 판 중 아홉 판 밴: 잘아타스는 15분 안에 이기고, 티리엘에게 진다",
+    "en": "Still banned nine games in ten after the hotfix: Xal'atath wins inside 15 minutes and loses to Tyrael"
+  },
+  "paragraphs": {
+    "ko": [
+      "이번 주(10/5~10/11) 폭풍 리그 표본 5,712판의 중심도 잘아타스다. 10/5 핫픽스로 너프됐지만 89.9%(5,137판)에서 밴됐고, 밴은 거의 모두 첫 밴 단계에서 나왔다(89.5%). 게임의 첫 밴은 언제나 첫 픽을 가진 팀이 하는데, 그 첫 밴으로 가장 많이 지워진 영웅도 잘아타스다(1,266판, 다음은 키히라 1,003판). 밴은 양쪽이 다 쓴다. 첫 픽 팀이 2,236판, 상대 팀이 2,901판에서 그녀를 밴했다. 밴을 피한 575판 중 455판(79%)에서 누군가 그녀를 골랐고, 그중 350판은 게임의 첫 픽이었다. 고르면 58.2%(455판)를 이긴다. 첫 픽으로 골랐을 때(58.6%, 350판)와 나중에 골랐을 때(57.1%, 105판)의 차이는 오차 범위 안이다.",
+      "한 판의 밴은 여섯 칸이고, 그녀가 그중 한 칸을 가져가면 나머지 밴도 달라진다. 그녀가 밴된 5,137판을 열린 575판과 비교하면 요한나 밴은 60.9%에서 54.5%로, 빛나래 밴은 36.2%에서 30.1%로 줄고, 키히라 밴은 54.3%에서 63.6%로 오히려 늘어난다. 셋 다 오차 범위(약 4%p) 밖의 차이다. 잘아타스와 키히라는 같이 지워지고, 그 대가로 요한나와 빛나래가 풀려난다.",
+      "잘아타스가 있는 판은 짧게 끝날수록 그녀 편이다. 15분 안에 끝난 113판에서 그녀는 70.8%를 이겼고, 15~20분 판(193판)에서는 53.9%, 20분이 넘은 판(149판)에서는 54.4%였다. 짧은 판과 나머지의 차이 16.7%p는 오차(10.7%p)를 넘고, 이번 주 300판 이상 나온 영웅 72명 중 두 번째로 크다(72명의 중앙값은 0에 가깝다). 강한 영웅이면 다 그런 것도 아니다. 승률 54% 이상인 다른 영웅 10명은 이 차이가 -2.8~+9.7%p다. 그녀가 15분 안에 이긴 판에서 그녀 팀은 10분에 평균 1.7레벨 앞섰고, 15분 안에 진 판에서는 1.8레벨 뒤졌다. 모든 판의 10분 평균 레벨 차는 +0.1로, 초반을 늘 가져가는 영웅은 아니다. 잘아타스 팀은 10분에 앞서서 일찍 끝내고 싶고, 상대는 15분을 넘기고 싶다.",
+      "10/5 핫픽스(2.57.0.98348)는 잘아타스를 직접 고쳤다. 공지의 주요 내용: 공허 걸음의 대상 지정 사거리 5→2, 순간이동 지점 사이 거리 7→6.5, 그리고 이제 속박에 막히고 끊긴다. 공허 화살 투사체 피해 90→72. 1레벨 고정 핵의 반경 보너스 50%→25%. 4레벨 검은 방벽은 적 영웅을 맞힐 때만 발동한다. 13레벨 검은 심장의 가호는 시전 시 침묵 대신, 그림자 표식이 찍힌 대상에게 검은 심장이 터질 때 맞은 적을 침묵시킨다. 게임 데이터에는 공지에 없는 변경(공지 외 변경)도 있다. 검은 심장의 의식 반경 4→3, 검은 심장의 의식 때 자신이 드러나는 시간 0.125→1.1초, 20레벨 불안정한 핵 반경 4→3이다. 공지는 공허 폭발 피해를 20%/5% 줄였다고 적었지만, 데이터에서 바뀐 것은 20레벨 전령의 소모의 분열 보주 피해(400→320 … 700→665)뿐이고 공허 폭발의 기본 폭발 피해는 400~700 그대로다.",
+      "핫픽스 뒤 밴은 95.0%(797판)에서 89.1%(4,915판)로 줄고, 픽은 4.4%에서 8.5%로 늘었다. 둘 다 오차(2.3%p, 2.1%p) 밖이다. 핫픽스 뒤 나온 420판의 승률은 58.1%다. 핫픽스 전 픽은 35판뿐이라 승률과 빌드의 전후 비교는 하지 않는다. 너프된 고정 핵은 핫픽스 뒤에도 1레벨에서 80.7%(339판)가 고르고 61.1%를 이긴다. 같은 레벨 공허의 달인(그림자 표식이 찍힌 대상에게 검은 심장을 터뜨릴 때마다 피해가 쌓이는 퀘스트)은 51판에서 39.2%로 21.8%p 낮다. 오차(14.8%p) 밖이고, 두 쪽 잘아타스 플레이어의 MMR 중앙값은 2,733과 2,726으로 같아 실력 차로 보기 어렵다. 핫픽스는 속박이 공허 걸음을 끊게 만들었지만, 속박을 건 팀 상대 승률(56.4%, 211판)과 그렇지 않은 팀 상대(59.8%, 209판)의 차이는 오차(9.6%p) 안이다. 기절, 침묵이 많은 팀 상대도 마찬가지다.",
+      "상대는 그녀 다음에 무엇을 고르나. 가장 많이 고르는 영웅은 리밍이다. 잘아타스가 나온 판의 14.1%(64판)에서 상대가 그녀 뒤에 리밍을 골랐다. 다른 판에서 한 팀이 리밍을 고르는 비율은 10.9%다. 리밍은 그녀의 피해를 줄인다. 리밍을 만난 66판에서 잘아타스의 분당 영웅 피해는 3,282로 다른 판(3,936)보다 17% 낮고, 게임 길이는 18.0분 대 18.4분으로 같다. 그래도 판은 못 뒤집는다. 리밍 상대 잘아타스 승률 60.6%(66판)는 다른 판(57.8%)과 오차(13.1%p) 안이다. 키히라(45판, 잘아타스 64.4%)와 아눕아락(37판, 59.5%)도 그녀 뒤에 자주 나오지만 승률을 끌어내리지 못했다.",
+      "데이터로 그녀를 이긴 영웅은 티리엘이다. 티리엘을 만난 51판에서 잘아타스는 39.2%만 이겼고, 다른 404판에서는 60.6%다(차이 21.4%p, 오차 14.7%p). Heroes Profile 집계(10/8~10/12)에서도 티리엘 상대 잘아타스 승률은 50.4%(143판)로 평소보다 9.4%p 낮아, 지난주(59.2%, 142판)에 이어 2주 연속이다. 티리엘이 이긴 31판과 진 20판을 비교하면, 이긴 판에서 잘아타스는 4.4회 죽었고(진 판 2.8회), 티리엘은 3.9킬(2.4킬)을 하면서 수적 열세에서 1.6회만 죽었다(2.6회). 티리엘이 이긴 판은 그녀를 잡은 판이다. 기술로 보면 엘드루인의 힘(Q, 12초)은 5초 안에 다시 쓰면 던진 검으로 순간이동하고, 심판(R)은 0.75초 뒤 대상 영웅에게 돌진해 1.5초 기절시킨다. 공허 걸음(15초)으로 빠져도 다시 붙을 수단이 둘 있다. 51판 중 46판이 10레벨에 심판을, 34판이 16레벨에 법의 구속력을, 29판이 20레벨에 정의의 천사(심판 사거리 +50%, 재사용 대기시간 -40초)를 골랐다. 빌드끼리, 판 MMR 상하위끼리 나누면 30판이 안 돼 어느 빌드가 누구 손에서 이기는지는 아직 말할 수 없다.",
+      "잘아타스를 할 때는 1레벨 고정 핵이다(핫픽스 뒤 61.1%, 339판). 공허의 달인(39.2%, 51판)은 검은 심장을 표식 대상에게 터뜨릴 때마다 피해가 쌓이는 퀘스트라 늦게 완성되는데, 그녀는 15분 안에 끝나는 판에서 가장 많이 이긴다(70.8%). 10분에 레벨을 앞서 일찍 끝내는 것이 그녀의 승리 패턴이다. 상대할 때는 티리엘을 고를 수 있으면 고른다(잘아타스 39.2%, 51판). 이긴 티리엘은 수적 열세에서 덜 죽었으니(1.6회 대 2.6회) 혼자 들어가지 말고, 팀이 붙을 때 엘드루인의 힘 순간이동과 심판을 그녀에게 쓴다. 리밍은 피해를 깎아도 판을 뒤집지 못했으니 답으로 믿지 않는다. 그리고 초반 레벨을 내주지 말고 15분을 넘긴다. 15분이 넘은 342판에서 그녀의 승률은 54.1%다.",
+      "아직 모르는 것. 티리엘의 어떤 빌드가 어느 MMR에서 이기는지는 51판으로 가를 수 없다. 리밍이 피해를 깎고도 지는 이유도 이 데이터로는 설명되지 않는다. Heroes Profile 집계에서 티리엘과 함께 의미 있게 버틴 스랄(135판, 잘아타스 51.1%)은 리플레이 표본(40판, 잘아타스 57.5%)에서는 차이가 없었다. 다음 주 티리엘 판이 쌓이면 빌드와 MMR을 다시 본다."
+    ],
+    "en": [
+      "This week (10/5–10/11) the centre of the 5,712 Storm League games in the sample is Xal'atath again. The 10/5 hotfix nerfed her, yet she was banned in 89.9% of games (5,137), almost always in the first ban phase (89.5%). The first ban of a game always belongs to the team with the first pick, and she is the hero that first ban removes most (1,266 games; next is Qhira, 1,003). Both sides spend bans on her: the first-pick team banned her in 2,236 games, the other team in 2,901. Of the 575 games she got through, someone picked her in 455 (79%), 350 of them as the game's first pick. When picked she wins 58.2% (455 games). Taken first (58.6%, 350 games) or later (57.1%, 105 games) is within the margin.",
+      "A game has six bans, and when she takes one the others move. In the 5,137 games she was banned against the 575 she was not, Johanna's ban drops from 60.9% to 54.5% and Brightwing's from 36.2% to 30.1%, while Qhira's rises from 54.3% to 63.6%. All three are outside the margin (about 4 points). Xal'atath and Qhira go out together, and Johanna and Brightwing are let through.",
+      "The shorter her game, the more it is hers. In the 113 games over within 15 minutes she won 70.8%; at 15–20 minutes (193 games) 53.9%; past 20 minutes (149 games) 54.4%. The 16.7-point gap between short games and the rest exceeds the margin (10.7) and is the second largest of the 72 heroes with 300+ games this week (their median is near zero). Strong heroes do not all show it: for the ten other heroes winning 54% or more the gap is -2.8 to +9.7 points. In the short games she won, her team was 1.7 levels ahead at 10 minutes on average; in the short games she lost, 1.8 behind. Across all her games the lead at 10 minutes is +0.1, so she does not always own the early game. Her team wants to be ahead at 10 and end early; her opponents want to get past 15 minutes.",
+      "The 10/5 hotfix (2.57.0.98348) changed her directly. The main points of the notes: Void Step's targeting range 5→2, the distance between teleport points 7→6.5, and it is now prevented and interrupted by Immobilize. Void Volley's damage per missile 90→72. Anchored Core (level 1) radius bonus 50%→25%. Dark Barrier (level 4) only triggers on enemy Heroes. Dark Heart's Protection (level 13) no longer silences on cast; detonating the Dark Heart on a Shadow Mark target silences the enemies hit. The game data has changes the notes leave out (not in the notes): Dark Heart Ritual radius 4→3, how long she reveals herself on Dark Heart Ritual 0.125→1.1 seconds, and Unstable Core (level 20) radius 4→3. The notes list Void Eruption damage -20%/-5%, but in the data only the split orbs of the level-20 talent Harbinger's Consumption changed (400→320 … 700→665); Void Eruption's base explosion is still 400–700.",
+      "After the hotfix her ban fell from 95.0% (797 games) to 89.1% (4,915) and her pick rose from 4.4% to 8.5%, both outside the margin (2.3 and 2.1 points). In the 420 games she was picked after it she won 58.1%. Before it she was picked in only 35 games, so win rates and builds are not compared across it. The nerfed Anchored Core is still taken at level 1 in 80.7% of games after the hotfix (339) and wins 61.1%. Void Adept at the same level (a quest that adds damage each time the Dark Heart detonates on a Shadow Mark target) wins 39.2% in 51 games, 21.8 points lower. That is outside the margin (14.8), and the median MMR of her players is the same on both sides (2,733 and 2,726), so skill does not explain it. The hotfix made Immobilize interrupt Void Step, but her win rate against teams that rooted (56.4%, 211 games) and teams that did not (59.8%, 209) is within the margin (9.6). The same holds for teams with more stuns or silences.",
+      "What do players draft into her? Li-Ming most of all: the other team picked Li-Ming after her in 14.1% of her games (64); in other games one team picks Li-Ming 10.9% of the time. Li-Ming cuts her damage: in the 66 games against Li-Ming, Xal'atath dealt 3,282 hero damage per minute, 17% below her other games (3,936), at the same length (18.0 against 18.4 minutes). It does not turn the game: her win rate against Li-Ming, 60.6% (66 games), is within the margin (13.1) of the rest (57.8%). Qhira (45 games, Xal'atath 64.4%) and Anub'arak (37 games, 59.5%) also come after her often and do not bring her down.",
+      "The hero that beats her in the data is Tyrael. In the 51 games against Tyrael she won only 39.2%, against 60.6% in the other 404 (a 21.4-point gap; margin 14.7). Heroes Profile's aggregate (10/8–10/12) agrees: 50.4% over 143 games, 9.4 points under her usual, the second week running after last week's 59.2% (142 games). Comparing Tyrael's 31 wins and 20 losses: in his wins she died 4.4 times (2.8 in his losses), and Tyrael got 3.9 kills (2.4) while dying outnumbered only 1.6 times (2.6). Tyrael wins the games in which he catches her. By the kit, El'druin's Might (Q, 12 seconds), recast within 5 seconds, teleports him to the thrown sword, and Judgment (R) charges a target hero after 0.75 seconds and stuns for 1.5 seconds: two ways back in after Void Step (15 seconds). Of the 51, 46 took Judgment at 10, 34 Bound by Law at 16 and 29 Angel of Justice at 20 (Judgment +50% range, -40 seconds cooldown). Split by build or by high and low game MMR the groups fall under 30 games, so which build wins in whose hands cannot be said yet.",
+      "Playing her: take Anchored Core at level 1 (61.1% after the hotfix, 339 games). Void Adept (39.2%, 51 games) is a quest that grows with each detonation on a marked target, so it pays late, and she wins most in games over within 15 minutes (70.8%). Being ahead at 10 minutes and ending early is how she wins. Against her: take Tyrael when you can (Xal'atath 39.2%, 51 games). The Tyraels who won died outnumbered less (1.6 against 2.6), so do not go in alone; use El'druin's Might's teleport and Judgment on her when the team commits. Li-Ming cut her damage but did not turn the game, so do not count on it as the answer. And do not give up early levels; get past 15 minutes, where she wins 54.1% (342 games).",
+      "What we don't know yet. Which Tyrael build wins at which MMR cannot be settled on 51 games. Why Li-Ming cuts her damage and still loses is not explained by this data. Thrall, who held her down with Tyrael in Heroes Profile's aggregate (135 games, Xal'atath 51.1%), shows no gap in the replay sample (40 games, Xal'atath 57.5%). Next week, with more Tyrael games, we look at his builds and MMR again."
+    ]
+  },
+  "notes": {
+    "ko": "기준: 폭풍 리그, 2026-10-05(월)~10-11(일) KST, Heroes Profile 리플레이 일일 표본 5,712판(유럽 3,688, 북미 1,792, 한국 232). 핫픽스 2.57.0.98348 전 797판, 후 4,915판. 차이는 30판 이상이고 두 비율의 차가 2×√(p(1−p)/n₁+p(1−p)/n₂)를 넘을 때만 쓴다. 그 밖은 차이로 쓰지 않는다. 기술로 설명한 부분은 해석이다. 출처: Heroes Profile 리플레이·통계(10/8~10/12 집계), 블리자드 패치 노트, 게임 데이터.",
+    "en": "Basis: Storm League, 2026-10-05 (Mon) to 10-11 (Sun) KST, 5,712 games from Heroes Profile's daily replay sample (Europe 3,688, North America 1,792, Korea 232). Hotfix 2.57.0.98348: 797 games before, 4,915 after. A difference is stated only on 30+ games and when the gap between two rates exceeds 2×√(p(1−p)/n₁+p(1−p)/n₂); nothing else is stated as a difference. Explanations from the kit are interpretation. Sources: Heroes Profile replays and stats (aggregate 10/8–10/12), Blizzard's patch notes, game data."
+  },
+  "cards": [
+    {
+      "type": "cover",
+      "section": "주간 메타 · 2026-w41",
+      "tag": "10/5 핫픽스 주간",
+      "title": "핫픽스 뒤에도\n<em>잘아타스</em>",
+      "lede": "열 판 중 아홉 판 밴. 15분 안에 끝나면 70.8%를 이기고, 티리엘을 만나면 39.2%만 이긴다.",
+      "foot": "폭풍 리그 5,712판 · 10/5~10/11"
+    },
+    {
+      "type": "stat",
+      "section": "드래프트",
+      "big": "89.9",
+      "unit": "%",
+      "title": "핫픽스 주간에도 <em>밴</em>",
+      "lede": "5,137판에서 밴. 밴을 피한 575판 중 455판에서 누군가 골랐고, 350판은 게임 첫 픽이었다. 고르면 58.2%를 이긴다.",
+      "foot": "폭풍 리그 5,712판 · 잘아타스 픽 455판"
+    },
+    {
+      "type": "bars",
+      "section": "게임 양상",
+      "title": "<em>15분</em> 안에 끝나야\n그녀 편",
+      "bars": [
+        {
+          "name": "15분 이하",
+          "value": 70.8,
+          "hl": true
+        },
+        {
+          "name": "15~20분",
+          "value": 53.9
+        },
+        {
+          "name": "20분 초과",
+          "value": 54.4
+        }
+      ],
+      "foot": "잘아타스 승률 · 113 / 193 / 149판"
+    },
+    {
+      "type": "compare",
+      "section": "10/5 핫픽스",
+      "title": "밴은 줄고 픽은 늘었다",
+      "boxes": [
+        {
+          "k": "밴률 (%)",
+          "from": "95.0",
+          "to": "89.1",
+          "s": "797 → 4,915판",
+          "dir": "down"
+        },
+        {
+          "k": "픽률 (%)",
+          "from": "4.4",
+          "to": "8.5",
+          "s": "35 → 420판",
+          "dir": "up"
+        },
+        {
+          "k": "핫픽스 뒤 승률",
+          "to": "58.1%",
+          "s": "420판"
+        },
+        {
+          "k": "고정 핵 (1레벨)",
+          "to": "61.1%",
+          "s": "339판 · 공허의 달인 39.2%"
+        }
+      ],
+      "note": "고정 핵은 반경 보너스가 50%→25%로 줄었어도 80.7%가 고른다. 핫픽스 전 픽은 35판뿐이라 승률 전후 비교는 하지 않는다.",
+      "foot": "폭풍 리그 · 핫픽스 전 797판 / 후 4,915판"
+    },
+    {
+      "type": "compare",
+      "section": "상대 픽",
+      "title": "답은 <em>티리엘</em>,\n리밍은 아니다",
+      "boxes": [
+        {
+          "k": "티리엘 상대",
+          "to": "39.2%",
+          "s": "잘아타스 승률 · 51판"
+        },
+        {
+          "k": "리밍 상대",
+          "to": "60.6%",
+          "s": "잘아타스 승률 · 66판"
+        }
+      ],
+      "note": "티리엘이 이긴 판에서 잘아타스는 4.4회 죽었다(진 판 2.8회). 리밍은 그녀의 분당 영웅 피해를 17% 깎았지만 승률은 다른 판(57.8%)과 오차 안이다.",
+      "foot": "잘아타스 픽 455판 · 티리엘 51판 · 리밍 66판"
+    },
+    {
+      "type": "list",
+      "section": "플레이",
+      "title": "이렇게 한다",
+      "items": [
+        {
+          "text": "1레벨은 고정 핵: 61.1% 대 공허의 달인 39.2%",
+          "chip": "잘아타스"
+        },
+        {
+          "text": "티리엘로 엘드루인의 힘과 심판을 그녀에게",
+          "chip": "상대"
+        },
+        {
+          "text": "혼자 잡히지 않는다: 이긴 티리엘의 수적 열세 사망 1.6회 대 2.6회",
+          "chip": "상대"
+        },
+        {
+          "text": "초반 레벨을 지키고 15분을 넘긴다: 그 뒤 그녀는 54.1%",
+          "chip": "상대"
+        }
+      ],
+      "note": "고정 핵 339판, 공허의 달인 51판(핫픽스 뒤). 티리엘의 빌드별·MMR별 차이는 30판 미만이라 아직 모른다.",
+      "foot": "폭풍 리그 · 핫픽스 뒤 339판 / 티리엘 51판"
+    },
+    {
+      "type": "closing",
+      "section": "마무리",
+      "title": "전체 분석은\n<em>hpgg.win</em>에서",
+      "lede": "티리엘로 잘아타스를 잡아 본 경험, 다르게 본 점이 있으면 댓글로 알려 주세요.",
+      "foot": "주간 메타 2026-w41"
+    }
+  ]
+}
