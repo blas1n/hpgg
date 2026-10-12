@@ -112,7 +112,8 @@ jobs:
     # The one job holding DATA_DEPLOY_KEY (main takes no direct push, ruleset `main` 2026-10-01; deploy keys are its
     # bypass, and a push to main is deployed on the Mac mini). Only GitHub's own actions and git run here — no
     # package installs, nothing third-party — so nothing else ever sees the key.
-    if: needs.collect.result == 'success'
+    # always(): a plain manual dispatch skips `gate`, and without it publish was skipped too (2026-10-12)
+    if: always() && needs.collect.result == 'success'
     runs-on: ubuntu-latest
     permissions:
       contents: read
