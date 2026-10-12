@@ -201,6 +201,38 @@ test("hero detail: counters and synergies from the matchups file, with numbers, 
   await expect(page.locator("h1")).toHaveText("키히라");
 });
 
+test("hero detail: Storm League win rate by game length, with the sample and a lean only beyond the error", async ({ page }) => {
+  // e2e-data/latest/sl_length.json (collector/hero_length.py): Abathur 38.0% / 50.0% / 55.0%, leaning late
+  await page.goto("./heroes/abathur/");
+  await expect(page.locator("#length-title")).toContainText("폭풍 리그");
+  await expect(page.locator("#length-lean")).toHaveText("후반에 강함");
+  const rows = page.locator("#length [data-band]");
+  await expect(rows).toHaveCount(3);
+  await expect(rows.nth(0)).toContainText("15분 이하");
+  await expect(rows.nth(0)).toContainText("38.0%");
+  await expect(rows.nth(0)).toContainText("150게임");
+  await expect(rows.nth(2)).toContainText("20분 초과");
+  await expect(rows.nth(2)).toContainText("55.0%");
+  await expect(page.locator("#length-sub")).toContainText("4,185게임");
+  await expect(page.locator("#length-rule")).toContainText("30게임 미만");
+  await expect(page.locator("nav[data-subnav] a[href='#length-title']")).toBeVisible();
+});
+
+test("hero detail: a thin game-length band shows no rate, and no lean is claimed", async ({ page }) => {
+  await page.goto("./heroes/alarak/");
+  const short = page.locator("#length [data-band='short']");
+  await expect(short).toContainText("12게임");
+  await expect(short).not.toContainText("%");
+  await expect(page.locator("#length-lean")).toHaveCount(0);
+});
+
+test("hero detail: no game-length section for a hero the sample does not have", async ({ page }) => {
+  await page.goto("./heroes/illidan/");
+  await expect(page.locator("h1")).toHaveText("일리단");
+  await expect(page.locator("#length-title")).toHaveCount(0);
+  await expect(page.locator("nav[data-subnav] a[href='#length-title']")).toHaveCount(0);
+});
+
 test("hero detail: no matchups file yet says so instead of an empty list", async ({ page }) => {
   await page.goto("./heroes/illidan/");
   await expect(page.locator("#matchups")).toContainText("다음 정기 수집");

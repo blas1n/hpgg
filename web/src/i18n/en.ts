@@ -206,7 +206,7 @@ The same data gives different tiers under a different formula. This site always 
     none: "No hero matches",
   },
   hero: {
-    sections: { top: "Summary", maps: "Maps", grid: "Region × bracket", matchups: "Matchups", builds: "Talent builds", patches: "Patches", comments: "Comments" },
+    sections: { top: "Summary", maps: "Maps", grid: "Region × bracket", matchups: "Matchups", length: "Game length", builds: "Talent builds", patches: "Patches", comments: "Comments" },
     sectionNav: "Sections",
     mapsTitle: (mode: string) => `Win rate per battleground (${mode})`,
     gridTitle: (mode: string) => `Region × bracket (${mode})`,
@@ -230,6 +230,12 @@ The same data gives different tiers under a different formula. This site always 
     matchupsSub: (patch: string, date: string, hero: string, wr: string, games: string) =>
       `patch ${patch} · collected ${date} · against ${hero}'s win rate of ${wr} (${plural(games, "game", "games")})`,
     matchupsLater: "Matchups appear after the next scheduled collection (Storm League, every other day)",
+    lengthTitle: (mode: string) => `Win rate by game length (${mode})`,
+    lengthSub: (patch: string, since: string | null, games: string) => `Patch ${patch}${since ? ` · since the ${since} hotfix` : ""} · ${games} sampled replays`,
+    lengthBands: { short: "15 min or less", mid: "15–20 min", long: "over 20 min" },
+    lengthLean: { early: "Strong early", late: "Strong late" },
+    lengthGames: (games: string) => plural(games, "game", "games"),
+    lengthRule: (min: string) => `Bands under ${min} games show no win rate. "Strong early/late" appears only when the win rates at 15 min or less and over 20 min differ beyond the margin of error (95%).`,
     patchesTitle: "Patch changes",
     patchesSub: "Blizzard's official patch notes · game data",
     patchVerdict: { buff: "Buff", nerf: "Nerf", mixed: "Mixed" },

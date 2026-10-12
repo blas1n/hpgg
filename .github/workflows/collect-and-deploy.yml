@@ -67,6 +67,16 @@ jobs:
           persist-credentials: false
       - uses: astral-sh/setup-uv@d4b2f3b6ecc6e67c4457f6d3e41ec42d3d0fcb86 # v5
       - run: uv sync --frozen --no-dev
+      # 게임 시간대별 승률 (collector/hero_length.py) counts every archived day of the patch's window:
+      # the Storm League records only (blobs fetched one file at a time), into Settings.replay_archive_dir
+      - name: Check out the archived Storm League records (snapshots branch, read only)
+        run: |
+          git fetch --depth=1 --filter=blob:none https://github.com/${{ github.repository }}.git snapshots
+          for f in $(git ls-tree -r --name-only FETCH_HEAD snapshots | grep '/replays_sl\.jsonl\.gz$'); do
+            mkdir -p "data/.snapshots/$(dirname "$f")"
+            git show "FETCH_HEAD:$f" > "data/.snapshots/$f"
+          done
+          ls data/.snapshots/snapshots | wc -l
       - name: Collect (QM, SL, 브실골플, 다마그 × KR/NA/EU + solo twins = 24 stats calls, ~25 min at 1 req/min; 1 builds call; then Storm League matchups for heroes due, every other day)
         id: run
         env:

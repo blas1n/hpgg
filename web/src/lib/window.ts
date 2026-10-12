@@ -14,7 +14,7 @@ export interface WindowNote {
   build: string;
 }
 
-const kstDay = (iso: string): string => {
+export const kstDay = (iso: string): string => {
   const d = new Date(Date.parse(iso) + 9 * 3600 * 1000);
   return `${d.getUTCMonth() + 1}/${d.getUTCDate()}`;
 };

@@ -30,6 +30,10 @@ class Settings(BaseSettings):
     replay_lookback_ids: int = 5000
     replay_minutes: float = 35.0
     replay_call_spacing_seconds: float = 1.05
+    # every archived day's records (the snapshots branch, checked out here by the workflow) for
+    # 게임 시간대별 승률 (collector/hero_length.py); absent on a local run: only the day's
+    # games count
+    replay_archive_dir: Path = Path("data/.snapshots/snapshots")
     # /heroes/matchups without group_by_map allows 60 requests/minute (measured 2026-09-29)
     matchups_call_spacing_seconds: float = 2.0
     # a matchups round stops starting new calls after this long (cache misses poll); the rest
