@@ -80,3 +80,17 @@ def test_publish_runs_after_a_plain_manual_dispatch() -> None:
     jobs = _jobs(Path(__file__).parent.parent / ".github/workflows/collect-and-deploy.yml")
     cond = jobs["publish"].get("if", "")
     assert "always()" in cond and "needs.collect.result == 'success'" in cond
+
+
+def test_the_collect_job_reads_the_archived_storm_league_records_before_collecting() -> None:
+    """게임 시간대별 승률 (collector/hero_length.py) counts every archived day of the window: the
+    collect job checks the snapshots branch's Storm League records out where the collector looks
+    (Settings.replay_archive_dir), read only, before the collection runs."""
+    jobs = _jobs(Path(__file__).parent.parent / ".github/workflows/collect-and-deploy.yml")
+    steps = jobs["collect"]["steps"]
+    runs = [s.get("run", "") for s in steps]
+    fetch = next(i for i, r in enumerate(runs) if "git fetch" in r and " snapshots" in r)
+    collect = next(i for i, r in enumerate(runs) if "python -m collector" in r)
+    assert fetch < collect
+    assert "data/.snapshots/snapshots" in runs[fetch] and "replays_sl" in runs[fetch]
+    assert "push" not in runs[fetch]

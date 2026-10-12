@@ -18,6 +18,7 @@ from collector.averages import collect_averages, due
 from collector.carry_baselines import update_baselines
 from collector.client import HPClient, HPError, SleepFn
 from collector.config import Settings
+from collector.hero_length import length_rates, load_archive
 from collector.matchups import collect_matchups, load_hero_list
 from collector.models import JobSpec
 from collector.party import apply_party_correction
@@ -544,6 +545,19 @@ async def _run_replays(
     log.info("replays.done", **{k: len(v) for k, v in out.records.items()})
 
 
+def _run_length(settings: Settings, *, patch: str, since: str | None, collected_at: str) -> None:
+    """게임 시간대별 승률 (collector/hero_length.py) from every archived day and today's sample.
+    Written after the swap of data/latest, every run; a failure never fails the run."""
+    try:
+        games = load_archive([settings.replay_archive_dir, settings.snapshot_out_dir])
+        out = length_rates(games, patch=patch, since=since, collected_at=collected_at)
+        path = settings.data_dir / "latest" / "sl_length.json"
+        path.write_text(json.dumps(out, ensure_ascii=False), encoding="utf-8")
+        log.info("length.done", patch=patch, since=since, games=out["games"])
+    except Exception as e:  # noqa: BLE001 — supplementary numbers never fail the daily run
+        log.warning("length.failed", error=f"{type(e).__name__}: {e}")
+
+
 async def _run_stats(
     c: HPClient,
     settings: Settings,
@@ -649,6 +663,9 @@ async def _run_stats(
     )
     await _run_replays(
         c, settings, patch=meta["reference_patch"], collected_at=collected_at, sleep=sleep
+    )
+    _run_length(
+        settings, patch=meta["reference_patch"], since=window["since"], collected_at=collected_at
     )
     if builds_result is not None:
         day_dir_b = settings.snapshot_out_dir / snapshot_day(collected_at)
