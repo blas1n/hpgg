@@ -26,36 +26,12 @@
     "win_rate": 51.87
    },
    {
-    "mode": "ud",
-    "mmr": 2890,
-    "tier": "Master",
-    "wins": 96,
-    "losses": 65,
-    "win_rate": 59.63
-   },
-   {
     "mode": "ar",
     "mmr": 2802,
     "tier": "Diamond 5",
     "wins": 853,
     "losses": 773,
     "win_rate": 52.46
-   },
-   {
-    "mode": "hl",
-    "mmr": 2859,
-    "tier": "Master",
-    "wins": 568,
-    "losses": 506,
-    "win_rate": 52.89
-   },
-   {
-    "mode": "tl",
-    "mmr": 2928,
-    "tier": "Diamond 1",
-    "wins": 39,
-    "losses": 31,
-    "win_rate": 55.71
    }
   ],
   "roles": [

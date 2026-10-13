@@ -26,7 +26,9 @@ def test_career_totals() -> None:
 def test_modes_carry_mmr_and_league_in_a_fixed_order() -> None:
     p = normalize_player(_raw(), battletag="Zemill#1940", region="NA")
     modes = {m["mode"]: m for m in p["modes"]}
-    assert [m["mode"] for m in p["modes"]] == ["sl", "qm", "ud", "ar", "hl", "tl"]
+    # Unranked Draft, Hero League and Team League are gone from the game: their old games are
+    # hidden too (owner 2026-10-14), the recorded profile has all six
+    assert [m["mode"] for m in p["modes"]] == ["sl", "qm", "ar"]
     assert modes["sl"] == {
         "mode": "sl",
         "mmr": 2908,
@@ -40,10 +42,10 @@ def test_modes_carry_mmr_and_league_in_a_fixed_order() -> None:
 
 def test_modes_without_games_are_dropped() -> None:
     raw = _raw()
-    raw["tl_mmr_data"] = {"win": 0, "loss": 0, "mmr": 0, "rank_tier": None, "win_rate": 0}
-    raw["hl_mmr_data"] = None
+    raw["ar_mmr_data"] = {"win": 0, "loss": 0, "mmr": 0, "rank_tier": None, "win_rate": 0}
+    raw["qm_mmr_data"] = None
     p = normalize_player(raw, battletag="A#1", region="KR")
-    assert [m["mode"] for m in p["modes"]] == ["sl", "qm", "ud", "ar"]
+    assert [m["mode"] for m in p["modes"]] == ["sl"]
 
 
 def test_roles_heroes_maps() -> None:

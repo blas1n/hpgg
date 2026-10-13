@@ -9,7 +9,9 @@ from __future__ import annotations
 from typing import Any
 
 # Storm League first (what most searches are about), then the rest by how often they're played.
-MODE_ORDER = ("sl", "qm", "ud", "ar", "hl", "tl")
+# Unranked Draft, Hero League and Team League are gone from the game: a player's old games there
+# are not shown either (owner 2026-10-14).
+MODE_ORDER = ("sl", "qm", "ar")
 ROLE_FIELDS = {
     "Tank": "tank_win_rate",
     "Bruiser": "bruiser_win_rate",
