@@ -218,9 +218,26 @@ describe("playerView", () => {
     expect(w.maps[0]!.name).toBe("New Map");
     expect(w.matches[0]).toMatchObject({ hero: "–", map: "–", mode: "–", when: "" });
     expect(w.modes[0]).toMatchObject({ tier: null, tierKey: null });
+    expect(w.rank).toMatchObject({ mode: "sl", tier: null, mmr: null }); // shown as 배치 전
     expect(w.stale).toBe(true);
     expect(w.notice).toBe("quota_exceeded");
     expect(w.fetchedLabel).toMatch(/^09\/29 \d\d:\d\d 기준$/);
+  });
+});
+
+describe("playerView rank (the headline tier over the MMR, like LoL search sites; owner 2026-10-14)", () => {
+  const now = new Date("2026-09-30T06:00:00Z");
+  it("is the Storm League tier and MMR", () => {
+    const v = playerView(zemill, heroes, maps, "ko", now);
+    expect(v.rank).toMatchObject({ mode: "sl", label: "폭풍 리그", tier: "다이아몬드 2", tierKey: "diamond", mmr: 2908 });
+  });
+  it("without Storm League games, the first mode the profile lists", () => {
+    const qmOnly = { ...zemill, player: { ...zemill.player, modes: zemill.player.modes.filter((m) => m.mode !== "sl") } };
+    expect(playerView(qmOnly, heroes, maps, "ko", now).rank).toMatchObject({ mode: "qm", tier: "마스터" });
+  });
+  it("is null with no rated mode at all", () => {
+    const none = { ...zemill, player: { ...zemill.player, modes: [] } };
+    expect(playerView(none, heroes, maps, "ko", now).rank).toBeNull();
   });
 });
 
