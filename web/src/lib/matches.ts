@@ -41,20 +41,11 @@ export interface MatchRow {
   time_cc: number | null;
   merc_camps: number | null;
   /** 영웅별 주요 스탯's candidates (lib/identity.ts); absent in answers from before 2026-10-13 */
-  creep_damage?: number | null;
-  summon_damage?: number | null;
   shields?: number | null;
   clutch_heals?: number | null;
   stuns?: number | null;
   roots?: number | null;
   silences?: number | null;
-  escapes?: number | null;
-  teamfight_escapes?: number | null;
-  multikill?: number | null;
-  towers?: number | null;
-  regen_globes?: number | null;
-  time_on_fire?: number | null;
-  town_kills?: number | null;
   first_to_ten: boolean | null;
   /** the game's award key (data/awards.json); absent in answers from before awards were sent */
   award?: string | null;

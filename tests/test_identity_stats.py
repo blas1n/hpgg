@@ -58,18 +58,36 @@ def test_a_hero_far_above_everyone_on_a_stat_gets_it_with_its_per_game_average()
 
 def test_at_most_three_and_none_under_one_and_a_half_times() -> None:
     lots = {_field(s): 100 for s in ("stuns", "roots", "silences", "shields")}
-    rows = [("Malfurion", lots), ("Muradin", {_field("escapes"): 1.4})] + [
-        ("Valla", {_field("escapes"): 1})
+    rows = [("Malfurion", lots), ("Muradin", {_field("self_healing"): 1.4})] + [
+        ("Valla", {_field("self_healing"): 1})
     ] * 8
     out = identity_stats(_games(30, rows), collected_at=DAY, min_games=20)
     assert len(out["heroes"]["Malfurion"]["stats"]) == 3
-    # Muradin's escapes: 1.4 against an average of ~1.04 — above, but not 1.5 times
+    # Muradin's self healing: 1.4 against an average of ~1.04 — above, but not 1.5 times
     assert "Muradin" not in out["heroes"]
 
 
 def test_only_candidates_count_never_the_cards_own_stats_or_vengeance() -> None:
     assert "vengeance" not in CANDIDATES.values()
     assert "time_cc_enemy_heroes" not in CANDIDATES.values()
+    # owner 2026-10-13: what the card's numbers do not show — crowd control, self healing, shields,
+    # clutch heals; not on fire or escapes (luck), nor merc / structure damage (in siege damage)
+    assert set(CANDIDATES) == {
+        "stuns",
+        "roots",
+        "silences",
+        "self_healing",
+        "shields",
+        "clutch_heals",
+    }
+    for dropped in (
+        "time_on_fire",
+        "escapes",
+        "teamfight_escapes",
+        "creep_damage",
+        "structure_damage",
+    ):
+        assert dropped not in CANDIDATES.values()
     for shown in (
         "hero_damage",
         "siege_damage",
@@ -85,12 +103,12 @@ def test_only_candidates_count_never_the_cards_own_stats_or_vengeance() -> None:
 
 
 def test_per_minute_so_long_games_do_not_look_big() -> None:
-    # 10 structure damage a minute for everyone; Sgt. Hammer only ever in 40-minute games
-    sd = _field("structure_damage")
-    long_ = _games(30, [("Sgt. Hammer", {sd: 400})] + [("Valla", {sd: 400})] * 9, length=2400)
-    short = [_game(100 + i, [("Valla", {sd: 100})] * 10) for i in range(30)]
+    # 10 self healing a minute for everyone; Leoric only ever in 40-minute games
+    sh = _field("self_healing")
+    long_ = _games(30, [("Leoric", {sh: 400})] + [("Valla", {sh: 400})] * 9, length=2400)
+    short = [_game(100 + i, [("Valla", {sh: 100})] * 10) for i in range(30)]
     out = identity_stats(long_ + short, collected_at=DAY, min_games=20)
-    assert "Sgt. Hammer" not in out["heroes"]
+    assert "Leoric" not in out["heroes"]
 
 
 def test_a_hero_with_too_few_games_is_left_out() -> None:

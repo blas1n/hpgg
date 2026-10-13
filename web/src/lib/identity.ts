@@ -5,30 +5,13 @@ import type { IdentityStats } from "../data";
 import type { Locale } from "../i18n/locale";
 import type { MatchRow } from "./matches";
 
-/** The match row fields the collector may pick (collector/identity_stats.py CANDIDATES). */
-export const IDENTITY_STATS = [
-  "self_healing",
-  "merc_camps",
-  "structure_damage",
-  "creep_damage",
-  "summon_damage",
-  "shields",
-  "clutch_heals",
-  "stuns",
-  "roots",
-  "silences",
-  "escapes",
-  "teamfight_escapes",
-  "multikill",
-  "towers",
-  "regen_globes",
-  "time_on_fire",
-  "town_kills",
-] as const;
+/** The match row fields the collector may pick (collector/identity_stats.py CANDIDATES): what the card's numbers do
+ *  not show (owner 2026-10-13). */
+export const IDENTITY_STATS = ["stuns", "roots", "silences", "self_healing", "shields", "clutch_heals"] as const;
 export type IdentityStat = (typeof IDENTITY_STATS)[number];
 
 /** Seconds in the score line. */
-const TIMES = new Set<IdentityStat>(["stuns", "roots", "silences", "time_on_fire"]);
+const TIMES = new Set<IdentityStat>(["stuns", "roots", "silences"]);
 const known = (s: string): s is IdentityStat => (IDENTITY_STATS as readonly string[]).includes(s);
 
 export interface IdentityView {

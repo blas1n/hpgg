@@ -11,15 +11,14 @@ accumulates between runs, like 게임 시간대별 승률 (collector/hero_length
 - Per minute, so a hero seen in long games does not look big: each player's value / game minutes,
   then the hero's mean set against all players' mean, in all players' standard deviations (z).
 - Picked: z ≥ `min_z` and the hero's mean ≥ `min_ratio` × all heroes' mean (owner: below 1.5×
-  it is no identity), up to `top`, strongest first; one of escapes / teamfight escapes. A hero with
-  none is left out and the card shows nothing (Cassia: blinds are no score value in the game).
-- Candidates leave out what the card already shows (K/D/A, hero and siege damage, healing, damage
-  taken, experience, and their teamfight twins), vengeance (owner: says nothing of the hero) and
+  it is no identity), up to `top`, strongest first. A hero with none is left out and the card
+  shows nothing (Cassia: blinds are no score value in the game).
+- Candidates (CANDIDATES): only what the card's numbers do not show. Not the card's own line, nor
+  vengeance, on fire, escapes, merc / structure / summon damage (owner 2026-10-12/13), nor
   time_cc_enemy_heroes (0 in every record from Heroes Profile, 2026-10-12).
 - `avg` is the hero's mean per game: the match list carries no game length, so the card compares
   a game's value with it.
 
-On 6,835 games (2026-10-07..11) 89 of 91 heroes get one to three (Cassia and Falstad none).
 
 Output (data/identity_stats.json, served as /identity_stats.json):
   {collected_at, since, games, heroes: {hero: {games, stats: [{stat, avg, ratio}]}}}
@@ -34,28 +33,17 @@ from collections.abc import Iterable
 from datetime import datetime, timedelta
 from typing import Any
 
-# match row field (server/players/match_rows.py) → Heroes Profile score field
+# match row field (server/players/match_rows.py) → Heroes Profile score field. Owner 10-13: what
+# the card's numbers do not show — crowd control time, self healing, shields, clutch heals. Not on
+# fire or escapes (luck more than the hero), nor merc / structure / summon damage (in siege damage).
 CANDIDATES: dict[str, str] = {
-    "self_healing": "self_healing",
-    "merc_camps": "merc_camp_captures",
-    "structure_damage": "structure_damage",
-    "creep_damage": "creep_damage",
-    "summon_damage": "summon_damage",
-    "shields": "protection_allies",
-    "clutch_heals": "clutch_heals",
     "stuns": "stunning_enemies",
     "roots": "rooting_enemies",
     "silences": "silencing_enemies",
-    "escapes": "escapes",
-    "teamfight_escapes": "teamfight_escapes",
-    "multikill": "multikill",
-    "towers": "watch_tower_captures",
-    "regen_globes": "regen_globes",
-    "time_on_fire": "time_on_fire",
-    "town_kills": "town_kills",
+    "self_healing": "self_healing",
+    "shields": "protection_allies",
+    "clutch_heals": "clutch_heals",
 }
-# near twins: a hero shows one of each
-GROUPS = {"teamfight_escapes": "escapes"}
 
 
 def _f(x: Any) -> float:
@@ -122,11 +110,8 @@ def identity_stats(
             z, ratio = (m - mean[s]) / sd[s], m / mean[s]
             if z >= min_z and ratio >= min_ratio:
                 ranked.append((z, s, ratio))
-        stats, used = [], set()
+        stats = []
         for _z, s, ratio in sorted(ranked, reverse=True):
-            if GROUPS.get(s, s) in used:
-                continue
-            used.add(GROUPS.get(s, s))
             stats.append(
                 {"stat": s, "avg": round(hero_game[hero][s] / k, 2), "ratio": round(ratio, 2)}
             )

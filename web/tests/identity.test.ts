@@ -23,25 +23,25 @@ const table: IdentityStats = {
       games: 564,
       stats: [
         { stat: "silences", avg: 40, ratio: 11.8 },
-        { stat: "time_on_fire", avg: 287, ratio: 1.9 },
+        { stat: "self_healing", avg: 30000, ratio: 1.9 },
       ],
     },
   },
 };
-const alarak: MatchRow = { ...full.matches.find((m) => m.hero === "Alarak")!, silences: 48, time_on_fire: 0 };
+const alarak: MatchRow = { ...full.matches.find((m) => m.hero === "Alarak")!, silences: 48, self_healing: 0 };
 
 describe("identityOf", () => {
   it("the hero's stats in the file's order, each against the hero's average", () => {
     expect(identityOf(alarak, table)).toEqual([
       { stat: "silences", value: 48, vs: 20 },
-      { stat: "time_on_fire", value: 0, vs: -100 },
+      { stat: "self_healing", value: 0, vs: -100 },
     ]);
   });
 
   it("nothing for a hero without any, a basic row, an answer from before the fields, or no table yet", () => {
     expect(identityOf({ ...alarak, hero: "Cassia" }, table)).toEqual([]);
-    expect(identityOf({ ...alarak, silences: null, time_on_fire: null }, table)).toEqual([]);
-    const { silences: _s, time_on_fire: _t, ...older } = alarak;
+    expect(identityOf({ ...alarak, silences: null, self_healing: null }, table)).toEqual([]);
+    const { silences: _s, self_healing: _t, ...older } = alarak;
     expect(identityOf(older as MatchRow, table)).toEqual([]);
     expect(identityOf(alarak, null)).toEqual([]);
   });
@@ -60,13 +60,17 @@ describe("identityOf", () => {
 describe("identityValue", () => {
   it("times as m:ss, the rest as whole numbers", () => {
     expect(identityValue("stuns", 12.4, "ko")).toBe("0:12");
-    expect(identityValue("time_on_fire", 287, "ko")).toBe("4:47");
-    expect(identityValue("summon_damage", 14450, "ko")).toBe("14,450");
+    expect(identityValue("roots", 107, "ko")).toBe("1:47");
+    expect(identityValue("self_healing", 14450, "ko")).toBe("14,450");
     expect(identityValue("clutch_heals", 3, "en")).toBe("3");
   });
 });
 
 describe("labels", () => {
+  it("only what the card's numbers do not show (owner 2026-10-13)", () => {
+    expect([...IDENTITY_STATS].sort()).toEqual(["clutch_heals", "roots", "self_healing", "shields", "silences", "stuns"]);
+  });
+
   it("every stat has a name in both languages", () => {
     for (const s of IDENTITY_STATS) {
       expect(ko.players.games.identity.stat[s]).toBeTruthy();
@@ -80,7 +84,7 @@ describe("matchRows", () => {
     const heroes = localizeHeroes(json<HeroTable>("e2e-data/heroes_ko.json"), "ko");
     const maps = localizeMaps(json<MapTable>("e2e-data/maps_ko.json"), "ko");
     const [m] = matchRows([alarak], heroes, maps, {}, "ko", new Date(), null, table);
-    expect(m!.identity.map((x) => x.stat)).toEqual(["silences", "time_on_fire"]);
+    expect(m!.identity.map((x) => x.stat)).toEqual(["silences", "self_healing"]);
     expect(matchRows([alarak], heroes, maps, {}, "ko")[0]!.identity).toEqual([]);
   });
 });

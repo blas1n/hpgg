@@ -47,21 +47,12 @@ STATS = {
     "time_spent_dead": "time_spent_dead",
     "time_cc": "time_cc_enemy_heroes",
     "merc_camps": "merc_camp_captures",
-    # 영웅별 주요 스탯 (collector/identity_stats.py CANDIDATES: the same names)
-    "creep_damage": "creep_damage",
-    "summon_damage": "summon_damage",
+    # 영웅별 주요 스탯 (collector/identity_stats.py CANDIDATES: the same names; self_healing above)
     "shields": "protection_allies",
     "clutch_heals": "clutch_heals",
     "stuns": "stunning_enemies",
     "roots": "rooting_enemies",
     "silences": "silencing_enemies",
-    "escapes": "escapes",
-    "teamfight_escapes": "teamfight_escapes",
-    "multikill": "multikill",
-    "towers": "watch_tower_captures",
-    "regen_globes": "regen_globes",
-    "time_on_fire": "time_on_fire",
-    "town_kills": "town_kills",
 }
 
 

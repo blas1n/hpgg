@@ -311,10 +311,16 @@ async def test_full_rows_carry_the_stats_a_hero_is_known_by(
     """영웅별 주요 스탯 (collector/identity_stats.py) picks among these; the card shows a game's."""
     fake_hp.responder = route()
     m = (await svc.lookup(TAG, REGION)).matches[0]  # the recorded Alarak game
-    assert (m["silences"], m["stuns"], m["roots"], m["shields"]) == (48, 0, 0, 0)
-    assert (m["time_on_fire"], m["multikill"], m["regen_globes"]) == (287, 9, 23)
-    assert (m["creep_damage"], m["summon_damage"], m["town_kills"]) == (14450, 266, 2)
-    assert (m["escapes"], m["teamfight_escapes"], m["clutch_heals"], m["towers"]) == (0, 0, 0, 0)
+    assert (m["silences"], m["stuns"], m["roots"], m["shields"], m["clutch_heals"]) == (
+        48,
+        0,
+        0,
+        0,
+        0,
+    )
+    # owner 2026-10-13: only what the card's numbers do not show
+    for gone in ("time_on_fire", "escapes", "creep_damage", "summon_damage", "multikill"):
+        assert gone not in m
 
 
 async def test_basic_rows_have_none_of_them(
@@ -323,7 +329,7 @@ async def test_basic_rows_have_none_of_them(
     settings.match_daily_budget = 0
     fake_hp.responder = route()
     m = (await svc.lookup(TAG, REGION)).matches[0]
-    assert m["silences"] is None and m["time_on_fire"] is None
+    assert m["silences"] is None and m["clutch_heals"] is None
 
 
 async def test_a_list_cached_before_the_identity_stats_is_refreshed(

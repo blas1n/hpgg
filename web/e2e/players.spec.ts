@@ -231,27 +231,25 @@ test("players: the newest 20 games — briefing, MMR line, stat lines and talent
 test("players: a game card shows the stats its hero stands out on, against the hero's average (영웅별 주요 스탯)", async ({ page }) => {
   // the recorded list predates the fields (2026-10-13): the newest game, Alarak, as the server sends it now
   const [first, ...rest] = games.matches as Record<string, unknown>[];
-  const now = { ...games, matches: [{ ...first, silences: 48, time_on_fire: 287, escapes: 0 }, ...rest] };
+  const now = { ...games, matches: [{ ...first, silences: 48, stuns: 0, roots: 0, shields: 0, clutch_heals: 0 }, ...rest] };
   await mockApi(page, withGames(now));
   await page.goto("./players/?tag=blAs1N%233479&region=KR");
   const card = page.locator("#player-matches > li").first();
   const stats = card.locator("[data-identity] li");
-  // tests/e2e-data/identity_stats.json: Alarak — silences (avg 39.56 a game), then time on fire (86.49)
-  await expect(stats).toHaveCount(2);
+  // tests/e2e-data/identity_stats.json: Alarak — silences only (avg 39.56 a game)
+  await expect(stats).toHaveCount(1);
   await expect(stats.nth(0)).toHaveAttribute("data-stat", "silences");
   await expect(stats.nth(0)).toContainText("침묵 시간");
   await expect(stats.nth(0)).toContainText("0:48");
   await expect(stats.nth(0)).toContainText("+21%");
-  await expect(stats.nth(1)).toContainText("4:47");
-  await expect(stats.nth(1)).toContainText("+232%");
-  // Leoric's self healing was in the list already; Chromie's time on fire was not: nothing rather than a zero
+  // Leoric's self healing was in the list already; Chromie stands out on nothing the card does not show
   await expect(page.locator("#player-matches > li").nth(1).locator('[data-identity] [data-stat="self_healing"]')).toContainText("자신 치유");
   await expect(page.locator("#player-matches > li").nth(4).locator("[data-identity]")).toHaveCount(0);
 });
 
 test("players: an English card names the signature stats in English", async ({ page }) => {
   const [first, ...rest] = games.matches as Record<string, unknown>[];
-  await mockApi(page, withGames({ ...games, matches: [{ ...first, silences: 48, time_on_fire: 287 }, ...rest] }));
+  await mockApi(page, withGames({ ...games, matches: [{ ...first, silences: 48 }, ...rest] }));
   await page.goto("../../en/hots/players/?tag=blAs1N%233479&region=KR");
   const stats = page.locator("#player-matches > li").first().locator("[data-identity] li");
   await expect(stats.nth(0)).toContainText("Silence Time");
