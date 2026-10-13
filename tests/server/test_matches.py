@@ -185,11 +185,12 @@ async def test_a_stale_full_list_beats_a_fresh_basic_one(
 ) -> None:
     fake_hp.responder = route()
     await svc.lookup(TAG, REGION)
+    asked = len(calls(fake_hp, "/players/mmr/history"))  # the league ranges, kept a day
     clock.now += settings.match_ttl_seconds + 1
     fake_hp.responder = route(matches=lambda r: quota_429())
     r = await svc.lookup(TAG, REGION)
     assert r.source == "full" and r.stale and r.notice == "quota_exceeded"
-    assert calls(fake_hp, "/players/mmr/history") == []
+    assert len(calls(fake_hp, "/players/mmr/history")) == asked
 
 
 async def test_a_stale_full_list_is_not_served_past_the_stale_limit(
@@ -303,3 +304,69 @@ def test_route_sends_the_return_time(settings: Settings, fake_hp: FakeHP, clock:
         body = c.get("/v1/players/matches", params={"battletag": TAG, "region": REGION}).json()
     assert body["source"] == "basic"
     assert body["full_after"] is not None and body["full_after"].endswith("Z")
+
+
+# --- league tier per game (server/players/leagues.py) ---
+# The recorded MMR history is Quick Match: Bronze 785-2439, so 2342 / 2299 / 2281 are all Bronze 1.
+
+
+async def test_each_game_of_a_full_list_carries_its_tier(
+    svc: MatchService, fake_hp: FakeHP
+) -> None:
+    fake_hp.responder = route()
+    r = await svc.lookup(TAG, REGION)
+    assert [m["tier"] for m in r.matches] == ["Bronze 1", "Bronze 1", "Bronze 1"]
+    (q,) = calls(fake_hp, "/players/mmr/history")
+    assert q.url.params["game_type"] == "qm" and q.url.params["battletag"] == TAG
+
+
+async def test_league_ranges_are_global_and_kept_a_day(
+    svc: MatchService, fake_hp: FakeHP, clock: Clock, settings: Settings
+) -> None:
+    fake_hp.responder = route()
+    await svc.lookup(TAG, REGION)
+    other = await svc.lookup("Other#1234", REGION)  # another player, same mode: no new ask
+    assert other.matches[0]["tier"] == "Bronze 1"
+    assert len(calls(fake_hp, "/players/mmr/history")) == 1
+    clock.now += settings.league_ttl_seconds + 1
+    await svc.lookup("Third#1234", REGION)
+    assert len(calls(fake_hp, "/players/mmr/history")) == 2
+
+
+async def test_a_basic_list_learns_the_ranges_from_its_own_answer(
+    settings: Settings, svc: MatchService, fake_hp: FakeHP
+) -> None:
+    settings.match_daily_budget = 0
+    fake_hp.responder = route()
+    r = await svc.lookup(TAG, REGION)
+    assert r.source == "basic" and r.matches[0]["tier"] == "Bronze 1"
+    assert len(calls(fake_hp, "/players/mmr/history")) == 1
+
+
+async def test_no_ranges_means_no_tier_not_an_error(
+    svc: MatchService, fake_hp: FakeHP, clock: Clock, settings: Settings
+) -> None:
+    fake_hp.responder = route(
+        history=lambda r: httpx.Response(500, json={"error": {"code": "server_error"}})
+    )
+    r = await svc.lookup(TAG, REGION)
+    assert r.outcome == "ok" and r.source == "full"
+    assert [m["tier"] for m in r.matches] == [None, None, None]
+    # a failed ask is not repeated on every request, but tried again within the hour
+    await svc.lookup("Other#1234", REGION)
+    assert len(calls(fake_hp, "/players/mmr/history")) == 1
+    clock.now += settings.league_retry_seconds + 1
+    fake_hp.responder = route()
+    assert (await svc.lookup("Third#1234", REGION)).matches[0]["tier"] == "Bronze 1"
+
+
+async def test_the_ranges_wait_for_the_mmr_history_quota(
+    settings: Settings, svc: MatchService, fake_hp: FakeHP, clock: Clock
+) -> None:
+    fake_hp.responder = route()
+    await svc.lookup(TAG, REGION)
+    clock.now += settings.league_ttl_seconds + 1
+    settings.mmr_history_daily_budget = 0
+    r = await svc.lookup("Other#1234", REGION)
+    assert len(calls(fake_hp, "/players/mmr/history")) == 1
+    assert r.matches[0]["tier"] == "Bronze 1"  # yesterday's ranges rather than none

@@ -10,6 +10,7 @@ import { fetchPlayer, isRegion, parseBattletag, playersHref, playerView, REGIONS
 import { Card, CardHeader, cx, Portrait } from "../ui";
 import { fetchMatches, type MatchesResult } from "@/lib/matches";
 import { HeroStats } from "./HeroStats";
+import { LEAGUE_CLASS } from "./league";
 import { MatchHistory } from "./MatchHistory";
 import { PlayerSearchForm } from "./PlayerSearchForm";
 
@@ -19,15 +20,6 @@ type Games = { kind: "loading" } | MatchesResult;
 const pct = (n: number | null) => (n === null ? "–" : `${n.toFixed(1)}%`);
 const int = (n: number) => n.toLocaleString("ko-KR");
 const wrClass = (wr: number | null) => (wr === null ? "text-muted" : wr >= 50 ? "text-pos" : "text-neg");
-const LEAGUE_CLASS: Record<string, string> = {
-  grandmaster: "text-secondary",
-  master: "text-secondary",
-  diamond: "text-primary",
-  platinum: "text-accent",
-  gold: "text-warn-fg",
-  silver: "text-fg-2",
-  bronze: "text-fg-2",
-};
 
 /** 전적 검색: the query lives in the URL (?tag=Name%231234&region=KR), so a search is shareable and 홈 can link here. */
 export function PlayerSearchView({ heroes, maps }: { heroes: HeroTable; maps: MapTable }) {

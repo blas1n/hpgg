@@ -46,6 +46,10 @@ class Settings(BaseSettings):
     match_daily_budget: int = 70
     mmr_history_quota_floor: int = 200
     mmr_history_daily_budget: int = 3500
+    # League ranges per game type (`server/players/leagues.py`), the same for every player: asked
+    # through the MMR history at most once a day per type, or again an hour after a failed ask.
+    league_ttl_seconds: int = 24 * 3600
+    league_retry_seconds: int = 3600
     # One game in full (`server/players/replays.py`): /replay/{id}, 25,000/week on Intermediate. A
     # game never changes, but it names ten players, so it is kept no longer than stale_max_seconds.
     # The bucket is shared with the weekly report's sampler (collector/replay_sample.py, ~1,500 a

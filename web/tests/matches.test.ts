@@ -85,6 +85,22 @@ describe("briefing (the newest games)", () => {
     expect(b.mmr.points[0]!.date < b.mmr.points.at(-1)!.date).toBe(true);
   });
 
+  it("names the league tier after each game, and the newest one as the line's tier", () => {
+    expect(b.mmr.points.at(-1)!.tier).toBe("브론즈 1");
+    expect(b.mmr.points.find((p) => p.mmr === 2064)!.tier).toBe("브론즈 2"); // 09-22, the low point
+    expect(b.mmr.tier).toBe("브론즈 1");
+    expect(b.mmr.tierKey).toBe("bronze");
+    const en = briefing(full.matches, heroes, "en");
+    expect(en.mmr.tier).toBe("Bronze 1");
+  });
+
+  it("answers from before the tier was sent draw the line without one", () => {
+    const old = full.matches.map(({ tier: _t, ...m }) => m);
+    const bo = briefing(old, heroes, "ko");
+    expect(bo.mmr.tier).toBeNull();
+    expect(bo.mmr.points.at(-1)!.tier).toBeNull();
+  });
+
   it("from the MMR history alone: record, heroes, roles and MMR, no stat averages", () => {
     const bb = briefing(basic.matches, heroes, "ko");
     expect([bb.wins, bb.losses]).toEqual([9, 11]);
@@ -101,6 +117,7 @@ describe("matchRows", () => {
   it("shows each game with its stat line in the page language", () => {
     const m = rows[0]!;
     expect(m).toMatchObject({ hero: "알라라크", slug: "alarak", win: true, mode: "빠른 대전", mmrChange: 43.05, level: 22 });
+    expect(m).toMatchObject({ tier: "브론즈 1", tierKey: "bronze" });
     expect(m.map).toBe(maps.maps.find((x) => x.name === "Hanamura Temple")?.ko ?? "Hanamura Temple");
     expect(m.kda).toEqual({ kills: 9, deaths: 1, assists: 25, ratio: 34, perfect: false });
     expect(m.stats?.heroDamage).toBe(72367);
