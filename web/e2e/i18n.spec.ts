@@ -117,7 +117,7 @@ test("English player page: modes, leagues, heroes and ARAM maps by their English
   await expect(page.locator("#player-result")).toHaveAttribute("data-state", "ok");
   await expect(page.locator('#player-modes [data-mode="sl"]')).toContainText("Storm League");
   await expect(page.locator('#player-modes [data-mode="sl"]')).toContainText("Diamond 2");
-  await expect(page.locator('#player-modes [data-mode="ud"]')).toContainText("Unranked Draft");
+  await expect(page.locator('#player-modes [data-mode="ar"]')).toContainText("ARAM");
   await expect(page.locator('#player-modes [data-mode="ar"]')).toContainText("ARAM");
   await expect(page.locator("#player-maps")).toContainText("Braxis Outpost");
   await expect(page.locator("#player-heroes li a").first()).toHaveAttribute("href", "/en/hots/heroes/lucio/");
@@ -128,7 +128,7 @@ test("English player page: modes, leagues, heroes and ARAM maps by their English
 
 test("Korean player page: 일반 선발전 and 무작위 영웅 대전, ARAM maps in Korean", async ({ page }) => {
   await page.goto("./players/?tag=Zemill%231940&region=NA");
-  await expect(page.locator('#player-modes [data-mode="ud"]')).toContainText("일반 선발전");
+  await expect(page.locator('#player-modes [data-mode="ar"]')).toContainText("무작위 영웅 대전");
   await expect(page.locator('#player-modes [data-mode="ar"]')).toContainText("무작위 영웅 대전");
   await expect(page.locator("#player-maps")).toContainText("브락시스 전초기지");
 });
