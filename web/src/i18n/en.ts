@@ -206,7 +206,7 @@ The same data gives different tiers under a different formula. This site always 
     none: "No hero matches",
   },
   hero: {
-    sections: { top: "Summary", maps: "Maps", grid: "Region × bracket", matchups: "Matchups", length: "Game length", builds: "Talent builds", patches: "Patches", comments: "Comments" },
+    sections: { top: "Summary", maps: "Maps", grid: "Region × bracket", tiers: "By league", matchups: "Matchups", length: "Game length", builds: "Talent builds", patches: "Patches", comments: "Comments" },
     sectionNav: "Sections",
     mapsTitle: (mode: string) => `Win rate per battleground (${mode})`,
     gridTitle: (mode: string) => `Region × bracket (${mode})`,
@@ -230,6 +230,11 @@ The same data gives different tiers under a different formula. This site always 
     matchupsSub: (patch: string, date: string, hero: string, wr: string, games: string) =>
       `patch ${patch} · collected ${date} · against ${hero}'s win rate of ${wr} (${plural(games, "game", "games")})`,
     matchupsLater: "Matchups appear after the next scheduled collection (Storm League, every other day)",
+    tiersTitle: (mode: string) => `Win rate by league (${mode})`,
+    tiersSub: (patch: string, games: string) => `Patch ${patch} · ${games} games · party-corrected`,
+    tiersGames: (games: string) => plural(games, "game", "games"),
+    tiersRule: (min: string) => `Each point is the win rate of the players in that league who picked this hero (party-corrected); bars show the 95% range. Under ${min} games the point is faint. Grand Master is counted in Master.`,
+    tiersAria: (points: string) => `Win rate by league: ${points}`,
     lengthTitle: (mode: string) => `Win rate by game length (${mode})`,
     lengthSub: (patch: string, since: string | null, games: string) => `Patch ${patch}${since ? ` · since the ${since} hotfix` : ""} · ${games} sampled replays`,
     lengthBands: { short: "15 min or less", mid: "15–20 min", long: "over 20 min" },

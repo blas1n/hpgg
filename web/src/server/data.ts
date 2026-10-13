@@ -8,6 +8,7 @@ import { pickShown, type Shown } from "../lib/shown";
 import type { SearchItem } from "../lib/search";
 import type { MapsMeta } from "../lib/maps";
 import type { LengthFile } from "../lib/length";
+import type { TiersFile } from "../lib/tiers";
 import type { WeeklyAnalysis, WeeklyEvidence, WeeklyIndex, WeeklyIssue } from "../lib/weekly";
 import type { Locale } from "../i18n/locale";
 import { localizeHeroes, localizeMaps } from "../i18n/names";
@@ -38,6 +39,8 @@ export const readTalents = (slug: string): TalentTable | null => opt<TalentTable
 /** Storm League counters/synergies for one hero (collector/matchups.py); null until the first collection. */
 export const readMatchups = (slug: string): MatchupsFile | null => onReference(opt<MatchupsFile>(`matchups/${slug}.json`), readMeta());
 /** 게임 시간대별 승률 (collector/hero_length.py), on the reference patch only; null before its first collection. */
+/** 티어별 승률 (collector/tiers.py), on the reference patch only; null before its first collection. */
+export const readTiers = (): TiersFile | null => onReference(opt<TiersFile>("latest/sl_tiers.json"), readMeta());
 export const readLength = (): LengthFile | null => onReference(opt<LengthFile>("latest/sl_length.json"), readMeta());
 
 let patchNotes: PatchNotesFile | null | undefined;
