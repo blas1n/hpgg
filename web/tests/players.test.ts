@@ -184,7 +184,7 @@ describe("playerView", () => {
   it("maps: Korean names, ARAM maps included (#10)", () => {
     expect(v.maps[0]).toMatchObject({ name: "브락시스 전초기지", games: 499 });
     expect(v.maps.map((m) => m.name)).toEqual(["브락시스 전초기지", "은빛 도시", "잃어버린 동굴"]);
-    expect(v.modes.find((m) => m.mode === "ud")?.label).toBe("일반 선발전");
+    expect(v.modes.map((m) => m.mode)).toEqual(["sl", "qm", "ar"]); // the server drops the modes gone from the game
     expect(v.modes.find((m) => m.mode === "ar")?.label).toBe("무작위 영웅 대전");
   });
 
