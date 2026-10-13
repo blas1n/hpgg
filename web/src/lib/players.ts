@@ -181,7 +181,7 @@ export const modeLabel = (mode: string | null, locale: Locale): string => {
   return mode in modes ? modes[mode as ModeKey] : mode;
 };
 
-export type LeagueKey = keyof Messages["players"]["leagues"];
+type LeagueKey = keyof Messages["players"]["leagues"];
 /** HP league name (lower case prefix) → our key, which is also the colour key. Grand Master before Master. */
 const LEAGUE: [string, LeagueKey][] = [
   ["grand master", "grandmaster"],
@@ -193,8 +193,6 @@ const LEAGUE: [string, LeagueKey][] = [
   ["bronze", "bronze"],
 ];
 const league = (tier: string | null) => (tier ? LEAGUE.find(([hp]) => tier.toLowerCase().startsWith(hp)) : undefined);
-/** "Diamond 2" → "diamond", the colour key; null for no tier or a name we do not know. */
-export const leagueKey = (tier: string | null): LeagueKey | null => league(tier)?.[1] ?? null;
 
 /** "Diamond 2" → "다이아몬드 2" / "Diamond 2"; unknown names pass through. */
 export function tierLabel(tier: string | null, locale: Locale): string | null {
@@ -286,7 +284,7 @@ export function playerView(r: PlayerResponse, heroes: HeroTable, maps: MapTable,
       label: modeLabel(m.mode, locale),
       mmr: m.mmr,
       tier: tierLabel(m.tier, locale),
-      tierKey: leagueKey(m.tier),
+      tierKey: league(m.tier)?.[1] ?? null,
       games: m.wins + m.losses,
       wins: m.wins,
       losses: m.losses,
