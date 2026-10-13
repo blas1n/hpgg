@@ -34,6 +34,9 @@ class Settings(BaseSettings):
     # 게임 시간대별 승률 (collector/hero_length.py); absent on a local run: only the day's
     # games count
     replay_archive_dir: Path = Path("data/.snapshots/snapshots")
+    # 영웅별 주요 스탯 (collector/identity_stats.py): days of records counted, games a hero needs
+    identity_days: int = 28
+    identity_min_games: int = 100
     # /heroes/matchups without group_by_map allows 60 requests/minute (measured 2026-09-29)
     matchups_call_spacing_seconds: float = 2.0
     # a matchups round stops starting new calls after this long (cache misses poll); the rest

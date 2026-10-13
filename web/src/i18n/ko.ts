@@ -573,6 +573,20 @@ export const ko = {
         timeDead: "죽어있던 시간",
         mercCamps: "용병 캠프 점령",
       },
+      // 영웅별 주요 스탯 (lib/identity.ts): GameStrings ScoreValue/Name (kokr, 2.57.0.98348), except where the game's own
+      // Korean is wrong or one string for three stats ("적을 이동 불가 상태로 만든 시간"; CreepDamage "점막 피해")
+      identity: {
+        label: "주요 스탯",
+        vs: "이 영웅 평균 대비",
+        stat: {
+          self_healing: "자신 치유",
+          shields: "아군 보호",
+          clutch_heals: "회심의 치유",
+          stuns: "기절 시간",
+          roots: "속박 시간",
+          silences: "침묵 시간",
+        },
+      },
     },
     minutesAgo: (n: string) => `${n}분 전`,
     hoursAgo: (n: string) => `${n}시간 전`,

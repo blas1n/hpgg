@@ -94,3 +94,14 @@ def test_the_collect_job_reads_the_archived_storm_league_records_before_collecti
     assert fetch < collect
     assert "data/.snapshots/snapshots" in runs[fetch] and "replays_sl" in runs[fetch]
     assert "push" not in runs[fetch]
+
+
+def test_identity_stats_go_from_the_collect_job_to_main() -> None:
+    """영웅별 주요 스탯 (collector/identity_stats.py): written by the collector, carried by the
+    artifact, replaced and committed by publish (else the site keeps serving none)."""
+    jobs = _jobs(Path(__file__).parent.parent / ".github/workflows/collect-and-deploy.yml")
+    upload = next(s for s in jobs["collect"]["steps"] if "upload-artifact" in s.get("uses", ""))
+    assert "data/identity_stats.json" in upload["with"]["path"].split()
+    runs = [s.get("run", "") for s in jobs["publish"]["steps"]]
+    assert any(r.startswith("rm -rf") and "data/identity_stats.json" in r for r in runs)
+    assert any("git add data/identity_stats.json" in r for r in runs)

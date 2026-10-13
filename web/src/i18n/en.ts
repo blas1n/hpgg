@@ -570,6 +570,19 @@ The same data gives different tiers under a different formula. This site always 
         timeDead: "Time Spent Dead",
         mercCamps: "Merc Camp Captures",
       },
+      // 영웅별 주요 스탯 (lib/identity.ts): GameStrings ScoreValue/Name (enus, 2.57.0.98348), shortened
+      identity: {
+        label: "Signature stats",
+        vs: "against this hero's average",
+        stat: {
+          self_healing: "Self Healing",
+          shields: "Protection Given to Allies",
+          clutch_heals: "Clutch Heals",
+          stuns: "Stun Time",
+          roots: "Root Time",
+          silences: "Silence Time",
+        },
+      },
     },
     minutesAgo: (n: string) => `${n} min ago`,
     hoursAgo: (n: string) => `${plural(n, "hour", "hours")} ago`,

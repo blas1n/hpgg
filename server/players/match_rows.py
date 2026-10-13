@@ -15,7 +15,8 @@ from typing import Any
 # Bump when a row gains, loses or changes a field: cached lists in another format are refreshed
 # (served only as stale while HP cannot be asked). 2 = `award`; 3 = HP's `award_id`, named when
 # served (server/players/awards.py), so an id learned later reaches cached lists (2026-10-01).
-ROWS_VERSION = 3
+# 4 = the stats 영웅별 주요 스탯 picks among (collector/identity_stats.py, 2026-10-13).
+ROWS_VERSION = 4
 # HP map ids (GET /maps, 2026-10-01). The MMR history names maps only by id.
 HP_MAPS: dict[int, str] = {
     int(k): v for k, v in json.loads((Path(__file__).parent / "hp_maps.json").read_text()).items()
@@ -46,6 +47,12 @@ STATS = {
     "time_spent_dead": "time_spent_dead",
     "time_cc": "time_cc_enemy_heroes",
     "merc_camps": "merc_camp_captures",
+    # 영웅별 주요 스탯 (collector/identity_stats.py CANDIDATES: the same names; self_healing above)
+    "shields": "protection_allies",
+    "clutch_heals": "clutch_heals",
+    "stuns": "stunning_enemies",
+    "roots": "rooting_enemies",
+    "silences": "silencing_enemies",
 }
 
 

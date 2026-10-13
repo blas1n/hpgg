@@ -1,10 +1,11 @@
 /** A player's games (전적 검색): API client, the briefing over the newest games and the per-game rows.
  * The API is GET /v1/players/matches (server/players/matches.py): `full` rows carry the stat line and talents
  * (Heroes Profile /players/matches), `basic` rows only hero, map, result and MMR (HP's MMR history). */
-import type { AwardTable, HeroInfo, HeroTable, MapTable, TalentTable } from "../data";
+import type { AwardTable, HeroInfo, HeroTable, IdentityStats, MapTable, TalentTable } from "../data";
 import { DEFAULT_LOCALE, type Locale } from "../i18n/locale";
 import { localField } from "../i18n/names";
 import { awardView, type AwardView } from "./awards";
+import { identityOf, type IdentityView } from "./identity";
 import { apiGet, modeLabel, relativeDay, type ApiResult, type FetchOptions, type Notice, type Region } from "./players";
 
 /** How many of the newest games the briefing covers. */
@@ -39,6 +40,12 @@ export interface MatchRow {
   time_spent_dead: number | null;
   time_cc: number | null;
   merc_camps: number | null;
+  /** 영웅별 주요 스탯's candidates (lib/identity.ts); absent in answers from before 2026-10-13 */
+  shields?: number | null;
+  clutch_heals?: number | null;
+  stuns?: number | null;
+  roots?: number | null;
+  silences?: number | null;
   first_to_ten: boolean | null;
   /** the game's award key (data/awards.json); absent in answers from before awards were sent */
   award?: string | null;
@@ -271,6 +278,8 @@ export interface MatchView {
   } | null;
   talents: MatchTalent[];
   award: AwardView | null;
+  /** the stats this hero stands out on, this game against the hero's average (lib/identity.ts) */
+  identity: IdentityView[];
 }
 
 /** `talents` maps a hero slug to its talent file (data/talents/<slug>.json) once loaded; a game whose hero's file is
@@ -283,6 +292,7 @@ export function matchRows(
   locale: Locale,
   now = new Date(),
   awards: AwardTable | null = null,
+  identity: IdentityStats | null = null,
 ): MatchView[] {
   const hero = heroIndex(heroes);
   const mapName = new Map([...maps.maps, ...(maps.aram ?? [])].map((m) => [m.name, m.ko]));
@@ -325,6 +335,7 @@ export function matchRows(
           }
         : null,
       award: awardView(m.award ?? null, awards, locale),
+      identity: identityOf(m, identity),
       talents: m.talents.length
         ? TALENT_LEVELS.map((level, j) => {
             const id = m.talents[j] ?? null;

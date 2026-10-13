@@ -303,3 +303,43 @@ def test_route_sends_the_return_time(settings: Settings, fake_hp: FakeHP, clock:
         body = c.get("/v1/players/matches", params={"battletag": TAG, "region": REGION}).json()
     assert body["source"] == "basic"
     assert body["full_after"] is not None and body["full_after"].endswith("Z")
+
+
+async def test_full_rows_carry_the_stats_a_hero_is_known_by(
+    svc: MatchService, fake_hp: FakeHP
+) -> None:
+    """영웅별 주요 스탯 (collector/identity_stats.py) picks among these; the card shows a game's."""
+    fake_hp.responder = route()
+    m = (await svc.lookup(TAG, REGION)).matches[0]  # the recorded Alarak game
+    assert (m["silences"], m["stuns"], m["roots"], m["shields"], m["clutch_heals"]) == (
+        48,
+        0,
+        0,
+        0,
+        0,
+    )
+    # owner 2026-10-13: only what the card's numbers do not show
+    for gone in ("time_on_fire", "escapes", "creep_damage", "summon_damage", "multikill"):
+        assert gone not in m
+
+
+async def test_basic_rows_have_none_of_them(
+    settings: Settings, svc: MatchService, fake_hp: FakeHP
+) -> None:
+    settings.match_daily_budget = 0
+    fake_hp.responder = route()
+    m = (await svc.lookup(TAG, REGION)).matches[0]
+    assert m["silences"] is None and m["clutch_heals"] is None
+
+
+async def test_a_list_cached_before_the_identity_stats_is_refreshed(
+    svc: MatchService, fake_hp: FakeHP, db: Database, clock: Clock
+) -> None:
+    old = {"v": 3, "source": "full", "matches": [{"replay_id": 1, "hero": "Alarak", "win": True}]}
+    await HPStore(db).put(
+        CacheEntry(matches_key(REGION, TAG), 200, old, clock.now, clock.now + 3600)
+    )
+    fake_hp.responder = route()
+    r = await svc.lookup(TAG, REGION)
+    assert len(calls(fake_hp, "/players/matches")) == 1
+    assert r.matches[0]["silences"] == 48
