@@ -52,8 +52,9 @@ jobs:
     if: always() && github.event_name != 'push' && needs.gate.outputs.fresh != 'true'
     runs-on: ubuntu-latest
     # stats ~25 min (24 calls at 1 a minute) + builds + matchups (≤ 25 min budget, + at most one
-    # in-flight job poll of ≤ 15 min)
-    timeout-minutes: 90
+    # in-flight job poll of ≤ 15 min) + the replay sample (≤ 35 min) + about once a week 티어별 승률
+    # (12 calls, ~13 min); 2026-10-10 took 79 min without the tiers
+    timeout-minutes: 120
     permissions:
       contents: read
       issues: write

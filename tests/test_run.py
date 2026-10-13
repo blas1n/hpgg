@@ -39,6 +39,7 @@ def settings(tmp_path: Path, **kw: Any) -> Settings:
         **{
             "patchnotes_limit": 3,
             "average_stats": False,
+            "tier_stats": False,
             "weekly_talents": False,
             "replay_sample": False,
             **kw,
@@ -63,6 +64,8 @@ def mock_api(
         # a settled balance hotfix narrows the current patch to its builds (snapshot.balance_window)
         allowed = ({CUR_TF, OLD_TF} if q.get("region") else {CUR_TF}) | {"2.55.17.97771"}
         assert q["timeframe_type"] == "minor" and q["timeframe"] in allowed
+        if fail_key == "tiers" and q.get("league_tier") == "6":
+            return httpx.Response(500, json={"error": {"code": "server_error", "message": "x"}})
         if fail_key == "sl_high" and q.get("league_tier") == "5,6":
             return httpx.Response(500, json={"error": {"code": "server_error", "message": "x"}})
         if fail_key == "solo" and q.get("groupsize") == "Solo":
@@ -766,6 +769,46 @@ async def test_a_run_fetches_the_weekly_average_stats_when_due(
     # the next day: not due again
     assert await run(s, sleep=fake_sleep, now=lambda: "2026-09-29T18:25:00Z") == 0
     assert len([c for c in respx.calls if "statfilter" in str(c.request.url)]) == 5
+
+
+@respx.mock
+async def test_a_run_fetches_the_tier_win_rates_when_due_with_their_solo_twins(
+    tmp_path: Path, raw_by_map, patches_payload, fake_sleep
+) -> None:
+    """티어별 승률 (collector/tiers.py): six tiers + six solo twins, about once a week."""
+    mock_api(raw_by_map, patches_payload)
+    s = settings(tmp_path, tier_stats=True)
+    assert await run(s, sleep=fake_sleep, now=lambda: "2026-09-28T18:25:00Z") == 0
+    out = json.loads((s.data_dir / "latest" / "sl_tiers.json").read_text())
+    assert out["tiers"] == [1, 2, 3, 4, 5, 6] and out["patch"] == "2.55.17"
+
+    def tier_calls() -> list[dict[str, str]]:
+        qs = [dict(httpx.QueryParams(c.request.url.query)) for c in respx.calls]
+        return [q for q in qs if q.get("league_tier") in {"1", "2", "3", "4", "5", "6"}]
+
+    asked = tier_calls()
+    assert sorted(q["league_tier"] for q in asked if "groupsize" not in q) == list("123456")
+    assert sorted(q["league_tier"] for q in asked if q.get("groupsize") == "Solo") == list("123456")
+    assert all(q["game_type"] == "sl" and "region" not in q for q in asked)
+    # the next day: not due, and the file is carried through the swap of data/latest
+    assert await run(s, sleep=fake_sleep, now=lambda: "2026-09-29T18:25:00Z") == 0
+    assert len(tier_calls()) == 12
+    assert (s.data_dir / "latest" / "sl_tiers.json").exists()
+
+
+@respx.mock
+async def test_failed_tier_win_rates_keep_the_last_file_and_never_fail_the_run(
+    tmp_path: Path, raw_by_map, patches_payload, fake_sleep
+) -> None:
+    mock_api(raw_by_map, patches_payload)
+    s = settings(tmp_path, tier_stats=True)
+    assert await run(s, sleep=fake_sleep, now=lambda: "2026-09-28T18:25:00Z") == 0
+    before = (s.data_dir / "latest" / "sl_tiers.json").read_text()
+    respx.reset()
+    mock_api(raw_by_map, patches_payload, fail_key="tiers")
+    # a week later: due, and the master call fails
+    assert await run(s, sleep=fake_sleep, now=lambda: "2026-10-05T18:25:00Z") == 0
+    assert (s.data_dir / "latest" / "sl_tiers.json").read_text() == before
 
 
 @respx.mock
