@@ -267,12 +267,23 @@ function Profile({ v, games, me, region, heroes, maps }: { v: PlayerView; games:
           {v.level !== null && <span className="num text-xs text-muted">{t.level(int(v.level))}</span>}
           <span className="num ml-auto text-2xs text-muted">{v.fetchedLabel}</span>
         </div>
-        <dl id="player-summary" className="num mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
-          <Stat label={t.totalGames} value={int(v.games)} />
-          <Stat label={t.winRate} value={pct(v.winRate)} className={wrClass(v.winRate)} />
-          <Stat label="KDA" value={v.kda === null ? "–" : v.kda.toFixed(2)} />
-          <Stat label="MVP" value={pct(v.mvpRate)} />
-        </dl>
+        <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+          {v.rank && (
+            <div id="player-rank" data-mode={v.rank.mode} className="shrink-0 rounded-lg bg-surface-2 px-4 py-2.5 sm:min-w-44">
+              <div className="text-2xs font-semibold text-muted">{v.rank.label}</div>
+              <div className={cx("text-2xl leading-tight font-extrabold", v.rank.tierKey ? LEAGUE_CLASS[v.rank.tierKey] : "text-fg")}>
+                {v.rank.tier ?? t.unplaced}
+              </div>
+              <div className="num text-xs text-fg-2">MMR {v.rank.mmr === null ? "–" : int(v.rank.mmr)}</div>
+            </div>
+          )}
+          <dl id="player-summary" className="num grid flex-1 grid-cols-2 gap-2 sm:grid-cols-4">
+            <Stat label={t.totalGames} value={int(v.games)} />
+            <Stat label={t.winRate} value={pct(v.winRate)} className={wrClass(v.winRate)} />
+            <Stat label="KDA" value={v.kda === null ? "–" : v.kda.toFixed(2)} />
+            <Stat label="MVP" value={pct(v.mvpRate)} />
+          </dl>
+        </div>
       </Card>
 
       <Card aria-labelledby="h-modes">
