@@ -222,8 +222,6 @@ test("players: the newest 20 games — briefing, MMR line, stat lines and talent
   await expect(first.locator("[data-kda]")).toContainText("9 / 1 / 25");
   await expect(first.locator("[data-stats]")).toContainText("72,367");
   await expect(first.locator("[data-mmr]")).toHaveText("+43.1");
-  await expect(first.locator("[data-tier]")).toHaveText("브론즈 1"); // the tier after the game, next to its MMR change
-  await expect(page.locator("#h-mmr [data-tier]")).toHaveText("브론즈 1"); // the newest game's tier on the MMR line
   await expect(first.locator("[data-talents] li")).toHaveCount(7);
   await page.locator("#games-more").click();
   await expect(page.locator("#player-matches > li")).toHaveCount(25);
@@ -237,15 +235,6 @@ test("players: hovering the MMR line reads out that game", async ({ page }) => {
   const box = (await chart.boundingBox())!;
   await chart.hover({ position: { x: box.width - 3, y: box.height / 2 } }); // the newest game sits at the right end
   await expect(page.locator('#brief-mmr [role="status"]')).toContainText("2342");
-  await expect(page.locator('#brief-mmr [role="status"]')).toContainText("브론즈 1");
-});
-
-test("players: an answer from before tiers were sent shows the MMR without one", async ({ page }) => {
-  const old = { ...games, matches: games.matches.map(({ tier: _t, ...m }: Record<string, unknown>) => m) };
-  await mockApi(page, withGames(old));
-  await page.goto("./players/?tag=blAs1N%233479&region=KR");
-  await expect(page.locator("#player-matches > li").first().locator("[data-mmr]")).toHaveText("+43.1");
-  await expect(page.locator("#player-games [data-tier]")).toHaveCount(0);
 });
 
 test("players: past the detailed budget the games come without stat lines, and the page says so", async ({ page }) => {

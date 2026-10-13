@@ -27,7 +27,6 @@ from server.config import Settings
 from server.players import quota
 from server.players.awards import AwardBook
 from server.players.hp import HPClient, Upstream
-from server.players.leagues import HISTORY, LeagueBook, tier_of
 from server.players.match_rows import ROWS_VERSION, basic_rows, full_rows
 from server.players.service import Notice, Outcome, PlayerService
 from server.players.store import CacheEntry, HPStore, matches_key
@@ -35,7 +34,7 @@ from server.players.store import CacheEntry, HPStore, matches_key
 log = structlog.get_logger(__name__)
 
 FULL = "player_match_history"  # HP bucket names
-BASIC = HISTORY
+BASIC = "player_mmr_history"
 Source = Literal["full", "basic"]
 
 
@@ -70,13 +69,10 @@ class MatchService:
         self._clock = clock
         self._sleep = sleep
         self._awards = AwardBook(store, clock)
-        self._leagues = LeagueBook(hp=hp, store=store, settings=settings, clock=clock)
         self._inflight: dict[str, asyncio.Task[MatchLookup]] = {}
 
     async def lookup(self, battletag: str, region: str) -> MatchLookup:
         r = await self._lookup(battletag, region)
-        if r.outcome == "ok":
-            r = replace(r, matches=await self._tiered(r.matches, battletag, region))
         if r.source != "basic":
             return r
         s, now = self._settings, self._clock()
@@ -99,21 +95,6 @@ class MatchService:
             self._inflight[key] = task
             task.add_done_callback(lambda _t: self._inflight.pop(key, None))
         return await asyncio.shield(task)
-
-    async def _tiered(
-        self, rows: list[dict[str, Any]], battletag: str, region: str
-    ) -> list[dict[str, Any]]:
-        """Each game with the league tier of its MMR after the game, None when it cannot be told."""
-        modes = sorted({m["mode"] for m in rows if _rated(m)})
-        floors = {mode: await self._leagues.floors(mode, battletag, region) for mode in modes}
-        out = []
-        for m in rows:
-            if not isinstance(m, dict):
-                out.append(m)
-                continue
-            f = floors.get(m["mode"]) if _rated(m) else None
-            out.append({**m, "tier": tier_of(m["mmr"], f) if f else None})
-        return out
 
     async def _serve(self, e: CacheEntry, *, notice: Notice | None = None) -> MatchLookup:
         return _from_entry(e, await self._awards.table(), notice=notice)
@@ -186,7 +167,6 @@ class MatchService:
         if up.status == 200 and isinstance(up.body, dict):
             await self._store.count_live_call(quota.day(now), BASIC)
             rows = basic_rows(up.body, mode)
-            await self._leagues.learn(mode, up.body)
             return await self._keep(key, "basic", rows, now, s.basic_match_ttl_seconds)
         if up.status == 403 and up.code == "player_unavailable":
             return await self._private(region, battletag, now)
@@ -255,13 +235,6 @@ def _from_entry(
         stale=notice is not None,
         notice=notice,
     )
-
-
-def _rated(m: Any) -> bool:
-    if not isinstance(m, dict):
-        return False
-    mmr = m.get("mmr")
-    return isinstance(m.get("mode"), str) and isinstance(mmr, int) and not isinstance(mmr, bool)
 
 
 def _named(m: Any, awards: dict[str, str]) -> Any:

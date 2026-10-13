@@ -11,7 +11,6 @@ import { fetchReplay, replayView, type ReplayResponse } from "@/lib/replays";
 import { carryOf } from "@/lib/carry";
 import { carryTone, fetchTeamLuck, luckGrade, type CarryTone, type LuckGrade } from "@/lib/teamLuck";
 import { Card, CardHeader, cx, Portrait } from "../ui";
-import { LEAGUE_CLASS } from "./league";
 
 const PAGE = 20;
 const PARTY = ["bg-secondary", "bg-accent", "bg-primary", "bg-warn-fg"];
@@ -271,11 +270,6 @@ function MmrChart({ b }: { b: Briefing }) {
       <figcaption>
         <h3 id="h-mmr" className="text-sm font-bold text-fg">
           {g.mmrTitle(b.mmr.label)}
-          {b.mmr.tier && (
-            <span data-tier className={cx("ml-1.5", b.mmr.tierKey ? LEAGUE_CLASS[b.mmr.tierKey] : "text-fg-2")}>
-              {b.mmr.tier}
-            </span>
-          )}
         </h3>
         <p className="text-2xs text-muted">{g.mmrSub(String(pts.length))}</p>
       </figcaption>
@@ -319,8 +313,7 @@ function MmrChart({ b }: { b: Briefing }) {
             className="num pointer-events-none absolute top-0 z-10 -translate-x-1/2 rounded-md border border-line-strong bg-pop px-2 py-1 text-2xs whitespace-nowrap text-pop-fg shadow"
             style={{ left: `${(x(hover) / W) * 100}%` }}
           >
-            {g.mmrPoint(h.hero, String(h.mmr))}
-            {h.tier && ` · ${h.tier}`} · {h.date.slice(5, 16)}
+            {g.mmrPoint(h.hero, String(h.mmr))} · {h.date.slice(5, 16)}
           </div>
         )}
       </div>
@@ -369,11 +362,6 @@ function MatchItem({
           <div data-mmr className={cx("mt-1 inline-block rounded px-1 font-semibold", m.mmrChange >= 0 ? "bg-pos/15 text-pos" : "bg-neg/15 text-neg")}>
             {m.mmrChange > 0 ? "+" : ""}
             {(Math.round(m.mmrChange * 10) / 10).toFixed(1)}
-          </div>
-        )}
-        {m.tier && (
-          <div data-tier className={cx("mt-0.5 font-semibold", m.tierKey ? LEAGUE_CLASS[m.tierKey] : "text-fg-2")}>
-            {m.tier}
           </div>
         )}
       </div>

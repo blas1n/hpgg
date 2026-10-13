@@ -5,7 +5,7 @@ import type { AwardTable, HeroInfo, HeroTable, MapTable, TalentTable } from "../
 import { DEFAULT_LOCALE, type Locale } from "../i18n/locale";
 import { localField } from "../i18n/names";
 import { awardView, type AwardView } from "./awards";
-import { apiGet, leagueKey, modeLabel, relativeDay, tierLabel, type ApiResult, type FetchOptions, type LeagueKey, type Notice, type Region } from "./players";
+import { apiGet, modeLabel, relativeDay, type ApiResult, type FetchOptions, type Notice, type Region } from "./players";
 
 /** How many of the newest games the briefing covers. */
 export const BRIEFING_GAMES = 20;
@@ -24,8 +24,6 @@ export interface MatchRow {
   role: string | null;
   mmr: number | null;
   mmr_change: number | null;
-  /** HP's league tier of `mmr` ("Diamond 2"), placed by the server; absent in answers from before 2026-10-13 */
-  tier?: string | null;
   level: number | null;
   kills: number | null;
   deaths: number | null;
@@ -137,10 +135,7 @@ export interface Briefing {
   mmr: {
     mode: string | null;
     label: string;
-    /** the newest game's tier, in the page language */
-    tier: string | null;
-    tierKey: LeagueKey | null;
-    points: { date: string; mmr: number; win: boolean | null; hero: string; tier: string | null }[];
+    points: { date: string; mmr: number; win: boolean | null; hero: string }[];
   };
 }
 
@@ -214,8 +209,6 @@ export function briefing(rows: MatchRow[], heroes: HeroTable, locale: Locale): B
       mmr: m.mmr!,
       win: m.win,
       hero: hero(m.hero, m.short_name)?.ko ?? m.hero,
-      tier: tierLabel(m.tier ?? null, locale),
-      tierKey: leagueKey(m.tier ?? null),
     }))
     .sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
 
@@ -234,13 +227,7 @@ export function briefing(rows: MatchRow[], heroes: HeroTable, locale: Locale): B
     avg,
     heroes: heroRows,
     roles,
-    mmr: {
-      mode,
-      label: modeLabel(mode, locale),
-      tier: points.at(-1)?.tier ?? null,
-      tierKey: points.at(-1)?.tierKey ?? null,
-      points: points.map(({ tierKey: _k, ...p }) => p),
-    },
+    mmr: { mode, label: modeLabel(mode, locale), points },
   };
 }
 
@@ -264,9 +251,6 @@ export interface MatchView {
   when: string;
   mmr: number | null;
   mmrChange: number | null;
-  /** the league tier after the game, in the page language */
-  tier: string | null;
-  tierKey: LeagueKey | null;
   level: number | null;
   kda: {
     kills: number;
@@ -318,8 +302,6 @@ export function matchRows(
       when: relativeDay(m.date, locale, now),
       mmr: m.mmr,
       mmrChange: m.mmr_change,
-      tier: tierLabel(m.tier ?? null, locale),
-      tierKey: leagueKey(m.tier ?? null),
       level: m.level,
       kda: has(m)
         ? {
