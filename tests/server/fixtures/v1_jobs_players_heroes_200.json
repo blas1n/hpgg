@@ -38,7 +38,12 @@
    "sum_kills": 33,
    "sum_assists": 105,
    "sum_takedowns": 138,
-   "sum_deaths": 25
+   "sum_deaths": 25,
+   "sum_hero_damage": 524339,
+   "sum_siege_damage": 532722,
+   "sum_healing": 0,
+   "sum_damage_taken": 465982,
+   "sum_experience_contribution": 101547
   },
   {
    "battletag": "blAs1N#3479",
@@ -72,7 +77,12 @@
    "sum_kills": 21,
    "sum_assists": 179,
    "sum_takedowns": 200,
-   "sum_deaths": 19
+   "sum_deaths": 19,
+   "sum_hero_damage": 171806,
+   "sum_siege_damage": 228179,
+   "sum_healing": 907905,
+   "sum_damage_taken": 235644,
+   "sum_experience_contribution": 87420
   },
   {
    "battletag": "blAs1N#3479",
@@ -106,7 +116,12 @@
    "sum_kills": 3,
    "sum_assists": 11,
    "sum_takedowns": 14,
-   "sum_deaths": 6
+   "sum_deaths": 6,
+   "sum_hero_damage": 52013,
+   "sum_siege_damage": 61550,
+   "sum_healing": 117973,
+   "sum_damage_taken": 57220,
+   "sum_experience_contribution": 14110
   },
   {
    "battletag": "blAs1N#3479",
@@ -140,7 +155,12 @@
    "sum_kills": 2,
    "sum_assists": 11,
    "sum_takedowns": 13,
-   "sum_deaths": 8
+   "sum_deaths": 8,
+   "sum_hero_damage": 54521,
+   "sum_siege_damage": 122674,
+   "sum_healing": 4541,
+   "sum_damage_taken": 123787,
+   "sum_experience_contribution": 22299
   },
   {
    "battletag": "blAs1N#3479",
@@ -174,7 +194,12 @@
    "sum_kills": 12,
    "sum_assists": 34,
    "sum_takedowns": 46,
-   "sum_deaths": 10
+   "sum_deaths": 10,
+   "sum_hero_damage": 189605,
+   "sum_siege_damage": 253723,
+   "sum_healing": 0,
+   "sum_damage_taken": 87973,
+   "sum_experience_contribution": 29178
   },
   {
    "battletag": "blAs1N#3479",
@@ -208,7 +233,12 @@
    "sum_kills": 9,
    "sum_assists": 51,
    "sum_takedowns": 60,
-   "sum_deaths": 9
+   "sum_deaths": 9,
+   "sum_hero_damage": 137395,
+   "sum_siege_damage": 559437,
+   "sum_healing": 0,
+   "sum_damage_taken": 323082,
+   "sum_experience_contribution": 82703
   },
   {
    "battletag": "blAs1N#3479",
@@ -242,7 +272,12 @@
    "sum_kills": 0,
    "sum_assists": 5,
    "sum_takedowns": 5,
-   "sum_deaths": 6
+   "sum_deaths": 6,
+   "sum_hero_damage": 22590,
+   "sum_siege_damage": 19421,
+   "sum_healing": 0,
+   "sum_damage_taken": 79302,
+   "sum_experience_contribution": 5903
   },
   {
    "battletag": "blAs1N#3479",
@@ -276,7 +311,12 @@
    "sum_kills": 25,
    "sum_assists": 33,
    "sum_takedowns": 58,
-   "sum_deaths": 12
+   "sum_deaths": 12,
+   "sum_hero_damage": 240828,
+   "sum_siege_damage": 480698,
+   "sum_healing": 0,
+   "sum_damage_taken": 166624,
+   "sum_experience_contribution": 55690
   },
   {
    "battletag": "blAs1N#3479",
@@ -310,7 +350,12 @@
    "sum_kills": 8,
    "sum_assists": 12,
    "sum_takedowns": 20,
-   "sum_deaths": 4
+   "sum_deaths": 4,
+   "sum_hero_damage": 95695,
+   "sum_siege_damage": 179288,
+   "sum_healing": 0,
+   "sum_damage_taken": 44508,
+   "sum_experience_contribution": 19772
   },
   {
    "battletag": "blAs1N#3479",
@@ -344,7 +389,12 @@
    "sum_kills": 6,
    "sum_assists": 13,
    "sum_takedowns": 19,
-   "sum_deaths": 14
+   "sum_deaths": 14,
+   "sum_hero_damage": 117026,
+   "sum_siege_damage": 220271,
+   "sum_healing": 0,
+   "sum_damage_taken": 176882,
+   "sum_experience_contribution": 34766
   },
   {
    "battletag": "blAs1N#3479",
@@ -378,7 +428,12 @@
    "sum_kills": 3,
    "sum_assists": 34,
    "sum_takedowns": 37,
-   "sum_deaths": 0
+   "sum_deaths": 0,
+   "sum_hero_damage": 102611,
+   "sum_siege_damage": 262878,
+   "sum_healing": 0,
+   "sum_damage_taken": 157079,
+   "sum_experience_contribution": 34221
   },
   {
    "battletag": "blAs1N#3479",
@@ -412,7 +467,12 @@
    "sum_kills": 6,
    "sum_assists": 17,
    "sum_takedowns": 23,
-   "sum_deaths": 5
+   "sum_deaths": 5,
+   "sum_hero_damage": 77884,
+   "sum_siege_damage": 116557,
+   "sum_healing": 0,
+   "sum_damage_taken": 87634,
+   "sum_experience_contribution": 21317
   },
   {
    "battletag": "blAs1N#3479",
@@ -446,7 +506,12 @@
    "sum_kills": 3,
    "sum_assists": 14,
    "sum_takedowns": 17,
-   "sum_deaths": 5
+   "sum_deaths": 5,
+   "sum_hero_damage": 67214,
+   "sum_siege_damage": 40434,
+   "sum_healing": 0,
+   "sum_damage_taken": 133643,
+   "sum_experience_contribution": 9026
   },
   {
    "battletag": "blAs1N#3479",
@@ -480,7 +545,12 @@
    "sum_kills": 0,
    "sum_assists": 9,
    "sum_takedowns": 9,
-   "sum_deaths": 3
+   "sum_deaths": 3,
+   "sum_hero_damage": 13181,
+   "sum_siege_damage": 5767,
+   "sum_healing": 40410,
+   "sum_damage_taken": 18391,
+   "sum_experience_contribution": 2901
   },
   {
    "battletag": "blAs1N#3479",
@@ -514,7 +584,12 @@
    "sum_kills": 14,
    "sum_assists": 29,
    "sum_takedowns": 43,
-   "sum_deaths": 14
+   "sum_deaths": 14,
+   "sum_hero_damage": 155145,
+   "sum_siege_damage": 235478,
+   "sum_healing": 0,
+   "sum_damage_taken": 173077,
+   "sum_experience_contribution": 45539
   },
   {
    "battletag": "blAs1N#3479",
@@ -548,7 +623,12 @@
    "sum_kills": 3,
    "sum_assists": 19,
    "sum_takedowns": 22,
-   "sum_deaths": 1
+   "sum_deaths": 1,
+   "sum_hero_damage": 33195,
+   "sum_siege_damage": 31690,
+   "sum_healing": 15473,
+   "sum_damage_taken": 28853,
+   "sum_experience_contribution": 10055
   },
   {
    "battletag": "blAs1N#3479",
@@ -582,7 +662,12 @@
    "sum_kills": 7,
    "sum_assists": 10,
    "sum_takedowns": 18,
-   "sum_deaths": 2
+   "sum_deaths": 2,
+   "sum_hero_damage": 59489,
+   "sum_siege_damage": 62653,
+   "sum_healing": 0,
+   "sum_damage_taken": 50136,
+   "sum_experience_contribution": 10909
   },
   {
    "battletag": "blAs1N#3479",
@@ -616,7 +701,12 @@
    "sum_kills": 4,
    "sum_assists": 13,
    "sum_takedowns": 17,
-   "sum_deaths": 1
+   "sum_deaths": 1,
+   "sum_hero_damage": 65508,
+   "sum_siege_damage": 126863,
+   "sum_healing": 0,
+   "sum_damage_taken": 32085,
+   "sum_experience_contribution": 17033
   },
   {
    "battletag": "blAs1N#3479",
@@ -650,7 +740,12 @@
    "sum_kills": 0,
    "sum_assists": 1,
    "sum_takedowns": 1,
-   "sum_deaths": 4
+   "sum_deaths": 4,
+   "sum_hero_damage": 20214,
+   "sum_siege_damage": 32604,
+   "sum_healing": 0,
+   "sum_damage_taken": 25975,
+   "sum_experience_contribution": 4818
   },
   {
    "battletag": "blAs1N#3479",
@@ -684,7 +779,12 @@
    "sum_kills": 9,
    "sum_assists": 24,
    "sum_takedowns": 33,
-   "sum_deaths": 12
+   "sum_deaths": 12,
+   "sum_hero_damage": 152289,
+   "sum_siege_damage": 118056,
+   "sum_healing": 17185,
+   "sum_damage_taken": 287099,
+   "sum_experience_contribution": 21174
   },
   {
    "battletag": "blAs1N#3479",
@@ -718,7 +818,12 @@
    "sum_kills": 17,
    "sum_assists": 22,
    "sum_takedowns": 39,
-   "sum_deaths": 4
+   "sum_deaths": 4,
+   "sum_hero_damage": 144439,
+   "sum_siege_damage": 200136,
+   "sum_healing": 0,
+   "sum_damage_taken": 54219,
+   "sum_experience_contribution": 25569
   },
   {
    "battletag": "blAs1N#3479",
@@ -752,8 +857,13 @@
    "sum_kills": 12,
    "sum_assists": 62,
    "sum_takedowns": 74,
-   "sum_deaths": 11
+   "sum_deaths": 11,
+   "sum_hero_damage": 149522,
+   "sum_siege_damage": 115047,
+   "sum_healing": 453232,
+   "sum_damage_taken": 164418,
+   "sum_experience_contribution": 35303
   }
  ],
- "_recorded": "2026-10-14 GET /jobs/{id} for the 202 above. Rows trimmed to the fields the server reads (hero, games, wins, losses, sums of kills, deaths, assists and takedowns); HP sends ~250 more per row (avg_*, max_*, map/hero breakdowns, MMR per mode)"
+ "_recorded": "2026-10-14 GET /jobs/{id} for the 202 above. Rows trimmed to the fields the server reads (hero, games, wins, losses, and the sums of kills, deaths, assists, takedowns, hero and siege damage, healing, damage taken, experience); HP sends ~250 more per row (avg_*, max_*, map/hero breakdowns, MMR per mode)"
 }

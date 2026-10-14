@@ -524,6 +524,8 @@ The same data gives different tiers under a different formula. This site always 
       gamesN: (n: string) => `${n} games`,
       more: (n: string) => `${n} more`,
       less: "Show less",
+      statsOpen: (hero: string) => `Show ${hero}'s averages this season`,
+      statsClose: (hero: string) => `Hide ${hero}'s averages`,
       loading: "Loading this season…",
       emptySl: "No Storm League games this season.",
       emptyQm: "No Quick Match among the newest games.",
