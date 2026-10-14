@@ -62,7 +62,7 @@ test("players: search shows league per mode, recent matches and heroes; the URL 
   await expect(page.locator("#season-summary")).toContainText("62%");
   await expect(page.locator("#season-summary")).toContainText("5.17");
   await expect(page.locator("#season-summary")).toContainText("13.7");
-  await expect(page.locator("#h-season").locator("..")).toContainText("시즌 34");
+  await expect(page.locator("#h-season").locator("..")).not.toContainText("시즌 34"); // no subtitle on Storm League (owner 2026-10-14)
   await expect(page.locator("#season-heroes li").first()).toHaveAttribute("data-hero", "ana");
   await expect(page.locator("#season-heroes li").first()).toContainText("75%");
   await expect(page.locator("#season-heroes li").first()).toContainText("12게임");

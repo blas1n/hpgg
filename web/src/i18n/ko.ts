@@ -509,7 +509,6 @@ export const ko = {
       sl: "폭풍 리그",
       qm: "빠른 대전",
       modeLabel: "모드",
-      slSub: (season: string, n: string) => `시즌 ${season} · Heroes Profile에 올라온 ${n}판`,
       qmSub: (n: string) => `최근 경기 중 빠른 대전 ${n}판 (빠른 대전은 시즌 구분이 없습니다)`,
       games: "게임",
       winRate: "승률",
