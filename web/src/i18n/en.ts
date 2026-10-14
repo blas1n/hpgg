@@ -507,7 +507,6 @@ The same data gives different tiers under a different formula. This site always 
       sl: "Storm League",
       qm: "Quick Match",
       modeLabel: "Mode",
-      slSub: (season: string, n: string) => `Season ${season} · ${n} games uploaded to Heroes Profile`,
       qmSub: (n: string) => `${n} Quick Match games among the newest (Quick Match has no seasons)`,
       games: "Games",
       winRate: "Win rate",

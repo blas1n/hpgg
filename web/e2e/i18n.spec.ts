@@ -125,7 +125,6 @@ test("English player page: modes, heroes and ARAM maps by their English names; l
   await expect(page.locator("#player-maps")).toContainText("Braxis Outpost");
   await expect(page.locator("#season-heroes li a").first()).toHaveAttribute("href", "/en/hots/heroes/ana/");
   await expect(page.locator("#season-heroes li").first()).toContainText("Ana");
-  await expect(page.locator("#h-season").locator("..")).toContainText("Season 34");
   await page.locator("#player-search-tag").fill("Someone#1234");
   await page.locator("#player-search-tag").press("Enter");
   await expect(page).toHaveURL(/\/en\/hots\/players\/\?tag=Someone%231234&region=NA$/);
