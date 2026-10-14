@@ -45,6 +45,8 @@ from collector.snapshot import (
     timeframe_of,
 )
 from collector.talent_details import fetch_weekly_talents
+from collector.tiers import TIERS, tiers_file
+from collector.tiers import due as tiers_due
 from collector.weekly import build_weekly, history_entry, write_history
 
 BUILDS_GAME_TYPE = "qm,sl"
@@ -477,6 +479,51 @@ async def _run_averages(
     log.info("averages.done", patch=patch, stats=sorted(out["stats"]))
 
 
+async def _run_tiers(
+    c: HPClient,
+    settings: Settings,
+    *,
+    patches: dict[str, Any],
+    meta: dict[str, Any],
+    at: datetime,
+    collected_at: str,
+    sleep: SleepFn,
+) -> None:
+    """티어별 승률 on the reference patch, about once a week (collector/tiers.py): each league
+    tier and its solo twin. A failure keeps the previous file and never fails the run."""
+    path = settings.data_dir / "latest" / "sl_tiers.json"
+    patch = meta["reference_patch"]
+    since = _since(meta, patch)
+    if not settings.tier_stats or not tiers_due(
+        path, patch=patch, since=since, collected_at=collected_at
+    ):
+        return
+    specs = tuple(JobSpec(f"sl_t{t}", "sl", (t,), "") for t in TIERS)
+    solo_specs = tuple(JobSpec(f"sl_t{t}_solo", "sl", (t,), "", groupsize="Solo") for t in TIERS)
+    try:
+        timeframe = timeframe_of(patches, patch, now=at, since=since)
+        common: dict[str, Any] = {
+            "patch": patch,
+            "timeframe": timeframe,
+            "collected_at": collected_at,
+            "sleep": sleep,
+        }
+        _, snaps = await _collect_all(c, settings, specs=specs, after_a_call=True, **common)
+        _, solos = await _collect_all(c, settings, specs=solo_specs, after_a_call=True, **common)
+        out = tiers_file(
+            {t: snaps[f"sl_t{t}"] for t in TIERS},
+            {t: solos[f"sl_t{t}_solo"] for t in TIERS},
+            patch=patch,
+            since=since,
+            collected_at=collected_at,
+        )
+    except Exception as e:  # noqa: BLE001 — supplementary numbers never fail the daily run
+        log.warning("tiers.failed", error=f"{type(e).__name__}: {e}")
+        return
+    _write_atomic(path, out)
+    log.info("tiers.done", patch=patch, since=since, matches=out["matches"])
+
+
 async def _run_weekly_talents(
     c: HPClient,
     settings: Settings,
@@ -626,6 +673,10 @@ async def _run_stats(
     kept_avg = _load_json(settings.data_dir / "latest" / "sl_averages.json")
     if kept_avg is not None:
         extra["sl_averages.json"] = kept_avg
+    # 티어별 승률 likewise (collector/tiers.py)
+    kept_tiers = _load_json(settings.data_dir / "latest" / "sl_tiers.json")
+    if kept_tiers is not None:
+        extra["sl_tiers.json"] = kept_tiers
     commit_atomic(
         data_dir=settings.data_dir,
         tmp_dir=settings.tmp_dir,
@@ -649,6 +700,9 @@ async def _run_stats(
     )
     weeks = build_weekly(settings.data_dir)
     await _run_averages(
+        c, settings, patches=patches, meta=meta, at=at, collected_at=collected_at, sleep=sleep
+    )
+    await _run_tiers(
         c, settings, patches=patches, meta=meta, at=at, collected_at=collected_at, sleep=sleep
     )
     await _run_weekly_talents(

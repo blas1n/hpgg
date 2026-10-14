@@ -209,7 +209,7 @@ export const ko = {
     none: "맞는 영웅이 없습니다",
   },
   hero: {
-    sections: { top: "요약", maps: "전장", grid: "지역 × 구간", matchups: "상성", length: "시간대", builds: "특성 빌드", patches: "패치", comments: "댓글" },
+    sections: { top: "요약", maps: "전장", grid: "지역 × 구간", tiers: "티어별", matchups: "상성", length: "시간대", builds: "특성 빌드", patches: "패치", comments: "댓글" },
     sectionNav: "섹션",
     mapsTitle: (mode: string) => `전장별 승률 (${mode})`,
     gridTitle: (mode: string) => `지역 × 구간 (${mode})`,
@@ -232,6 +232,13 @@ export const ko = {
     matchupsTitle: (mode: string) => `상성 (${mode})`,
     matchupsSub: (patch: string, date: string, hero: string, wr: string, games: string) => `패치 ${patch} · ${date} 수집 · ${hero} 승률 ${wr} (${games}게임) 대비`,
     matchupsLater: "상성 데이터는 다음 정기 수집 후 표시됩니다 (폭풍 리그, 이틀마다 갱신)",
+    tiersTitle: (mode: string) => `티어별 승률 (${mode})`,
+    tiersSub: (patch: string, games: string) => `패치 ${patch} · ${games}게임 · 파티 보정`,
+    tiersGames: (games: string) => `${games}게임`,
+    tiersRule: (min: string) => `점은 그 티어에서 이 영웅을 고른 플레이어들의 승률(파티 보정), 세로 막대는 95% 범위입니다. ${min}게임 미만은 흐리게 표시합니다. 마스터+는 마스터와 그랜드마스터입니다.`,
+    /** HP has no grandmaster tier: its master is master and grandmaster (owner 2026-10-14: 마스터+). */
+    tiersLeagues: { bronze: "브론즈", silver: "실버", gold: "골드", platinum: "플래티넘", diamond: "다이아몬드", master: "마스터+" },
+    tiersAria: (points: string) => `티어별 승률: ${points}`,
     lengthTitle: (mode: string) => `게임 시간대별 승률 (${mode})`,
     lengthSub: (patch: string, since: string | null, games: string) => `패치 ${patch}${since ? ` · ${since} 핫픽스 이후` : ""} · 리플레이 ${games}게임 표본`,
     lengthBands: { short: "15분 이하", mid: "15~20분", long: "20분 초과" },

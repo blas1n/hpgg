@@ -201,6 +201,30 @@ test("hero detail: counters and synergies from the matchups file, with numbers, 
   await expect(page.locator("h1")).toHaveText("키히라");
 });
 
+test("hero detail: Storm League win rate by league, bronze to master, with a faint point under 30 games", async ({ page }) => {
+  // e2e-data/latest/sl_tiers.json (collector/tiers.py): Abathur 53.0 / 52.0 / 48.0 / 50.0 / 45.0 / 45.0 (20 games)
+  await page.goto("./heroes/abathur/");
+  await expect(page.locator("#tiers-title")).toContainText("티어별 승률");
+  await expect(page.locator("#tiers-title")).toContainText("폭풍 리그");
+  const points = page.locator("#tiers [data-league]");
+  await expect(points).toHaveCount(6);
+  await expect(points.first()).toContainText("브론즈");
+  await expect(points.first()).toContainText("53.0%");
+  await expect(points.first()).toContainText("174게임");
+  await expect(points.last()).toHaveText(/^마스터\+/); // grandmasters are inside master
+  await expect(points.last()).toHaveAttribute("data-thin", "true");
+  await expect(page.locator("#tiers svg circle")).toHaveCount(6);
+  await expect(page.locator("#tiers-sub")).toContainText("1,771게임");
+  await expect(page.locator("#tiers-rule")).toContainText("30게임 미만");
+  await expect(page.locator("nav[data-subnav] a[href='#tiers-title']")).toBeVisible();
+});
+
+test("hero detail: no league chart for a hero the file does not have", async ({ page }) => {
+  await page.goto("./heroes/illidan/");
+  await expect(page.locator("h1")).toHaveText("일리단");
+  await expect(page.locator("#tiers-title")).toHaveCount(0);
+});
+
 test("hero detail: Storm League win rate by game length, with the sample and a lean only beyond the error", async ({ page }) => {
   // e2e-data/latest/sl_length.json (collector/hero_length.py): Abathur 38.0% / 50.0% / 55.0%, leaning late
   await page.goto("./heroes/abathur/");
