@@ -46,6 +46,13 @@ class Settings(BaseSettings):
     match_daily_budget: int = 70
     mmr_history_quota_floor: int = 200
     mmr_history_daily_budget: int = 3500
+    # The season card (`server/players/season.py`): /players/heroes for the current season's Storm
+    # League, bucket player_hero_all (500/week on Intermediate) ≈ (500 − floor) / 7 a day, one ask
+    # per player, cached as long as the match list (match_ttl_seconds, owner 2026-10-14). The
+    # season comes from /patches (1,000,000/week), asked once a day.
+    season_quota_floor: int = 20
+    season_daily_budget: int = 68
+    season_list_ttl_seconds: int = 24 * 3600
     # One game in full (`server/players/replays.py`): /replay/{id}, 25,000/week on Intermediate. A
     # game never changes, but it names ten players, so it is kept no longer than stale_max_seconds.
     # The bucket is shared with the weekly report's sampler (collector/replay_sample.py, ~1,500 a

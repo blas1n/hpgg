@@ -35,10 +35,16 @@ def matches_key(region: str, battletag: str) -> str:
     return f"player_matches|{region}|{battletag}"
 
 
+def season_key(region: str, battletag: str) -> str:
+    """Cache key of one player's Storm League heroes this season (`server/players/season.py`)."""
+    return f"player_season|{region}|{battletag}"
+
+
 # Every cache key that holds one player's data — a player going private drops them all.
 PLAYER_KEYS: tuple[Callable[[str, str], str], ...] = (
     player_key,
     matches_key,
+    season_key,
 )
 
 

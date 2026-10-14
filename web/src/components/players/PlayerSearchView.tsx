@@ -9,12 +9,15 @@ import { useLocale, useT } from "@/i18n/client";
 import { fetchPlayer, isRegion, parseBattletag, playersHref, playerView, REGIONS, startRegion, type PlayerResult, type PlayerView, type Region } from "@/lib/players";
 import { Card, CardHeader, cx, Portrait } from "../ui";
 import { fetchMatches, type MatchesResult } from "@/lib/matches";
+import { fetchSeason, type SeasonResult } from "@/lib/season";
 import { HeroStats } from "./HeroStats";
 import { MatchHistory } from "./MatchHistory";
+import { SeasonCard } from "./SeasonCard";
 import { PlayerSearchForm } from "./PlayerSearchForm";
 
 type State = { kind: "idle" } | { kind: "loading"; tag: string } | PlayerResult;
 type Games = { kind: "loading" } | MatchesResult;
+type Season = { kind: "loading" } | SeasonResult;
 
 const pct = (n: number | null) => (n === null ? "–" : `${n.toFixed(1)}%`);
 const int = (n: number) => n.toLocaleString("ko-KR");
@@ -26,6 +29,7 @@ export function PlayerSearchView({ heroes, maps }: { heroes: HeroTable; maps: Ma
   const locale = useLocale();
   const [state, setState] = useState<State>({ kind: "idle" });
   const [games, setGames] = useState<Games>({ kind: "loading" });
+  const [season, setSeason] = useState<Season>({ kind: "loading" });
   const [query, setQuery] = useState<{ tag: string; region: Region } | null>(null);
   const [formKey, setFormKey] = useState(0);
 
@@ -33,10 +37,12 @@ export function PlayerSearchView({ heroes, maps }: { heroes: HeroTable; maps: Ma
     setQuery({ tag, region });
     setState({ kind: "loading", tag });
     setGames({ kind: "loading" });
-    // the match list is a second call so the profile is not held up by Heroes Profile's job queue
+    setSeason({ kind: "loading" });
+    // the match list and the season are calls of their own so the profile is not held up by Heroes Profile's job queue
     const matches = fetchMatches(tag, region).then(setGames);
+    const thisSeason = fetchSeason(tag, region).then(setSeason);
     setState(await fetchPlayer(tag, region));
-    await matches;
+    await Promise.all([matches, thisSeason]);
   }, []);
 
   useEffect(() => {
@@ -72,6 +78,7 @@ export function PlayerSearchView({ heroes, maps }: { heroes: HeroTable; maps: Ma
         <Result
           state={state}
           games={games}
+          season={season}
           me={query?.tag ?? ""}
           region={query?.region ?? "KR"}
           heroes={heroes}
@@ -86,7 +93,7 @@ export function PlayerSearchView({ heroes, maps }: { heroes: HeroTable; maps: Ma
   );
 }
 
-function Result({ state, games, me, region, heroes, maps, retry, elsewhere }: { state: State; games: Games; me: string; region: Region; heroes: HeroTable; maps: MapTable; retry?: () => void; elsewhere?: (r: Region) => void }) {
+function Result({ state, games, season, me, region, heroes, maps, retry, elsewhere }: { state: State; games: Games; season: Season; me: string; region: Region; heroes: HeroTable; maps: MapTable; retry?: () => void; elsewhere?: (r: Region) => void }) {
   const t = useT().players;
   const locale = useLocale();
   switch (state.kind) {
@@ -132,7 +139,7 @@ function Result({ state, games, me, region, heroes, maps, retry, elsewhere }: { 
     case "invalid":
       return <Notice tone="warn" title={t.invalidTitle} body={t.invalidBody} />;
     case "ok":
-      return <Profile v={playerView(state.data, heroes, maps, locale)} games={games} me={me} region={region} heroes={heroes} maps={maps} />;
+      return <Profile v={playerView(state.data, heroes, maps, locale)} games={games} season={season} me={me} region={region} heroes={heroes} maps={maps} />;
   }
 }
 
@@ -238,7 +245,7 @@ function Notice({ title, body, tone, retry, children }: { title: string; body: s
   );
 }
 
-function Profile({ v, games, me, region, heroes, maps }: { v: PlayerView; games: Games; me: string; region: Region; heroes: HeroTable; maps: MapTable }) {
+function Profile({ v, games, season, me, region, heroes, maps }: { v: PlayerView; games: Games; season: Season; me: string; region: Region; heroes: HeroTable; maps: MapTable }) {
   const t = useT().players;
   return (
     <div className="space-y-4">
@@ -319,30 +326,7 @@ function Profile({ v, games, me, region, heroes, maps }: { v: PlayerView; games:
         )}
 
         <div className={cx("space-y-4", games.kind === "ok" ? "lg:col-span-4" : "lg:col-span-5")}>
-          <Card aria-labelledby="h-heroes">
-            <CardHeader id="h-heroes" title={t.heroesTitle} />
-            <ul id="player-heroes" className="divide-y divide-line">
-              {v.heroes.map((h) => (
-                <li key={h.name} data-hero={h.slug ?? undefined}>
-                  <HeroLine h={h} />
-                </li>
-              ))}
-            </ul>
-          </Card>
-          <Card aria-labelledby="h-roles">
-            <CardHeader id="h-roles" title={t.rolesTitle} />
-            <ul id="player-roles" className="space-y-2 p-4">
-              {v.roles.map((r) => (
-                <li key={r.role} className="flex items-center gap-3 text-xs">
-                  <span className="w-20 shrink-0 text-fg-2">{r.label}</span>
-                  <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-surface-3">
-                    <span className={cx("block h-full rounded-full", r.winRate >= 50 ? "bg-pos" : "bg-neg")} style={{ width: `${Math.min(100, Math.max(0, r.winRate))}%` }} />
-                  </span>
-                  <span className={cx("num w-12 text-right", wrClass(r.winRate))}>{pct(r.winRate)}</span>
-                </li>
-              ))}
-            </ul>
-          </Card>
+          <SeasonCard key={`${me}|${region}`} season={season} games={games} heroes={heroes} />
           {v.maps.length > 0 && (
             <Card aria-labelledby="h-maps">
               <CardHeader id="h-maps" title={t.mapsTitle} />
@@ -364,28 +348,6 @@ function Profile({ v, games, me, region, heroes, maps }: { v: PlayerView; games:
 
       <HeroStats key={`${me}|${region}`} games={games} heroes={heroes} />
     </div>
-  );
-}
-
-function HeroLine({ h }: { h: PlayerView["heroes"][number] }) {
-  const t = useT().players;
-  const body = (
-    <>
-      <Portrait src={h.portrait} size={32} role={h.role} />
-      <span className="min-w-0 flex-1 truncate text-sm font-semibold text-fg">{h.name}</span>
-      <span className="num shrink-0 text-xs text-muted">
-        {t.gamesWr(int(h.games))}
-        <span className={wrClass(h.winRate)}>{pct(h.winRate)}</span>
-      </span>
-    </>
-  );
-  const cls = "flex items-center gap-3 px-4 py-2";
-  return h.href ? (
-    <a href={h.href} className={cx(cls, "transition-colors hover:bg-surface-2")}>
-      {body}
-    </a>
-  ) : (
-    <span className={cls}>{body}</span>
   );
 }
 

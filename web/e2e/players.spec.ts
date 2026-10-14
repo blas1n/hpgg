@@ -6,6 +6,7 @@ import { expect, test, type Page, type Route } from "@playwright/test";
 // 전적 검색 against a mocked API (the real one is https://api.hpgg.win, our server in server/).
 const fixture = JSON.parse(readFileSync(join(dirname(fileURLToPath(import.meta.url)), "../tests/fixtures/api_player_zemill.json"), "utf-8"));
 const games = JSON.parse(readFileSync(join(dirname(fileURLToPath(import.meta.url)), "../tests/fixtures/api_matches_blas1n.json"), "utf-8"));
+const season = JSON.parse(readFileSync(join(dirname(fileURLToPath(import.meta.url)), "../tests/fixtures/api_season_blas1n.json"), "utf-8"));
 const replay = JSON.parse(readFileSync(join(dirname(fileURLToPath(import.meta.url)), "../tests/fixtures/api_replay_65597227.json"), "utf-8"));
 const API = "https://api.hpgg.win/v1/players**";
 
@@ -35,7 +36,7 @@ test("players: empty page explains what to type; nav marks 전적 검색", async
 });
 
 test("players: search shows league per mode, recent matches and heroes; the URL carries the query", async ({ page }) => {
-  const seen = await mockApi(page, (route) => json(route, 200, fixture));
+  const seen = await mockApi(page, (route, url) => json(route, 200, url.pathname.endsWith("/season") ? season : fixture));
   await page.goto("./players/");
   await page.locator("#player-search-region").selectOption("NA");
   await page.locator("#player-search-tag").fill(" Zemill ＃1940 ");
@@ -53,8 +54,23 @@ test("players: search shows league per mode, recent matches and heroes; the URL 
   await expect(page.locator("#player-matches li")).toHaveCount(5);
   await expect(page.locator("#player-matches li").first()).toHaveAttribute("data-result", "win");
   await expect(page.locator("#player-matches li").first()).toContainText("데커드");
-  await expect(page.locator("#player-heroes li").first()).toHaveAttribute("data-hero", "lucio");
-  await expect(page.locator("#player-heroes li a").first()).toHaveAttribute("href", "/ko/hots/heroes/lucio/");
+  // 이번 시즌 (owner 2026-10-14): Storm League this season, most played first, in place of the all-time hero and role cards
+  await expect(page.locator("#player-heroes")).toHaveCount(0);
+  await expect(page.locator("#player-roles")).toHaveCount(0);
+  await expect(page.locator("#player-season")).toHaveAttribute("data-mode", "sl");
+  await expect(page.locator("#season-summary")).toContainText("66");
+  await expect(page.locator("#season-summary")).toContainText("62%");
+  await expect(page.locator("#season-summary")).toContainText("5.17");
+  await expect(page.locator("#season-summary")).toContainText("13.7");
+  await expect(page.locator("#h-season").locator("..")).toContainText("시즌 34");
+  await expect(page.locator("#season-heroes li").first()).toHaveAttribute("data-hero", "ana");
+  await expect(page.locator("#season-heroes li").first()).toContainText("75%");
+  await expect(page.locator("#season-heroes li").first()).toContainText("12게임");
+  await expect(page.locator("#season-heroes li a").first()).toHaveAttribute("href", "/ko/hots/heroes/ana/");
+  await expect(page.locator("#season-heroes li")).toHaveCount(7);
+  await page.locator("#season-more").click();
+  await expect(page.locator("#season-heroes li")).toHaveCount(22);
+  await expect(page.locator('#season-roles [data-role="Healer"]')).toContainText("19게임");
   await expect(page.locator("#player-stale")).toHaveCount(0);
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
   expect(overflow).toBeLessThanOrEqual(0);
@@ -64,8 +80,8 @@ test("players: a shared link runs the search on load", async ({ page }) => {
   const seen = await mockApi(page, (route) => json(route, 200, fixture));
   await page.goto("./players/?tag=Zemill%231940&region=NA");
   await expect(page.locator("#player-result")).toHaveAttribute("data-state", "ok");
-  // one profile call and one game-list call (팀운, when on, asks its own: tests/e2e teamluck.spec.ts)
-  expect(seen.map((u) => u.pathname).filter((p) => p !== "/v1/players/teamluck").sort()).toEqual(["/v1/players", "/v1/players/matches"]);
+  // one profile call, one game-list call and one season call (팀운, when on, asks its own: tests/e2e teamluck.spec.ts)
+  expect(seen.map((u) => u.pathname).filter((p) => p !== "/v1/players/teamluck").sort()).toEqual(["/v1/players", "/v1/players/matches", "/v1/players/season"]);
   await expect(page.locator("#player-search-tag")).toHaveValue("Zemill#1940");
   await expect(page.locator("#player-search-region")).toHaveValue("NA");
 });
@@ -206,7 +222,41 @@ test("players: not found leads straight to uploading, and the funnel is counted 
   expect([...events].sort()).toEqual(["upload-complete", "upload-cta"]);
 });
 
-const withGames = (body: unknown) => (route: Route, url: URL) => json(route, 200, url.pathname.endsWith("/matches") ? body : fixture);
+const withGames = (body: unknown) => (route: Route, url: URL) =>
+  json(route, 200, url.pathname.endsWith("/matches") ? body : url.pathname.endsWith("/season") ? season : fixture);
+
+test("players: 이번 시즌 — Quick Match from the newest games, asking nothing more", async ({ page }) => {
+  const seen = await mockApi(page, withGames(games));
+  await page.goto("./players/?tag=blAs1N%233479&region=KR");
+  await expect(page.locator("#player-season")).toHaveAttribute("data-state", "ok");
+  const asked = seen.length;
+  await page.locator("#season-mode-qm").click();
+  await expect(page.locator("#player-season")).toHaveAttribute("data-mode", "qm");
+  await expect(page.locator("#h-season").locator("..")).toContainText("빠른 대전 25판");
+  await expect(page.locator("#season-summary")).toContainText("25");
+  await expect(page.locator("#season-summary")).toContainText("44%");
+  await expect(page.locator("#season-heroes li").first()).toHaveAttribute("data-hero", "alarak");
+  await expect(page.locator("#season-heroes li").first()).toContainText("9게임");
+  expect(seen.length).toBe(asked);
+});
+
+test("players: 이번 시즌 — no Storm League this season opens on Quick Match; a used-up lookup says so", async ({ page }) => {
+  await mockApi(page, (route, url) =>
+    url.pathname.endsWith("/season") ? json(route, 200, { ...season, heroes: [] }) : withGames(games)(route, url),
+  );
+  await page.goto("./players/?tag=blAs1N%233479&region=KR");
+  await expect(page.locator("#player-season")).toHaveAttribute("data-mode", "qm");
+  await page.locator("#season-mode-sl").click();
+  await expect(page.locator("#player-season")).toContainText("이번 시즌 폭풍 리그 기록이 없습니다");
+
+  await page.unrouteAll({ behavior: "wait" });
+  await mockApi(page, (route, url) =>
+    url.pathname.endsWith("/season") ? json(route, 429, { error: { code: "quota_exceeded" } }, { "retry-after": "60" }) : withGames(games)(route, url),
+  );
+  await page.goto("./players/?tag=Zemill%231940&region=NA");
+  await expect(page.locator("#player-season")).toHaveAttribute("data-state", "error");
+  await expect(page.locator("#player-season")).toContainText("조회 한도");
+});
 
 test("players: the newest 20 games — briefing, MMR line, stat lines and talents; more on request", async ({ page }) => {
   await mockApi(page, withGames(games));

@@ -9,11 +9,14 @@ import { navIds, sectionEnabled } from "../src/features";
 // them; the URLs from before (/hots/…) forward.
 
 const playerFixture = fileURLToPath(new URL("../tests/fixtures/api_player_zemill.json", import.meta.url));
+const seasonFixture = fileURLToPath(new URL("../tests/fixtures/api_season_blas1n.json", import.meta.url));
 const HANGUL = /[가-힣ㄱ-ㆎ]/;
 
 test.beforeEach(async ({ page }) => {
   await page.route("**/gc.zgo.at/**", (r) => r.abort());
-  await page.route("https://api.hpgg.win/**", (r) => r.fulfill({ status: 200, contentType: "application/json", headers: { "access-control-allow-origin": "*" }, path: playerFixture }));
+  await page.route("https://api.hpgg.win/**", (r) =>
+    r.fulfill({ status: 200, contentType: "application/json", headers: { "access-control-allow-origin": "*" }, path: new URL(r.request().url()).pathname.endsWith("/season") ? seasonFixture : playerFixture }),
+  );
 });
 
 /** Every page type: its Korean path and the English heading it must show. */
@@ -120,7 +123,9 @@ test("English player page: modes, heroes and ARAM maps by their English names; l
   await expect(page.locator('#player-modes [data-mode="ar"]')).toContainText("ARAM");
   await expect(page.locator('#player-modes [data-mode="ar"]')).toContainText("ARAM");
   await expect(page.locator("#player-maps")).toContainText("Braxis Outpost");
-  await expect(page.locator("#player-heroes li a").first()).toHaveAttribute("href", "/en/hots/heroes/lucio/");
+  await expect(page.locator("#season-heroes li a").first()).toHaveAttribute("href", "/en/hots/heroes/ana/");
+  await expect(page.locator("#season-heroes li").first()).toContainText("Ana");
+  await expect(page.locator("#h-season").locator("..")).toContainText("Season 34");
   await page.locator("#player-search-tag").fill("Someone#1234");
   await page.locator("#player-search-tag").press("Enter");
   await expect(page).toHaveURL(/\/en\/hots\/players\/\?tag=Someone%231234&region=NA$/);
