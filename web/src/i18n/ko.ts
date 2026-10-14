@@ -527,6 +527,8 @@ export const ko = {
       gamesN: (n: string) => `${n}게임`,
       more: (n: string) => `${n}명 더 보기`,
       less: "접기",
+      statsOpen: (hero: string) => `${hero} 이번 시즌 평균 스탯 보기`,
+      statsClose: (hero: string) => `${hero} 평균 스탯 접기`,
       loading: "이번 시즌 기록을 불러오는 중…",
       emptySl: "이번 시즌 폭풍 리그 기록이 없습니다.",
       emptyQm: "최근 경기에 빠른 대전이 없습니다.",

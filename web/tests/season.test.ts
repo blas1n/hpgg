@@ -50,6 +50,22 @@ describe("seasonCard (Storm League this season)", () => {
     expect(c.heroes[1]!.name).toBe("알라라크");
   });
 
+  it("averages the game card's stat line per hero over the season (owner 2026-10-14)", () => {
+    expect(c.heroes[0]!.stats).toEqual({
+      heroDamage: 171806 / 12,
+      siegeDamage: 228179 / 12,
+      healing: 907905 / 12,
+      damageTaken: 235644 / 12,
+      experience: 87420 / 12,
+    });
+    expect(c.heroes[1]!.stats!.healing).toBe(0); // the card then shows damage taken, like a game card
+  });
+
+  it("an answer from before the stat line was sent shows no stats, not zeros", () => {
+    const old = season.heroes.map(({ hero_damage: _h, siege_damage: _s, healing: _he, damage_taken: _d, experience: _e, ...r }) => r);
+    expect(seasonCard(old, heroes, "ko").heroes[0]!.stats).toBeNull();
+  });
+
   it("adds the heroes up by role, every role listed in the game's order, played or not", () => {
     expect(c.roles.map((r) => r.role)).toEqual(heroes.roles.map((r) => r.name));
     const by = Object.fromEntries(c.roles.map((r) => [r.role, r]));
@@ -87,12 +103,18 @@ describe("qmCard (Quick Match, the newest games of the match list)", () => {
   it("the same heroes and roles as the season card, from the games", () => {
     expect(c.heroes[0]).toMatchObject({ name: "알라라크", games: 9, wins: 4 });
     expect(c.heroes[0]!.kda).toBeCloseTo((43 + 90) / 24, 5);
+    // a game without healing (HP sends null for a non-healer) counts as none
+    expect(c.heroes[0]!.stats).toEqual({ heroDamage: 411175 / 9, siegeDamage: 516181 / 9, healing: 0, damageTaken: 445185 / 9, experience: 95908 / 9 });
   });
 
   it("games from the MMR history (no stat line) give the record without KDA", () => {
-    const basic = games.matches.map((m) => ({ ...m, kills: null, deaths: null, assists: null, takedowns: null }));
+    const basic = games.matches.map((m) => ({
+      ...m,
+      kills: null, deaths: null, assists: null, takedowns: null,
+      hero_damage: null, siege_damage: null, healing: null, damage_taken: null, experience: null,
+    }));
     const b = qmCard(basic, heroes, "ko");
     expect([b.games, b.wins, b.kda, b.takedowns]).toEqual([25, 11, null, null]);
-    expect(b.heroes[0]).toMatchObject({ games: 9, kda: null, perGame: null });
+    expect(b.heroes[0]).toMatchObject({ games: 9, kda: null, perGame: null, stats: null });
   });
 });
