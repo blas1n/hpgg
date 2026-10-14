@@ -545,8 +545,7 @@ function Tiers({ v }: { v: TiersView }) {
     .filter(Boolean)
     .join(" ");
   const ticks = [lo, 50, hi].filter((n, i, a) => a.indexOf(n) === i);
-  // HP has no grandmaster tier: its master is master and grandmaster
-  const league = (l: TiersView["points"][number]["league"]) => (l === "master" ? t.hero.tiersMasterPlus : t.players.leagues[l]);
+  const league = (l: TiersView["points"][number]["league"]) => t.hero.tiersLeagues[l];
   return (
     <>
       <h2 id="tiers-title" className={SECTION}>

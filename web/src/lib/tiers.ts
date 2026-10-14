@@ -2,7 +2,7 @@
  *  every win rate the site shows (collector/tiers.py, data/latest/sl_tiers.json). Pure. */
 import { wilson } from "../wilson";
 
-/** League tier ids 1…6 (HP has no grandmaster id: grandmasters are inside master); keys of messages players.leagues. */
+/** League tier ids 1…6 (HP has no grandmaster id: grandmasters are inside master); keys of messages hero.tiersLeagues. */
 export const TIER_LEAGUES = ["bronze", "silver", "gold", "platinum", "diamond", "master"] as const;
 export type TierLeague = (typeof TIER_LEAGUES)[number];
 /** A point under this many games is drawn faint: its interval is wider than most differences between tiers. */
