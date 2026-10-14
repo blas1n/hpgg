@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import type { HeroTable } from "@/data";
 import { useLocale, useT } from "@/i18n/client";
 import type { MatchesResult } from "@/lib/matches";
-import { qmCard, seasonCard, type SeasonCardView, type SeasonResult } from "@/lib/season";
+import { qmCard, seasonCard, type SeasonCardView, type SeasonHeroView, type SeasonResult } from "@/lib/season";
 import { Card, CardHeader, cx, Portrait, Segmented } from "../ui";
 
 type Mode = "sl" | "qm";
@@ -13,6 +13,7 @@ const pct = (n: number | null) => (n === null ? "–" : `${n.toFixed(0)}%`);
 const wr = (n: number | null) => (n === null ? "text-muted" : n >= 50 ? "text-pos" : "text-neg");
 const two = (n: number | null) => (n === null ? "–" : n.toFixed(2));
 const one = (n: number) => n.toFixed(1);
+const int = (n: number) => Math.round(n).toLocaleString("ko-KR");
 
 /** 이번 시즌 (owner 2026-10-14): Storm League this season from /v1/players/season, Quick Match from the match list. */
 export function SeasonCard({ season, games, heroes }: { season: { kind: "loading" } | SeasonResult; games: { kind: "loading" } | MatchesResult; heroes: HeroTable }) {
@@ -75,38 +76,9 @@ function Body({ v }: { v: SeasonCardView }) {
 
       <h3 className="px-4 pt-3 pb-1 text-xs font-bold text-fg-2">{t.most}</h3>
       <ul id="season-heroes" className="divide-y divide-line">
-        {list.map((h) => {
-          const body = (
-            <>
-              <Portrait src={h.portrait} size={34} role={h.role} />
-              <span className="min-w-0 flex-1">
-                <span className="block truncate text-sm font-semibold text-fg">{h.name}</span>
-                {h.perGame && (
-                  <span className="num block text-2xs text-muted">
-                    <span className={cx("font-semibold", h.kda !== null && h.kda >= 4 ? "text-primary" : "text-fg-2")}>{two(h.kda)}</span> KDA ·{" "}
-                    {one(h.perGame.kills)} / {one(h.perGame.deaths)} / {one(h.perGame.assists)}
-                  </span>
-                )}
-              </span>
-              <span className="num shrink-0 text-right">
-                <span className={cx("block text-sm font-bold", wr(h.winRate))}>{pct(h.winRate)}</span>
-                <span className="block text-2xs text-muted">{t.gamesN(String(h.games))}</span>
-              </span>
-            </>
-          );
-          const cls = "flex items-center gap-3 px-4 py-2";
-          return (
-            <li key={h.slug ?? h.name} data-hero={h.slug ?? undefined}>
-              {h.href ? (
-                <a href={h.href} className={cx(cls, "transition-colors hover:bg-surface-2")}>
-                  {body}
-                </a>
-              ) : (
-                <span className={cls}>{body}</span>
-              )}
-            </li>
-          );
-        })}
+        {list.map((h) => (
+          <HeroRow key={h.slug ?? h.name} h={h} />
+        ))}
       </ul>
       {v.heroes.length > SHOWN && (
         <button id="season-more" type="button" onClick={() => setAll(!all)} className="w-full border-t border-line py-2 text-xs font-semibold text-fg-2 hover:bg-surface-2">
@@ -125,6 +97,81 @@ function Body({ v }: { v: SeasonCardView }) {
         ))}
       </ul>
     </>
+  );
+}
+
+function HeroRow({ h }: { h: SeasonHeroView }) {
+  const t = useT().players;
+  const s = t.season;
+  const [open, setOpen] = useState(false);
+  const panel = `season-hero-${h.slug ?? h.name}`;
+  const body = (
+    <>
+      <Portrait src={h.portrait} size={34} role={h.role} />
+      <span className="min-w-0 flex-1">
+        <span className="block truncate text-sm font-semibold text-fg">{h.name}</span>
+        {h.perGame && (
+          <span className="num block text-2xs text-muted">
+            <span className={cx("font-semibold", h.kda !== null && h.kda >= 4 ? "text-primary" : "text-fg-2")}>{two(h.kda)}</span> KDA ·{" "}
+            {one(h.perGame.kills)} / {one(h.perGame.deaths)} / {one(h.perGame.assists)}
+          </span>
+        )}
+      </span>
+      <span className="num shrink-0 text-right">
+        <span className={cx("block text-sm font-bold", wr(h.winRate))}>{pct(h.winRate)}</span>
+        <span className="block text-2xs text-muted">{s.gamesN(String(h.games))}</span>
+      </span>
+    </>
+  );
+  const cls = "flex min-w-0 flex-1 items-center gap-3 py-2 pl-4";
+  return (
+    <li data-hero={h.slug ?? undefined} data-open={open || undefined}>
+      <div className="flex items-center gap-2 pr-3">
+        {h.href ? (
+          <a href={h.href} className={cx(cls, "transition-colors hover:bg-surface-2")}>
+            {body}
+          </a>
+        ) : (
+          <span className={cls}>{body}</span>
+        )}
+        {h.stats ? (
+          <button
+            type="button"
+            data-toggle
+            aria-expanded={open}
+            aria-controls={panel}
+            aria-label={open ? s.statsClose(h.name) : s.statsOpen(h.name)}
+            title={open ? s.statsClose(h.name) : s.statsOpen(h.name)}
+            onClick={() => setOpen((o) => !o)}
+            className="flex size-7 shrink-0 items-center justify-center rounded-md border border-line text-fg-2 hover:border-primary hover:text-fg"
+          >
+            <span aria-hidden className={cx("inline-block text-xs transition-transform", open && "rotate-180")}>
+              ▾
+            </span>
+          </button>
+        ) : (
+          <span className="size-7 shrink-0" />
+        )}
+      </div>
+      {open && h.stats && (
+        // the game card's stat line, averaged over the season (owner 2026-10-14)
+        <dl id={panel} data-stats className="num grid grid-cols-2 gap-x-3 gap-y-0.5 px-4 pb-2.5 text-2xs">
+          <Avg label={t.games.stat.heroDamage} value={int(h.stats.heroDamage)} />
+          <Avg label={t.games.stat.siegeDamage} value={int(h.stats.siegeDamage)} />
+          {h.stats.healing ? <Avg label={t.games.stat.healing} value={int(h.stats.healing)} /> : <Avg label={t.games.stat.damageTaken} value={int(h.stats.damageTaken)} />}
+          <Avg label={t.games.stat.experience} value={int(h.stats.experience)} />
+        </dl>
+      )}
+    </li>
+  );
+}
+
+function Avg({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex justify-between gap-2 border-b border-line/60 py-0.5">
+      <dt className="truncate text-fg-2">{label}</dt>
+      <dd className="font-semibold text-fg">{value}</dd>
+    </div>
   );
 }
 

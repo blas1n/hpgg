@@ -33,6 +33,21 @@ from server.players.store import CacheEntry, HPStore, season_key
 log = structlog.get_logger(__name__)
 
 BUCKET = "player_hero_all"  # HP bucket name
+# Bump when a row gains, loses or changes a field: answers cached in another format are asked again
+# (still served stale while HP cannot be). 2 = the match card's stat line as sums (2026-10-14).
+ROWS_VERSION = 2
+# our field → HP's season sum: the stats a game card shows (owner 2026-10-14)
+SUMS = {
+    "kills": "sum_kills",
+    "deaths": "sum_deaths",
+    "assists": "sum_assists",
+    "takedowns": "sum_takedowns",
+    "hero_damage": "sum_hero_damage",
+    "siege_damage": "sum_siege_damage",
+    "healing": "sum_healing",
+    "damage_taken": "sum_damage_taken",
+    "experience": "sum_experience_contribution",
+}
 SEASONS_KEY = "hp_seasons"
 MODE = "sl"
 
@@ -69,10 +84,7 @@ def season_rows(body: Any) -> list[dict[str, Any]]:
                 "games": _int(r, "games_played"),
                 "wins": _int(r, "wins"),
                 "losses": _int(r, "losses"),
-                "kills": _int(r, "sum_kills"),
-                "deaths": _int(r, "sum_deaths"),
-                "assists": _int(r, "sum_assists"),
-                "takedowns": _int(r, "sum_takedowns"),
+                **{ours: _int(r, theirs) for ours, theirs in SUMS.items()},
             }
         )
     return sorted(rows, key=lambda x: (-x["games"], -x["wins"], x["hero"]))
@@ -114,7 +126,8 @@ class SeasonService:
         entry = await self._store.get(key)
         if entry is not None and _season_of(entry) != season:
             entry = None  # last season's answer
-        if entry is not None and entry.expires_at > self._clock():
+        current = entry is not None and _d(entry.body).get("v") == ROWS_VERSION
+        if entry is not None and current and entry.expires_at > self._clock():
             return _from_entry(entry)
         task = self._inflight.get(key)
         if task is None:
@@ -167,7 +180,7 @@ class SeasonService:
             now = self._clock()
         if up.status == 200 or up.code == "not_found":
             rows = season_rows(up.body)
-            body = {"season": season, "heroes": rows}
+            body = {"v": ROWS_VERSION, "season": season, "heroes": rows}
             entry = CacheEntry(key, 200, body, now, now + s.match_ttl_seconds)
             await self._store.put(entry)
             log.info("season.live", season=season, heroes=len(rows))
@@ -209,6 +222,10 @@ class SeasonService:
             return _from_entry(cached, stale=True, notice=notice)
         outcome: Outcome = "quota_exceeded" if notice == "quota_exceeded" else "unavailable"
         return SeasonLookup(outcome, retry_after=retry_after)
+
+
+def _d(x: Any) -> dict[str, Any]:
+    return x if isinstance(x, dict) else {}
 
 
 def _season_of(e: CacheEntry) -> int | None:

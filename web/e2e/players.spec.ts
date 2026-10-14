@@ -67,6 +67,21 @@ test("players: search shows league per mode, recent matches and heroes; the URL 
   await expect(page.locator("#season-heroes li").first()).toContainText("75%");
   await expect(page.locator("#season-heroes li").first()).toContainText("12게임");
   await expect(page.locator("#season-heroes li a").first()).toHaveAttribute("href", "/ko/hots/heroes/ana/");
+  // ▾ opens the hero's season averages: the game card's four, healing in place of damage taken for a healer
+  const ana = page.locator("#season-heroes li").first();
+  await expect(ana.locator("[data-stats]")).toHaveCount(0);
+  await ana.locator("[data-toggle]").click();
+  await expect(ana.locator("[data-stats]")).toContainText("영웅 피해14,317");
+  await expect(ana.locator("[data-stats]")).toContainText("공성 피해19,015");
+  await expect(ana.locator("[data-stats]")).toContainText("치유/방지75,659");
+  await expect(ana.locator("[data-stats]")).toContainText("경험치 기여7,285");
+  await expect(ana.locator("[data-stats]")).not.toContainText("받은 피해");
+  const alarak = page.locator("#season-heroes li").nth(1);
+  await alarak.locator("[data-toggle]").click();
+  await expect(alarak.locator("[data-stats]")).toContainText("받은 피해42,362");
+  await expect(alarak.locator("[data-stats]")).not.toContainText("치유/방지");
+  await ana.locator("[data-toggle]").click();
+  await expect(ana.locator("[data-stats]")).toHaveCount(0);
   await expect(page.locator("#season-heroes li")).toHaveCount(7);
   await page.locator("#season-more").click();
   await expect(page.locator("#season-heroes li")).toHaveCount(22);

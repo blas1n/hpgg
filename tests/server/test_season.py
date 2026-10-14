@@ -125,10 +125,16 @@ async def test_the_current_seasons_storm_league_heroes(svc: SeasonService, fake_
         "games": 12,
         "wins": 9,
         "losses": 3,
-        "kills": ana["kills"],
-        "deaths": ana["deaths"],
-        "assists": ana["assists"],
-        "takedowns": ana["takedowns"],
+        "kills": 21,
+        "deaths": 19,
+        "assists": 179,
+        "takedowns": 200,
+        # the match card's stat line, as season sums (owner 2026-10-14)
+        "hero_damage": 171806,
+        "siege_damage": 228179,
+        "healing": 907905,
+        "damage_taken": 235644,
+        "experience": 87420,
     }
     assert sum(h["takedowns"] for h in r.heroes) == 906  # season sums, not per-game averages
 
@@ -185,6 +191,28 @@ async def test_a_new_season_does_not_serve_last_seasons_answer(
     fake_hp.responder = route(heroes=warm)
     r = await svc.lookup(TAG, REGION)
     assert r.season == 34 and r.heroes[0]["games"] == 12
+
+
+async def test_an_answer_cached_before_the_stat_line_is_asked_again(
+    svc: SeasonService, fake_hp: FakeHP, store: HPStore, clock: Clock
+) -> None:
+    """Rows from before 2026-10-14 lack the damage and healing sums: not served as fresh."""
+    old = {"season": 34, "heroes": [{"hero": "Ana", "games": 12, "kills": 21}]}
+    await store.put(CacheEntry(season_key(REGION, TAG), 200, old, clock.now, clock.now + 3600))
+    fake_hp.responder = route(heroes=warm)
+    r = await svc.lookup(TAG, REGION)
+    assert len(calls(fake_hp, "/players/heroes")) == 1
+    assert r.heroes[0]["hero_damage"] == 171806
+
+
+async def test_an_old_format_answer_still_serves_as_stale(
+    svc: SeasonService, fake_hp: FakeHP, store: HPStore, clock: Clock
+) -> None:
+    old = {"season": 34, "heroes": [{"hero": "Ana", "games": 12}]}
+    await store.put(CacheEntry(season_key(REGION, TAG), 200, old, clock.now, clock.now + 3600))
+    fake_hp.responder = route(heroes=quota_429)
+    r = await svc.lookup(TAG, REGION)
+    assert (r.outcome, r.stale, r.heroes[0]["games"]) == ("ok", True, 12)
 
 
 async def test_no_storm_league_this_season_is_an_empty_list(
