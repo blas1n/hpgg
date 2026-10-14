@@ -31,6 +31,7 @@ from server.players.privacy import PrivacyFeed
 from server.players.replay_router import router as replays_router
 from server.players.replays import ReplayService
 from server.players.router import router as players_router
+from server.players.season import SeasonService
 from server.players.service import PlayerService
 from server.players.store import HPStore
 from server.players.teamluck import TeamLuckService
@@ -65,6 +66,7 @@ def create_app(
             hp=hp, store=store, players=app.state.players, settings=settings, clock=clock
         )
         app.state.replays = ReplayService(hp=hp, store=store, settings=settings, clock=clock)
+        app.state.season = SeasonService(hp=hp, store=store, settings=settings, clock=clock)
         app.state.teamluck = TeamLuckService(matches=app.state.matches, replays=app.state.replays)
         app.state.privacy = PrivacyFeed(hp=hp, store=store, settings=settings, clock=clock)
         poller = asyncio.create_task(app.state.privacy.run_forever()) if privacy_poll else None
@@ -138,6 +140,7 @@ def create_app(
                 **await service.status(),
                 **await request.app.state.matches.status(),
                 **await request.app.state.replays.status(),
+                **await request.app.state.season.status(),
             },
             "privacy": await feed.status(),
         }

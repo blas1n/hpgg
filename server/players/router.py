@@ -1,5 +1,5 @@
 """GET /v1/players?battletag=Name%231234&region=KR — one player's profile; /matches — games;
-/heroes — stats per hero (?mode=all|qm|sl); /teamluck — 팀운 over the newest games
+/season — Storm League heroes this season; /teamluck — 팀운 over the newest games
 (?mode, ?games)."""
 
 from __future__ import annotations
@@ -14,6 +14,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from server.errors import error
 from server.players.matches import MatchService
+from server.players.season import MODE, SeasonService
 from server.players.service import Outcome, PlayerService
 from server.players.teamluck import GOOD, TeamLuckService
 from server.ratelimit import SlidingWindowLimiter, client_ip
@@ -104,6 +105,25 @@ async def get_matches(request: Request, q: Annotated[PlayerQuery, Query()]) -> J
         "stale": r.stale,
         "notice": r.notice,
         "full_after": _iso(r.full_after),
+    }
+    return JSONResponse(body, headers={"Cache-Control": "public, max-age=300"})
+
+
+@router.get("/season")
+async def get_season(request: Request, q: Annotated[PlayerQuery, Query()]) -> JSONResponse:
+    if (limited := rate_limited(request)) is not None:
+        return limited
+    service: SeasonService = request.app.state.season
+    r = await service.lookup(q.battletag, q.region.value)
+    if (failed := _failure(r.outcome, r.retry_after)) is not None:
+        return failed
+    body: dict[str, Any] = {
+        "season": r.season,
+        "mode": MODE,
+        "heroes": r.heroes,
+        "fetched_at": _iso(r.fetched_at),
+        "stale": r.stale,
+        "notice": r.notice,
     }
     return JSONResponse(body, headers={"Cache-Control": "public, max-age=300"})
 

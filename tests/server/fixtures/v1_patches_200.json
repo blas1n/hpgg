@@ -1,0 +1,103 @@
+{
+ "status": 200,
+ "headers": {
+  "content-type": "application/json",
+  "x-hp-quota-limit": "1000000",
+  "x-hp-quota-remaining": "999988",
+  "x-hp-quota-reset": "459983",
+  "x-ratelimit-limit": "60",
+  "x-ratelimit-remaining": "59"
+ },
+ "body": {
+  "patches": [
+   {
+    "id": 270,
+    "season": 34,
+    "game_version": "2.57.0.98348",
+    "major": 2,
+    "minor": 57,
+    "patch": 0,
+    "build": 98348,
+    "date_added": "2026-10-05T17:27:14.000000Z",
+    "valid_globals": true,
+    "patch_notes_url": "https://news.blizzard.com/en-us/article/24303007/heroes-of-the-storm-live-patch-notes-september-28-2026"
+   },
+   {
+    "id": 269,
+    "season": 33,
+    "game_version": "2.57.0.98304",
+    "major": 2,
+    "minor": 57,
+    "patch": 0,
+    "build": 98304,
+    "date_added": "2026-09-29T22:08:51.000000Z",
+    "valid_globals": true,
+    "patch_notes_url": null
+   },
+   {
+    "id": 267,
+    "season": 33,
+    "game_version": "2.57.0.98285",
+    "major": 2,
+    "minor": 57,
+    "patch": 0,
+    "build": 98285,
+    "date_added": "2026-09-28T21:27:21.000000Z",
+    "valid_globals": true,
+    "patch_notes_url": "https://news.blizzard.com/en-us/article/24303007/heroes-of-the-storm-live-patch-notes-september-28-2026"
+   },
+   {
+    "id": 265,
+    "season": 33,
+    "game_version": "2.55.17.98025",
+    "major": 2,
+    "minor": 55,
+    "patch": 17,
+    "build": 98025,
+    "date_added": "2026-09-12T18:29:02.000000Z",
+    "valid_globals": true,
+    "patch_notes_url": null
+   },
+   {
+    "id": 264,
+    "season": 33,
+    "game_version": "2.55.17.97771",
+    "major": 2,
+    "minor": 55,
+    "patch": 17,
+    "build": 97771,
+    "date_added": "2026-08-12T14:32:30.000000Z",
+    "valid_globals": true,
+    "patch_notes_url": null
+   },
+   {
+    "id": 263,
+    "season": 33,
+    "game_version": "2.55.17.97650",
+    "major": 2,
+    "minor": 55,
+    "patch": 17,
+    "build": 97650,
+    "date_added": "2026-07-24T13:39:29.000000Z",
+    "valid_globals": true,
+    "patch_notes_url": null
+   }
+  ],
+  "oldest_patch": {
+   "heroes/stats": "2.47.0.75589",
+   "heroes/maps": "2.47.0.75589",
+   "heroes/matchups": "2.47.0.75589",
+   "heroes/matchups/talents": "2.55.12.94786",
+   "heroes/talents/details": "2.50.0.79155",
+   "heroes/talents/builds": "2.50.0.79155",
+   "heroes/talents/builds/all": "2.50.0.79155",
+   "heroes/talents/builder": "2.47.0.75589",
+   "heroes/talents/builder/replays": "2.47.0.75589",
+   "compositions": "2.47.0.75589",
+   "compositions/heroes": "2.47.0.75589",
+   "draft": "2.52.0.81700",
+   "party": "2.53.0.83004"
+  }
+ },
+ "_recorded": "2026-10-14 GET /patches, newest 6 kept"
+}
