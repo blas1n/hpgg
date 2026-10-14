@@ -234,7 +234,7 @@ The same data gives different tiers under a different formula. This site always 
     tiersSub: (patch: string, games: string) => `Patch ${patch} · ${games} games · party-corrected`,
     tiersGames: (games: string) => plural(games, "game", "games"),
     tiersRule: (min: string) => `Each point is the win rate of the players in that league who picked this hero (party-corrected); bars show the 95% range. Under ${min} games the point is faint. Master+ is Master and Grand Master.`,
-    tiersMasterPlus: "Master+",
+    tiersLeagues: { bronze: "Bronze", silver: "Silver", gold: "Gold", platinum: "Platinum", diamond: "Diamond", master: "Master+" },
     tiersAria: (points: string) => `Win rate by league: ${points}`,
     lengthTitle: (mode: string) => `Win rate by game length (${mode})`,
     lengthSub: (patch: string, since: string | null, games: string) => `Patch ${patch}${since ? ` · since the ${since} hotfix` : ""} · ${games} sampled replays`,

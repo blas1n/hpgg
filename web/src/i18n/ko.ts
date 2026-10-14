@@ -236,7 +236,8 @@ export const ko = {
     tiersSub: (patch: string, games: string) => `패치 ${patch} · ${games}게임 · 파티 보정`,
     tiersGames: (games: string) => `${games}게임`,
     tiersRule: (min: string) => `점은 그 티어에서 이 영웅을 고른 플레이어들의 승률(파티 보정), 세로 막대는 95% 범위입니다. ${min}게임 미만은 흐리게 표시합니다. 마스터+는 마스터와 그랜드마스터입니다.`,
-    tiersMasterPlus: "마스터+",
+    /** HP has no grandmaster tier: its master is master and grandmaster (owner 2026-10-14: 마스터+). */
+    tiersLeagues: { bronze: "브론즈", silver: "실버", gold: "골드", platinum: "플래티넘", diamond: "다이아몬드", master: "마스터+" },
     tiersAria: (points: string) => `티어별 승률: ${points}`,
     lengthTitle: (mode: string) => `게임 시간대별 승률 (${mode})`,
     lengthSub: (patch: string, since: string | null, games: string) => `패치 ${patch}${since ? ` · ${since} 핫픽스 이후` : ""} · 리플레이 ${games}게임 표본`,
