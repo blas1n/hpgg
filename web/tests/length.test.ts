@@ -19,7 +19,7 @@ describe("lengthView", () => {
   it("gives the hero's win rate per band, shortest first, with the sample it stands on", () => {
     const v = lengthView(file, "Abathur", window)!;
     expect(v.bands.map((b) => b.band)).toEqual(["short", "mid", "long"]);
-    expect(v.bands[0]).toEqual({ band: "short", games: 150, winRate: 38 });
+    expect(v.bands[0]).toMatchObject({ band: "short", games: 150, winRate: 38 });
     expect(v.bands[2]!.winRate).toBeCloseTo(55);
     expect(v.games).toBe(610);
     expect(v.sample).toBe(4185);
@@ -35,8 +35,18 @@ describe("lengthView", () => {
 
   it(`shows no rate for a band under ${LENGTH_MIN_GAMES} games`, () => {
     const v = lengthView(file, "Medivh", window)!;
-    expect(v.bands[0]).toEqual({ band: "short", games: 20, winRate: null });
+    expect(v.bands[0]).toMatchObject({ band: "short", games: 20, winRate: null });
     expect(v.bands[1]!.winRate).toBe(40);
+  });
+
+  it("gives each band's gap from the hero's own rate: every band's all-hero average is 50% by construction", () => {
+    const v = lengthView(file, "Abathur", window)!;
+    // 297 wins in 610 games
+    expect(v.heroRate).toBeCloseTo((297 / 610) * 100);
+    expect(v.bands[0]!.vsHero).toBeCloseTo(38 - (297 / 610) * 100);
+    expect(v.bands[2]!.vsHero).toBeCloseTo(55 - (297 / 610) * 100);
+    // a thin band has no rate and so no gap
+    expect(lengthView(file, "Medivh", window)!.bands[0]!.vsHero).toBeNull();
   });
 
   it("is null without the file or without the hero in it", () => {

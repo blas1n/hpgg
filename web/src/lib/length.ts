@@ -31,22 +31,30 @@ export interface LengthView {
   games: number;
   /** M/D (Korean time) of the hotfix the count starts from, or null. */
   sinceDay: string | null;
-  bands: { band: LengthBand; games: number; winRate: number | null }[];
+  /** The hero's rate over all three bands: what a band is compared with (every band's all-hero average is 50%, as every
+   *  game has five winners and five losers; asked 2026-10-14). */
+  heroRate: number;
+  /** `vsHero`: the band's rate minus heroRate, in %p; null with no rate. */
+  bands: { band: LengthBand; games: number; winRate: number | null; vsHero: number | null }[];
   lean: "early" | "late" | null;
 }
 
 export function lengthView(file: LengthFile | null, heroName: string, window: MetaWindow | undefined): LengthView | null {
   const h = file?.heroes[heroName];
   if (!file || !h) return null;
+  const games = LENGTH_BANDS.reduce((n, b) => n + h[b].games, 0);
+  const heroRate = games ? (LENGTH_BANDS.reduce((n, b) => n + h[b].wins, 0) / games) * 100 : 50;
   const bands = LENGTH_BANDS.map((band) => {
-    const { games, wins } = h[band];
-    return { band, games, winRate: games >= LENGTH_MIN_GAMES ? (wins / games) * 100 : null };
+    const { games: n, wins } = h[band];
+    const winRate = n >= LENGTH_MIN_GAMES ? (wins / n) * 100 : null;
+    return { band, games: n, winRate, vsHero: winRate === null ? null : winRate - heroRate };
   });
   return {
     patch: file.patch,
     collectedAt: file.collected_at,
     sample: file.games,
-    games: bands.reduce((n, b) => n + b.games, 0),
+    games,
+    heroRate,
     sinceDay: file.since && window?.since === file.since && window.since_at ? kstDay(window.since_at) : null,
     bands,
     lean: h.lean,

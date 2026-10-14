@@ -235,16 +235,19 @@ export const ko = {
     tiersTitle: (mode: string) => `티어별 승률 (${mode})`,
     tiersSub: (patch: string, games: string) => `패치 ${patch} · ${games}게임 · 파티 보정`,
     tiersGames: (games: string) => `${games}게임`,
-    tiersRule: (min: string) => `점은 그 티어에서 이 영웅을 고른 플레이어들의 승률(파티 보정), 세로 막대는 95% 범위입니다. ${min}게임 미만은 흐리게 표시합니다. 마스터+는 마스터와 그랜드마스터입니다.`,
+    tiersRule: (min: string) =>
+      `점은 그 티어에서 이 영웅을 고른 플레이어들의 승률(파티 보정), 세로 막대는 95% 범위입니다. 회색 점선은 그 티어의 전체 영웅 평균이고, 아래 %p는 티어 평균 대비 차이입니다. 한 판에 여러 티어가 섞여 높은 티어가 낮은 티어를 이기는 경우가 많아, 티어 평균은 50%가 아닙니다. ${min}게임 미만은 흐리게 표시합니다. 마스터+는 마스터와 그랜드마스터입니다.`,
     /** HP has no grandmaster tier: its master is master and grandmaster (owner 2026-10-14: 마스터+). */
     tiersLeagues: { bronze: "브론즈", silver: "실버", gold: "골드", platinum: "플래티넘", diamond: "다이아몬드", master: "마스터+" },
     tiersAria: (points: string) => `티어별 승률: ${points}`,
     lengthTitle: (mode: string) => `게임 시간대별 승률 (${mode})`,
-    lengthSub: (patch: string, since: string | null, games: string) => `패치 ${patch}${since ? ` · ${since} 핫픽스 이후` : ""} · 리플레이 ${games}게임 표본`,
+    lengthSub: (patch: string, since: string | null, games: string, hero: string, rate: string) =>
+      `패치 ${patch}${since ? ` · ${since} 핫픽스 이후` : ""} · 리플레이 ${games}게임 표본 · ${hero} 평균 ${rate}`,
     lengthBands: { short: "15분 이하", mid: "15~20분", long: "20분 초과" },
     lengthLean: { early: "초반에 강함", late: "후반에 강함" },
     lengthGames: (games: string) => `${games}게임`,
-    lengthRule: (min: string) => `${min}게임 미만인 시간대는 승률을 표시하지 않습니다. '초반·후반에 강함'은 15분 이하와 20분 초과 승률의 차이가 오차 범위(95%)를 넘을 때만 붙습니다.`,
+    lengthRule: (min: string) =>
+      `게임 시간은 실제 경기 길이입니다. %p는 이 영웅의 전체 평균 대비 차이입니다. 모든 판에 이긴 쪽 5명과 진 쪽 5명이 있어 시간대별 전체 영웅 평균은 항상 50%입니다. ${min}게임 미만인 시간대는 승률을 표시하지 않습니다. '초반·후반에 강함'은 15분 이하와 20분 초과 승률의 차이가 오차 범위(95%)를 넘을 때만 붙습니다.`,
     patchesTitle: "패치 변경",
     patchesSub: "블리자드 공식 패치 노트 · 게임 데이터",
     patchVerdict: { buff: "버프", nerf: "너프", mixed: "조정" },
