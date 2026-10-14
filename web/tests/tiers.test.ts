@@ -42,6 +42,17 @@ describe("tiersView", () => {
     expect(v.points[2]!.thin).toBe(false);
   });
 
+  it("compares each league with that league's all-hero average, which is not 50%: higher leagues beat lower ones", () => {
+    const v = tiersView(file, "Sylvanas")!;
+    // games-weighted corrected rate of every hero in the league (Sylvanas and Gall here)
+    const bronzeAvg = 39.5; // Gall has no bronze row
+    const silverAvg = (46.5 * 406 + 45 * 20) / 426;
+    expect(v.points[0]!.average).toBeCloseTo(bronzeAvg);
+    expect(v.points[1]!.average).toBeCloseTo(silverAvg);
+    expect(v.points[1]!.vsAverage).toBeCloseTo(46.5 - silverAvg);
+    expect(tiersView(file, "Gall")!.points[0]!.vsAverage).toBeNull();
+  });
+
   it("is null without the file or the hero", () => {
     expect(tiersView(null, "Sylvanas")).toBeNull();
     expect(tiersView(file, "Valla")).toBeNull();
