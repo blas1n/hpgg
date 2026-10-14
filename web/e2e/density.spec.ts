@@ -61,6 +61,19 @@ test.describe("desktop 1280", () => {
     const row = (await page.locator("#maps [data-map]").first().boundingBox())!;
     expect(row.height).toBeLessThanOrEqual(44);
   });
+
+  test("hero detail: win rate split by league and by game length sits under the maps, so the columns even out", async ({ page }) => {
+    // owner 2026-10-14: with the league chart on the right the left column ended a screen early
+    await page.goto("./heroes/abathur/");
+    const x = async (id: string) => (await page.locator(`#${id}`).boundingBox())!.x;
+    const maps = await x("maps-title");
+    expect(await x("tiers-title")).toBe(maps);
+    expect(await x("length-title")).toBe(maps);
+    const right = await x("grid-title");
+    expect(right).toBeGreaterThan(maps + 300);
+    expect(await x("matchups-title")).toBe(right);
+    expect(await x("builds-title")).toBe(right);
+  });
 });
 
 test("no functional text under 11 px on the hero page", async ({ page }) => {

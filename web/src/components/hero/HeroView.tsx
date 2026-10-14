@@ -111,10 +111,10 @@ export function HeroView({
   const sections = [
     { id: "top", label: tab.top },
     { id: "maps-title", label: tab.maps },
-    { id: "grid-title", label: tab.grid, nav: "nav-grid" },
     ...(tiers ? [{ id: "tiers-title", label: tab.tiers, nav: "nav-tiers" }] : []),
-    ...(matchups ? [{ id: "matchups-title", label: tab.matchups, nav: "nav-matchups" }] : []),
     ...(length ? [{ id: "length-title", label: tab.length, nav: "nav-length" }] : []),
+    { id: "grid-title", label: tab.grid, nav: "nav-grid" },
+    ...(matchups ? [{ id: "matchups-title", label: tab.matchups, nav: "nav-matchups" }] : []),
     ...(builds.length ? [{ id: "builds-title", label: tab.builds, nav: "nav-builds" }] : []),
     // long and not what people come for first: last, below both columns
     ...(patches.notes.length || patches.since ? [{ id: "patches-title", label: tab.patches, nav: "nav-patches" }] : []),
@@ -189,7 +189,8 @@ export function HeroView({
 
       <SectionTabs sections={sections} />
 
-      {/* desktop: maps on the left, the other sections on the right, so the page is not one long column */}
+      {/* desktop: the win rate split three ways (maps, leagues, game length) on the left, the filters, matchups and
+          builds on the right, so the page is not one long column and the two end near each other (owner 2026-10-14) */}
       <div className="lg:grid lg:grid-cols-2 lg:items-start lg:gap-x-6">
       <section>
       <h2 id="maps-title" className={SECTION}>
@@ -198,6 +199,10 @@ export function HeroView({
       <div id="maps">
         <MapRows rows={cell?.maps ?? []} />
       </div>
+
+      {tiers && <Tiers v={tiers} />}
+
+      {length && <GameLength v={length} wholeOnly={filtered} />}
       </section>
       <section>
 
@@ -206,11 +211,7 @@ export function HeroView({
       </h2>
       <Grid grid={m.grid} region={region} bracket={bracket} onPick={(r, b) => change({ region: r, bracket: b })} />
 
-      {tiers && <Tiers v={tiers} />}
-
       <Matchups hero={hero} v={matchups} wholeOnly={filtered} />
-
-      {length && <GameLength v={length} wholeOnly={filtered} />}
 
       {builds.length > 0 && (
         <>
@@ -544,6 +545,8 @@ function Tiers({ v }: { v: TiersView }) {
     .filter(Boolean)
     .join(" ");
   const ticks = [lo, 50, hi].filter((n, i, a) => a.indexOf(n) === i);
+  // HP has no grandmaster tier: its master is master and grandmaster
+  const league = (l: TiersView["points"][number]["league"]) => (l === "master" ? t.hero.tiersMasterPlus : t.players.leagues[l]);
   return (
     <>
       <h2 id="tiers-title" className={SECTION}>
@@ -557,7 +560,7 @@ function Tiers({ v }: { v: TiersView }) {
           viewBox={`0 0 ${W} ${H}`}
           className="h-auto w-full"
           role="img"
-          aria-label={t.hero.tiersAria(v.points.map((p) => `${t.players.leagues[p.league]} ${p.winRate === null ? "–" : pct(p.winRate)}`).join(", "))}
+          aria-label={t.hero.tiersAria(v.points.map((p) => `${league(p.league)} ${p.winRate === null ? "–" : pct(p.winRate)}`).join(", "))}
         >
           {ticks.map((n) => (
             <g key={n}>
@@ -580,7 +583,7 @@ function Tiers({ v }: { v: TiersView }) {
         <div className="mt-1 grid grid-cols-6 gap-1 text-center">
           {v.points.map((p) => (
             <div key={p.league} data-league={p.league} data-thin={p.thin ? "true" : undefined} className={cx("min-w-0", p.thin && "opacity-60")}>
-              <div className="truncate text-2xs text-fg-2">{t.players.leagues[p.league]}</div>
+              <div className="truncate text-2xs text-fg-2">{league(p.league)}</div>
               <div className={cx("num text-xs font-bold", p.winRate === null ? "text-muted" : wrTone(p.winRate))}>{p.winRate === null ? "–" : pct(p.winRate)}</div>
               <div className="num text-2xs text-muted">{t.hero.tiersGames(int(p.games))}</div>
             </div>
