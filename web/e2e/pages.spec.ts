@@ -211,7 +211,7 @@ test("hero detail: Storm League win rate by league, bronze to master, with a fai
   await expect(points.first()).toContainText("브론즈");
   await expect(points.first()).toContainText("53.0%");
   await expect(points.first()).toContainText("174게임");
-  await expect(points.last()).toContainText("마스터");
+  await expect(points.last()).toHaveText(/^마스터\+/); // grandmasters are inside master
   await expect(points.last()).toHaveAttribute("data-thin", "true");
   await expect(page.locator("#tiers svg circle")).toHaveCount(6);
   await expect(page.locator("#tiers-sub")).toContainText("1,771게임");
