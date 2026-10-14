@@ -24,6 +24,7 @@ import { heroBuilds, heroGrid, heroSummary, mapRows } from "@/lib/hero";
 import { homeModel, mapCards } from "@/lib/home";
 import { mapDetail } from "@/lib/maps";
 import { lengthView } from "@/lib/length";
+import { tiersView } from "@/lib/tiers";
 import { matchupsView } from "@/lib/matchups";
 import { heroPatchNotes } from "@/lib/patchnotes";
 import { patchSummary } from "@/lib/patchSummary";
@@ -31,7 +32,7 @@ import { centreCard, weeklyModel } from "@/lib/weekly";
 import { WeeklyView } from "@/components/weekly/WeeklyView";
 import { PatchesView } from "@/components/patches/PatchesView";
 import { tierTable } from "@/lib/tier";
-import { readBuilds, readHeroes, readLength, readMaps, readMapsMeta, readMatchups, readMeta, readHotfixes, readPatchNotes, readSearchIndex, readShown, readTalents, readWeekly, readWeeklyAnalysis, readWeeklyEvidence, readWeeklyIndex } from "@/server/data";
+import { readBuilds, readHeroes, readLength, readTiers, readMaps, readMapsMeta, readMatchups, readMeta, readHotfixes, readPatchNotes, readSearchIndex, readShown, readTalents, readWeekly, readWeeklyAnalysis, readWeeklyEvidence, readWeeklyIndex } from "@/server/data";
 
 type Params = { params: Promise<{ slug: string }> };
 
@@ -164,6 +165,7 @@ export async function HeroPage({ locale, params }: { locale: Locale } & Params) 
       buildsPatch={builds?.patch ?? null}
       matchups={matchupsView(readMatchups(slug), heroes)}
       length={lengthView(readLength(), hero.name, meta.window)}
+      tiers={tiersView(readTiers(), hero.name)}
       patches={heroPatchNotes(readPatchNotes(), hero.name, referencePatchId(meta), locale, readHotfixes())}
       minGames={min}
     />

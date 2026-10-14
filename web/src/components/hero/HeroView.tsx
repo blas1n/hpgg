@@ -9,6 +9,7 @@ import { CommentThread } from "@/components/comments/CommentThread";
 import { useLocale, useT } from "@/i18n/client";
 import { descParts, type BuildTalentView, type BuildView, type GridRow, type HeroSummary, type MapRow } from "@/lib/hero";
 import { LENGTH_MIN_GAMES, type LengthView } from "@/lib/length";
+import { TIER_MIN_GAMES, type TiersView } from "@/lib/tiers";
 import { matchupRule, type MatchupRow, type MatchupsView } from "@/lib/matchups";
 import type { HeroPatchNotes, PatchNoteView } from "@/lib/patchnotes";
 import { Card, cx, Portrait, Segmented, TierBadge, wrTone } from "../ui";
@@ -39,6 +40,7 @@ export function HeroView({
   buildsPatch,
   matchups,
   length,
+  tiers,
   patches,
   minGames,
 }: {
@@ -50,6 +52,8 @@ export function HeroView({
   matchups: MatchupsView | null;
   /** Storm League win rate by game length (lib/length.ts); null when the replay sample does not have the hero. */
   length: LengthView | null;
+  /** Storm League win rate by league (lib/tiers.ts); null before the first collection or for a hero it lacks. */
+  tiers: TiersView | null;
   /** This hero in Blizzard's official patch notes (#62); the same in both modes. */
   patches: HeroPatchNotes;
   minGames: number;
@@ -107,9 +111,10 @@ export function HeroView({
   const sections = [
     { id: "top", label: tab.top },
     { id: "maps-title", label: tab.maps },
+    ...(tiers ? [{ id: "tiers-title", label: tab.tiers, nav: "nav-tiers" }] : []),
+    ...(length ? [{ id: "length-title", label: tab.length, nav: "nav-length" }] : []),
     { id: "grid-title", label: tab.grid, nav: "nav-grid" },
     ...(matchups ? [{ id: "matchups-title", label: tab.matchups, nav: "nav-matchups" }] : []),
-    ...(length ? [{ id: "length-title", label: tab.length, nav: "nav-length" }] : []),
     ...(builds.length ? [{ id: "builds-title", label: tab.builds, nav: "nav-builds" }] : []),
     // long and not what people come for first: last, below both columns
     ...(patches.notes.length || patches.since ? [{ id: "patches-title", label: tab.patches, nav: "nav-patches" }] : []),
@@ -184,7 +189,8 @@ export function HeroView({
 
       <SectionTabs sections={sections} />
 
-      {/* desktop: maps on the left, the other sections on the right, so the page is not one long column */}
+      {/* desktop: the win rate split three ways (maps, leagues, game length) on the left, the filters, matchups and
+          builds on the right, so the page is not one long column and the two end near each other (owner 2026-10-14) */}
       <div className="lg:grid lg:grid-cols-2 lg:items-start lg:gap-x-6">
       <section>
       <h2 id="maps-title" className={SECTION}>
@@ -193,6 +199,10 @@ export function HeroView({
       <div id="maps">
         <MapRows rows={cell?.maps ?? []} />
       </div>
+
+      {tiers && <Tiers v={tiers} />}
+
+      {length && <GameLength v={length} wholeOnly={filtered} />}
       </section>
       <section>
 
@@ -202,8 +212,6 @@ export function HeroView({
       <Grid grid={m.grid} region={region} bracket={bracket} onPick={(r, b) => change({ region: r, bracket: b })} />
 
       <Matchups hero={hero} v={matchups} wholeOnly={filtered} />
-
-      {length && <GameLength v={length} wholeOnly={filtered} />}
 
       {builds.length > 0 && (
         <>
@@ -515,6 +523,75 @@ function Matchups({ hero, v, wholeOnly }: { hero: HeroInfo; v: MatchupsView | nu
           </>
         )}
       </div>
+    </>
+  );
+}
+
+/** 티어별 승률 — Storm League, whole world, whatever the filters say: a line bronze → master with 95% bars. */
+function Tiers({ v }: { v: TiersView }) {
+  const t = useT();
+  const W = 360;
+  const H = 150;
+  const padX = 24;
+  const padY = 12;
+  const shown = v.points.filter((p) => p.winRate !== null);
+  // at least 40–60 %, wider when a bar needs it
+  const lo = Math.floor(Math.min(40, ...shown.map((p) => p.low!)) / 5) * 5;
+  const hi = Math.ceil(Math.max(60, ...shown.map((p) => p.high!)) / 5) * 5;
+  const x = (i: number) => padX + (i * (W - padX * 2)) / (v.points.length - 1);
+  const y = (wr: number) => padY + ((hi - wr) / (hi - lo)) * (H - padY * 2);
+  const line = v.points
+    .map((p, i) => (p.winRate === null ? null : `${x(i).toFixed(1)},${y(p.winRate).toFixed(1)}`))
+    .filter(Boolean)
+    .join(" ");
+  const ticks = [lo, 50, hi].filter((n, i, a) => a.indexOf(n) === i);
+  const league = (l: TiersView["points"][number]["league"]) => t.hero.tiersLeagues[l];
+  return (
+    <>
+      <h2 id="tiers-title" className={SECTION}>
+        {t.hero.tiersTitle(t.common.modes.sl)}{" "}
+        <span id="tiers-sub" className="num text-xs font-normal text-muted">
+          {t.hero.tiersSub(v.patch, int(v.games))}
+        </span>
+      </h2>
+      <Card as="div" id="tiers" className="px-3 pb-3 pt-2">
+        <svg
+          viewBox={`0 0 ${W} ${H}`}
+          className="h-auto w-full"
+          role="img"
+          aria-label={t.hero.tiersAria(v.points.map((p) => `${league(p.league)} ${p.winRate === null ? "–" : pct(p.winRate)}`).join(", "))}
+        >
+          {ticks.map((n) => (
+            <g key={n}>
+              <line x1={padX} x2={W - padX} y1={y(n)} y2={y(n)} className="stroke-line" strokeDasharray={n === 50 ? "4 3" : undefined} />
+              <text x={2} y={y(n) + 3} className="num fill-muted text-[9px]">
+                {n}
+              </text>
+            </g>
+          ))}
+          <polyline points={line} fill="none" className="stroke-primary" strokeWidth={2} strokeLinejoin="round" />
+          {v.points.map((p, i) =>
+            p.winRate === null ? null : (
+              <g key={p.league} opacity={p.thin ? 0.35 : 1}>
+                <line x1={x(i)} x2={x(i)} y1={y(Math.min(p.high!, hi))} y2={y(Math.max(p.low!, lo))} className="stroke-primary" strokeWidth={1.5} />
+                <circle cx={x(i)} cy={y(p.winRate)} r={4} className={p.thin ? "fill-surface stroke-primary" : "fill-primary"} strokeWidth={1.5} />
+              </g>
+            ),
+          )}
+        </svg>
+        <div className="mt-1 grid grid-cols-6 gap-1 text-center">
+          {v.points.map((p) => (
+            <div key={p.league} data-league={p.league} data-thin={p.thin ? "true" : undefined} className={cx("min-w-0", p.thin && "opacity-60")}>
+              <div className="truncate text-2xs text-fg-2">{league(p.league)}</div>
+              <div className={cx("num text-xs font-bold", p.winRate === null ? "text-muted" : wrTone(p.winRate))}>{p.winRate === null ? "–" : pct(p.winRate)}</div>
+              <div className="num text-2xs text-muted">{t.hero.tiersGames(int(p.games))}</div>
+            </div>
+          ))}
+        </div>
+      </Card>
+      <p id="tiers-rule" className="mt-2 text-2xs leading-relaxed text-muted">
+        {t.hero.tiersRule(String(TIER_MIN_GAMES))}
+      </p>
     </>
   );
 }
