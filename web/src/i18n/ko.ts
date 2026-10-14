@@ -39,7 +39,7 @@ export const ko = {
     weeklyDescription: "히어로즈 오브 더 스톰 주간 메타 리포트: 이번 주에 치러진 판만으로 매긴 티어, 지난주 대비 많이 오르고 내린 영웅, 신규 영웅, 일별 승률 추이.",
     patchesTitle: "패치 요약",
     patchesDescription: "히어로즈 오브 더 스톰 이번 패치 요약: 공식 패치 노트의 버프·너프, 공지 없는 핫픽스, 신규 영웅, 바뀐 영웅의 직전 패치 대비 순위·승률.",
-    playersDescription: "히어로즈 오브 더 스톰 전적 검색: 배틀태그로 모드별 MMR·리그, 최근 경기, 많이 한 영웅.",
+    playersDescription: "히어로즈 오브 더 스톰 전적 검색: 배틀태그로 모드별 MMR, 최근 경기, 많이 한 영웅.",
   },
   nav: {
     home: "홈",
@@ -477,8 +477,7 @@ export const ko = {
     totalGames: "전체 게임",
     winRate: "승률",
     modesTitle: "모드별 MMR",
-    modesSub: "현재 MMR과 리그 · 승패는 전체 기간 (Heroes Profile)",
-    unplaced: "배치 전",
+    modesSub: "현재 MMR · 승패는 전체 기간 (Heroes Profile)",
     record: (w: string, l: string) => `${w}승 ${l}패`,
     noModes: "모드별 기록이 없습니다.",
     matchesTitle: "최근 경기",
@@ -519,15 +518,6 @@ export const ko = {
     gamesWr: (games: string) => `${games}게임 · `,
     /** Heroes Profile game modes, as the game names them (sources in docs/HANDOFF.md "Localisation"). */
     modes: { sl: "폭풍 리그", qm: "빠른 대전", ud: "일반 선발전", ar: "무작위 영웅 대전", hl: "영웅 리그", tl: "팀 리그" },
-    leagues: {
-      grandmaster: "그랜드마스터",
-      master: "마스터",
-      diamond: "다이아몬드",
-      platinum: "플래티넘",
-      gold: "골드",
-      silver: "실버",
-      bronze: "브론즈",
-    },
     games: {
       briefTitle: (n: string) => `최근 ${n}경기`,
       kda: "KDA",
