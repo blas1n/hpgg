@@ -31,7 +31,8 @@ export function SeasonCard({ season, games, heroes }: { season: { kind: "loading
   let note: string | null = null;
   if (!view && !loading) note = mode === "sl" && season.kind === "quota" ? t.quota : t.error;
   else if (view && view.games === 0) note = mode === "sl" ? t.emptySl : t.emptyQm;
-  const sub = view && view.games > 0 ? (mode === "sl" ? t.slSub(String(sl!.season), String(view.games)) : t.qmSub(String(view.games))) : undefined;
+  // Quick Match says what its numbers cover; Storm League needs no subtitle (owner 2026-10-14)
+  const sub = mode === "qm" && view && view.games > 0 ? t.qmSub(String(view.games)) : undefined;
 
   return (
     <Card aria-labelledby="h-season">
