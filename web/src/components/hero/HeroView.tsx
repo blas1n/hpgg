@@ -15,6 +15,9 @@ import type { HeroPatchNotes, PatchNoteView } from "@/lib/patchnotes";
 import { Card, cx, Portrait, Segmented, TierBadge, wrTone } from "../ui";
 
 const pct = (n: number) => `${n.toFixed(1)}%`;
+/** A gap in percentage points, signed like the matchups' (−0.04 shows as 0.0). */
+const pp = (n: number) => `${n >= 0.05 ? "+" : ""}${(Math.abs(n) < 0.05 ? 0 : n).toFixed(1)}%p`;
+const ppTone = (n: number) => (Math.abs(n) < 0.05 ? "text-muted" : n > 0 ? "text-pos" : "text-neg");
 const int = (n: number) => n.toLocaleString("ko-KR");
 
 export interface HeroModeModel {
@@ -202,7 +205,7 @@ export function HeroView({
 
       {tiers && <Tiers v={tiers} />}
 
-      {length && <GameLength v={length} wholeOnly={filtered} />}
+      {length && <GameLength v={length} wholeOnly={filtered} heroName={hero.ko} />}
       </section>
       <section>
 
@@ -536,8 +539,9 @@ function Tiers({ v }: { v: TiersView }) {
   const padY = 12;
   const shown = v.points.filter((p) => p.winRate !== null);
   // at least 40–60 %, wider when a bar needs it
-  const lo = Math.floor(Math.min(40, ...shown.map((p) => p.low!)) / 5) * 5;
-  const hi = Math.ceil(Math.max(60, ...shown.map((p) => p.high!)) / 5) * 5;
+  const avgs = v.points.map((p) => p.average).filter((a): a is number => a !== null);
+  const lo = Math.floor(Math.min(40, ...shown.map((p) => p.low!), ...avgs) / 5) * 5;
+  const hi = Math.ceil(Math.max(60, ...shown.map((p) => p.high!), ...avgs) / 5) * 5;
   const x = (i: number) => padX + (i * (W - padX * 2)) / (v.points.length - 1);
   const y = (wr: number) => padY + ((hi - wr) / (hi - lo)) * (H - padY * 2);
   const line = v.points
@@ -569,6 +573,15 @@ function Tiers({ v }: { v: TiersView }) {
               </text>
             </g>
           ))}
+          {/* the league's all-hero average: not 50%, as higher leagues beat lower ones in the same games */}
+          <polyline
+            data-average
+            points={v.points.map((p, i) => (p.average === null ? null : `${x(i).toFixed(1)},${y(p.average).toFixed(1)}`)).filter(Boolean).join(" ")}
+            fill="none"
+            className="stroke-muted"
+            strokeWidth={1.5}
+            strokeDasharray="5 4"
+          />
           <polyline points={line} fill="none" className="stroke-primary" strokeWidth={2} strokeLinejoin="round" />
           {v.points.map((p, i) =>
             p.winRate === null ? null : (
@@ -583,7 +596,9 @@ function Tiers({ v }: { v: TiersView }) {
           {v.points.map((p) => (
             <div key={p.league} data-league={p.league} data-thin={p.thin ? "true" : undefined} className={cx("min-w-0", p.thin && "opacity-60")}>
               <div className="truncate text-2xs text-fg-2">{league(p.league)}</div>
-              <div className={cx("num text-xs font-bold", p.winRate === null ? "text-muted" : wrTone(p.winRate))}>{p.winRate === null ? "–" : pct(p.winRate)}</div>
+              {/* plain: the league's own average, not 50%, is the yardstick, and the gap below carries the colour */}
+              <div className={cx("num text-xs font-bold", p.winRate === null ? "text-muted" : "text-fg")}>{p.winRate === null ? "–" : pct(p.winRate)}</div>
+              <div data-vs className={cx("num text-2xs font-semibold", p.vsAverage === null ? "text-muted" : ppTone(p.vsAverage))}>{p.vsAverage === null ? "–" : pp(p.vsAverage)}</div>
               <div className="num text-2xs text-muted">{t.hero.tiersGames(int(p.games))}</div>
             </div>
           ))}
@@ -597,7 +612,7 @@ function Tiers({ v }: { v: TiersView }) {
 }
 
 /** 게임 시간대별 승률 — Storm League replays, whatever the mode toggle says (like 상성). */
-function GameLength({ v, wholeOnly }: { v: LengthView; wholeOnly: boolean }) {
+function GameLength({ v, wholeOnly, heroName }: { v: LengthView; wholeOnly: boolean; heroName: string }) {
   const t = useT();
   return (
     <>
@@ -609,13 +624,13 @@ function GameLength({ v, wholeOnly }: { v: LengthView; wholeOnly: boolean }) {
           </span>
         )}{" "}
         <span id="length-sub" className="num text-xs font-normal text-muted">
-          {t.hero.lengthSub(v.patch, v.sinceDay, int(v.sample))}
+          {t.hero.lengthSub(v.patch, v.sinceDay, int(v.sample), heroName, pct(v.heroRate))}
           {wholeOnly && ` · ${t.hero.wholeOnly}`}
         </span>
       </h2>
       <Card as="div" id="length" className="flex flex-col gap-2.5 px-3 py-3">
         {v.bands.map((b) => (
-          <div key={b.band} data-band={b.band} className="grid grid-cols-[5.5rem_minmax(0,1fr)_3.5rem_4.5rem] items-center gap-2 text-[13px]">
+          <div key={b.band} data-band={b.band} className="grid grid-cols-[5rem_minmax(0,1fr)_3.25rem_3.5rem_4rem] items-center gap-2 text-[13px]">
             <span className="text-fg-2">{t.hero.lengthBands[b.band]}</span>
             <span className="relative h-2 overflow-hidden rounded-full bg-line" aria-hidden>
               {b.winRate !== null && <span className={cx("absolute inset-y-0 left-0 rounded-full", b.winRate >= 50 ? "bg-pos" : "bg-neg")} style={{ width: `${b.winRate}%` }} />}
@@ -623,6 +638,7 @@ function GameLength({ v, wholeOnly }: { v: LengthView; wholeOnly: boolean }) {
               <span className="absolute inset-y-0 left-1/2 w-px bg-fg/40" />
             </span>
             <span className={cx("num text-right font-bold", b.winRate === null ? "text-muted" : wrTone(b.winRate))}>{b.winRate === null ? "–" : pct(b.winRate)}</span>
+            <span data-vs className={cx("num text-right text-xs font-semibold", b.vsHero === null ? "text-muted" : ppTone(b.vsHero))}>{b.vsHero === null ? "–" : pp(b.vsHero)}</span>
             <span className="num text-right text-xs text-muted">{t.hero.lengthGames(int(b.games))}</span>
           </div>
         ))}

@@ -214,8 +214,13 @@ test("hero detail: Storm League win rate by league, bronze to master, with a fai
   await expect(points.last()).toHaveText(/^마스터\+/); // grandmasters are inside master
   await expect(points.last()).toHaveAttribute("data-thin", "true");
   await expect(page.locator("#tiers svg circle")).toHaveCount(6);
+  // each league against its own all-hero average (asked 2026-10-14: higher leagues beat lower ones, so it is not 50%)
+  // bronze: Abathur 53.0 % (174) and Alarak 43.0 % (230) → average 47.31 %, Abathur +5.7%p
+  await expect(page.locator("#tiers svg [data-average]")).toHaveCount(1);
+  await expect(points.first().locator("[data-vs]")).toHaveText("+5.7%p");
   await expect(page.locator("#tiers-sub")).toContainText("1,771게임");
   await expect(page.locator("#tiers-rule")).toContainText("30게임 미만");
+  await expect(page.locator("#tiers-rule")).toContainText("티어 평균");
   await expect(page.locator("nav[data-subnav] a[href='#tiers-title']")).toBeVisible();
 });
 
@@ -235,6 +240,9 @@ test("hero detail: Storm League win rate by game length, with the sample and a l
   await expect(rows.nth(0)).toContainText("15분 이하");
   await expect(rows.nth(0)).toContainText("38.0%");
   await expect(rows.nth(0)).toContainText("150게임");
+  // against the hero's own rate, 297 of 610 = 48.7 % (every band's all-hero average is 50 %)
+  await expect(rows.nth(0).locator("[data-vs]")).toHaveText("-10.7%p");
+  await expect(page.locator("#length-sub")).toContainText("평균 48.7%");
   await expect(rows.nth(2)).toContainText("20분 초과");
   await expect(rows.nth(2)).toContainText("55.0%");
   await expect(page.locator("#length-sub")).toContainText("4,185게임");
