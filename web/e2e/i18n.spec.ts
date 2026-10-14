@@ -112,11 +112,11 @@ test("English pages show no Korean text, including views built in the browser", 
   expect(await visibleHangul(page)).toEqual([]);
 });
 
-test("English player page: modes, leagues, heroes and ARAM maps by their English names; links stay in English", async ({ page }) => {
+test("English player page: modes, heroes and ARAM maps by their English names; links stay in English", async ({ page }) => {
   await page.goto("/en/hots/players/?tag=Zemill%231940&region=NA");
   await expect(page.locator("#player-result")).toHaveAttribute("data-state", "ok");
   await expect(page.locator('#player-modes [data-mode="sl"]')).toContainText("Storm League");
-  await expect(page.locator('#player-modes [data-mode="sl"]')).toContainText("Diamond 2");
+  await expect(page.locator('#player-modes [data-mode="sl"]')).toContainText("2,908");
   await expect(page.locator('#player-modes [data-mode="ar"]')).toContainText("ARAM");
   await expect(page.locator('#player-modes [data-mode="ar"]')).toContainText("ARAM");
   await expect(page.locator("#player-maps")).toContainText("Braxis Outpost");

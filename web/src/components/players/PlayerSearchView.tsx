@@ -19,15 +19,6 @@ type Games = { kind: "loading" } | MatchesResult;
 const pct = (n: number | null) => (n === null ? "–" : `${n.toFixed(1)}%`);
 const int = (n: number) => n.toLocaleString("ko-KR");
 const wrClass = (wr: number | null) => (wr === null ? "text-muted" : wr >= 50 ? "text-pos" : "text-neg");
-const LEAGUE_CLASS: Record<string, string> = {
-  grandmaster: "text-secondary",
-  master: "text-secondary",
-  diamond: "text-primary",
-  platinum: "text-accent",
-  gold: "text-warn-fg",
-  silver: "text-fg-2",
-  bronze: "text-fg-2",
-};
 
 /** 전적 검색: the query lives in the URL (?tag=Name%231234&region=KR), so a search is shareable and 홈 can link here. */
 export function PlayerSearchView({ heroes, maps }: { heroes: HeroTable; maps: MapTable }) {
@@ -267,23 +258,12 @@ function Profile({ v, games, me, region, heroes, maps }: { v: PlayerView; games:
           {v.level !== null && <span className="num text-xs text-muted">{t.level(int(v.level))}</span>}
           <span className="num ml-auto text-2xs text-muted">{v.fetchedLabel}</span>
         </div>
-        <div className="mt-3 flex flex-col gap-2 sm:flex-row">
-          {v.rank && (
-            <div id="player-rank" data-mode={v.rank.mode} className="shrink-0 rounded-lg bg-surface-2 px-4 py-2.5 sm:min-w-44">
-              <div className="text-2xs font-semibold text-muted">{v.rank.label}</div>
-              <div className={cx("text-2xl leading-tight font-extrabold", v.rank.tierKey ? LEAGUE_CLASS[v.rank.tierKey] : "text-fg")}>
-                {v.rank.tier ?? t.unplaced}
-              </div>
-              <div className="num text-xs text-fg-2">MMR {v.rank.mmr === null ? "–" : int(v.rank.mmr)}</div>
-            </div>
-          )}
-          <dl id="player-summary" className="num grid flex-1 grid-cols-2 gap-2 sm:grid-cols-4">
-            <Stat label={t.totalGames} value={int(v.games)} />
-            <Stat label={t.winRate} value={pct(v.winRate)} className={wrClass(v.winRate)} />
-            <Stat label="KDA" value={v.kda === null ? "–" : v.kda.toFixed(2)} />
-            <Stat label="MVP" value={pct(v.mvpRate)} />
-          </dl>
-        </div>
+        <dl id="player-summary" className="num mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
+          <Stat label={t.totalGames} value={int(v.games)} />
+          <Stat label={t.winRate} value={pct(v.winRate)} className={wrClass(v.winRate)} />
+          <Stat label="KDA" value={v.kda === null ? "–" : v.kda.toFixed(2)} />
+          <Stat label="MVP" value={pct(v.mvpRate)} />
+        </dl>
       </Card>
 
       <Card aria-labelledby="h-modes">
@@ -293,9 +273,9 @@ function Profile({ v, games, me, region, heroes, maps }: { v: PlayerView; games:
             {v.modes.map((m) => (
               <div key={m.mode} data-mode={m.mode} className="rounded-lg bg-surface-2 p-3">
                 <div className="text-2xs font-semibold text-muted">{m.label}</div>
-                <div className={cx("mt-0.5 text-[15px] font-bold", m.tierKey ? LEAGUE_CLASS[m.tierKey] : "text-fg")}>{m.tier ?? t.unplaced}</div>
+                <div className="num mt-0.5 text-[15px] font-bold text-fg">MMR {m.mmr === null ? "–" : int(m.mmr)}</div>
                 <div className="num mt-0.5 text-xs text-fg-2">
-                  MMR {m.mmr === null ? "–" : int(m.mmr)} · {t.record(int(m.wins), int(m.losses))} · <span className={wrClass(m.winRate)}>{pct(m.winRate)}</span>
+                  {t.record(int(m.wins), int(m.losses))} · <span className={wrClass(m.winRate)}>{pct(m.winRate)}</span>
                 </div>
               </div>
             ))}

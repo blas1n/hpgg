@@ -45,12 +45,10 @@ test("players: search shows league per mode, recent matches and heroes; the URL 
   expect(seen[0]!.searchParams.get("region")).toBe("NA");
   await expect(page).toHaveURL(/\/ko\/hots\/players\/\?tag=Zemill%231940&region=NA$/);
   await expect(page.locator("#player-name")).toContainText("Zemill#1940");
-  // the headline tier sits over the MMR in the profile card (owner 2026-10-14)
-  await expect(page.locator("#player-rank")).toHaveAttribute("data-mode", "sl");
-  await expect(page.locator("#player-rank")).toContainText("다이아몬드 2");
-  await expect(page.locator("#player-rank")).toContainText("MMR 2,908");
+  // no league tier anywhere: HP's is an MMR estimate, not the in-game rank (owner 2026-10-14)
+  await expect(page.locator("#player-rank")).toHaveCount(0);
   await expect(page.locator("#player-modes [data-mode]").first()).toHaveAttribute("data-mode", "sl");
-  await expect(page.locator('#player-modes [data-mode="sl"]')).toContainText("다이아몬드 2");
+  await expect(page.locator('#player-modes [data-mode="sl"]')).not.toContainText("다이아몬드");
   await expect(page.locator('#player-modes [data-mode="sl"]')).toContainText("2,908");
   await expect(page.locator("#player-matches li")).toHaveCount(5);
   await expect(page.locator("#player-matches li").first()).toHaveAttribute("data-result", "win");
