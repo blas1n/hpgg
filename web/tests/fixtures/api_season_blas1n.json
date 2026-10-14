@@ -12,7 +12,12 @@
    "kills": 21,
    "deaths": 19,
    "assists": 179,
-   "takedowns": 200
+   "takedowns": 200,
+   "hero_damage": 171806,
+   "siege_damage": 228179,
+   "healing": 907905,
+   "damage_taken": 235644,
+   "experience": 87420
   },
   {
    "hero": "Alarak",
@@ -24,7 +29,12 @@
    "kills": 33,
    "deaths": 25,
    "assists": 105,
-   "takedowns": 138
+   "takedowns": 138,
+   "hero_damage": 524339,
+   "siege_damage": 532722,
+   "healing": 0,
+   "damage_taken": 465982,
+   "experience": 101547
   },
   {
    "hero": "Greymane",
@@ -36,7 +46,12 @@
    "kills": 25,
    "deaths": 12,
    "assists": 33,
-   "takedowns": 58
+   "takedowns": 58,
+   "hero_damage": 240828,
+   "siege_damage": 480698,
+   "healing": 0,
+   "damage_taken": 166624,
+   "experience": 55690
   },
   {
    "hero": "Malthael",
@@ -48,7 +63,12 @@
    "kills": 14,
    "deaths": 14,
    "assists": 29,
-   "takedowns": 43
+   "takedowns": 43,
+   "hero_damage": 155145,
+   "siege_damage": 235478,
+   "healing": 0,
+   "damage_taken": 173077,
+   "experience": 45539
   },
   {
    "hero": "Whitemane",
@@ -60,7 +80,12 @@
    "kills": 12,
    "deaths": 11,
    "assists": 62,
-   "takedowns": 74
+   "takedowns": 74,
+   "hero_damage": 149522,
+   "siege_damage": 115047,
+   "healing": 453232,
+   "damage_taken": 164418,
+   "experience": 35303
   },
   {
    "hero": "Dehaka",
@@ -72,7 +97,12 @@
    "kills": 9,
    "deaths": 9,
    "assists": 51,
-   "takedowns": 60
+   "takedowns": 60,
+   "hero_damage": 137395,
+   "siege_damage": 559437,
+   "healing": 0,
+   "damage_taken": 323082,
+   "experience": 82703
   },
   {
    "hero": "Chromie",
@@ -84,7 +114,12 @@
    "kills": 12,
    "deaths": 10,
    "assists": 34,
-   "takedowns": 46
+   "takedowns": 46,
+   "hero_damage": 189605,
+   "siege_damage": 253723,
+   "healing": 0,
+   "damage_taken": 87973,
+   "experience": 29178
   },
   {
    "hero": "Kerrigan",
@@ -96,7 +131,12 @@
    "kills": 6,
    "deaths": 14,
    "assists": 13,
-   "takedowns": 19
+   "takedowns": 19,
+   "hero_damage": 117026,
+   "siege_damage": 220271,
+   "healing": 0,
+   "damage_taken": 176882,
+   "experience": 34766
   },
   {
    "hero": "Leoric",
@@ -108,7 +148,12 @@
    "kills": 3,
    "deaths": 0,
    "assists": 34,
-   "takedowns": 37
+   "takedowns": 37,
+   "hero_damage": 102611,
+   "siege_damage": 262878,
+   "healing": 0,
+   "damage_taken": 157079,
+   "experience": 34221
   },
   {
    "hero": "Valla",
@@ -120,7 +165,12 @@
    "kills": 17,
    "deaths": 4,
    "assists": 22,
-   "takedowns": 39
+   "takedowns": 39,
+   "hero_damage": 144439,
+   "siege_damage": 200136,
+   "healing": 0,
+   "damage_taken": 54219,
+   "experience": 25569
   },
   {
    "hero": "Anduin",
@@ -132,7 +182,12 @@
    "kills": 3,
    "deaths": 6,
    "assists": 11,
-   "takedowns": 14
+   "takedowns": 14,
+   "hero_damage": 52013,
+   "siege_damage": 61550,
+   "healing": 117973,
+   "damage_taken": 57220,
+   "experience": 14110
   },
   {
    "hero": "Chen",
@@ -144,7 +199,12 @@
    "kills": 2,
    "deaths": 8,
    "assists": 11,
-   "takedowns": 13
+   "takedowns": 13,
+   "hero_damage": 54521,
+   "siege_damage": 122674,
+   "healing": 4541,
+   "damage_taken": 123787,
+   "experience": 22299
   },
   {
    "hero": "Hanzo",
@@ -156,7 +216,12 @@
    "kills": 8,
    "deaths": 4,
    "assists": 12,
-   "takedowns": 20
+   "takedowns": 20,
+   "hero_damage": 95695,
+   "siege_damage": 179288,
+   "healing": 0,
+   "damage_taken": 44508,
+   "experience": 19772
   },
   {
    "hero": "Maiev",
@@ -168,7 +233,12 @@
    "kills": 6,
    "deaths": 5,
    "assists": 17,
-   "takedowns": 23
+   "takedowns": 23,
+   "hero_damage": 77884,
+   "siege_damage": 116557,
+   "healing": 0,
+   "damage_taken": 87634,
+   "experience": 21317
   },
   {
    "hero": "Tyrael",
@@ -180,7 +250,12 @@
    "kills": 9,
    "deaths": 12,
    "assists": 24,
-   "takedowns": 33
+   "takedowns": 33,
+   "hero_damage": 152289,
+   "siege_damage": 118056,
+   "healing": 17185,
+   "damage_taken": 287099,
+   "experience": 21174
   },
   {
    "hero": "Malfurion",
@@ -192,7 +267,12 @@
    "kills": 0,
    "deaths": 3,
    "assists": 9,
-   "takedowns": 9
+   "takedowns": 9,
+   "hero_damage": 13181,
+   "siege_damage": 5767,
+   "healing": 40410,
+   "damage_taken": 18391,
+   "experience": 2901
   },
   {
    "hero": "Medivh",
@@ -204,7 +284,12 @@
    "kills": 3,
    "deaths": 1,
    "assists": 19,
-   "takedowns": 22
+   "takedowns": 22,
+   "hero_damage": 33195,
+   "siege_damage": 31690,
+   "healing": 15473,
+   "damage_taken": 28853,
+   "experience": 10055
   },
   {
    "hero": "Qhira",
@@ -216,7 +301,12 @@
    "kills": 7,
    "deaths": 2,
    "assists": 10,
-   "takedowns": 18
+   "takedowns": 18,
+   "hero_damage": 59489,
+   "siege_damage": 62653,
+   "healing": 0,
+   "damage_taken": 50136,
+   "experience": 10909
   },
   {
    "hero": "Raynor",
@@ -228,7 +318,12 @@
    "kills": 4,
    "deaths": 1,
    "assists": 13,
-   "takedowns": 17
+   "takedowns": 17,
+   "hero_damage": 65508,
+   "siege_damage": 126863,
+   "healing": 0,
+   "damage_taken": 32085,
+   "experience": 17033
   },
   {
    "hero": "E.T.C.",
@@ -240,7 +335,12 @@
    "kills": 0,
    "deaths": 6,
    "assists": 5,
-   "takedowns": 5
+   "takedowns": 5,
+   "hero_damage": 22590,
+   "siege_damage": 19421,
+   "healing": 0,
+   "damage_taken": 79302,
+   "experience": 5903
   },
   {
    "hero": "Mal'Ganis",
@@ -252,7 +352,12 @@
    "kills": 3,
    "deaths": 5,
    "assists": 14,
-   "takedowns": 17
+   "takedowns": 17,
+   "hero_damage": 67214,
+   "siege_damage": 40434,
+   "healing": 0,
+   "damage_taken": 133643,
+   "experience": 9026
   },
   {
    "hero": "Tychus",
@@ -264,7 +369,12 @@
    "kills": 0,
    "deaths": 4,
    "assists": 1,
-   "takedowns": 1
+   "takedowns": 1,
+   "hero_damage": 20214,
+   "siege_damage": 32604,
+   "healing": 0,
+   "damage_taken": 25975,
+   "experience": 4818
   }
  ],
  "fetched_at": "2026-10-14T01:08:00Z",

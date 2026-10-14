@@ -22,6 +22,12 @@ export interface SeasonHero {
   deaths: number | null;
   assists: number | null;
   takedowns: number | null;
+  /** the game card's stat line as season sums (owner 2026-10-14); absent in answers from before it was sent */
+  hero_damage?: number | null;
+  siege_damage?: number | null;
+  healing?: number | null;
+  damage_taken?: number | null;
+  experience?: number | null;
 }
 export interface SeasonResponse {
   season: number;
@@ -51,6 +57,8 @@ export interface SeasonHeroView {
   winRate: number;
   kda: number | null;
   perGame: { kills: number; deaths: number; assists: number } | null;
+  /** per game over the season: what a game card shows; null without a stat line */
+  stats: { heroDamage: number; siegeDamage: number; healing: number; damageTaken: number; experience: number } | null;
 }
 export interface SeasonCardView {
   games: number;
@@ -67,6 +75,8 @@ export interface SeasonCardView {
 /** (K + A) / D; a game without deaths counts its takedowns, as the game does. */
 const ratio = (k: number, d: number, a: number) => (d === 0 ? k + a : (k + a) / d);
 const lined = (r: SeasonHero) => r.kills !== null && r.deaths !== null && r.assists !== null;
+const num = (x: number | null | undefined): x is number => typeof x === "number";
+const statted = (r: SeasonHero) => num(r.hero_damage) && num(r.siege_damage) && num(r.damage_taken) && num(r.experience);
 
 export function seasonCard(rows: SeasonHero[], heroes: HeroTable, locale: Locale): SeasonCardView {
   const byKey = new Map<string, HeroInfo>();
@@ -101,6 +111,16 @@ export function seasonCard(rows: SeasonHero[], heroes: HeroTable, locale: Locale
         winRate: r.games ? (r.wins / r.games) * 100 : 0,
         kda: lined(r) ? ratio(r.kills!, r.deaths!, r.assists!) : null,
         perGame: lined(r) && r.games ? { kills: r.kills! / r.games, deaths: r.deaths! / r.games, assists: r.assists! / r.games } : null,
+        stats:
+          statted(r) && r.games
+            ? {
+                heroDamage: r.hero_damage! / r.games,
+                siegeDamage: r.siege_damage! / r.games,
+                healing: (r.healing ?? 0) / r.games,
+                damageTaken: r.damage_taken! / r.games,
+                experience: r.experience! / r.games,
+              }
+            : null,
       };
     }),
     roles: heroes.roles.map((x) => {
@@ -119,7 +139,10 @@ export function qmCard(matches: MatchRow[], heroes: HeroTable, locale: Locale): 
   for (const m of matches) {
     if (m.mode !== "qm" || m.win === null) continue;
     const k = m.short_name ?? m.hero;
-    const r = by.get(k) ?? { hero: m.hero, short_name: m.short_name, role: m.role, games: 0, wins: 0, losses: 0, kills: 0, deaths: 0, assists: 0, takedowns: 0 };
+    const zero = { kills: 0, deaths: 0, assists: 0, takedowns: 0, hero_damage: 0, siege_damage: 0, healing: 0, damage_taken: 0, experience: 0 };
+    const r: SeasonHero = by.get(k) ?? { hero: m.hero, short_name: m.short_name, role: m.role, games: 0, wins: 0, losses: 0, ...zero };
+    // a game with a stat line sends no healing for a non-healer: none, not unknown
+    const line = m.kills !== null;
     by.set(k, {
       ...r,
       games: r.games + 1,
@@ -129,6 +152,11 @@ export function qmCard(matches: MatchRow[], heroes: HeroTable, locale: Locale): 
       deaths: add(r.deaths, m.deaths),
       assists: add(r.assists, m.assists),
       takedowns: add(r.takedowns, m.takedowns),
+      hero_damage: add(r.hero_damage ?? null, m.hero_damage),
+      siege_damage: add(r.siege_damage ?? null, m.siege_damage),
+      healing: add(r.healing ?? null, line ? (m.healing ?? 0) : null),
+      damage_taken: add(r.damage_taken ?? null, m.damage_taken),
+      experience: add(r.experience ?? null, m.experience),
     });
   }
   return seasonCard([...by.values()], heroes, locale);
