@@ -32,6 +32,11 @@ export interface TierPoint {
   low: number | null;
   high: number | null;
   thin: boolean;
+  /** The league's all-hero average (games-weighted, corrected): not 50%, as players of a higher league beat lower ones in
+   *  the same games (bronze 46.9 %, master+ 53.7 % on 2.57.0, asked 2026-10-14). */
+  average: number | null;
+  /** winRate minus average, in %p; null with no rate. */
+  vsAverage: number | null;
 }
 export interface TiersView {
   patch: string;
@@ -43,12 +48,34 @@ export interface TiersView {
 export function tiersView(file: TiersFile | null, heroName: string): TiersView | null {
   const rows = file?.heroes[heroName];
   if (!file || !rows) return null;
+  const averages = TIER_LEAGUES.map((_, i) => {
+    let games = 0;
+    let sum = 0;
+    for (const hero of Object.values(file.heroes)) {
+      const r = hero[i];
+      if (r && r.games) {
+        games += r.games;
+        sum += r.tier_win_rate * r.games;
+      }
+    }
+    return games ? sum / games : null;
+  });
   const points = TIER_LEAGUES.map((league, i): TierPoint => {
     const r = rows[i];
-    if (!r || !r.games) return { league, games: 0, winRate: null, low: null, high: null, thin: true };
+    const average = averages[i] ?? null;
+    if (!r || !r.games) return { league, games: 0, winRate: null, low: null, high: null, thin: true, average, vsAverage: null };
     const [lo, hi] = wilson(r.wins, r.games);
     const shift = r.tier_win_rate - (r.wins / r.games) * 100;
-    return { league, games: r.games, winRate: r.tier_win_rate, low: lo + shift, high: hi + shift, thin: r.games < TIER_MIN_GAMES };
+    return {
+      league,
+      games: r.games,
+      winRate: r.tier_win_rate,
+      low: lo + shift,
+      high: hi + shift,
+      thin: r.games < TIER_MIN_GAMES,
+      average,
+      vsAverage: average === null ? null : r.tier_win_rate - average,
+    };
   });
   return { patch: file.patch, collectedAt: file.collected_at, games: points.reduce((n, p) => n + p.games, 0), points };
 }

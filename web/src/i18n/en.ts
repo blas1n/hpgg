@@ -233,15 +233,18 @@ The same data gives different tiers under a different formula. This site always 
     tiersTitle: (mode: string) => `Win rate by league (${mode})`,
     tiersSub: (patch: string, games: string) => `Patch ${patch} · ${games} games · party-corrected`,
     tiersGames: (games: string) => plural(games, "game", "games"),
-    tiersRule: (min: string) => `Each point is the win rate of the players in that league who picked this hero (party-corrected); bars show the 95% range. Under ${min} games the point is faint. Master+ is Master and Grand Master.`,
+    tiersRule: (min: string) =>
+      `Each point is the win rate of the players in that league who picked this hero (party-corrected); bars show the 95% range. The grey dashed line is the league's all-hero average, and the %p below is the gap from it. Games mix leagues and higher leagues beat lower ones, so a league's average is not 50%. Under ${min} games the point is faint. Master+ is Master and Grand Master.`,
     tiersLeagues: { bronze: "Bronze", silver: "Silver", gold: "Gold", platinum: "Platinum", diamond: "Diamond", master: "Master+" },
     tiersAria: (points: string) => `Win rate by league: ${points}`,
     lengthTitle: (mode: string) => `Win rate by game length (${mode})`,
-    lengthSub: (patch: string, since: string | null, games: string) => `Patch ${patch}${since ? ` · since the ${since} hotfix` : ""} · ${games} sampled replays`,
+    lengthSub: (patch: string, since: string | null, games: string, hero: string, rate: string) =>
+      `Patch ${patch}${since ? ` · since the ${since} hotfix` : ""} · ${games} sampled replays · ${hero} overall ${rate}`,
     lengthBands: { short: "15 min or less", mid: "15–20 min", long: "over 20 min" },
     lengthLean: { early: "Strong early", late: "Strong late" },
     lengthGames: (games: string) => plural(games, "game", "games"),
-    lengthRule: (min: string) => `Bands under ${min} games show no win rate. "Strong early/late" appears only when the win rates at 15 min or less and over 20 min differ beyond the margin of error (95%).`,
+    lengthRule: (min: string) =>
+      `Game length is the real length of the game. The %p is the gap from this hero's overall rate; every game has five winners and five losers, so every band's all-hero average is 50%. Bands under ${min} games show no win rate. "Strong early/late" appears only when the win rates at 15 min or less and over 20 min differ beyond the margin of error (95%).`,
     patchesTitle: "Patch changes",
     patchesSub: "Blizzard's official patch notes · game data",
     patchVerdict: { buff: "Buff", nerf: "Nerf", mixed: "Mixed" },
