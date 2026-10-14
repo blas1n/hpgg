@@ -181,26 +181,6 @@ export const modeLabel = (mode: string | null, locale: Locale): string => {
   return mode in modes ? modes[mode as ModeKey] : mode;
 };
 
-type LeagueKey = keyof Messages["players"]["leagues"];
-/** HP league name (lower case prefix) → our key, which is also the colour key. Grand Master before Master. */
-const LEAGUE: [string, LeagueKey][] = [
-  ["grand master", "grandmaster"],
-  ["master", "master"],
-  ["diamond", "diamond"],
-  ["platinum", "platinum"],
-  ["gold", "gold"],
-  ["silver", "silver"],
-  ["bronze", "bronze"],
-];
-const league = (tier: string | null) => (tier ? LEAGUE.find(([hp]) => tier.toLowerCase().startsWith(hp)) : undefined);
-
-/** "Diamond 2" → "다이아몬드 2" / "Diamond 2"; unknown names pass through. */
-export function tierLabel(tier: string | null, locale: Locale): string | null {
-  if (!tier) return null;
-  const l = league(tier);
-  return l ? (messages[locale].players.leagues[l[1]] + tier.slice(l[0].length)).trim() : tier;
-}
-
 /** HP match dates are UTC "YYYY-MM-DD HH:MM:SS". */
 export function relativeDay(date: string | null, locale: Locale, now = new Date()): string {
   if (!date) return "";
@@ -228,8 +208,6 @@ export interface ModeView {
   mode: string;
   label: string;
   mmr: number | null;
-  tier: string | null;
-  tierKey: string | null;
   games: number;
   wins: number;
   losses: number;
@@ -247,8 +225,6 @@ export interface PlayerView {
   kda: number | null;
   mvpRate: number | null;
   modes: ModeView[];
-  /** the headline tier over the MMR (owner 2026-10-14): Storm League, else the first mode listed */
-  rank: ModeView | null;
   roles: { role: string; label: string; winRate: number }[];
   heroes: HeroRow[];
   bestHeroes: HeroRow[];
@@ -285,8 +261,6 @@ export function playerView(r: PlayerResponse, heroes: HeroTable, maps: MapTable,
     mode: m.mode,
     label: modeLabel(m.mode, locale),
     mmr: m.mmr,
-    tier: tierLabel(m.tier, locale),
-    tierKey: league(m.tier)?.[1] ?? null,
     games: m.wins + m.losses,
     wins: m.wins,
     losses: m.losses,
@@ -304,7 +278,6 @@ export function playerView(r: PlayerResponse, heroes: HeroTable, maps: MapTable,
     kda: p.kda,
     mvpRate: p.mvp_rate,
     modes,
-    rank: modes.find((m) => m.mode === "sl") ?? modes[0] ?? null,
     roles: [...p.roles]
       .sort((a, b) => roleOrder.indexOf(a.role) - roleOrder.indexOf(b.role))
       .map((x) => ({ role: x.role, label: roleKo.get(x.role) ?? x.role, winRate: x.win_rate })),

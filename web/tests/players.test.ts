@@ -13,7 +13,6 @@ import {
   playersHref,
   REGIONS,
   relativeDay,
-  tierLabel,
   type PlayerResponse,
   defaultRegion,
   readStoredRegion,
@@ -105,20 +104,6 @@ describe("fetchPlayer", () => {
 });
 
 describe("labels", () => {
-  it("translates league names", () => {
-    expect(tierLabel("Diamond 2", "ko")).toBe("다이아몬드 2");
-    expect(tierLabel("Master", "ko")).toBe("마스터");
-    expect(tierLabel("Grand Master", "ko")).toBe("그랜드마스터");
-    expect(tierLabel("Bronze 5", "ko")).toBe("브론즈 5");
-    expect(tierLabel("Silver 1", "ko")).toBe("실버 1");
-    expect(tierLabel("Gold 3", "ko")).toBe("골드 3");
-    expect(tierLabel("Platinum 4", "ko")).toBe("플래티넘 4");
-    expect(tierLabel("Wood", "ko")).toBe("Wood");
-    expect(tierLabel(null, "ko")).toBeNull();
-    expect(tierLabel("Diamond 2", "en")).toBe("Diamond 2");
-    expect(tierLabel("grand master 1", "en")).toBe("Grand Master 1");
-  });
-
   // #10: "일반 대전" and "ARAM" were guesses. The game's Korean names: Unranked Draft = 일반 선발전 (Blizzard news
   // 2016-06-01 "일반 선발전과 등급전 개편 관련 정보"), ARAM = 무작위 영웅 대전 (patch notes 2020-09-10).
   it("names modes as the game does", () => {
@@ -160,9 +145,12 @@ describe("playerView", () => {
     expect(v.stale).toBe(false);
   });
 
-  it("puts Storm League first with its league in Korean", () => {
-    expect(v.modes[0]).toMatchObject({ mode: "sl", label: "폭풍 리그", mmr: 2908, tier: "다이아몬드 2", tierKey: "diamond", games: 93 });
-    expect(v.modes.find((m) => m.mode === "qm")?.tierKey).toBe("master");
+  it("puts Storm League first with its MMR, and no league tier", () => {
+    // HP's tier is its own estimate from its MMR, not the in-game rank, and no API has the in-game
+    // rank (HP API docs, Battle.net developer portal: no Heroes of the Storm; owner 2026-10-14)
+    expect(v.modes[0]).toMatchObject({ mode: "sl", label: "폭풍 리그", mmr: 2908, games: 93 });
+    expect(v.modes[0]).not.toHaveProperty("tier");
+    expect(v).not.toHaveProperty("rank");
   });
 
   it("uses Korean hero names, portraits and hero links", () => {
@@ -191,7 +179,7 @@ describe("playerView", () => {
   it("in English: English names, labels and links under /en", () => {
     const e = playerView(zemill, localizeHeroes(heroes, "en"), localizeMaps(maps, "en"), "en", now);
     expect(e.regionLabel).toBe("Americas");
-    expect(e.modes[0]).toMatchObject({ label: "Storm League", tier: "Diamond 2" });
+    expect(e.modes[0]).toMatchObject({ label: "Storm League", mmr: 2908 });
     expect(e.heroes[0]).toMatchObject({ name: "Lúcio", href: "/en/hots/heroes/lucio/" });
     expect(e.matches[0]).toMatchObject({ hero: "Deckard", mode: "Storm League", map: "Volskaya Foundry", when: "1 day ago" });
     expect(e.maps.map((m) => m.name)).toEqual(["Braxis Outpost", "Silver City", "Lost Cavern"]);
@@ -217,27 +205,10 @@ describe("playerView", () => {
     expect(w.heroes[0]).toMatchObject({ name: "Xal'atath", portrait: undefined, href: null });
     expect(w.maps[0]!.name).toBe("New Map");
     expect(w.matches[0]).toMatchObject({ hero: "–", map: "–", mode: "–", when: "" });
-    expect(w.modes[0]).toMatchObject({ tier: null, tierKey: null });
-    expect(w.rank).toMatchObject({ mode: "sl", tier: null, mmr: null }); // shown as 배치 전
+    expect(w.modes[0]).toMatchObject({ mmr: null });
     expect(w.stale).toBe(true);
     expect(w.notice).toBe("quota_exceeded");
     expect(w.fetchedLabel).toMatch(/^09\/29 \d\d:\d\d 기준$/);
-  });
-});
-
-describe("playerView rank (the headline tier over the MMR, like LoL search sites; owner 2026-10-14)", () => {
-  const now = new Date("2026-09-30T06:00:00Z");
-  it("is the Storm League tier and MMR", () => {
-    const v = playerView(zemill, heroes, maps, "ko", now);
-    expect(v.rank).toMatchObject({ mode: "sl", label: "폭풍 리그", tier: "다이아몬드 2", tierKey: "diamond", mmr: 2908 });
-  });
-  it("without Storm League games, the first mode the profile lists", () => {
-    const qmOnly = { ...zemill, player: { ...zemill.player, modes: zemill.player.modes.filter((m) => m.mode !== "sl") } };
-    expect(playerView(qmOnly, heroes, maps, "ko", now).rank).toMatchObject({ mode: "qm", tier: "마스터" });
-  });
-  it("is null with no rated mode at all", () => {
-    const none = { ...zemill, player: { ...zemill.player, modes: [] } };
-    expect(playerView(none, heroes, maps, "ko", now).rank).toBeNull();
   });
 });
 
