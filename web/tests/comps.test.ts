@@ -119,7 +119,7 @@ describe("recommend with team compositions", () => {
     expect(out[0]!.hero.slug).toBe("heal");
     const star = out.find((s) => s.hero.slug === "star")!;
     expect(star.terms.comp).toBeCloseTo(c("ranged", 3) + c("healer", 0), 6);
-    expect(star.score).toBeCloseTo(4 + c("ranged", 3) + c("healer", 0), 6);
+    expect(star.score).toBeCloseTo(4 * 0.5 + c("ranged", 3) + c("healer", 0), 6); // base × 0.5, team × 1
     expect(out[0]!.terms.comp).toBe(0);
   });
 

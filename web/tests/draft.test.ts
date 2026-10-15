@@ -7,6 +7,7 @@ import {
   decodeDraft,
   draftState,
   encodeDraft,
+  DRAFT_WEIGHTS,
   recommend,
   undo,
   type DraftHero,
@@ -101,16 +102,21 @@ describe("recommend", () => {
   const heroes = HEROES.map((x) => (x.slug === "illidan" ? { ...x, maps: { "Cursed Hollow": { wr: 55, games: 100 } } } : x));
   const bans = ["zeratul", "cho", "gall", "x1"];
 
-  it("a pick: base + synergy with our picks + counter against theirs + map, each term shown", () => {
+  it("weights: how much of each term showed in later games (owner 2026-10-15, measured on 6,207 replays)", () => {
+    expect(DRAFT_WEIGHTS).toEqual({ base: 0.5, allies: 0.2, enemies: 0.1, map: 0.2, comp: 1 });
+  });
+
+  it("a pick: base + synergy with our picks + counter against theirs + map, each term shown weighted", () => {
     // first team picks at step 7, with Abathur picked by it and Uther by the second team
     const seq = [...bans, "abathur", "uther", "x2"];
     const [top] = recommend(heroes, seq, { matchups, map: "Cursed Hollow" });
     expect(top!.hero.slug).toBe("illidan");
-    expect(top!.terms.base).toBeCloseTo(2, 6);
-    expect(top!.terms.allies).toBeCloseTo((60 - 50) * (100 / 200), 6); // +5.0
-    expect(top!.terms.enemies).toBeCloseTo(-(40 - 50) * (900 / 1000), 6); // +9.0
-    expect(top!.terms.map).toBeCloseTo((55 - 50) * (100 / 200), 6); // +2.5
-    expect(top!.score).toBeCloseTo(2 + 5 + 9 + 2.5, 6);
+    expect(top!.terms.base).toBeCloseTo(2 * 0.5, 6);
+    expect(top!.terms.allies).toBeCloseTo((60 - 50) * (100 / 200) * 0.2, 6); // +5.0 × 0.2
+    expect(top!.terms.enemies).toBeCloseTo(-(40 - 50) * (900 / 1000) * 0.1, 6); // +9.0 × 0.1
+    expect(top!.terms.map).toBeCloseTo((55 - 50) * (100 / 200) * 0.2, 6); // +2.5 × 0.2
+    // the score is the sum of the shown terms
+    expect(top!.score).toBeCloseTo(1 + 1 + 0.9 + 0.5, 6);
   });
 
   it("a ban: the same score from the other team's side", () => {
@@ -118,8 +124,8 @@ describe("recommend", () => {
     const seq = [...bans, "abathur", "uther", "x2", "x3", "x4"];
     const [top] = recommend(heroes, seq, { matchups, map: null });
     expect(top!.hero.slug).toBe("illidan");
-    expect(top!.terms.allies).toBeCloseTo(5, 6); // with Abathur, on the first team
-    expect(top!.terms.enemies).toBeCloseTo(9, 6); // against Uther
+    expect(top!.terms.allies).toBeCloseTo(5 * 0.2, 6); // with Abathur, on the first team
+    expect(top!.terms.enemies).toBeCloseTo(9 * 0.1, 6); // against Uther
     expect(top!.terms.map).toBe(0);
   });
 
