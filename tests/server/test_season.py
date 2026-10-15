@@ -221,11 +221,20 @@ async def test_no_storm_league_this_season_is_an_empty_list(
     fake_hp.responder = route(heroes=lambda _r: httpx.Response(200, json=[]))
     r = await svc.lookup(TAG, REGION)
     assert (r.outcome, r.heroes) == ("ok", [])
-    fake_hp.responder = route(
-        heroes=lambda _r: httpx.Response(404, json={"error": {"code": "not_found", "message": "x"}})
-    )
-    r = await svc.lookup("Other#1234", REGION)  # the profile already knows the player
-    assert (r.outcome, r.heroes) == ("ok", [])
+    # live HP says `player_not_found` for a player it knows with no games in the filter
+    # (2026-10-15, two in the log); the profile already found them, so it is an empty season
+    for code in ("not_found", "player_not_found"):
+        fake_hp.responder = route(
+            heroes=lambda _r, c=code: httpx.Response(
+                404, json={"error": {"code": c, "message": "x"}}
+            )
+        )
+        r = await svc.lookup(f"Other{len(code)}#1234", REGION)
+        assert (r.outcome, r.heroes) == ("ok", [])
+    # kept like any answer: the next search costs no call
+    n = len(calls(fake_hp, "/players/heroes"))
+    assert (await svc.lookup("Other16#1234", REGION)).heroes == []
+    assert len(calls(fake_hp, "/players/heroes")) == n
 
 
 async def test_private_players_cost_no_call_and_are_dropped(
