@@ -152,6 +152,27 @@ describe("how often a make-up is chosen (owner 2026-10-15: people do it for a re
   });
 });
 
+describe("played roles (owner 2026-10-15: from the teams around each hero)", () => {
+  const counts = { "1-1-1-2-0-0": cell(500, 50), "2-0-1-2-0-0": cell(10, 47), "1-1-1-1-1-0": cell(200, 50) };
+  const played = { Blaze: { second: "Bruiser", share: 0.41, low: 0.37, games: 1013 }, Varian: { second: "Tank", share: 0.54, low: 0.51, games: 1793 } };
+  const MODEL = compModel({ ...FILE, teams: 1000, makeups: counts, played });
+
+  it("the model knows each hero's second role", () => {
+    expect(MODEL.second).toEqual({ Blaze: "Bruiser", Varian: "Tank" });
+    expect(COSTS.second).toEqual({});
+  });
+
+  it("a hero of two roles counts as whichever is better for the team: Blaze next to a tank is the bruiser", () => {
+    expect(compTerm([T, H, R, R], [[T, B]], 1, PLENTY, MODEL)).toBe(0);
+    expect(compTerm([T, H, R, R], [T], 1, PLENTY, MODEL)).toBeLessThan(0);
+  });
+
+  it("a picked hero of two roles too: Varian on the team takes the tank's place, so a bruiser costs nothing", () => {
+    expect(compTerm([[B, T], H, R, R], [B], 1, PLENTY, MODEL)).toBe(0);
+    expect(compTerm([B, H, R, R], [B], 1, PLENTY, MODEL)).toBeLessThan(0);
+  });
+});
+
 const h = (slug: string, role: string, wrs = 50): DraftHero => ({ slug, name: slug, ko: slug, role, role_ko: role, wrs, wr: wrs, games: 1000, maps: {} });
 const NONE = new Map<string, MatchupsFile>();
 
@@ -173,6 +194,21 @@ describe("recommend with team compositions", () => {
     expect(star.terms.comp).toBeCloseTo(c("ranged", 3) + c("healer", 0), 6);
     expect(star.score).toBeCloseTo(4 * 0.7 + c("ranged", 3) + c("healer", 0), 6); // base × 0.7, team × 1
     expect(out[0]!.terms.comp).toBe(0);
+  });
+
+  it("a candidate the file says also plays another role is scored in the better one", () => {
+    // first team: f1 tank, f2 f3 ranged, f4 melee; its last pick. 'blaze' (tank) also plays bruiser
+    const flexHeroes = [...heroes, h("blaze", "Tank")].map((x) => (x.slug === "blaze" ? { ...x, name: "Blaze" } : x));
+    const model = compModel({
+      ...FILE,
+      teams: 1000,
+      makeups: { "1-1-1-2-0-0": cell(500, 50), "1-1-0-2-1-0": cell(5, 40), "2-0-0-2-1-0": cell(1, 40), "1-0-1-2-1-0": cell(80, 50) },
+      played: { Blaze: { second: "Bruiser", share: 0.41, low: 0.37, games: 1013 } },
+    });
+    const out = recommend(flexHeroes, seq, { matchups: NONE, map: null, comps: model });
+    const blaze = out.find((s) => s.hero.slug === "blaze")!;
+    const tankOnly = recommend(flexHeroes, seq, { matchups: NONE, map: null, comps: { ...model, second: {} } }).find((s) => s.hero.slug === "blaze")!;
+    expect(blaze.terms.comp).toBeGreaterThan(tankOnly.terms.comp);
   });
 
   it("no compositions file: the term is 0 and the order is the old one", () => {

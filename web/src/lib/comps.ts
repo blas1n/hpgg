@@ -41,7 +41,12 @@ export interface CompsFile {
   groups: Record<CompGroup, Record<string, Count>>;
   /** Teams by exact make-up (makeupKey); absent in files from before 2026-10-16. */
   makeups?: Record<string, Count>;
+  /** Heroes that also play a second role, found from the teams around them (collector/team_comps.py played_roles). */
+  played?: Record<string, { second: string; share: number; low: number; games: number }>;
 }
+/** A team member: its role, or the roles it can play (the official one first). */
+export type Member = Role | readonly Role[];
+const optionsOf = (m: Member): readonly Role[] => (typeof m === "string" ? [m] : m);
 /** Cost (%p, ≤ 0) of having n of a group, index n up to the cap. */
 export type CompPenalties = Record<CompGroup, number[]>;
 
@@ -77,12 +82,19 @@ export interface CompModel {
   logShare: Record<string, number> | null;
   /** ln share of a make-up nobody chose: counted as one team. */
   unseen: number;
+  /** Hero (API name) → the second role it also plays. */
+  second: Record<string, Role>;
 }
 
 export function compModel(file: CompsFile): CompModel {
   const ln = (n: number) => Math.log((n + 1) / (file.teams + 1));
   const logShare = file.makeups ? Object.fromEntries(Object.entries(file.makeups).map(([k, c]) => [k, ln(c.games)])) : null;
-  return { penalties: compPenalties(file), logShare, unseen: ln(0) };
+  const second = Object.fromEntries(
+    Object.entries(file.played ?? {})
+      .filter(([, p]) => (MAKEUP_ROLES as readonly string[]).includes(p.second))
+      .map(([h, p]) => [h, p.second as Role]),
+  );
+  return { penalties: compPenalties(file), logShare, unseen: ln(0), second };
 }
 
 /** A finished team's value: its measured costs plus how often its make-up is chosen. */
@@ -93,10 +105,11 @@ function value(counts: readonly number[], m: CompModel): number {
   return costs + (m.logShare ? COMP_POP * (m.logShare[counts.join("-")] ?? m.unseen) : 0);
 }
 
-/** The best value a team can still end with: `slots` more heroes from `pool` (heroes left, by role). */
-export function bestReachable(team: readonly Role[], slots: number, pool: Readonly<Record<Role, number>>, m: CompModel): number {
-  const counts = MAKEUP_ROLES.map((r) => team.filter((x) => x === r).length);
+/** The best value a team can still end with: each member in its best role, `slots` more heroes from `pool` (heroes
+ *  left, by role). */
+export function bestReachable(team: readonly Member[], slots: number, pool: Readonly<Record<Role, number>>, m: CompModel): number {
   let best = -Infinity;
+  const counts = MAKEUP_ROLES.map(() => 0);
   const fill = (i: number, left: number) => {
     if (i === MAKEUP_ROLES.length) {
       if (left === 0) best = Math.max(best, value(counts, m));
@@ -108,15 +121,32 @@ export function bestReachable(team: readonly Role[], slots: number, pool: Readon
       counts[i]! -= n;
     }
   };
-  fill(0, slots);
-  // a pool too small to fill the slots: judge the team as it is
-  return best === -Infinity ? value(counts, m) : best;
+  const assign = (j: number) => {
+    if (j === team.length) {
+      const before = best;
+      fill(0, slots);
+      // a pool too small to fill the slots: judge the team as it is
+      if (best === before && best === -Infinity) best = value(counts, m);
+      return;
+    }
+    for (const r of optionsOf(team[j]!)) {
+      counts[MAKEUP_ROLES.indexOf(r)]! += 1;
+      assign(j + 1);
+      counts[MAKEUP_ROLES.indexOf(r)]! -= 1;
+    }
+  };
+  assign(0);
+  return best;
 }
 
 /** What picking `cand` (one hero, or Cho'gall's two halves) costs a team with `slots` free; `pool` includes cand. */
-export function compTerm(team: readonly Role[], cand: readonly Role[], slots: number, pool: Readonly<Record<Role, number>>, m: CompModel): number {
+export function compTerm(team: readonly Member[], cand: readonly Member[], slots: number, pool: Readonly<Record<Role, number>>, m: CompModel): number {
+  // the pool counts heroes by their official role: the candidate leaves it under that one
   const rest = { ...pool };
-  for (const r of cand) rest[r] = Math.max(0, rest[r] - 1);
+  for (const c of cand) {
+    const r = optionsOf(c)[0]!;
+    rest[r] = Math.max(0, rest[r] - 1);
+  }
   const after = bestReachable([...team, ...cand], Math.max(0, slots - cand.length), rest, m);
   return Math.min(0, after - bestReachable(team, slots, pool, m));
 }
