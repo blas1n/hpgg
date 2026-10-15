@@ -266,7 +266,7 @@ export const ko = {
     countersNote: "상대 팀에 있을 때의 승률 차",
     synergies: "잘 맞는 영웅",
     synergiesNote: "같은 팀일 때의 승률 차",
-    matchupsRule: (hero: string, rule: string) => `승률 차 = 그 영웅과 만났을 때 ${hero}의 승률 − ${hero}의 승률. ${rule}`,
+    matchupsRule: (hero: string, rule: string) => `승률 차 = 그 영웅과 만났을 때 ${hero}의 승률 − 두 영웅의 평소 승률로 기대되는 승률(${hero}의 승률 ± 그 영웅의 승률 − 50). 센 영웅 옆이라서, 약한 영웅 상대라서 오른 승률은 빼고 봅니다. ${rule}`,
     matchupRule: (k: string, min: string) => `순서: (승률 차) × n/(n+${k}) · n = 함께 또는 상대로 한 게임 수 · ${min}게임 미만 제외 · 차이가 오차(95%)를 넘는 영웅만`,
     noMatchups: "기준을 넘는 영웅이 아직 없습니다",
     matchupLine: (games: string, wr: string) => `${games}게임 · 승률 ${wr}`,
