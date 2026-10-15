@@ -1,7 +1,9 @@
 /** Counters and synergies on the hero page. Pure: computed at build time from data/matchups/<slug>.json.
  *
  *  score = (pair win rate − the hero's own win rate) × n / (n + k)   — the tier formula's shrinkage, applied to the gap
- *  pairs with fewer than MATCHUP_MIN_GAMES games are left out; the rule is printed on the page (matchupRule). */
+ *  pairs with fewer than MATCHUP_MIN_GAMES games are left out; the rule is printed on the page (matchupRule).
+ *  Both lists keep only pairs beyond the error (beyondError): of the pairs over 50 games only 8.7 % of enemy and 8.4 %
+ *  of ally pairs were, against 5 % by chance alone, so most listed pairs were chance (owner 2026-10-15). */
 import type { HeroTable, MatchupPair, MatchupsFile } from "../data";
 import type { Locale } from "../i18n/locale";
 import { messages } from "../i18n/messages";
@@ -9,11 +11,20 @@ import { messages } from "../i18n/messages";
 export const MATCHUP_K = 100;
 export const MATCHUP_MIN_GAMES = 50;
 export const MATCHUP_TOP = 5;
+/** Two-sided 95 %. */
+export const MATCHUP_Z = 1.96;
 /** The ordering rule as printed on the page. */
 export const matchupRule = (locale: Locale): string => messages[locale].hero.matchupRule(String(MATCHUP_K), String(MATCHUP_MIN_GAMES));
 
 export const matchupScore = (pairWinRate: number, ownWinRate: number, games: number): number =>
   (pairWinRate - ownWinRate) * (games / (games + MATCHUP_K));
+
+/** The pair rate differs from the hero's own rate by more than MATCHUP_Z standard errors on the pair's games. */
+export function beyondError(pairWinRate: number, ownWinRate: number, games: number): boolean {
+  const p = ownWinRate / 100;
+  const se = Math.sqrt((p * (1 - p)) / games) * 100;
+  return games > 0 && se > 0 && Math.abs(pairWinRate - ownWinRate) / se >= MATCHUP_Z;
+}
 
 export interface MatchupRow {
   hero: string;
@@ -53,7 +64,7 @@ export function matchupsView(file: MatchupsFile | null, heroes: HeroTable): Matc
     collectedAt: file.collected_at,
     win_rate: file.win_rate,
     games: file.games,
-    counters: rows(file.enemy).filter((r) => r.score < 0).sort((a, b) => a.score - b.score).slice(0, MATCHUP_TOP),
-    synergies: rows(file.ally).filter((r) => r.score > 0).sort((a, b) => b.score - a.score).slice(0, MATCHUP_TOP),
+    counters: rows(file.enemy).filter((r) => r.score < 0 && beyondError(r.win_rate, file.win_rate, r.games)).sort((a, b) => a.score - b.score).slice(0, MATCHUP_TOP),
+    synergies: rows(file.ally).filter((r) => r.score > 0 && beyondError(r.win_rate, file.win_rate, r.games)).sort((a, b) => b.score - a.score).slice(0, MATCHUP_TOP),
   };
 }
