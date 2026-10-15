@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from collector.team_comps import CAPS, GROUPS, comp_counts
+from collector.team_comps import CAPS, GROUPS, MAKEUP_ROLES, comp_counts, makeup_key
 
 PATCH = "2.57.0"
 ROLES = {
@@ -102,3 +102,32 @@ def test_no_games_still_lists_every_cell() -> None:
     out = comp_counts([], ROLES, patch=PATCH, since=None)
     assert out["games"] == 0 and out["teams"] == 0
     assert out["groups"]["ranged"]["3"] == {"games": 0, "wins": 0}
+
+
+def test_a_make_up_is_the_count_of_each_of_the_six_roles_in_a_fixed_order() -> None:
+    assert MAKEUP_ROLES == (
+        "Tank",
+        "Bruiser",
+        "Healer",
+        "Ranged Assassin",
+        "Melee Assassin",
+        "Support",
+    )
+    roles = [ROLES[h] for h in STANDARD]  # Anduin Muradin Sonya Valla Jaina
+    assert makeup_key(roles) == "1-1-1-2-0-0"
+
+
+def test_each_team_counts_under_its_exact_make_up_too() -> None:
+    """How often players choose a make-up (owner 2026-10-15: people do it for a reason)."""
+    two_tanks = ["Anduin", "Muradin", "Muradin", "Valla", "Jaina"]
+    out = comp_counts(
+        [_game(1, STANDARD, NO_HEALER), _game(2, two_tanks, STANDARD)],
+        ROLES,
+        patch=PATCH,
+        since=None,
+    )
+    assert out["makeups"] == {
+        "1-1-1-2-0-0": {"games": 2, "wins": 1},
+        "1-1-0-2-1-0": {"games": 1, "wins": 0},
+        "2-0-1-2-0-0": {"games": 1, "wins": 1},
+    }

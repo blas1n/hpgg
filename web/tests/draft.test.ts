@@ -210,6 +210,7 @@ describe("the printed rule", () => {
       expect(text).not.toContain("0.5 ×");
     }
     expect(draftRule("ko")).toContain("기대 승률");
+    expect(draftRule("ko")).toContain("0.43 × ln(그 조합을 고르는 팀 비율)");
     expect(draftRule("en")).toContain("expected");
     expect(typeof messages.ko.draft.rule).toBe("function");
   });
