@@ -295,6 +295,32 @@ test("players: the newest 20 games — briefing, MMR line, stat lines and talent
   await expect(page.locator("#games-more")).toHaveCount(0);
 });
 
+test("players: 경기 기록 filters by mode over the loaded games, asking nothing more", async ({ page }) => {
+  const mixed = { ...games, matches: games.matches.map((m: Record<string, unknown>, i: number) => ({ ...m, mode: i < 12 ? "sl" : i < 24 ? "qm" : "ar" })) };
+  const seen = await mockApi(page, withGames(mixed));
+  await page.goto("./players/?tag=blAs1N%233479&region=KR");
+  await expect(page.locator("#player-matches > li")).toHaveCount(20);
+  await expect(page.locator("#games-filter button")).toHaveText(["전체 25", "폭풍 리그 12", "빠른 대전 12", "무작위 영웅 대전 1"]);
+  const asked = seen.length;
+  await page.locator("#games-mode-sl").click();
+  await expect(page.locator("#player-matches > li")).toHaveCount(12);
+  await expect(page.locator('#player-matches > li:not([data-mode="sl"])')).toHaveCount(0);
+  await expect(page.locator("#games-more")).toHaveCount(0);
+  await page.locator("#games-mode-ar").click();
+  await expect(page.locator("#player-matches > li")).toHaveCount(1);
+  await page.locator("#games-mode-all").click();
+  await expect(page.locator("#player-matches > li")).toHaveCount(20); // back to the first page
+  await expect(page.locator("#games-more")).toBeVisible();
+  expect(seen.length).toBe(asked);
+});
+
+test("players: a list of one mode offers no filter", async ({ page }) => {
+  await mockApi(page, withGames(games));
+  await page.goto("./players/?tag=blAs1N%233479&region=KR");
+  await expect(page.locator("#player-matches > li")).toHaveCount(20);
+  await expect(page.locator("#games-filter")).toHaveCount(0);
+});
+
 test("players: hovering the MMR line reads out that game", async ({ page }) => {
   await mockApi(page, withGames(games));
   await page.goto("./players/?tag=blAs1N%233479&region=KR");

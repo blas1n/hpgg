@@ -4,13 +4,13 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { assetUrl, loadAwards, loadCarryBaselines, loadTalents, type AwardTable, type HeroTable, type MapTable, type TalentTable } from "@/data";
 import { useLocale, useT } from "@/i18n/client";
 import type { AwardView } from "@/lib/awards";
-import { briefing, fullAfterAt, matchRows, type Briefing, type MatchesResponse, type MatchTalent, type MatchView } from "@/lib/matches";
+import { briefing, fullAfterAt, matchRows, modeFilters, type Briefing, type ModeFilter, type MatchesResponse, type MatchTalent, type MatchView } from "@/lib/matches";
 import { FEATURES } from "@/features";
 import type { Region } from "@/lib/players";
 import { fetchReplay, replayView, type ReplayResponse } from "@/lib/replays";
 import { carryOf } from "@/lib/carry";
 import { carryTone, fetchTeamLuck, luckGrade, type CarryTone, type LuckGrade } from "@/lib/teamLuck";
-import { Card, CardHeader, cx, Portrait } from "../ui";
+import { Card, CardHeader, cx, Portrait, Segmented } from "../ui";
 
 const PAGE = 20;
 const PARTY = ["bg-secondary", "bg-accent", "bg-primary", "bg-warn-fg"];
@@ -28,7 +28,11 @@ export function MatchHistory({ data, heroes, maps, me, region }: { data: Matches
   const [opened, setOpened] = useState<string[]>([]); // heroes of opened games, for their talents
   const [awards, setAwards] = useState<AwardTable | null>(null);
   const b = useMemo(() => briefing(data.matches, heroes, locale), [data, heroes, locale]);
-  const rows = useMemo(() => matchRows(data.matches, heroes, maps, talents, locale, new Date(), awards), [data, heroes, maps, talents, locale, awards]);
+  const all = useMemo(() => matchRows(data.matches, heroes, maps, talents, locale, new Date(), awards), [data, heroes, maps, talents, locale, awards]);
+  // 경기 기록 by mode (owner 2026-10-15): over the loaded games only, nothing more is fetched
+  const filters = useMemo(() => modeFilters(data.matches, locale), [data, locale]);
+  const [mode, setMode] = useState<ModeFilter>("all");
+  const rows = mode === "all" ? all : all.filter((m) => m.modeKey === mode);
 
   // 팀운 (#90): one line in the briefing; "loading" until the server has opened the games' replays
   // and 몇인분 per game from the same games' replays
@@ -85,7 +89,21 @@ export function MatchHistory({ data, heroes, maps, me, region }: { data: Matches
       {data.source === "basic" && <BasicNotice fullAfter={data.full_after ?? null} />}
       <BriefingCard b={b} luck={luck} />
       <Card aria-labelledby="h-games">
-        <CardHeader id="h-games" title={t.listTitle} sub={t.listSub(String(rows.length))} />
+        <CardHeader id="h-games" title={t.listTitle} sub={t.listSub(String(all.length))} />
+        {filters.length > 0 && (
+          <div id="games-filter" className="overflow-x-auto border-b border-line px-4 py-2">
+            <Segmented
+              value={mode}
+              onChange={(v) => {
+                setMode(v);
+                setShown(PAGE);
+              }}
+              label={t.filterLabel}
+              idPrefix="games-mode"
+              options={filters.map((f) => ({ value: f.value, label: `${f.label} ${f.count}` }))}
+            />
+          </div>
+        )}
         <ul id="player-matches" className="divide-y divide-line">
           {visible.map((m) => (
             <MatchItem key={m.key} m={m} me={me} heroes={heroes} awards={awards} talents={talents} need={need} carry={carries.get(m.replayId) ?? null} />
@@ -347,6 +365,7 @@ function MatchItem({
   return (
     <li
       data-result={m.win ? "win" : "loss"}
+      data-mode={m.modeKey ?? undefined}
       data-open={open || undefined}
       className={cx(
         "grid grid-cols-[4.5rem_minmax(0,1fr)] gap-x-3 gap-y-2 border-l-4 px-3 py-3 sm:grid-cols-[4.5rem_minmax(0,1fr)_auto]",
