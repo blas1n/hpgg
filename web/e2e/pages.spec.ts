@@ -175,6 +175,26 @@ test("hero detail: at the bottom of the page the last section's tab is active", 
   await expect(page.locator("#nav-patches")).not.toHaveAttribute("aria-current", "location");
 });
 
+test("role tabs: a hero that also plays 전사 or 투사 is under that tab too, labelled (played roles)", async ({ page }) => {
+  // e2e-data/latest/sl_comps.json played: Blaze (전사) also bruiser 41 %, Varian (투사) also tank 54 %; Alarak's move
+  // to ranged is between dealers and is not listed
+  await page.goto("./tier/?role=Bruiser");
+  const blaze = page.locator('#rows tr[data-hero="blaze"]');
+  await expect(blaze).toBeVisible();
+  await expect(blaze.locator("[data-also]")).toHaveText("투사로도 41%");
+  await page.goto("./tier/?role=Tank");
+  await expect(page.locator('#rows tr[data-hero="varian"] [data-also]')).toHaveText("전사로도 54%");
+  // on a phone the role column is hidden: the label sits under the name
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect(page.locator('#rows tr[data-hero="varian"] [data-also-phone]')).toHaveText("전사로도 54%");
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.goto("./tier/?role=Ranged%20Assassin");
+  await expect(page.locator('#rows tr[data-hero="alarak"]')).toHaveCount(0);
+  await page.goto("./heroes/?role=Bruiser");
+  await expect(page.locator('#grid a[data-hero="blaze"] [data-also]')).toHaveText("투사로도 41%");
+  await expect(page.locator('#grid a[data-hero="illidan"]')).toBeVisible();
+});
+
 test("hero detail: counters and synergies from the matchups file, with numbers, links and the rule", async ({ page }) => {
   // e2e-data/matchups/abathur.json = the live answer recorded 2026-09-29 (SL, 2.55.17.98025), normalised
   await page.goto("./heroes/abathur/");

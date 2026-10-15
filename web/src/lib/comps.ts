@@ -13,6 +13,7 @@
  *  comp term of a candidate = best team still reachable with it − best team still reachable without deciding: about
  *  0 while the remaining slots can still fix the team, the full cost once they cannot — so it grows as the draft
  *  goes on. */
+import type { AlsoPlays } from "../data";
 import { MATCHUP_Z } from "./matchups";
 
 export type CompGroup = "healer" | "front" | "ranged";
@@ -44,6 +45,17 @@ export interface CompsFile {
   /** Heroes that also play a second role, found from the teams around them (collector/team_comps.py played_roles). */
   played?: Record<string, { second: string; share: number; low: number; games: number }>;
 }
+/** Heroes (API name) that also play 전사 or 투사, for the role tabs: a move between dealers is a dealer either way
+ *  (owner 2026-10-15), so only front-line moves are listed. */
+export function alsoPlays(file: CompsFile | null, roles: readonly { name: string; ko: string }[]): Map<string, AlsoPlays> {
+  const ko = new Map(roles.map((r) => [r.name, r.ko]));
+  return new Map(
+    Object.entries(file?.played ?? {})
+      .filter(([, p]) => p.second === "Tank" || p.second === "Bruiser")
+      .map(([h, p]) => [h, { role: p.second, role_ko: ko.get(p.second) ?? p.second, share: p.share }]),
+  );
+}
+
 /** A team member: its role, or the roles it can play (the official one first). */
 export type Member = Role | readonly Role[];
 const optionsOf = (m: Member): readonly Role[] => (typeof m === "string" ? [m] : m);

@@ -46,6 +46,14 @@ export interface HeroInfo {
   short_name?: string; // Heroes Profile short_name (player search matches heroes by it)
   /** Universe (#43): Warcraft, Starcraft, Diablo, Overwatch, Nexus — grouped as on Blizzard's heroes page. */
   franchise?: string;
+  /** A front-line role it also plays, from the teams around it (lib/comps.ts alsoPlays); listed under that tab too. */
+  also?: AlsoPlays;
+}
+export interface AlsoPlays {
+  role: string;
+  role_ko: string;
+  /** Share of its games in that role. */
+  share: number;
 }
 export interface HeroTable {
   roles: { name: string; ko: string; en?: string }[];
