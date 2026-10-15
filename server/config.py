@@ -59,8 +59,8 @@ class Settings(BaseSettings):
     # day, 2026-10-06): 2,000 a day here leaves both room. 팀운 (teamluck.py) spends from it too.
     replay_quota_floor: int = 50
     replay_daily_budget: int = 2000
-    # A cold /players/matches query answers 202 and is asked again. HP charges
-    # every ask, polls included (2026-10-08), so a job that never finishes costs 1 + wait / poll.
+    # A cold /players/matches or /players/heroes query answers 202 with a job id, and /jobs/{id} is
+    # polled (`hp.follow_job`): not charged, unlike asking the query again (2026-10-08, 10-15).
     hp_job_poll_seconds: float = 5.0
     hp_job_wait_seconds: float = 25.0
 
