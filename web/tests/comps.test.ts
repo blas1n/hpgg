@@ -1,6 +1,19 @@
 import { describe, expect, it } from "vitest";
 import type { MatchupsFile } from "../src/data";
-import { COMP_MIN_GAMES, bestReachable, compPenalties, compTerm, groupOf, type CompGroup, type CompsFile, type PoolGroup } from "../src/lib/comps";
+import {
+  COMP_MIN_GAMES,
+  COMP_POP,
+  MAKEUP_ROLES,
+  bestReachable,
+  compModel,
+  compPenalties,
+  compTerm,
+  groupOf,
+  makeupKey,
+  type CompGroup,
+  type CompsFile,
+  type Role,
+} from "../src/lib/comps";
 import { recommend, type DraftHero } from "../src/lib/draft";
 
 const cell = (games: number, rate: number) => ({ games, wins: Math.round((games * rate) / 100) });
@@ -20,6 +33,16 @@ const FILE: CompsFile = {
 const P = compPenalties(FILE);
 /** The cost of n of a group. */
 const c = (g: CompGroup, n: number): number => P[g][n]!;
+/** Without make-up counts (a file from before they were collected): the measured costs only. */
+const COSTS = compModel(FILE);
+
+const T: Role = "Tank";
+const B: Role = "Bruiser";
+const H: Role = "Healer";
+const R: Role = "Ranged Assassin";
+const M: Role = "Melee Assassin";
+const S: Role = "Support";
+const PLENTY: Record<Role, number> = { Tank: 10, Bruiser: 15, Healer: 15, "Ranged Assassin": 30, "Melee Assassin": 10, Support: 4 };
 
 describe("compPenalties", () => {
   it("a count that loses beyond the error costs its gap from 50 %", () => {
@@ -57,45 +80,75 @@ describe("groupOf", () => {
   });
 });
 
-const PLENTY: Record<PoolGroup, number> = { healer: 10, front: 20, ranged: 30, other: 25 };
-const g = (...xs: PoolGroup[]): PoolGroup[] => xs;
-
-describe("bestReachable", () => {
-  it("with slots left a team can still fix a missing healer", () => {
-    expect(bestReachable(g("front", "ranged"), 3, PLENTY, P)).toBe(0);
-  });
-
-  it("with no slot left it is what the team is", () => {
-    expect(bestReachable(g("front", "ranged", "ranged", "other", "other"), 0, PLENTY, P)).toBeCloseTo(c("healer", 0), 6);
-  });
-
-  it("a healer nobody can pick any more cannot be counted on", () => {
-    expect(bestReachable(g("front", "ranged"), 3, { ...PLENTY, healer: 0 }, P)).toBeCloseTo(c("healer", 0), 6);
+describe("makeupKey", () => {
+  it("the count of each role in collector/team_comps.py's order", () => {
+    expect(MAKEUP_ROLES).toEqual(["Tank", "Bruiser", "Healer", "Ranged Assassin", "Melee Assassin", "Support"]);
+    expect(makeupKey([H, T, B, R, R])).toBe("1-1-1-2-0-0");
+    expect(makeupKey([T, T, H, R, R])).toBe("2-0-1-2-0-0");
   });
 });
 
-describe("compTerm", () => {
+describe("bestReachable (measured costs only)", () => {
+  it("with slots left a team can still fix a missing healer", () => {
+    expect(bestReachable([T, R], 3, PLENTY, COSTS)).toBe(0);
+  });
+
+  it("with no slot left it is what the team is", () => {
+    expect(bestReachable([T, R, R, M, M], 0, PLENTY, COSTS)).toBeCloseTo(c("healer", 0), 6);
+  });
+
+  it("a healer nobody can pick any more cannot be counted on", () => {
+    expect(bestReachable([T, R], 3, { ...PLENTY, Healer: 0 }, COSTS)).toBeCloseTo(c("healer", 0), 6);
+  });
+});
+
+describe("compTerm (measured costs only)", () => {
   it("early picks cost nothing: every team can still be completed well", () => {
-    expect(compTerm([], g("ranged"), 5, PLENTY, P)).toBe(0);
-    expect(compTerm(g("healer"), g("healer"), 4, PLENTY, P)).toBeCloseTo(c("healer", 2), 6); // a second healer is final
+    expect(compTerm([], [R], 5, PLENTY, COSTS)).toBe(0);
+    expect(compTerm([H], [H], 4, PLENTY, COSTS)).toBeCloseTo(c("healer", 2), 6); // a second healer is final
   });
 
   it("the last slot without a healer: anything but a healer costs what no healer costs", () => {
-    const team = g("front", "front", "ranged", "other");
-    expect(compTerm(team, g("ranged"), 1, PLENTY, P)).toBeCloseTo(c("healer", 0), 6);
-    expect(compTerm(team, g("healer"), 1, PLENTY, P)).toBe(0);
+    expect(compTerm([T, B, R, M], [R], 1, PLENTY, COSTS)).toBeCloseTo(c("healer", 0), 6);
+    expect(compTerm([T, B, R, M], [H], 1, PLENTY, COSTS)).toBe(0);
   });
 
   it("two slots, no healer: a non-healer still leaves room, so it costs nothing yet", () => {
-    expect(compTerm(g("front", "ranged", "other"), g("front"), 2, PLENTY, P)).toBe(0);
+    expect(compTerm([T, R, M], [B], 2, PLENTY, COSTS)).toBe(0);
   });
 
   it("a third ranged assassin costs what three ranged cost", () => {
-    expect(compTerm(g("healer", "ranged", "ranged"), g("ranged"), 2, PLENTY, P)).toBeCloseTo(c("ranged", 3), 6);
+    expect(compTerm([H, R, R], [R], 2, PLENTY, COSTS)).toBeCloseTo(c("ranged", 3), 6);
+  });
+});
+
+describe("how often a make-up is chosen (owner 2026-10-15: people do it for a reason)", () => {
+  // 1,000 teams: the usual make-up 500, two tanks 10
+  const counts = { "1-1-1-2-0-0": cell(500, 50), "2-0-1-2-0-0": cell(10, 47), "1-1-1-1-1-0": cell(200, 50), "1-1-1-1-0-1": cell(40, 50) };
+  const MODEL = compModel({ ...FILE, teams: 1000, makeups: counts });
+  const ln = (n: number) => Math.log((n + 1) / 1001);
+
+  it("measured out of sample: about -1 %p for a make-up chosen 10 times less often", () => {
+    expect(COMP_POP * Math.log(10)).toBeCloseTo(1, 0);
+  });
+
+  it("a second tank costs what choosing a rarer make-up costs, against the usual one still reachable", () => {
+    expect(compTerm([T, H, R, R], [T], 1, PLENTY, MODEL)).toBeCloseTo(COMP_POP * (ln(10) - ln(500)), 6);
+    expect(compTerm([T, H, R, R], [B], 1, PLENTY, MODEL)).toBe(0);
+  });
+
+  it("an early pick costs a little when every make-up it leaves is rarer", () => {
+    expect(compTerm([], [S], 5, PLENTY, MODEL)).toBeCloseTo(COMP_POP * (ln(40) - ln(500)), 6);
+    expect(compTerm([], [R], 5, PLENTY, MODEL)).toBe(0);
+  });
+
+  it("a make-up nobody chose counts as one team", () => {
+    expect(compTerm([T, B, H, R], [S], 1, PLENTY, MODEL)).toBeCloseTo(COMP_POP * (ln(40) - ln(500)), 6);
+    expect(compTerm([T, B, H, M], [M], 1, PLENTY, MODEL)).toBeCloseTo(COMP_POP * (ln(0) - ln(200)), 6);
   });
 
   it("is never positive", () => {
-    for (const x of g("healer", "front", "ranged", "other")) expect(compTerm(g("front"), [x], 4, PLENTY, P)).toBeLessThanOrEqual(0);
+    for (const x of MAKEUP_ROLES) expect(compTerm([B], [x], 4, PLENTY, MODEL)).toBeLessThanOrEqual(0);
   });
 });
 
@@ -103,7 +156,6 @@ const h = (slug: string, role: string, wrs = 50): DraftHero => ({ slug, name: sl
 const NONE = new Map<string, MatchupsFile>();
 
 describe("recommend with team compositions", () => {
-  // first team: bans b1 b3, picks f1 f2 f3 f4, its last pick is step 14 (index 14)
   const heroes = [
     ...["b1", "b2", "b3", "b4", "b5", "b6"].map((s) => h(s, "Support")),
     h("f1", "Tank"), h("f2", "Ranged Assassin"), h("f3", "Ranged Assassin"), h("f4", "Melee Assassin"),
@@ -115,7 +167,7 @@ describe("recommend with team compositions", () => {
   const seq = ["b1", "b2", "b3", "b4", "f1", "s1", "s2", "f2", "f3", "b5", "b6", "s3", "s4", "f4"];
 
   it("the first team's last pick without a healer: the healer ranks over a stronger ranged assassin", () => {
-    const out = recommend(heroes, seq, { matchups: NONE, map: null, comps: P });
+    const out = recommend(heroes, seq, { matchups: NONE, map: null, comps: COSTS });
     expect(out[0]!.hero.slug).toBe("heal");
     const star = out.find((s) => s.hero.slug === "star")!;
     expect(star.terms.comp).toBeCloseTo(c("ranged", 3) + c("healer", 0), 6);
@@ -131,7 +183,7 @@ describe("recommend with team compositions", () => {
 
   it("a ban weighs the other team's needs: what the first team would most want, a third ranged costs it", () => {
     // step 9 (index 9) is the second team's ban: it scores for the first team (tank + 2 ranged, 2 slots left)
-    const out = recommend(heroes, seq.slice(0, 9), { matchups: NONE, map: null, comps: P });
+    const out = recommend(heroes, seq.slice(0, 9), { matchups: NONE, map: null, comps: COSTS });
     expect(out.find((s) => s.hero.slug === "heal")!.terms.comp).toBe(0);
     expect(out.find((s) => s.hero.slug === "star")!.terms.comp).toBeCloseTo(c("ranged", 3), 6);
     // b5 / b6 (supports) are still on the board and cost nothing either; the healer ranks over the stronger ranged

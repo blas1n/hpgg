@@ -9,7 +9,8 @@
  *  pair gap = the picked hero's rate with / against h − what h's own strength alone brings (lib/matchups.ts
  *  pairExpected), shrunk by n / (n + MATCHUP_K), pairs under MATCHUP_MIN_GAMES or within the error left out (the hero
  *  page's rule); pair gaps are read from the picked heroes' matchups files; comp(h) is what h costs the team's
- *  composition (lib/comps.ts: 0 while the remaining picks can still fix it). Every term is shown next to the score,
+ *  composition (lib/comps.ts: its measured costs and how often its make-up is chosen, against the best team still
+ *  reachable — about 0 while the remaining picks can still fix it). Every term is shown next to the score,
  *  weighted, so the terms add up to it.
  *
  *  Weights (DRAFT_WEIGHTS, owner 2026-10-15): the share of each term's %p that showed in later games — a logistic fit
@@ -21,7 +22,7 @@ import type { HeroTable, MatchupsFile } from "../data";
 import type { Locale } from "../i18n/locale";
 import { messages } from "../i18n/messages";
 import { FORMULA, shrinkWinRate, type Snapshot } from "../formula";
-import { TEAM_SIZE, compTerm, groupOf, type CompPenalties, type PoolGroup } from "./comps";
+import { COMP_POP, MAKEUP_ROLES, TEAM_SIZE, compTerm, roleOf, type CompModel, type Role } from "./comps";
 import { MATCHUP_K, MATCHUP_MIN_GAMES, beyondError, matchupScore, pairExpected } from "./matchups";
 
 export type Side = "first" | "second";
@@ -147,6 +148,7 @@ export const draftRule = (locale: Locale): string =>
     allies: String(DRAFT_WEIGHTS.allies),
     enemies: String(DRAFT_WEIGHTS.enemies),
     map: String(DRAFT_WEIGHTS.map),
+    pop: String(COMP_POP),
   });
 
 export interface Suggestion {
@@ -160,8 +162,8 @@ export interface Suggestion {
 export interface RecommendOptions {
   matchups: ReadonlyMap<string, MatchupsFile>;
   map: string | null;
-  /** Team composition costs (lib/comps.ts); null or absent: the term is 0. */
-  comps?: CompPenalties | null;
+  /** Team composition model (lib/comps.ts compModel); null or absent: the term is 0. */
+  comps?: CompModel | null;
 }
 
 /** Suggestions for the current step, best first. */
@@ -184,16 +186,16 @@ export function recommend(heroes: readonly DraftHero[], seq: readonly string[], 
   };
   const open = available(heroes, seq);
   const bySlug = new Map(heroes.map((h) => [h.slug, h]));
-  const groupOfSlug = (s: string): PoolGroup => groupOf(bySlug.get(s)?.role ?? "");
-  // the team's picks as groups (an unknown slug still takes a slot), the slots it has left and what is left to pick
-  const team = st[forSide].picks.map(groupOfSlug);
+  const roleOfSlug = (s: string): Role => roleOf(bySlug.get(s)?.role ?? "");
+  // the team's picks by role (an unknown slug still takes a slot), the slots it has left and what is left to pick
+  const team = st[forSide].picks.map(roleOfSlug);
   const slots = TEAM_SIZE - team.length;
-  const pool: Record<PoolGroup, number> = { healer: 0, front: 0, ranged: 0, other: 0 };
-  for (const h of open) pool[groupOf(h.role)] += 1;
+  const pool = Object.fromEntries(MAKEUP_ROLES.map((r) => [r, 0])) as Record<Role, number>;
+  for (const h of open) pool[roleOf(h.role)] += 1;
   const compOf = (h: DraftHero): number => {
     if (!comps) return 0;
     const partner = PARTNER[h.slug];
-    const cand = [groupOf(h.role), ...(partner && st.next!.kind === "pick" ? [groupOfSlug(partner)] : [])];
+    const cand = [roleOf(h.role), ...(partner && st.next!.kind === "pick" ? [roleOfSlug(partner)] : [])];
     return compTerm(team, cand, slots, pool, comps);
   };
   return open

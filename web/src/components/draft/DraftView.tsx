@@ -16,7 +16,7 @@ import {
   type DraftHero,
   type Side,
 } from "@/lib/draft";
-import type { CompPenalties } from "@/lib/comps";
+import type { CompModel } from "@/lib/comps";
 import { filterHeroes } from "@/lib/heroes";
 import { Card, cx, Portrait, SELECT, Segmented } from "../ui";
 
@@ -36,8 +36,8 @@ export function DraftView({
   maps: { name: string; ko: string }[];
   roles: { name: string; ko: string }[];
   patch: string;
-  /** Team composition costs (lib/comps.ts); null before the first collection: the term is 0. */
-  comps: CompPenalties | null;
+  /** Team composition model (lib/comps.ts); null before the first collection: the term is 0. */
+  comps: CompModel | null;
 }) {
   const t = useT();
   const locale = useLocale();
