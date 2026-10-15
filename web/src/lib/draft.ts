@@ -5,13 +5,14 @@
  *
  *  Suggestion for the team to act (a ban: the other team's side — what they would most want):
  *    score = (WRs − 50) + Σ allies: gap(ally with h) + Σ enemies: −gap(enemy against h) + map gap(h)
- *  gaps shrunk by n / (n + MATCHUP_K) and pairs under MATCHUP_MIN_GAMES left out (the hero page's rule, lib/matchups.ts);
+ *  gaps shrunk by n / (n + MATCHUP_K), pairs under MATCHUP_MIN_GAMES or within the error left out (the hero page's rule,
+ *  lib/matchups.ts);
  *  pair gaps are read from the picked heroes' matchups files; comp(h) is what h costs the team's composition
  *  (lib/comps.ts: 0 while the remaining picks can still fix it). Every term is shown next to the score. */
 import type { HeroTable, MatchupsFile } from "../data";
 import { FORMULA, shrinkWinRate, type Snapshot } from "../formula";
 import { TEAM_SIZE, compTerm, groupOf, type CompPenalties, type PoolGroup } from "./comps";
-import { MATCHUP_MIN_GAMES, matchupScore } from "./matchups";
+import { MATCHUP_MIN_GAMES, beyondError, matchupScore } from "./matchups";
 
 export type Side = "first" | "second";
 export interface DraftStep {
@@ -155,7 +156,9 @@ export function recommend(heroes: readonly DraftHero[], seq: readonly string[], 
   const gap = (slug: string, side: "ally" | "enemy", name: string): number => {
     const f = matchups.get(slug);
     const row = f?.[side].find((p) => p.hero === name);
-    return f && row && row.games >= MATCHUP_MIN_GAMES ? matchupScore(row.win_rate, f.win_rate, row.games) : 0;
+    return f && row && row.games >= MATCHUP_MIN_GAMES && beyondError(row.win_rate, f.win_rate, row.games)
+      ? matchupScore(row.win_rate, f.win_rate, row.games)
+      : 0;
   };
   const open = available(heroes, seq);
   const bySlug = new Map(heroes.map((h) => [h.slug, h]));

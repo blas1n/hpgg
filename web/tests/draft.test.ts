@@ -123,6 +123,18 @@ describe("recommend", () => {
     expect(top!.terms.map).toBe(0);
   });
 
+  it("a pair within the error adds nothing (the hero page's rule, owner 2026-10-15: most pair gaps were chance)", () => {
+    // 1,000 games: Abathur 53 % with Illidan against his own 50 % (z = 1.90); Uther 47 % against him (z = -1.90)
+    const near = new Map([
+      ["abathur", file("Abathur", 50, [["Illidan", 1000, 53]], [])],
+      ["uther", file("Uther", 50, [], [["Illidan", 1000, 47]])],
+    ]);
+    const top = recommend(heroes, [...bans, "abathur", "uther", "x2"], { matchups: near, map: null }).find((s) => s.hero.slug === "illidan")!;
+    expect(top.terms.allies).toBe(0);
+    expect(top.terms.enemies).toBe(0);
+    expect(top.missing).toEqual([]);
+  });
+
   it("pairs under 50 games and picked heroes without a matchups file add nothing, and say so", () => {
     const thin = new Map([["abathur", file("Abathur", 50, [["Illidan", 49, 90]], [])]]);
     const [top] = recommend(heroes, [...bans, "abathur", "uther", "x2"], { matchups: thin, map: null });
