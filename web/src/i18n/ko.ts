@@ -267,7 +267,7 @@ export const ko = {
     synergies: "잘 맞는 영웅",
     synergiesNote: "같은 팀일 때의 승률 차",
     matchupsRule: (hero: string, rule: string) => `승률 차 = 그 영웅과 만났을 때 ${hero}의 승률 − ${hero}의 승률. ${rule}`,
-    matchupRule: (k: string, min: string) => `순서: (승률 차) × n/(n+${k}) · n = 함께 또는 상대로 한 게임 수 · ${min}게임 미만 제외`,
+    matchupRule: (k: string, min: string) => `순서: (승률 차) × n/(n+${k}) · n = 함께 또는 상대로 한 게임 수 · ${min}게임 미만 제외 · 상대하기 어려운 영웅은 차이가 오차(95%)를 넘는 영웅만`,
     noMatchups: "기준을 넘는 영웅이 아직 없습니다",
     matchupLine: (games: string, wr: string) => `${games}게임 · 승률 ${wr}`,
     talentAria: (level: string, name: string) => `${level}레벨 · ${name}, 설명 보기`,
