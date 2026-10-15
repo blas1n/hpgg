@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { MatchupsFile } from "../src/data";
+import { messages } from "../src/i18n/messages";
+import { draftRule } from "../src/lib/draft";
 import {
   DRAFT_ORDER,
   applyPick,
@@ -197,5 +199,18 @@ describe("draftHeroes (build time)", () => {
     expect(illidan!.wr).toBeCloseTo(55, 6);
     expect(illidan!.maps["Cursed Hollow"]).toEqual({ wr: 60, games: 100 });
     expect(uther).toMatchObject({ slug: "uther", wrs: 50, games: 0, maps: {} }); // no Storm League games: neutral
+  });
+});
+
+describe("the printed rule", () => {
+  it("carries the weights the score uses, in both languages (they drifted once: #175 changed them, the text did not)", () => {
+    for (const locale of ["ko", "en"] as const) {
+      const text = draftRule(locale);
+      for (const k of ["base", "allies", "enemies", "map"] as const) expect(text).toContain(`${DRAFT_WEIGHTS[k]} ×`);
+      expect(text).not.toContain("0.5 ×");
+    }
+    expect(draftRule("ko")).toContain("기대 승률");
+    expect(draftRule("en")).toContain("expected");
+    expect(typeof messages.ko.draft.rule).toBe("function");
   });
 });
