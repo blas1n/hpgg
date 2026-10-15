@@ -9,7 +9,7 @@ the Authorization header; nothing here logs a header, a URL with credentials, or
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 from typing import Any
 
@@ -86,3 +86,31 @@ class HPClient:
         code = str(err.get("code", "http_error")) if isinstance(err, dict) else "http_error"
         log.info("hp.error", path=path, status=resp.status_code, code=code)
         return Upstream(resp.status_code, code, None, quota, _retry_after(resp.headers))
+
+
+async def follow_job(
+    hp: HPClient,
+    first: Upstream,
+    *,
+    poll: float,
+    wait: float,
+    sleep: Callable[[float], Awaitable[None]],
+) -> Upstream:
+    """A 202's answer: poll `/jobs/{id}` until HP has it, up to `wait` seconds.
+
+    HP charges every ask of the query itself, a 202 included (2026-10-08), but `/jobs/{id}`
+    answers without an X-HP-Quota reading (2026-10-14), so polling it costs nothing. Past the wait,
+    or with no job id, an Upstream with code `job_pending`.
+    """
+    body = first.body if isinstance(first.body, dict) else {}
+    job = body.get("job_id")
+    if isinstance(job, str) and job:
+        waited = 0.0
+        while waited + poll <= wait:
+            await sleep(poll)
+            waited += poll
+            up = await hp.get(f"/jobs/{job}", {})
+            if up.status != 202:
+                return up
+    log.info("hp.job_pending", job=bool(job))
+    return Upstream(0, "job_pending", None, first.quota, None)
