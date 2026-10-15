@@ -420,6 +420,7 @@ The same data gives different tiers under a different formula. This site always 
     termEnemies: "enemies",
     termMap: "map",
     termComp: "team",
+    compNote: "team: 0 is best. A minus shows how much worse this hero makes the best team the remaining picks can still build.",
     missing: (names: string) => `${names}: no matchup data yet, so pairs with that hero are left out`,
     loading: "Loading matchup data",
     allHeroes: "All heroes",
