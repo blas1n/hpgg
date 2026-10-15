@@ -2,8 +2,8 @@
  *
  *  score = (pair win rate − the hero's own win rate) × n / (n + k)   — the tier formula's shrinkage, applied to the gap
  *  pairs with fewer than MATCHUP_MIN_GAMES games are left out; the rule is printed on the page (matchupRule).
- *  A counter must also be below the hero's own rate beyond the error (beyondError): of 5,698 enemy pairs over 50 games
- *  only 8.7 % were, against 5 % by chance alone, so most listed counters were chance (owner 2026-10-15). */
+ *  Both lists keep only pairs beyond the error (beyondError): of the pairs over 50 games only 8.7 % of enemy and 8.4 %
+ *  of ally pairs were, against 5 % by chance alone, so most listed pairs were chance (owner 2026-10-15). */
 import type { HeroTable, MatchupPair, MatchupsFile } from "../data";
 import type { Locale } from "../i18n/locale";
 import { messages } from "../i18n/messages";
@@ -65,6 +65,6 @@ export function matchupsView(file: MatchupsFile | null, heroes: HeroTable): Matc
     win_rate: file.win_rate,
     games: file.games,
     counters: rows(file.enemy).filter((r) => r.score < 0 && beyondError(r.win_rate, file.win_rate, r.games)).sort((a, b) => a.score - b.score).slice(0, MATCHUP_TOP),
-    synergies: rows(file.ally).filter((r) => r.score > 0).sort((a, b) => b.score - a.score).slice(0, MATCHUP_TOP),
+    synergies: rows(file.ally).filter((r) => r.score > 0 && beyondError(r.win_rate, file.win_rate, r.games)).sort((a, b) => b.score - a.score).slice(0, MATCHUP_TOP),
   };
 }

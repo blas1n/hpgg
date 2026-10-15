@@ -52,9 +52,12 @@ describe("matchupsView", () => {
     expect([...scores].sort((a, b) => a - b)).toEqual(scores);
   });
 
-  it("top 5 synergies: ally heroes, best first, above the hero's own win rate", () => {
-    expect(v.synergies).toHaveLength(MATCHUP_TOP);
-    for (const r of v.synergies) expect(r.delta).toBeGreaterThan(0);
+  it("synergies: ally heroes, best first, above the hero's own win rate beyond the error (3 of the recorded answer)", () => {
+    expect(v.synergies.map((r) => r.hero)).toEqual(["Samuro", "Tyrael", "Hogger"]);
+    for (const r of v.synergies) {
+      expect(r.delta).toBeGreaterThan(0);
+      expect(beyondError(r.win_rate, abathur.win_rate, r.games)).toBe(true);
+    }
     const scores = v.synergies.map((r) => r.score);
     expect([...scores].sort((a, b) => b - a)).toEqual(scores);
   });
@@ -71,9 +74,10 @@ describe("matchupsView", () => {
     expect(w.counters.map((r) => r.hero)).toEqual(["Kerrigan"]);
   });
 
-  it("synergies keep the old rule: a gap within the error still lists", () => {
+  it("a synergy within the error stays off the list too (ally pairs: 8.4 % beyond the error, 5 % by chance)", () => {
     const near = { hero: "Fenix", games: 1000, wins: 535, win_rate: 53.5 }; // z = +1.71
-    expect(matchupsView({ ...abathur, ally: [near] }, heroes)!.synergies.map((r) => r.hero)).toEqual(["Fenix"]);
+    const far = { hero: "Kerrigan", games: 1000, wins: 560, win_rate: 56 }; // z = +3.29
+    expect(matchupsView({ ...abathur, ally: [near, far] }, heroes)!.synergies.map((r) => r.hero)).toEqual(["Kerrigan"]);
   });
 
   it("the floor keeps a tiny sample off the list even with the biggest gap", () => {
