@@ -7,14 +7,14 @@
  *
  *  comp term of a candidate = best team still reachable with it − best team still reachable without deciding: 0 while
  *  the remaining slots can still fix the team, the full cost once they cannot — so it grows as the draft goes on. */
+import { MATCHUP_Z } from "./matchups";
+
 export type CompGroup = "healer" | "front" | "ranged";
 export type PoolGroup = CompGroup | "other";
 export const COMP_GROUPS: readonly CompGroup[] = ["healer", "front", "ranged"];
 /** The top count of each group holds every count above it (collector/team_comps.py CAPS). */
 export const COMP_CAPS: Record<CompGroup, number> = { healer: 2, front: 3, ranged: 3 };
 export const COMP_MIN_GAMES = 30;
-/** Two-sided 95 %. */
-export const COMP_Z = 1.96;
 export const TEAM_SIZE = 5;
 
 interface Count {
@@ -40,7 +40,7 @@ export function compPenalties(file: CompsFile): CompPenalties {
       if (!c || c.games < COMP_MIN_GAMES) return 0;
       const gap = (c.wins / c.games) * 100 - 50;
       const se = Math.sqrt(0.25 / c.games) * 100;
-      return gap < 0 && -gap / se >= COMP_Z ? gap : 0;
+      return gap < 0 && -gap / se >= MATCHUP_Z ? gap : 0;
     });
   }
   return out;
