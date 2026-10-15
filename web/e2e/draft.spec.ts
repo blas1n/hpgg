@@ -11,6 +11,7 @@ test.beforeEach(async ({ page }) => {
 
 // 밴픽 simulator (#25) against the frozen e2e data set (only Abathur has a matchups file there).
 const abathur = JSON.parse(readFileSync(new URL("../tests/e2e-data/matchups/abathur.json", import.meta.url), "utf-8"));
+const sl = JSON.parse(readFileSync(new URL("../tests/e2e-data/latest/sl.json", import.meta.url), "utf-8"));
 
 const choose = (page: Page, slug: string) => page.locator(`#draft-heroes button[data-hero="${slug}"]`).click();
 const slot = (page: Page, team: "us" | "them", kind: "ban" | "pick", n: number) => page.locator(`[data-slot="${team}-${kind}-${n}"]`);
@@ -37,9 +38,12 @@ test("draft: the real order, turn prompt, suggestions with their terms, and the 
   await choose(page, "uther");
   await choose(page, "muradin");
 
-  // our pick with Abathur on the team: Samuro's ally term is Abathur's gap with Samuro, shrunk (the hero page's rule), × 0.2
+  // our pick with Abathur on the team: Samuro's ally term is Abathur's gap with Samuro (the hero page's rule)
   const row = abathur.ally.find((r: { hero: string }) => r.hero === "Samuro");
-  const expected = (((row.win_rate - abathur.win_rate) * row.games) / (row.games + 100)) * 0.2; // allies weigh 0.2
+  // against what Samuro's own rate brings (e2e-data/latest/sl.json), shrunk, × 0.3 (allies' weight)
+  const samuroOwn = sl.rows.find((r: { hero: string; map: string }) => r.hero === "Samuro" && r.map === "all").win_rate;
+  const exp = abathur.win_rate + (samuroOwn - 50);
+  const expected = (((row.win_rate - exp) * row.games) / (row.games + 100)) * 0.3;
   const samuro = page.locator('#draft-suggest [data-hero="samuro"]');
   await expect(samuro.locator("[data-term=allies]")).toHaveText(`+${expected.toFixed(1)}`);
   // Uther and Muradin have no matchups file in the e2e data: said, not hidden

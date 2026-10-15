@@ -3,7 +3,8 @@ import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import type { HeroTable, MatchupsFile } from "../src/data";
-import { MATCHUP_K, MATCHUP_MIN_GAMES, MATCHUP_TOP, MATCHUP_Z, beyondError, matchupScore, matchupsView } from "../src/lib/matchups";
+import type { Snapshot } from "../src/formula";
+import { MATCHUP_K, MATCHUP_MIN_GAMES, MATCHUP_TOP, MATCHUP_Z, beyondError, heroStrength, matchupScore, matchupsView, pairExpected } from "../src/lib/matchups";
 
 const dataDir = join(dirname(fileURLToPath(import.meta.url)), "e2e-data");
 const json = <T>(rel: string): T => JSON.parse(readFileSync(join(dataDir, rel), "utf-8")) as T;
@@ -29,6 +30,65 @@ describe("beyondError", () => {
     expect(beyondError(41, 50, 100)).toBe(false);
     expect(beyondError(60, 50, 100)).toBe(true);
     expect(beyondError(50, 50, 0)).toBe(false);
+  });
+});
+
+describe("pairExpected", () => {
+  it("the other hero's own strength is taken out: with a strong ally or against a weak enemy a hero wins more anyway", () => {
+    expect(pairExpected(50, 56, "ally")).toBe(56);
+    expect(pairExpected(50, 44, "ally")).toBe(44);
+    expect(pairExpected(50, 56, "enemy")).toBe(44);
+    expect(pairExpected(52, 50, "enemy")).toBe(52);
+  });
+  it("a hero of unknown strength counts as 50 %: no adjustment", () => {
+    expect(pairExpected(51, undefined, "ally")).toBe(51);
+  });
+});
+
+describe("heroStrength", () => {
+  it("each hero's all-map Storm League win rate from the shown snapshot; none: an empty map", () => {
+    const snap = json<Snapshot>("latest/sl.json");
+    const m = heroStrength(snap);
+    const row = snap.rows.find((r) => r.map === "all" && r.games > 0)!;
+    expect(m.get(row.hero)).toBe(row.win_rate);
+    expect(m.size).toBe(new Set(snap.rows.filter((r) => r.map === "all" && r.games > 0).map((r) => r.hero)).size);
+    expect(heroStrength(null).size).toBe(0);
+  });
+});
+
+describe("matchupsView with each hero's own strength (owner 2026-10-15)", () => {
+  // 1,000 games each: Kerrigan wins 56 % overall, Fenix 44 %
+  const strength = new Map([["Kerrigan", 56], ["Fenix", 44]]);
+  const file: MatchupsFile = {
+    ...abathur,
+    win_rate: 50,
+    ally: [
+      { hero: "Kerrigan", games: 1000, wins: 560, win_rate: 56 }, // only Kerrigan's own strength
+      { hero: "Fenix", games: 1000, wins: 500, win_rate: 50 }, // +6 over what a 44 % ally brings
+    ],
+    enemy: [
+      { hero: "Kerrigan", games: 1000, wins: 440, win_rate: 44 }, // only Kerrigan's own strength
+      { hero: "Fenix", games: 1000, wins: 500, win_rate: 50 }, // -6 against what a 44 % enemy gives away
+    ],
+  };
+  const w = matchupsView(file, heroes, strength)!;
+
+  it("a strong ally is not a synergy and a strong enemy is not a counter", () => {
+    expect(w.synergies.map((r) => r.hero)).toEqual(["Fenix"]);
+    expect(w.counters.map((r) => r.hero)).toEqual(["Fenix"]);
+  });
+
+  it("the gap is against that expectation, and the row says what it was", () => {
+    expect(w.synergies[0]!.expected).toBe(44);
+    expect(w.synergies[0]!.delta).toBeCloseTo(6, 6);
+    expect(w.counters[0]!.expected).toBe(56);
+    expect(w.counters[0]!.delta).toBeCloseTo(-6, 6);
+  });
+
+  it("without strengths nothing is adjusted (the old reading)", () => {
+    const old = matchupsView(file, heroes)!;
+    expect(old.synergies.map((r) => r.hero)).toEqual(["Kerrigan"]);
+    expect(old.counters.map((r) => r.hero)).toEqual(["Kerrigan"]);
   });
 });
 

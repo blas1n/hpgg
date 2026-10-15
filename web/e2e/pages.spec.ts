@@ -183,23 +183,25 @@ test("hero detail: counters and synergies from the matchups file, with numbers, 
   await expect(page.locator("#matchups-title")).toContainText("폭풍 리그");
   await expect(page.locator("#counters-title")).toHaveText("상대하기 어려운 영웅");
   await expect(page.locator("#synergies-title")).toHaveText("잘 맞는 영웅");
-  await expect(counters).toHaveCount(5);
-  await expect(synergies).toHaveCount(3); // Samuro, Tyrael, Hogger: the only allies beyond the error
-  await expect(counters.first()).toHaveAttribute("data-matchup", "qhira");
-  await expect(counters.first()).toContainText("키히라");
-  await expect(counters.first().locator("[data-delta]")).toHaveText("-7.5%p");
-  await expect(counters.first()).toContainText("330게임");
+  // gaps against what the two heroes' own rates lead to expect (e2e-data/latest/sl.json): Qhira was only strong
+  await expect(counters).toHaveCount(2);
+  await expect(synergies).toHaveCount(3); // Samuro, Kael'thas, Hogger: the only allies beyond the error
+  await expect(counters.first()).toHaveAttribute("data-matchup", "fenix");
+  await expect(counters.first()).toContainText("피닉스");
+  await expect(counters.first().locator("[data-delta]")).toHaveText("-10.3%p");
+  await expect(counters.first()).toContainText("104게임");
   await expect(synergies.first()).toHaveAttribute("data-matchup", "samuro");
-  await expect(synergies.first().locator("[data-delta]")).toHaveText("+11.7%p");
+  await expect(synergies.first().locator("[data-delta]")).toHaveText("+8.1%p");
   await expect(page.locator("#matchups-sub")).toContainText("2.55.17.98025");
   await expect(page.locator("#matchups-sub")).toContainText("50.8%"); // the hero's own win rate in that sample
   await expect(page.locator("#matchups-rule")).toContainText("n/(n+100)");
   await expect(page.locator("#matchups-rule")).toContainText("50게임 미만 제외");
+  await expect(page.locator("#matchups-rule")).toContainText("기대되는 승률");
   await expect(page.locator("#matchups-rule")).toContainText("차이가 오차(95%)를 넘는 영웅만");
   await expect(page.locator("nav[data-subnav] a[href='#matchups-title']")).toBeVisible();
   await counters.first().click();
-  await expect(page).toHaveURL(/\/heroes\/qhira\/$/);
-  await expect(page.locator("h1")).toHaveText("키히라");
+  await expect(page).toHaveURL(/\/heroes\/fenix\/$/);
+  await expect(page.locator("h1")).toHaveText("피닉스");
 });
 
 test("hero detail: Storm League win rate by league, bronze to master, with a faint point under 30 games", async ({ page }) => {
