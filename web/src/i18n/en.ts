@@ -265,7 +265,7 @@ The same data gives different tiers under a different formula. This site always 
     synergies: "Best teammates",
     synergiesNote: "win rate gap with them on the same team",
     matchupsRule: (hero: string, rule: string) => `Win rate gap = ${hero}'s win rate with or against that hero − ${hero}'s own win rate. ${rule}`,
-    matchupRule: (k: string, min: string) => `Order: (win rate gap) × n/(n+${k}) · n = games together or against each other · pairs under ${min} games left out`,
+    matchupRule: (k: string, min: string) => `Order: (win rate gap) × n/(n+${k}) · n = games together or against each other · pairs under ${min} games left out · only gaps beyond the error (95%)`,
     noMatchups: "No hero passes the threshold yet",
     matchupLine: (games: string, wr: string) => `${plural(games, "game", "games")} · win rate ${wr}`,
     talentAria: (level: string, name: string) => `Level ${level} · ${name}, show description`,
