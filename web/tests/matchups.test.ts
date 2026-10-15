@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import type { HeroTable, MatchupsFile } from "../src/data";
-import { MATCHUP_K, MATCHUP_MIN_GAMES, MATCHUP_TOP, matchupScore, matchupsView } from "../src/lib/matchups";
+import { MATCHUP_K, MATCHUP_MIN_GAMES, MATCHUP_TOP, MATCHUP_Z, beyondError, matchupScore, matchupsView } from "../src/lib/matchups";
 
 const dataDir = join(dirname(fileURLToPath(import.meta.url)), "e2e-data");
 const json = <T>(rel: string): T => JSON.parse(readFileSync(join(dataDir, rel), "utf-8")) as T;
@@ -18,6 +18,17 @@ describe("matchupScore", () => {
   });
   it("a small sample with a big gap ranks below a big sample with a moderate gap", () => {
     expect(matchupScore(80, 50, 10)).toBeLessThan(matchupScore(56, 50, 400));
+  });
+});
+
+describe("beyondError", () => {
+  it("is a two-sided 95% test of the pair rate against the hero's own rate on the pair's games", () => {
+    expect(MATCHUP_Z).toBe(1.96);
+    // own 50 %, 100 games: SE = 5 %p, so 40 % (z = -2) is beyond and 41 % (z = -1.8) is not
+    expect(beyondError(40, 50, 100)).toBe(true);
+    expect(beyondError(41, 50, 100)).toBe(false);
+    expect(beyondError(60, 50, 100)).toBe(true);
+    expect(beyondError(50, 50, 0)).toBe(false);
   });
 });
 
@@ -46,6 +57,23 @@ describe("matchupsView", () => {
     for (const r of v.synergies) expect(r.delta).toBeGreaterThan(0);
     const scores = v.synergies.map((r) => r.score);
     expect([...scores].sort((a, b) => b - a)).toEqual(scores);
+  });
+
+  it("every counter is below the hero's own win rate beyond the error (owner 2026-10-15: most gaps were chance)", () => {
+    for (const r of v.counters) expect(beyondError(r.win_rate, abathur.win_rate, r.games)).toBe(true);
+  });
+
+  it("a counter within the error stays off the list, however big its sample", () => {
+    // 1,000 games at 48.0 % against an own 50.79 %: z = -1.77
+    const near = { hero: "Fenix", games: 1000, wins: 480, win_rate: 48 };
+    const far = { hero: "Kerrigan", games: 1000, wins: 460, win_rate: 46 }; // z = -3.04
+    const w = matchupsView({ ...abathur, enemy: [near, far] }, heroes)!;
+    expect(w.counters.map((r) => r.hero)).toEqual(["Kerrigan"]);
+  });
+
+  it("synergies keep the old rule: a gap within the error still lists", () => {
+    const near = { hero: "Fenix", games: 1000, wins: 535, win_rate: 53.5 }; // z = +1.71
+    expect(matchupsView({ ...abathur, ally: [near] }, heroes)!.synergies.map((r) => r.hero)).toEqual(["Fenix"]);
   });
 
   it("the floor keeps a tiny sample off the list even with the biggest gap", () => {

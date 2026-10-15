@@ -195,6 +195,7 @@ test("hero detail: counters and synergies from the matchups file, with numbers, 
   await expect(page.locator("#matchups-sub")).toContainText("50.8%"); // the hero's own win rate in that sample
   await expect(page.locator("#matchups-rule")).toContainText("n/(n+100)");
   await expect(page.locator("#matchups-rule")).toContainText("50게임 미만 제외");
+  await expect(page.locator("#matchups-rule")).toContainText("오차(95%)를 넘는");
   await expect(page.locator("nav[data-subnav] a[href='#matchups-title']")).toBeVisible();
   await counters.first().click();
   await expect(page).toHaveURL(/\/heroes\/qhira\/$/);
