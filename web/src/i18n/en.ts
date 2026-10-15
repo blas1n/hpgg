@@ -558,6 +558,8 @@ The same data gives different tiers under a different formula. This site always 
       mmrPoint: (hero: string, mmr: string) => `${hero} · MMR ${mmr}`,
       listTitle: "Match history",
       listSub: (n: string) => `Last ${plural(n, "game", "games")}`,
+      filterAll: "All",
+      filterLabel: "Show by mode",
       more: (n: string) => `${plural(n, "more game", "more games")}`,
       loading: "Loading match history…",
       basicTitle: "Showing a short history for now",
