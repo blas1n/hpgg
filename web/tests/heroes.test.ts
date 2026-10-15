@@ -16,6 +16,12 @@ const ITEMS: SearchItem[] = [
 ];
 
 describe("filterHeroes", () => {
+  it("a hero that also plays a role is under that role's tab too (owner 2026-10-15, played roles)", () => {
+    const blaze = { ...item("blaze", "블레이즈", "Blaze", "Tank"), also: { role: "Bruiser", role_ko: "투사", share: 0.41 } };
+    expect(filterHeroes([...ITEMS, blaze], "Bruiser", "").map((h) => h.slug)).toEqual(["blaze"]);
+    expect(filterHeroes([...ITEMS, blaze], "Tank", "").map((h) => h.slug)).toEqual(["diablo", "blaze"]);
+  });
+
   it("no query, every role: the whole list in its given (Korean name) order", () => {
     expect(filterHeroes(ITEMS, "all", "").map((h) => h.slug)).toEqual(["diablo", "illidan", "li-li", "li-ming"]);
   });

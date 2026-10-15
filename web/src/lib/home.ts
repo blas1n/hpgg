@@ -2,7 +2,7 @@
 import { computeTiers, type Ranked, type Snapshot, type Tier } from "../formula";
 import type { HeroInfo, HeroTable, MapTable } from "../data";
 
-export type HeroRef = Pick<HeroInfo, "slug" | "ko" | "name" | "role" | "role_ko" | "portrait">;
+export type HeroRef = Pick<HeroInfo, "slug" | "ko" | "name" | "role" | "role_ko" | "portrait" | "also">;
 
 export interface LeaderCard {
   role: string;

@@ -24,7 +24,7 @@ test.describe("desktop 1280", () => {
   test("tier table: role column and win-rate interval on desktop, no wasted hero column", async ({ page }) => {
     await page.goto("./tier/");
     const r = page.locator('#rows tr[data-hero="illidan"]');
-    await expect(r.locator('td[data-col="role"]')).toHaveText("근접 암살자");
+    await expect(r.locator('td[data-col="role"] [data-role-name]')).toHaveText("근접 암살자");
     await expect(r.locator('td[data-col="win_rate"]')).toContainText("±");
     const hero = (await page.locator('th[data-col="hero"]').boundingBox())!.width;
     expect(hero).toBeLessThanOrEqual(360);

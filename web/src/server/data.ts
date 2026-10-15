@@ -7,7 +7,7 @@ import { onReference, type Bracket, type BuildsFile, type HeroTable, type MapTab
 import { pickShown, type Shown } from "../lib/shown";
 import type { SearchItem } from "../lib/search";
 import type { MapsMeta } from "../lib/maps";
-import type { CompsFile } from "../lib/comps";
+import { alsoPlays, type CompsFile } from "../lib/comps";
 import type { LengthFile } from "../lib/length";
 import type { TiersFile } from "../lib/tiers";
 import type { WeeklyAnalysis, WeeklyEvidence, WeeklyIndex, WeeklyIssue } from "../lib/weekly";
@@ -20,7 +20,12 @@ const read = <T>(rel: string): T => JSON.parse(readFileSync(join(dir, rel), "utf
 export const readMeta = (): Meta => read<Meta>("latest/meta.json");
 const heroTable = (): HeroTable => read<HeroTable>("heroes_ko.json");
 /** Heroes and maps with their display names in the page language (i18n/names.ts). */
-export const readHeroes = (locale: Locale): HeroTable => localizeHeroes(heroTable(), locale);
+export const readHeroes = (locale: Locale): HeroTable => withAlso(localizeHeroes(heroTable(), locale));
+/** Each hero's front-line second role from the 팀 조합 file (lib/comps.ts alsoPlays): listed under that role's tab too. */
+function withAlso(t: HeroTable): HeroTable {
+  const also = alsoPlays(readComps(), t.roles);
+  return also.size ? { ...t, heroes: t.heroes.map((h) => (also.has(h.name) ? { ...h, also: also.get(h.name) } : h)) } : t;
+}
 export const readMaps = (locale: Locale): MapTable => localizeMaps(read<MapTable>("maps_ko.json"), locale);
 export const readSnapshot = (key: string, patch: "current" | "previous" = "current"): Snapshot | null => {
   const rel = `${patch === "previous" ? "previous" : "latest"}/${key}.json`;
@@ -71,5 +76,5 @@ export function readSearchIndex(locale: Locale, mode: Mode = "qm"): SearchItem[]
   const tierOf = new Map(tiers?.ranked.map((x) => [x.row.hero, x.tier]) ?? []);
   return [...heroes.heroes]
     .sort((a, b) => a.ko.localeCompare(b.ko, locale))
-    .map((h) => ({ slug: h.slug, ko: h.ko, name: h.name, role: h.role, role_ko: h.role_ko, portrait: h.portrait, tier: tierOf.get(h.name), ...(h.alt ? { alt: h.alt } : {}) }));
+    .map((h) => ({ slug: h.slug, ko: h.ko, name: h.name, role: h.role, role_ko: h.role_ko, portrait: h.portrait, tier: tierOf.get(h.name), ...(h.alt ? { alt: h.alt } : {}), ...(h.also ? { also: h.also } : {}) }));
 }

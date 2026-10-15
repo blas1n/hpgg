@@ -152,6 +152,18 @@ describe("visibleRows", () => {
     expect(asc[0]!.pick).toBeLessThanOrEqual(asc[1]!.pick);
   });
 
+  it("a hero that also plays a role is under that role's tab too, with its own rank (played roles)", () => {
+    const withAlso: HeroTable = {
+      ...heroes,
+      heroes: heroes.heroes.map((h) => (h.slug === "abathur" ? { ...h, also: { role: "Healer", role_ko: "치유사", share: 0.3 } } : h)),
+    };
+    const t2 = tierTable(qm, null, "all", withAlso, 200);
+    const healers = visibleRows(t2.rows, "Healer", "score", "desc");
+    const ab = healers.find((r) => r.hero.slug === "abathur")!;
+    expect(ab.hero.also).toEqual({ role: "Healer", role_ko: "치유사", share: 0.3 });
+    expect(ab.rank).toBe(t2.rows.find((r) => r.hero.slug === "abathur")!.rank);
+  });
+
   it("filters by role without re-ranking", () => {
     const healers = visibleRows(t.rows, "Healer", "score", "desc");
     expect(healers.every((r) => r.hero.role === "Healer")).toBe(true);

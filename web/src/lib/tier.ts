@@ -98,7 +98,7 @@ function heroRef(heroes: HeroTable): (name: string) => HeroRef {
   return (name) => {
     const h = by.get(name);
     return h
-      ? { slug: h.slug, ko: h.ko, name: h.name, role: h.role, role_ko: h.role_ko, portrait: h.portrait }
+      ? { slug: h.slug, ko: h.ko, name: h.name, role: h.role, role_ko: h.role_ko, portrait: h.portrait, ...(h.also ? { also: h.also } : {}) }
       : { slug: slugOf(name), ko: name, name, role: "", role_ko: "" };
   };
 }
@@ -150,7 +150,7 @@ export function nextSort(cur: Pick<TierState, "sort" | "dir">, key: SortKey | "r
 
 export function visibleRows(rows: TierRow[], role: string, sort: SortKey, dir: "desc" | "asc"): TierRow[] {
   const val = (r: TierRow) => (sort === "score" ? r.score : r[sort]);
-  return rows.filter((r) => role === "all" || r.hero.role === role).sort((a, b) => (dir === "desc" ? val(b) - val(a) : val(a) - val(b)) || a.rank - b.rank);
+  return rows.filter((r) => role === "all" || r.hero.role === role || r.hero.also?.role === role).sort((a, b) => (dir === "desc" ? val(b) - val(a) : val(a) - val(b)) || a.rank - b.rank);
 }
 
 /** Score as printed: whole points with a sign. */
