@@ -3,8 +3,10 @@
 Order: fresh cache → one refresh per player at a time (coalesced):
 1. `/players/matches` (bucket `player_match_history`, 250/week on Basic) when its quota guard
    allows — up to 100 games with the stat line, talents and per-game MMR. A cold query answers
-   202; it is asked again every `hp_job_poll_seconds` for up to `hp_job_wait_seconds` (HP
-   charges every ask, polls included; each is counted). Cached `match_ttl_seconds`.
+   202 with a job id: `/jobs/{id}` is polled every `hp_job_poll_seconds` for up to
+   `hp_job_wait_seconds` (`hp.follow_job`). Asking the query again was charged each time (six
+   lists cost twelve on 2026-10-15); the job URL is not, so a list costs its first ask. Cached
+   `match_ttl_seconds`.
 2. Otherwise a cached full list HP returned less than `stale_max_seconds` ago, marked stale.
 3. Otherwise `/players/mmr/history` (bucket `player_mmr_history`, 10,000/week) for the player's
    most played game type — the games with hero, map, result and MMR, no stat line. Cached
@@ -26,7 +28,7 @@ import structlog
 from server.config import Settings
 from server.players import quota
 from server.players.awards import AwardBook
-from server.players.hp import HPClient, Upstream
+from server.players.hp import HPClient, Upstream, follow_job
 from server.players.match_rows import ROWS_VERSION, basic_rows, full_rows
 from server.players.service import Notice, Outcome, PlayerService
 from server.players.store import CacheEntry, HPStore, matches_key
@@ -176,18 +178,15 @@ class MatchService:
         return await self._degraded(cached, "upstream_unavailable", up.retry_after)
 
     async def _ready(self, path: str, params: dict[str, str]) -> Upstream:
-        """GET, asking again while HP answers 202 (job pending), up to the wait limit."""
-        waited = 0.0
-        while True:
-            up = await self._hp.get(path, params)
-            await quota.charge(self._store, FULL, up, self._clock())
-            if up.status != 202:
-                return up
-            if waited + self._settings.hp_job_poll_seconds > self._settings.hp_job_wait_seconds:
-                log.info("matches.job_pending", waited=waited)
-                return Upstream(0, "job_pending", None, up.quota, None)
-            await self._sleep(self._settings.hp_job_poll_seconds)
-            waited += self._settings.hp_job_poll_seconds
+        """GET; on 202 (job pending) follow the job, which is not charged, up to the wait limit."""
+        up = await self._hp.get(path, params)
+        await quota.charge(self._store, FULL, up, self._clock())
+        if up.status != 202:
+            return up
+        s = self._settings
+        return await follow_job(
+            self._hp, up, poll=s.hp_job_poll_seconds, wait=s.hp_job_wait_seconds, sleep=self._sleep
+        )
 
     async def _keep(
         self, key: str, source: Source, rows: list[dict[str, Any]], now: float, ttl: int

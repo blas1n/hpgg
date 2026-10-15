@@ -70,9 +70,12 @@ def route(
     matches: Responder | None = None,
     history: Responder | None = None,
     players: Responder | None = None,
+    job: Responder | None = None,
 ) -> Responder:
     def answer(r: httpx.Request) -> httpx.Response:
         path = r.url.path
+        if "/jobs/" in path:
+            return (job or (lambda _r: hp_response("v1_players_matches_200.json")))(r)
         if path.endswith("/players/matches"):
             return (matches or (lambda _r: hp_response("v1_players_matches_200.json")))(r)
         if path.endswith("/players/mmr/history"):
@@ -122,30 +125,42 @@ async def test_full_stat_lines_live_then_cached(svc: MatchService, fake_hp: Fake
     assert again.source == "full" and len(calls(fake_hp, "/players/matches")) == 1
 
 
-async def test_a_cold_query_is_polled_until_ready_and_every_ask_is_counted(
+async def test_a_cold_query_follows_its_job_and_only_the_first_ask_is_counted(
     svc: MatchService, fake_hp: FakeHP, db: Database, sleeper: Sleeper
 ) -> None:
-    answers = iter(["v1_players_matches_202.json", "v1_players_matches_202.json"])
+    """Asking /players/matches again while its job ran was charged each time: on 2026-10-15 six
+    lists cost twelve. The job's own URL, /jobs/{id}, carries no X-HP-Quota reading (not charged,
+    measured on /players/heroes 2026-10-14), so a cold list costs its first ask only."""
+    pending = iter([httpx.Response(202, json={"status": "pending", "job_id": "x"})])
     fake_hp.responder = route(
-        matches=lambda r: hp_response(next(answers, "v1_players_matches_200.json"))
+        matches=lambda r: hp_response("v1_players_matches_202.json"),
+        job=lambda r: next(pending, hp_response("v1_players_matches_200.json")),
     )
     r = await svc.lookup(TAG, REGION)
-    assert r.outcome == "ok" and r.source == "full"
-    assert len(calls(fake_hp, "/players/matches")) == 3 and len(sleeper.calls) == 2
+    assert r.outcome == "ok" and r.source == "full" and len(r.matches) == 3
+    assert len(calls(fake_hp, "/players/matches")) == 1
+    jobs = [q for q in fake_hp.requests if "/jobs/" in q.url.path]
+    assert len(jobs) == 2 and jobs[0].url.path.endswith(
+        "/jobs/c5a6cbfe-523a-4c65-b57e-17ec5f64e61f"
+    )
+    assert len(sleeper.calls) == 2
     status = await svc.status()
-    assert status["player_match_history"]["live_calls_today"] == 3
+    assert status["player_match_history"]["live_calls_today"] == 1
 
 
 async def test_a_job_that_never_finishes_falls_back_to_the_mmr_history(
     svc: MatchService, fake_hp: FakeHP, settings: Settings, sleeper: Sleeper
 ) -> None:
-    fake_hp.responder = route(matches=lambda r: hp_response("v1_players_matches_202.json"))
+    fake_hp.responder = route(
+        matches=lambda r: hp_response("v1_players_matches_202.json"),
+        job=lambda r: hp_response("v1_players_matches_202.json"),
+    )
     r = await svc.lookup(TAG, REGION)
     assert r.outcome == "ok" and r.source == "basic"
     assert sum(sleeper.calls) <= settings.hp_job_wait_seconds
-    asked = len(calls(fake_hp, "/players/matches"))
+    assert len(calls(fake_hp, "/players/matches")) == 1
     status = await svc.status()
-    assert status["player_match_history"]["live_calls_today"] == asked
+    assert status["player_match_history"]["live_calls_today"] == 1
 
 
 async def test_basic_rows_come_from_the_mmr_history_of_the_most_played_mode(
@@ -280,7 +295,10 @@ async def test_a_list_cut_to_basic_by_the_quota_says_when_full_lines_return(
 async def test_a_list_cut_to_basic_by_a_slow_job_has_no_return_time(
     svc: MatchService, fake_hp: FakeHP
 ) -> None:
-    fake_hp.responder = route(matches=lambda r: hp_response("v1_players_matches_202.json"))
+    fake_hp.responder = route(
+        matches=lambda r: hp_response("v1_players_matches_202.json"),
+        job=lambda r: hp_response("v1_players_matches_202.json"),
+    )
     r = await svc.lookup(TAG, REGION)
     assert r.source == "basic" and r.full_after is None
 
