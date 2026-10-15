@@ -671,7 +671,7 @@ function MatchupList({ id, title, note, rows }: { id: string; title: string; not
               <span className="min-w-0">
                 <span className="block truncate text-[13px] font-semibold text-fg">{r.ko}</span>
                 <span className="num block text-2xs text-muted">
-                  {t.hero.matchupLine(int(r.games), pct(r.win_rate))}
+                  {t.hero.matchupLine(int(r.games), pct(r.win_rate), pct(r.expected))}
                 </span>
               </span>
               <span data-delta className={cx("num text-right text-[13px] font-bold", up ? "text-pos" : "text-neg")}>
