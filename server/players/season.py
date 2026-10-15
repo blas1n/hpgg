@@ -27,7 +27,7 @@ import structlog
 
 from server.config import Settings
 from server.players import quota
-from server.players.hp import HPClient, Upstream
+from server.players.hp import HPClient, follow_job
 from server.players.service import Notice, Outcome
 from server.players.store import CacheEntry, HPStore, season_key
 
@@ -177,7 +177,13 @@ class SeasonService:
         await quota.charge(self._store, BUCKET, up, now)
         exhausted = await quota.record(self._store, BUCKET, up, now)
         if up.status == 202:
-            up = await self._job(up)
+            up = await follow_job(
+                self._hp,
+                up,
+                poll=s.hp_job_poll_seconds,
+                wait=s.hp_job_wait_seconds,
+                sleep=self._sleep,
+            )
             now = self._clock()
         # a 404 (`not_found`, or `player_not_found` as live HP says it) for a player the profile
         # already found is a season without Storm League (2026-10-15)
@@ -196,23 +202,6 @@ class SeasonService:
             return self._degraded(cached, "quota_exceeded", exhausted)
         log.warning("season.unavailable", status=up.status, code=up.code)
         return self._degraded(cached, "upstream_unavailable", up.retry_after)
-
-    async def _job(self, first: Upstream) -> Upstream:
-        """Follow a 202's job until HP has the answer, up to the wait limit (polls are free)."""
-        body = first.body if isinstance(first.body, dict) else {}
-        job = body.get("job_id")
-        if not isinstance(job, str) or not job:
-            return Upstream(0, "job_pending", None, first.quota, None)
-        waited = 0.0
-        s = self._settings
-        while waited + s.hp_job_poll_seconds <= s.hp_job_wait_seconds:
-            await self._sleep(s.hp_job_poll_seconds)
-            waited += s.hp_job_poll_seconds
-            up = await self._hp.get(f"/jobs/{job}", {})
-            if up.status != 202:
-                return up
-        log.info("season.job_pending", waited=waited)
-        return Upstream(0, "job_pending", None, first.quota, None)
 
     def _degraded(
         self, cached: CacheEntry | None, notice: Notice, retry_after: float | None
