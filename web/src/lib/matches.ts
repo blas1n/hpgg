@@ -5,6 +5,7 @@ import type { AwardTable, HeroInfo, HeroTable, MapTable, TalentTable } from "../
 import { DEFAULT_LOCALE, type Locale } from "../i18n/locale";
 import { localField } from "../i18n/names";
 import { awardView, type AwardView } from "./awards";
+import { messages } from "../i18n/messages";
 import { apiGet, modeLabel, relativeDay, type ApiResult, type FetchOptions, type Notice, type Region } from "./players";
 
 /** How many of the newest games the briefing covers. */
@@ -248,6 +249,8 @@ export interface MatchView {
   win: boolean | null;
   mode: string;
   map: string;
+  /** HP's mode code ("sl", "qm", …), what the list filters on */
+  modeKey: string | null;
   when: string;
   mmr: number | null;
   mmrChange: number | null;
@@ -298,6 +301,7 @@ export function matchRows(
       role: h?.role,
       win: m.win,
       mode: modeLabel(m.mode, locale),
+      modeKey: m.mode,
       map: m.map ? (mapName.get(m.map) ?? m.map) : "–",
       when: relativeDay(m.date, locale, now),
       mmr: m.mmr,
@@ -348,3 +352,21 @@ export function matchRows(
     };
   });
 }
+
+// --- 경기 기록 by mode (owner 2026-10-15): a filter over the games already loaded, no more are asked for ---
+const MODE_ORDER = ["sl", "qm", "ar"];
+export type ModeFilter = "all" | string;
+
+/** 전체 then each mode in the loaded games with its count, Storm League first; nothing when there is one mode only. */
+export function modeFilters(rows: MatchRow[], locale: Locale): { value: ModeFilter; label: string; count: number }[] {
+  const n = new Map<string, number>();
+  for (const m of rows) if (m.mode) n.set(m.mode, (n.get(m.mode) ?? 0) + 1);
+  if (n.size < 2) return [];
+  const rank = (m: string) => (MODE_ORDER.includes(m) ? MODE_ORDER.indexOf(m) : MODE_ORDER.length);
+  const modes = [...n.keys()].sort((a, b) => rank(a) - rank(b) || a.localeCompare(b));
+  return [
+    { value: "all", label: messages[locale].players.games.filterAll, count: rows.length },
+    ...modes.map((m) => ({ value: m, label: modeLabel(m, locale), count: n.get(m)! })),
+  ];
+}
+

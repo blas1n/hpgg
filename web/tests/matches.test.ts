@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import type { AwardTable, HeroTable, MapTable, TalentTable } from "../src/data";
 import { localizeHeroes, localizeMaps } from "../src/i18n/names";
-import { BRIEFING_GAMES, briefing, fetchMatches, matchRows, type MatchesResponse } from "../src/lib/matches";
+import { BRIEFING_GAMES, briefing, fetchMatches, matchRows, modeFilters, type MatchesResponse } from "../src/lib/matches";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const json = <T>(rel: string): T => JSON.parse(readFileSync(join(here, rel), "utf-8")) as T;
@@ -136,5 +136,30 @@ describe("matchRows", () => {
     expect(m!.stats).toBeNull();
     expect(m!.talents).toEqual([]);
     expect(m!.win).toBe(true);
+  });
+});
+
+describe("modeFilters (경기 기록 by mode, owner 2026-10-15: on the loaded games only)", () => {
+  // the recorded list is all Quick Match: make it a mix of the modes a list can hold
+  const mixed = full.matches.map((m, i) => ({ ...m, mode: i < 12 ? "sl" : i < 24 ? "qm" : "ar" }));
+
+  it("every mode in the loaded games with its count, Storm League first, after 전체", () => {
+    expect(modeFilters(mixed, "ko")).toEqual([
+      { value: "all", label: "전체", count: 25 },
+      { value: "sl", label: "폭풍 리그", count: 12 },
+      { value: "qm", label: "빠른 대전", count: 12 },
+      { value: "ar", label: "무작위 영웅 대전", count: 1 },
+    ]);
+    expect(modeFilters(mixed, "en")[0]).toEqual({ value: "all", label: "All", count: 25 });
+  });
+
+  it("one mode only: no filter to offer", () => {
+    expect(modeFilters(full.matches, "ko")).toEqual([]);
+  });
+
+  it("each row keeps its mode code to filter on", () => {
+    const rows = matchRows(mixed, heroes, maps, {}, "ko");
+    expect(rows.filter((m) => m.modeKey === "sl")).toHaveLength(12);
+    expect(rows[0]).toMatchObject({ modeKey: "sl", mode: "폭풍 리그" });
   });
 });

@@ -562,6 +562,8 @@ export const ko = {
       mmrPoint: (hero: string, mmr: string) => `${hero} · MMR ${mmr}`,
       listTitle: "경기 기록",
       listSub: (n: string) => `최근 ${n}경기`,
+      filterAll: "전체",
+      filterLabel: "모드별로 보기",
       more: (n: string) => `${n}경기 더 보기`,
       loading: "경기 기록을 불러오는 중…",
       basicTitle: "지금은 간단 전적만 보여요",
