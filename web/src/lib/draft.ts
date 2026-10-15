@@ -4,22 +4,23 @@
  *  first-pick team: ban A, ban B, ban A, ban B · A · B B · A A · ban B, ban A · B B · A A · B.
  *
  *  Suggestion for the team to act (a ban: the other team's side — what they would most want):
- *    score = 0.5 × (WRs − 50) + 0.2 × Σ allies: gap(ally with h) + 0.1 × Σ enemies: −gap(enemy against h)
+ *    score = 0.7 × (WRs − 50) + 0.3 × Σ allies: gap(ally with h) + 0.1 × Σ enemies: −gap(enemy against h)
  *          + 0.2 × map gap(h) + comp(h)
- *  gaps shrunk by n / (n + MATCHUP_K), pairs under MATCHUP_MIN_GAMES or within the error left out (the hero page's rule,
- *  lib/matchups.ts); pair gaps are read from the picked heroes' matchups files; comp(h) is what h costs the team's
+ *  pair gap = the picked hero's rate with / against h − what h's own strength alone brings (lib/matchups.ts
+ *  pairExpected), shrunk by n / (n + MATCHUP_K), pairs under MATCHUP_MIN_GAMES or within the error left out (the hero
+ *  page's rule); pair gaps are read from the picked heroes' matchups files; comp(h) is what h costs the team's
  *  composition (lib/comps.ts: 0 while the remaining picks can still fix it). Every term is shown next to the score,
  *  weighted, so the terms add up to it.
  *
  *  Weights (DRAFT_WEIGHTS, owner 2026-10-15): the share of each term's %p that showed in later games — a logistic fit
  *  of the result on the two teams' differences, Heroes Profile data as of 10-06/07 judged on 6,207 Storm League replays
- *  from 10-08 (the same games inside Heroes Profile's numbers inflated the pair terms several times over): base
- *  0.50 ± 0.24, allies 0.17 ± 0.27, enemies 0.09 ± 0.13, map 0.22 ± 0.17, comp 0.90 ± 1.0 (95 %). Re-measure as the
- *  sample grows. */
+ *  from 10-08 (the same games inside Heroes Profile's numbers inflated the pair terms several times over), with the
+ *  pair gaps as above: base 0.72 ± 0.25, allies 0.28 ± 0.17, enemies 0.12 ± 0.08, map 0.23 ± 0.17, comp 0.93 ± 1.0
+ *  (95 %). Re-measure as the sample grows. */
 import type { HeroTable, MatchupsFile } from "../data";
 import { FORMULA, shrinkWinRate, type Snapshot } from "../formula";
 import { TEAM_SIZE, compTerm, groupOf, type CompPenalties, type PoolGroup } from "./comps";
-import { MATCHUP_MIN_GAMES, beyondError, matchupScore } from "./matchups";
+import { MATCHUP_MIN_GAMES, beyondError, matchupScore, pairExpected } from "./matchups";
 
 export type Side = "first" | "second";
 export interface DraftStep {
@@ -135,7 +136,7 @@ export function undo(seq: readonly string[]): string[] {
   return seq.slice(0, Math.max(0, n - 1));
 }
 
-export const DRAFT_WEIGHTS = { base: 0.5, allies: 0.2, enemies: 0.1, map: 0.2, comp: 1 } as const;
+export const DRAFT_WEIGHTS = { base: 0.7, allies: 0.3, enemies: 0.1, map: 0.2, comp: 1 } as const;
 
 export interface Suggestion {
   hero: DraftHero;
@@ -162,12 +163,13 @@ export function recommend(heroes: readonly DraftHero[], seq: readonly string[], 
   const allies = st[forSide].picks.filter((s) => known.has(s));
   const enemies = st[forSide === "first" ? "second" : "first"].picks.filter((s) => known.has(s));
   const missing = [...allies, ...enemies].filter((s) => !matchups.has(s));
-  const gap = (slug: string, side: "ally" | "enemy", name: string): number => {
+  // the picked hero's rate with or against h, against what h's own strength alone brings (pairExpected)
+  const gap = (slug: string, side: "ally" | "enemy", h: DraftHero): number => {
     const f = matchups.get(slug);
-    const row = f?.[side].find((p) => p.hero === name);
-    return f && row && row.games >= MATCHUP_MIN_GAMES && beyondError(row.win_rate, f.win_rate, row.games)
-      ? matchupScore(row.win_rate, f.win_rate, row.games)
-      : 0;
+    const row = f?.[side].find((p) => p.hero === h.name);
+    if (!f || !row || row.games < MATCHUP_MIN_GAMES) return 0;
+    const expected = pairExpected(f.win_rate, h.games > 0 ? h.wr : undefined, side);
+    return beyondError(row.win_rate, expected, row.games) ? matchupScore(row.win_rate, expected, row.games) : 0;
   };
   const open = available(heroes, seq);
   const bySlug = new Map(heroes.map((h) => [h.slug, h]));
@@ -189,9 +191,9 @@ export function recommend(heroes: readonly DraftHero[], seq: readonly string[], 
       const w = DRAFT_WEIGHTS;
       const terms = {
         base: w.base * (h.wrs - 50),
-        allies: w.allies * allies.reduce((a, s) => a + gap(s, "ally", h.name), 0),
+        allies: w.allies * allies.reduce((a, s) => a + gap(s, "ally", h), 0),
         // an enemy's win rate against h going down is h's advantage
-        enemies: w.enemies * enemies.reduce((a, s) => a - gap(s, "enemy", h.name), 0),
+        enemies: w.enemies * enemies.reduce((a, s) => a - gap(s, "enemy", h), 0),
         map: w.map * (m ? matchupScore(m.wr, h.wr, m.games) : 0),
         comp: w.comp * compOf(h),
       };

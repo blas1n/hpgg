@@ -103,7 +103,8 @@ describe("recommend", () => {
   const bans = ["zeratul", "cho", "gall", "x1"];
 
   it("weights: how much of each term showed in later games (owner 2026-10-15, measured on 6,207 replays)", () => {
-    expect(DRAFT_WEIGHTS).toEqual({ base: 0.5, allies: 0.2, enemies: 0.1, map: 0.2, comp: 1 });
+    // re-measured with the pair gaps against expected (the other hero's own strength taken out)
+    expect(DRAFT_WEIGHTS).toEqual({ base: 0.7, allies: 0.3, enemies: 0.1, map: 0.2, comp: 1 });
   });
 
   it("a pick: base + synergy with our picks + counter against theirs + map, each term shown weighted", () => {
@@ -111,12 +112,13 @@ describe("recommend", () => {
     const seq = [...bans, "abathur", "uther", "x2"];
     const [top] = recommend(heroes, seq, { matchups, map: "Cursed Hollow" });
     expect(top!.hero.slug).toBe("illidan");
-    expect(top!.terms.base).toBeCloseTo(2 * 0.5, 6);
-    expect(top!.terms.allies).toBeCloseTo((60 - 50) * (100 / 200) * 0.2, 6); // +5.0 × 0.2
+    expect(top!.terms.base).toBeCloseTo(2 * 0.7, 6);
+    // Illidan's own rate is 50 % here, so nothing is taken out
+    expect(top!.terms.allies).toBeCloseTo((60 - 50) * (100 / 200) * 0.3, 6); // +5.0 × 0.3
     expect(top!.terms.enemies).toBeCloseTo(-(40 - 50) * (900 / 1000) * 0.1, 6); // +9.0 × 0.1
     expect(top!.terms.map).toBeCloseTo((55 - 50) * (100 / 200) * 0.2, 6); // +2.5 × 0.2
     // the score is the sum of the shown terms
-    expect(top!.score).toBeCloseTo(1 + 1 + 0.9 + 0.5, 6);
+    expect(top!.score).toBeCloseTo(1.4 + 1.5 + 0.9 + 0.5, 6);
   });
 
   it("a ban: the same score from the other team's side", () => {
@@ -124,9 +126,17 @@ describe("recommend", () => {
     const seq = [...bans, "abathur", "uther", "x2", "x3", "x4"];
     const [top] = recommend(heroes, seq, { matchups, map: null });
     expect(top!.hero.slug).toBe("illidan");
-    expect(top!.terms.allies).toBeCloseTo(5 * 0.2, 6); // with Abathur, on the first team
+    expect(top!.terms.allies).toBeCloseTo(5 * 0.3, 6); // with Abathur, on the first team
     expect(top!.terms.enemies).toBeCloseTo(9 * 0.1, 6); // against Uther
     expect(top!.terms.map).toBe(0);
+  });
+
+  it("a strong hero's own strength is not a pair term: the gap is against what its own rate brings", () => {
+    // Illidan wins 60 % overall: Abathur's 60 % with him and Uther's 40 % against him are just that
+    const strong = heroes.map((x) => (x.slug === "illidan" ? { ...x, wr: 60 } : x));
+    const top = recommend(strong, [...bans, "abathur", "uther", "x2"], { matchups, map: null }).find((s) => s.hero.slug === "illidan")!;
+    expect(top.terms.allies).toBe(0);
+    expect(top.terms.enemies).toBe(0);
   });
 
   it("a pair within the error adds nothing (the hero page's rule, owner 2026-10-15: most pair gaps were chance)", () => {

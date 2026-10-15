@@ -264,7 +264,7 @@ The same data gives different tiers under a different formula. This site always 
     countersNote: "win rate gap with them on the enemy team",
     synergies: "Best teammates",
     synergiesNote: "win rate gap with them on the same team",
-    matchupsRule: (hero: string, rule: string) => `Win rate gap = ${hero}'s win rate with or against that hero − ${hero}'s own win rate. ${rule}`,
+    matchupsRule: (hero: string, rule: string) => `Win rate gap = ${hero}'s win rate with or against that hero − what the two heroes' own win rates lead to expect (${hero}'s own ± that hero's own − 50): what a strong ally or a weak enemy adds by itself is taken out. ${rule}`,
     matchupRule: (k: string, min: string) => `Order: (win rate gap) × n/(n+${k}) · n = games together or against each other · pairs under ${min} games left out · only gaps beyond the error (95%)`,
     noMatchups: "No hero passes the threshold yet",
     matchupLine: (games: string, wr: string) => `${plural(games, "game", "games")} · win rate ${wr}`,

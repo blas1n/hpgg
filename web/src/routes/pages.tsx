@@ -26,7 +26,7 @@ import { homeModel, mapCards } from "@/lib/home";
 import { mapDetail } from "@/lib/maps";
 import { lengthView } from "@/lib/length";
 import { tiersView } from "@/lib/tiers";
-import { matchupsView } from "@/lib/matchups";
+import { heroStrength, matchupsView } from "@/lib/matchups";
 import { heroPatchNotes } from "@/lib/patchnotes";
 import { patchSummary } from "@/lib/patchSummary";
 import { centreCard, weeklyModel } from "@/lib/weekly";
@@ -164,7 +164,7 @@ export async function HeroPage({ locale, params }: { locale: Locale } & Params) 
       models={{ qm: model("qm"), sl: model("sl") }}
       builds={heroBuilds(builds, readTalents(slug), hero.name, locale)}
       buildsPatch={builds?.patch ?? null}
-      matchups={matchupsView(readMatchups(slug), heroes)}
+      matchups={matchupsView(readMatchups(slug), heroes, heroStrength(readShown("sl")?.snap ?? null))}
       length={lengthView(readLength(), hero.name, meta.window)}
       tiers={tiersView(readTiers(), hero.name)}
       patches={heroPatchNotes(readPatchNotes(), hero.name, referencePatchId(meta), locale, readHotfixes())}
