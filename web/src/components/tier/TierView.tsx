@@ -349,6 +349,7 @@ function RegionNote({ meta, mode, region, bracket, patch, shown }: { meta: Meta;
 }
 
 function HeroRow({ r, cols, hasPrevious, mode }: { r: TierRow; cols: typeof COLUMNS; hasPrevious: boolean; mode: Mode }) {
+  const t = useT();
   const link = hotsHref(useLocale()).hero(r.hero.slug, mode);
   const cell: Record<SortKey, string> = {
     score: formatScore(r.score),
@@ -388,17 +389,29 @@ function HeroRow({ r, cols, hasPrevious, mode }: { r: TierRow; cols: typeof COLU
               <a data-link href={link} className="block max-w-full truncate font-semibold text-fg focus-visible:outline-2 focus-visible:outline-primary">
                 <span data-name>{r.hero.ko}</span>
               </a>
+              {/* on a phone the role line is hidden: a hero listed under a role it also plays says so here */}
+              {r.hero.also && (
+                <span data-also-phone className="block truncate text-2xs text-muted sm:hidden">
+                  {t.common.alsoAs(r.hero.also.role_ko, `${Math.round(r.hero.also.share * 100)}%`)}
+                </span>
+              )}
               <span className="hidden truncate text-2xs text-muted sm:block">
                 {/* the API name, where it differs from the name shown (on English pages it is the same) */}
                 {r.hero.name !== r.hero.ko && r.hero.name}
                 {/* the role has its own column from 1024px */}
                 {r.hero.role_ko && <span className="lg:hidden">{(r.hero.name !== r.hero.ko ? " · " : "") + r.hero.role_ko}</span>}
+                {r.hero.also && <span className="lg:hidden">{" · " + t.common.alsoAs(r.hero.also.role_ko, `${Math.round(r.hero.also.share * 100)}%`)}</span>}
               </span>
             </span>
           </span>
         </td>
         <td data-col="role" className={cx(LG, "truncate py-1.5 text-[13px] text-fg-2")}>
-          <span>{r.hero.role_ko}</span>
+          <span data-role-name>{r.hero.role_ko}</span>
+          {r.hero.also && (
+            <span data-also className="ml-1.5 text-2xs text-muted">
+              {t.common.alsoAs(r.hero.also.role_ko, `${Math.round(r.hero.also.share * 100)}%`)}
+            </span>
+          )}
         </td>
         {cols.map(({ key: k, wide }) => (
           <td key={k} data-col={k} className={cx("py-1.5 pr-2 text-right sm:pr-4", wide && WIDE, k === "score" ? (r.score < 0 ? "font-bold text-neg" : "font-bold text-fg") : "text-fg-2", k === "win_rate" && wrTone(r.win_rate))}>

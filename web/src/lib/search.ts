@@ -1,3 +1,4 @@
+import type { AlsoPlays } from "../data";
 /** Hero search for the header box: Korean, English (accent/punctuation-insensitive) and 초성 queries. */
 
 export interface SearchItem {
@@ -10,6 +11,7 @@ export interface SearchItem {
   tier?: string;
   /** The name in the other language (English pages keep Korean names searchable). */
   alt?: string;
+  also?: AlsoPlays;
 }
 
 /** The 19 initial consonants (ㄱ ㄲ ㄴ … ㅎ) in syllable order, as compatibility jamo — what people type. */

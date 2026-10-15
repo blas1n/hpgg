@@ -91,6 +91,8 @@ export const ko = {
     regions: { all: "전체 지역", kr: "아시아 (KR)", na: "아메리카 (NA)", eu: "유럽 (EU)" },
     /** Appended to a page's meta line while it shows the previous patch (lib/shown.ts). */
     fallbackNote: (patch: string) => `새 패치 ${patch} 표본 쌓는 중`,
+    /** A hero listed under a role it also plays (played roles, lib/comps.ts alsoPlays). */
+    alsoAs: (role: string, share: string) => `${role}로도 ${share}`,
     patch: (patch: string) => `패치 ${patch}`,
     matches: (n: string) => `${n} 매치`,
     updated: (date: string) => `${date} 갱신`,

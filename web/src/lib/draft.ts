@@ -18,7 +18,7 @@
  *  from 10-08 (the same games inside Heroes Profile's numbers inflated the pair terms several times over), with the
  *  pair gaps as above: base 0.72 ± 0.25, allies 0.28 ± 0.17, enemies 0.12 ± 0.08, map 0.23 ± 0.17, comp 0.93 ± 1.0
  *  (95 %). Re-measure as the sample grows. */
-import type { HeroTable, MatchupsFile } from "../data";
+import type { AlsoPlays, HeroTable, MatchupsFile } from "../data";
 import type { Locale } from "../i18n/locale";
 import { messages } from "../i18n/messages";
 import { FORMULA, shrinkWinRate, type Snapshot } from "../formula";
@@ -55,6 +55,8 @@ export interface DraftHero {
   wr: number; // raw win rate, %
   games: number;
   maps: Record<string, { wr: number; games: number }>;
+  /** A front-line role it also plays (the role tabs list it there too). */
+  also?: AlsoPlays;
 }
 
 /** Build time: every hero of the table, with its Storm League record from the shown snapshot (none: neutral 50 %). */
@@ -74,6 +76,7 @@ export function draftHeroes(snap: Snapshot | null, table: HeroTable): DraftHero[
       role: h.role,
       role_ko: h.role_ko,
       ...(h.portrait ? { portrait: h.portrait } : {}),
+      ...(h.also ? { also: h.also } : {}),
       wrs: r ? shrinkWinRate(r.tier_win_rate ?? r.win_rate, r.games, FORMULA.k) : 50,
       wr: r ? r.win_rate : 50,
       games: r?.games ?? 0,
