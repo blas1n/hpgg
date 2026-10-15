@@ -190,13 +190,17 @@ test("hero detail: counters and synergies from the matchups file, with numbers, 
   await expect(counters.first()).toContainText("피닉스");
   await expect(counters.first().locator("[data-delta]")).toHaveText("-10.3%p");
   await expect(counters.first()).toContainText("104게임");
+  // the row says what was expected, so the gap can be checked: 40.4 % against an expected 50.7 % → −10.3
+  await expect(counters.first()).toContainText("기대 50.7%");
   await expect(synergies.first()).toHaveAttribute("data-matchup", "samuro");
   await expect(synergies.first().locator("[data-delta]")).toHaveText("+8.1%p");
   await expect(page.locator("#matchups-sub")).toContainText("2.55.17.98025");
   await expect(page.locator("#matchups-sub")).toContainText("50.8%"); // the hero's own win rate in that sample
+  await expect(page.locator("#matchups-sub")).toContainText("기대 승률 대비");
+  await expect(page.locator("#counters-title + span, #counters-title ~ span").first()).toContainText("기대보다 낮은");
   await expect(page.locator("#matchups-rule")).toContainText("n/(n+100)");
   await expect(page.locator("#matchups-rule")).toContainText("50게임 미만 제외");
-  await expect(page.locator("#matchups-rule")).toContainText("기대되는 승률");
+  await expect(page.locator("#matchups-rule")).toContainText("같은 팀이면 +, 상대 팀이면 −");
   await expect(page.locator("#matchups-rule")).toContainText("차이가 오차(95%)를 넘는 영웅만");
   await expect(page.locator("nav[data-subnav] a[href='#matchups-title']")).toBeVisible();
   await counters.first().click();

@@ -18,9 +18,11 @@
  *  pair gaps as above: base 0.72 ± 0.25, allies 0.28 ± 0.17, enemies 0.12 ± 0.08, map 0.23 ± 0.17, comp 0.93 ± 1.0
  *  (95 %). Re-measure as the sample grows. */
 import type { HeroTable, MatchupsFile } from "../data";
+import type { Locale } from "../i18n/locale";
+import { messages } from "../i18n/messages";
 import { FORMULA, shrinkWinRate, type Snapshot } from "../formula";
 import { TEAM_SIZE, compTerm, groupOf, type CompPenalties, type PoolGroup } from "./comps";
-import { MATCHUP_MIN_GAMES, beyondError, matchupScore, pairExpected } from "./matchups";
+import { MATCHUP_K, MATCHUP_MIN_GAMES, beyondError, matchupScore, pairExpected } from "./matchups";
 
 export type Side = "first" | "second";
 export interface DraftStep {
@@ -137,6 +139,15 @@ export function undo(seq: readonly string[]): string[] {
 }
 
 export const DRAFT_WEIGHTS = { base: 0.7, allies: 0.3, enemies: 0.1, map: 0.2, comp: 1 } as const;
+
+/** The rule as printed under the simulator, with the weights the score uses (they drifted from the text once). */
+export const draftRule = (locale: Locale): string =>
+  messages[locale].draft.rule(String(MATCHUP_K), String(MATCHUP_MIN_GAMES), {
+    base: String(DRAFT_WEIGHTS.base),
+    allies: String(DRAFT_WEIGHTS.allies),
+    enemies: String(DRAFT_WEIGHTS.enemies),
+    map: String(DRAFT_WEIGHTS.map),
+  });
 
 export interface Suggestion {
   hero: DraftHero;

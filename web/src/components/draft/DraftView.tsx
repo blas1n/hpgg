@@ -3,11 +3,12 @@
 import { useEffect, useMemo, useState } from "react";
 import { PageHead } from "@/components/PageHead";
 import { loadMatchups, type MatchupsFile } from "@/data";
-import { useT } from "@/i18n/client";
+import { useLocale, useT } from "@/i18n/client";
 import {
   applyPick,
   available,
   decodeDraft,
+  draftRule,
   draftState,
   encodeDraft,
   recommend,
@@ -17,7 +18,6 @@ import {
 } from "@/lib/draft";
 import type { CompPenalties } from "@/lib/comps";
 import { filterHeroes } from "@/lib/heroes";
-import { MATCHUP_K, MATCHUP_MIN_GAMES } from "@/lib/matchups";
 import { Card, cx, Portrait, SELECT, Segmented } from "../ui";
 
 const SUGGEST_TOP = 8;
@@ -40,6 +40,7 @@ export function DraftView({
   comps: CompPenalties | null;
 }) {
   const t = useT();
+  const locale = useLocale();
   const [usFirst, setUsFirst] = useState(true);
   const [map, setMap] = useState<string | null>(null);
   const [seq, setSeq] = useState<string[]>([]);
@@ -405,7 +406,7 @@ export function DraftView({
           id="draft-rule"
           className="max-w-[80ch] rounded-lg border border-line bg-surface px-3 py-2 font-mono text-xs break-keep text-fg-2"
         >
-          {t.draft.rule(String(MATCHUP_K), String(MATCHUP_MIN_GAMES))}
+          {draftRule(locale)}
         </p>
         <p className="text-2xs text-muted">{t.draft.orderSource}</p>
       </div>
