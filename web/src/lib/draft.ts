@@ -22,7 +22,7 @@ import type { HeroTable, MatchupsFile } from "../data";
 import type { Locale } from "../i18n/locale";
 import { messages } from "../i18n/messages";
 import { FORMULA, shrinkWinRate, type Snapshot } from "../formula";
-import { COMP_POP, MAKEUP_ROLES, TEAM_SIZE, compTerm, roleOf, type CompModel, type Role } from "./comps";
+import { COMP_POP, MAKEUP_ROLES, TEAM_SIZE, compTerm, roleOf, type CompModel, type Member, type Role } from "./comps";
 import { MATCHUP_K, MATCHUP_MIN_GAMES, beyondError, matchupScore, pairExpected } from "./matchups";
 
 export type Side = "first" | "second";
@@ -186,7 +186,13 @@ export function recommend(heroes: readonly DraftHero[], seq: readonly string[], 
   };
   const open = available(heroes, seq);
   const bySlug = new Map(heroes.map((h) => [h.slug, h]));
-  const roleOfSlug = (s: string): Role => roleOf(bySlug.get(s)?.role ?? "");
+  // a hero that also plays a second role (the collector's played roles) can be either
+  const memberOf = (x: DraftHero | undefined): Member => {
+    const r = roleOf(x?.role ?? "");
+    const second = x ? comps?.second[x.name] : undefined;
+    return second && second !== r ? [r, second] : r;
+  };
+  const roleOfSlug = (s: string): Member => memberOf(bySlug.get(s));
   // the team's picks by role (an unknown slug still takes a slot), the slots it has left and what is left to pick
   const team = st[forSide].picks.map(roleOfSlug);
   const slots = TEAM_SIZE - team.length;
@@ -195,7 +201,7 @@ export function recommend(heroes: readonly DraftHero[], seq: readonly string[], 
   const compOf = (h: DraftHero): number => {
     if (!comps) return 0;
     const partner = PARTNER[h.slug];
-    const cand = [roleOf(h.role), ...(partner && st.next!.kind === "pick" ? [roleOfSlug(partner)] : [])];
+    const cand = [memberOf(h), ...(partner && st.next!.kind === "pick" ? [roleOfSlug(partner)] : [])];
     return compTerm(team, cand, slots, pool, comps);
   };
   return open
