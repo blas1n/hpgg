@@ -19,6 +19,7 @@ import { TierView } from "@/components/tier/TierView";
 import { BRACKETS, REGIONS, referencePatchId, snapshotKey, type Bracket, type Mode, type Region } from "@/data";
 import { alternates, DEFAULT_LOCALE, type Locale } from "@/i18n/locale";
 import { messages } from "@/i18n/messages";
+import { compPenalties } from "@/lib/comps";
 import { draftHeroes } from "@/lib/draft";
 import { heroBuilds, heroGrid, heroSummary, mapRows } from "@/lib/hero";
 import { homeModel, mapCards } from "@/lib/home";
@@ -32,7 +33,7 @@ import { centreCard, weeklyModel } from "@/lib/weekly";
 import { WeeklyView } from "@/components/weekly/WeeklyView";
 import { PatchesView } from "@/components/patches/PatchesView";
 import { tierTable } from "@/lib/tier";
-import { readBuilds, readHeroes, readLength, readTiers, readMaps, readMapsMeta, readMatchups, readMeta, readHotfixes, readPatchNotes, readSearchIndex, readShown, readTalents, readWeekly, readWeeklyAnalysis, readWeeklyEvidence, readWeeklyIndex } from "@/server/data";
+import { readBuilds, readComps, readHeroes, readLength, readTiers, readMaps, readMapsMeta, readMatchups, readMeta, readHotfixes, readPatchNotes, readSearchIndex, readShown, readTalents, readWeekly, readWeeklyAnalysis, readWeeklyEvidence, readWeeklyIndex } from "@/server/data";
 
 type Params = { params: Promise<{ slug: string }> };
 
@@ -243,7 +244,8 @@ export function DraftPage({ locale }: { locale: Locale }) {
   const table = readHeroes(locale);
   const shown = readShown("sl");
   const heroes = draftHeroes(shown?.snap ?? null, table).sort((a, b) => a.ko.localeCompare(b.ko, locale));
-  return <DraftView heroes={heroes} maps={readMaps(locale).maps} roles={table.roles} patch={shown?.snap.patch ?? ""} />;
+  const comps = readComps();
+  return <DraftView heroes={heroes} maps={readMaps(locale).maps} roles={table.roles} patch={shown?.snap.patch ?? ""} comps={comps ? compPenalties(comps) : null} />;
 }
 
 // --- 패치 요약: the reference patch's notes, hotfixes and new heroes, with each changed hero against the previous patch ---

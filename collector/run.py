@@ -45,6 +45,7 @@ from collector.snapshot import (
     timeframe_of,
 )
 from collector.talent_details import fetch_weekly_talents
+from collector.team_comps import comp_counts
 from collector.tiers import TIERS, tiers_file
 from collector.tiers import due as tiers_due
 from collector.weekly import build_weekly, history_entry, write_history
@@ -593,16 +594,31 @@ async def _run_replays(
 
 
 def _run_length(settings: Settings, *, patch: str, since: str | None, collected_at: str) -> None:
-    """게임 시간대별 승률 (collector/hero_length.py) from every archived day and today's sample.
-    Written after the swap of data/latest, every run; a failure never fails the run."""
+    """게임 시간대별 승률 (collector/hero_length.py) and 팀 조합 (collector/team_comps.py) from
+    every archived day and today's sample. Written after the swap of data/latest, every run; a
+    failure never fails the run, and one file failing does not keep the other."""
     try:
         games = load_archive([settings.replay_archive_dir, settings.snapshot_out_dir])
+    except Exception as e:  # noqa: BLE001 — supplementary numbers never fail the daily run
+        log.warning("length.failed", error=f"{type(e).__name__}: {e}")
+        return
+    latest = settings.data_dir / "latest"
+    try:
         out = length_rates(games, patch=patch, since=since, collected_at=collected_at)
-        path = settings.data_dir / "latest" / "sl_length.json"
-        path.write_text(json.dumps(out, ensure_ascii=False), encoding="utf-8")
+        text = json.dumps(out, ensure_ascii=False)
+        (latest / "sl_length.json").write_text(text, encoding="utf-8")
         log.info("length.done", patch=patch, since=since, games=out["games"])
     except Exception as e:  # noqa: BLE001 — supplementary numbers never fail the daily run
         log.warning("length.failed", error=f"{type(e).__name__}: {e}")
+    try:
+        table = _load_json(settings.data_dir / "heroes_ko.json") or {}
+        roles = {h["name"]: h["role"] for h in table.get("heroes", []) if h.get("role")}
+        comps = comp_counts(games, roles, patch=patch, since=since, collected_at=collected_at)
+        text = json.dumps(comps, ensure_ascii=False)
+        (latest / "sl_comps.json").write_text(text, encoding="utf-8")
+        log.info("comps.done", patch=patch, since=since, teams=comps["teams"])
+    except Exception as e:  # noqa: BLE001 — supplementary numbers never fail the daily run
+        log.warning("comps.failed", error=f"{type(e).__name__}: {e}")
 
 
 async def _run_stats(
