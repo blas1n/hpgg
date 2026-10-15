@@ -19,7 +19,7 @@ import { TierView } from "@/components/tier/TierView";
 import { BRACKETS, REGIONS, referencePatchId, snapshotKey, type Bracket, type Mode, type Region } from "@/data";
 import { alternates, DEFAULT_LOCALE, type Locale } from "@/i18n/locale";
 import { messages } from "@/i18n/messages";
-import { compPenalties } from "@/lib/comps";
+import { compModel } from "@/lib/comps";
 import { draftHeroes } from "@/lib/draft";
 import { heroBuilds, heroGrid, heroSummary, mapRows } from "@/lib/hero";
 import { homeModel, mapCards } from "@/lib/home";
@@ -245,7 +245,7 @@ export function DraftPage({ locale }: { locale: Locale }) {
   const shown = readShown("sl");
   const heroes = draftHeroes(shown?.snap ?? null, table).sort((a, b) => a.ko.localeCompare(b.ko, locale));
   const comps = readComps();
-  return <DraftView heroes={heroes} maps={readMaps(locale).maps} roles={table.roles} patch={shown?.snap.patch ?? ""} comps={comps ? compPenalties(comps) : null} />;
+  return <DraftView heroes={heroes} maps={readMaps(locale).maps} roles={table.roles} patch={shown?.snap.patch ?? ""} comps={comps ? compModel(comps) : null} />;
 }
 
 // --- 패치 요약: the reference patch's notes, hotfixes and new heroes, with each changed hero against the previous patch ---
