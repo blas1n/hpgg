@@ -423,6 +423,7 @@ export const ko = {
     termEnemies: "상대",
     termMap: "전장",
     termComp: "조합",
+    compNote: "조합: 0이 최선입니다. 이 영웅을 넣으면 남은 픽으로 만들 수 있는 가장 나은 팀보다 나빠지는 만큼 −로 표시합니다.",
     missing: (names: string) => `${names}: 상성 데이터가 없어 그 영웅과의 쌍은 넣지 않았습니다`,
     loading: "상성 데이터를 불러오는 중",
     allHeroes: "전체 영웅",
