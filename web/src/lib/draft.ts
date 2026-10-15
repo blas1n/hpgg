@@ -4,11 +4,18 @@
  *  first-pick team: ban A, ban B, ban A, ban B · A · B B · A A · ban B, ban A · B B · A A · B.
  *
  *  Suggestion for the team to act (a ban: the other team's side — what they would most want):
- *    score = (WRs − 50) + Σ allies: gap(ally with h) + Σ enemies: −gap(enemy against h) + map gap(h)
+ *    score = 0.5 × (WRs − 50) + 0.2 × Σ allies: gap(ally with h) + 0.1 × Σ enemies: −gap(enemy against h)
+ *          + 0.2 × map gap(h) + comp(h)
  *  gaps shrunk by n / (n + MATCHUP_K), pairs under MATCHUP_MIN_GAMES or within the error left out (the hero page's rule,
- *  lib/matchups.ts);
- *  pair gaps are read from the picked heroes' matchups files; comp(h) is what h costs the team's composition
- *  (lib/comps.ts: 0 while the remaining picks can still fix it). Every term is shown next to the score. */
+ *  lib/matchups.ts); pair gaps are read from the picked heroes' matchups files; comp(h) is what h costs the team's
+ *  composition (lib/comps.ts: 0 while the remaining picks can still fix it). Every term is shown next to the score,
+ *  weighted, so the terms add up to it.
+ *
+ *  Weights (DRAFT_WEIGHTS, owner 2026-10-15): the share of each term's %p that showed in later games — a logistic fit
+ *  of the result on the two teams' differences, Heroes Profile data as of 10-06/07 judged on 6,207 Storm League replays
+ *  from 10-08 (the same games inside Heroes Profile's numbers inflated the pair terms several times over): base
+ *  0.50 ± 0.24, allies 0.17 ± 0.27, enemies 0.09 ± 0.13, map 0.22 ± 0.17, comp 0.90 ± 1.0 (95 %). Re-measure as the
+ *  sample grows. */
 import type { HeroTable, MatchupsFile } from "../data";
 import { FORMULA, shrinkWinRate, type Snapshot } from "../formula";
 import { TEAM_SIZE, compTerm, groupOf, type CompPenalties, type PoolGroup } from "./comps";
@@ -128,6 +135,8 @@ export function undo(seq: readonly string[]): string[] {
   return seq.slice(0, Math.max(0, n - 1));
 }
 
+export const DRAFT_WEIGHTS = { base: 0.5, allies: 0.2, enemies: 0.1, map: 0.2, comp: 1 } as const;
+
 export interface Suggestion {
   hero: DraftHero;
   score: number;
@@ -177,13 +186,14 @@ export function recommend(heroes: readonly DraftHero[], seq: readonly string[], 
   return open
     .map((h) => {
       const m = map ? h.maps[map] : undefined;
+      const w = DRAFT_WEIGHTS;
       const terms = {
-        base: h.wrs - 50,
-        allies: allies.reduce((a, s) => a + gap(s, "ally", h.name), 0),
+        base: w.base * (h.wrs - 50),
+        allies: w.allies * allies.reduce((a, s) => a + gap(s, "ally", h.name), 0),
         // an enemy's win rate against h going down is h's advantage
-        enemies: enemies.reduce((a, s) => a - gap(s, "enemy", h.name), 0),
-        map: m ? matchupScore(m.wr, h.wr, m.games) : 0,
-        comp: compOf(h),
+        enemies: w.enemies * enemies.reduce((a, s) => a - gap(s, "enemy", h.name), 0),
+        map: w.map * (m ? matchupScore(m.wr, h.wr, m.games) : 0),
+        comp: w.comp * compOf(h),
       };
       return { hero: h, score: terms.base + terms.allies + terms.enemies + terms.map + terms.comp, terms, missing };
     })

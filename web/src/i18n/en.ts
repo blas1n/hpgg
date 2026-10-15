@@ -425,7 +425,7 @@ The same data gives different tiers under a different formula. This site always 
     allHeroes: "All heroes",
     choGall: "Cho'gall can be picked only where the same team picks twice in a row",
     rule: (k: string, min: string) =>
-      `score = (WRs − 50) + Σ our heroes' win rate with this hero − their usual + Σ drop in enemy heroes' win rate against this hero + this map's win rate − usual + team · pair and map gaps × n/(n+${k}), pairs under ${min} games or within the error (95%) left out · team = how much worse the best team still reachable with this hero gets (the win rate − 50 of make-ups that lose beyond the error, such as no healer or two, from Storm League replays), 0 while the remaining picks can still fix it · ban suggestions: the same score for the other team`,
+      `score = 0.5 × (WRs − 50) + 0.2 × Σ our heroes' win rate with this hero − their usual + 0.1 × Σ drop in enemy heroes' win rate against this hero + 0.2 × (this map's win rate − usual) + team · the weights = how much of each term showed in later games (6,207 Storm League replays) · pair and map gaps × n/(n+${k}), pairs under ${min} games or within the error (95%) left out · team = how much worse the best team still reachable with this hero gets (the win rate − 50 of make-ups that lose beyond the error, such as no healer or two, from Storm League replays), 0 while the remaining picks can still fix it · ban suggestions: the same score for the other team`,
     orderSource: "Draft order: 4 bans → picks 1·2·2 → 2 bans → picks 2·2·1 (Heroes Profile's drafter and recorded drafts)",
   },
   players: {

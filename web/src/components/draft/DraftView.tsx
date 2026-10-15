@@ -295,7 +295,7 @@ export function DraftView({
                                     `term${k[0]!.toUpperCase()}${k.slice(1)}` as "termBase"
                                   ]
                                 }{" "}
-                                <span data-term={k}>{signed(s.terms[k])}</span>
+                                <span data-term={k} data-value={s.terms[k]}>{signed(s.terms[k])}</span>
                               </span>
                             ),
                           )}
