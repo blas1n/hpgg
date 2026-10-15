@@ -6,6 +6,7 @@ import {
   MAKEUP_ROLES,
   bestReachable,
   compModel,
+  alsoPlays,
   compPenalties,
   compTerm,
   groupOf,
@@ -170,6 +171,30 @@ describe("played roles (owner 2026-10-15: from the teams around each hero)", () 
   it("a picked hero of two roles too: Varian on the team takes the tank's place, so a bruiser costs nothing", () => {
     expect(compTerm([[B, T], H, R, R], [B], 1, PLENTY, MODEL)).toBe(0);
     expect(compTerm([B, H, R, R], [B], 1, PLENTY, MODEL)).toBeLessThan(0);
+  });
+});
+
+describe("alsoPlays (role tabs)", () => {
+  const ROLES = [
+    { name: "Tank", ko: "전사" },
+    { name: "Bruiser", ko: "투사" },
+    { name: "Ranged Assassin", ko: "원거리 암살자" },
+  ];
+  const played = {
+    Blaze: { second: "Bruiser", share: 0.4085, low: 0.37, games: 1013 },
+    Varian: { second: "Tank", share: 0.5417, low: 0.51, games: 1793 },
+    Alarak: { second: "Ranged Assassin", share: 0.4462, low: 0.36, games: 914 },
+  };
+
+  it("only moves into 전사 or 투사: between dealers it is a dealer either way (owner 2026-10-15)", () => {
+    const m = alsoPlays({ ...FILE, played }, ROLES);
+    expect([...m.keys()]).toEqual(["Blaze", "Varian"]);
+    expect(m.get("Blaze")).toEqual({ role: "Bruiser", role_ko: "투사", share: 0.4085 });
+  });
+
+  it("no file or no played roles: nobody", () => {
+    expect(alsoPlays(null, ROLES).size).toBe(0);
+    expect(alsoPlays(FILE, ROLES).size).toBe(0);
   });
 });
 

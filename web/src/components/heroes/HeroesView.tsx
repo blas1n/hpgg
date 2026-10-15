@@ -116,6 +116,11 @@ export function HeroesView({ heroes, roles, universes, tiers, patches }: { heroe
             <Portrait src={h.portrait} size={56} tier={tiers[mode][h.slug]} role={h.role} />
             <span className="w-full truncate text-center text-xs font-bold text-fg group-hover:text-primary">{h.ko}</span>
             <span className="text-2xs text-muted">{h.role_ko}</span>
+            {h.also && (
+              <span data-also className="-mt-1 text-2xs text-muted">
+                {t.common.alsoAs(h.also.role_ko, `${Math.round(h.also.share * 100)}%`)}
+              </span>
+            )}
           </a>
         ))}
       </div>

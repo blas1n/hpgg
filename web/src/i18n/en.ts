@@ -89,6 +89,7 @@ export const en: Messages = {
     brackets: { all: "All leagues", low: "Bronze – Platinum", high: "Diamond – Grand Master" },
     regions: { all: "All regions", kr: "Asia (KR)", na: "Americas (NA)", eu: "Europe (EU)" },
     fallbackNote: (patch: string) => `new patch ${patch}: collecting games`,
+    alsoAs: (role: string, share: string) => `also ${role} ${share}`,
     patch: (patch: string) => `Patch ${patch}`,
     matches: (n: string) => plural(n, "match", "matches"),
     updated: (date: string) => `updated ${date}`,

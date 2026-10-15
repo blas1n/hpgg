@@ -47,7 +47,7 @@ for (const [width, cols] of [[1280, DESKTOP], [800, TABLET], [390, PHONE]] as co
       await expect(portraitBadge).toBeHidden();
     } else await expect(portraitBadge).toBeVisible(); // on a phone the tier stays on the portrait
     if (width >= 1024) {
-      await expect(row.locator('td[data-col="role"]')).toHaveText("근접 암살자");
+      await expect(row.locator('td[data-col="role"] [data-role-name]')).toHaveText("근접 암살자");
       await expect(interval).toHaveText("±1.2");
     } else await expect(interval).toBeHidden(); // the ± interval is desktop-only
     const hydrated = await open(browser, true, width, url);
