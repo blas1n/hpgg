@@ -37,9 +37,9 @@ test("draft: the real order, turn prompt, suggestions with their terms, and the 
   await choose(page, "uther");
   await choose(page, "muradin");
 
-  // our pick with Abathur on the team: Samuro's ally term is Abathur's gap with Samuro, shrunk (the hero page's rule)
+  // our pick with Abathur on the team: Samuro's ally term is Abathur's gap with Samuro, shrunk (the hero page's rule), × 0.2
   const row = abathur.ally.find((r: { hero: string }) => r.hero === "Samuro");
-  const expected = ((row.win_rate - abathur.win_rate) * row.games) / (row.games + 100);
+  const expected = (((row.win_rate - abathur.win_rate) * row.games) / (row.games + 100)) * 0.2; // allies weigh 0.2
   const samuro = page.locator('#draft-suggest [data-hero="samuro"]');
   await expect(samuro.locator("[data-term=allies]")).toHaveText(`+${expected.toFixed(1)}`);
   // Uther and Muradin have no matchups file in the e2e data: said, not hidden
@@ -60,6 +60,29 @@ test("draft: the real order, turn prompt, suggestions with their terms, and the 
   await expect(page.locator("#draft-turn")).toHaveText("우리 팀이 금지합니다");
 });
 
+test("draft: our last pick without a healer — healers first, the rest pay the team term", async ({ page }) => {
+  // e2e-data/latest/sl_comps.json: no healer 37.3 % on 134 teams (−12.7, beyond the error), three ranged 44.0 % on 579
+  const roles = new Map<string, string>(
+    JSON.parse(readFileSync(new URL("../tests/e2e-data/heroes_ko.json", import.meta.url), "utf-8")).heroes.map((h: { slug: string; role: string }) => [h.slug, h.role]),
+  );
+  // us: Muradin, Valla, Jaina, Kerrigan — no healer, one pick left
+  const d = "illidan.zeratul.tracer.genji.muradin.uther.rehgar.valla.jaina.sonya.johanna.diablo.arthas.kerrigan";
+  await page.goto(`./draft/?d=${d}`);
+  await expect(page.locator("#draft-turn")).toHaveText("우리 팀이 선택합니다");
+  const rows = page.locator("#draft-suggest button[data-hero]");
+  await expect(rows.first()).toBeVisible();
+  const top = await rows.first().getAttribute("data-hero");
+  expect(roles.get(top!)).toBe("Healer");
+  await expect(rows.first().locator("[data-term=comp]")).toHaveText("0.0");
+  // every suggestion: a healer costs the team nothing, anything else costs at least what no healer costs
+  for (const row of await rows.all()) {
+    const comp = Number(await row.locator("[data-term=comp]").textContent());
+    if (roles.get((await row.getAttribute("data-hero"))!) === "Healer") expect(comp).toBe(0);
+    else expect(comp).toBeLessThanOrEqual(-12.6);
+  }
+  await expect(page.locator("#draft-rule")).toContainText("조합 = 이 영웅을 넣으면");
+});
+
 test("draft: Cho'gall fills both slots of the team that picks twice, and undo takes both back", async ({ page }) => {
   await page.goto("./draft/?first=them&d=illidan.zeratul.tracer.genji.abathur");
   // they picked first (Abathur), we pick twice now
@@ -78,8 +101,9 @@ test("draft: the map changes the map term and lands in the URL; the first-pick t
   await page.goto("./draft/");
   await page.locator("#draft-map").selectOption("Cursed Hollow");
   await expect(page).toHaveURL(/map=Cursed(\+|%20)Hollow/);
-  // at least one suggestion carries a map term now (a hero's own record on that map)
-  await expect.poll(async () => (await page.locator('#draft-suggest [data-term="map"]').allTextContents()).some((x) => x !== "0.0")).toBe(true);
+  // at least one suggestion carries a map term now (a hero's own record on that map; × 0.2, so it may round to 0.0)
+  const mapValues = async () => (await page.locator('#draft-suggest [data-term="map"]').evaluateAll((els) => els.map((e) => Number(e.getAttribute("data-value")))));
+  await expect.poll(async () => (await mapValues()).some((x) => x !== 0)).toBe(true);
   await choose(page, "illidan");
   await expect(page.locator("#draft-first-them")).toBeDisabled();
 });

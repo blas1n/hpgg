@@ -41,7 +41,7 @@ def _version_key(v: str) -> tuple[int, ...]:
     return tuple(int(x) for x in v.split("."))
 
 
-def _in_window(version: str, patch: str, since: str | None) -> bool:
+def in_window(version: str, patch: str, since: str | None) -> bool:
     if patch_line(version) != patch:
         return False
     if since is None or patch_line(since) != patch:
@@ -74,7 +74,7 @@ def length_rates(
     bands = dict.fromkeys(BANDS, 0)
     heroes: dict[str, dict[str, Any]] = {}
     for g in games:
-        if g["id"] in seen or not _in_window(str(g.get("version") or ""), patch, since):
+        if g["id"] in seen or not in_window(str(g.get("version") or ""), patch, since):
             continue
         seen.add(g["id"])
         b = band_of(int(g["length"]))

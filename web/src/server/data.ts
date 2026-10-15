@@ -7,6 +7,7 @@ import { onReference, type Bracket, type BuildsFile, type HeroTable, type MapTab
 import { pickShown, type Shown } from "../lib/shown";
 import type { SearchItem } from "../lib/search";
 import type { MapsMeta } from "../lib/maps";
+import type { CompsFile } from "../lib/comps";
 import type { LengthFile } from "../lib/length";
 import type { TiersFile } from "../lib/tiers";
 import type { WeeklyAnalysis, WeeklyEvidence, WeeklyIndex, WeeklyIssue } from "../lib/weekly";
@@ -42,6 +43,8 @@ export const readMatchups = (slug: string): MatchupsFile | null => onReference(o
 /** 티어별 승률 (collector/tiers.py), on the reference patch only; null before its first collection. */
 export const readTiers = (): TiersFile | null => onReference(opt<TiersFile>("latest/sl_tiers.json"), readMeta());
 export const readLength = (): LengthFile | null => onReference(opt<LengthFile>("latest/sl_length.json"), readMeta());
+/** 팀 조합 for the 밴픽 suggestions (collector/team_comps.py), on the reference patch only; null before its first collection. */
+export const readComps = (): CompsFile | null => onReference(opt<CompsFile>("latest/sl_comps.json"), readMeta());
 
 let patchNotes: PatchNotesFile | null | undefined;
 /** Blizzard's official patch notes (collector/patchnotes.py); null until the first collection. Read once per build. */
