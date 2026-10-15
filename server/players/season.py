@@ -9,7 +9,8 @@ Order: fresh cache (as long as the match list, `match_ttl_seconds`) → one refr
 time (coalesced) → under the quota guard, HP. A cold query answers 202 with a job id: `/jobs/{id}`
 is polled, which HP does not charge (no X-HP-Quota reading on it, 2026-10-14), so only the first
 ask counts → past the guard, an answer HP gave less than `stale_max_seconds` ago, marked stale →
-else `quota_exceeded`. No Storm League this season (HP's empty list or 404) is an empty list.
+else `quota_exceeded`. No Storm League this season (HP's empty list, or a 404 whatever its code)
+is an empty list.
 
 Privacy as for the profile: a private player gets `private` without a call, and HP's 403
 `player_unavailable` marks them private (which drops every cached answer about them).
@@ -178,7 +179,9 @@ class SeasonService:
         if up.status == 202:
             up = await self._job(up)
             now = self._clock()
-        if up.status == 200 or up.code == "not_found":
+        # a 404 (`not_found`, or `player_not_found` as live HP says it) for a player the profile
+        # already found is a season without Storm League (2026-10-15)
+        if up.status in (200, 404):
             rows = season_rows(up.body)
             body = {"v": ROWS_VERSION, "season": season, "heroes": rows}
             entry = CacheEntry(key, 200, body, now, now + s.match_ttl_seconds)
