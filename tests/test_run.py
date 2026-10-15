@@ -92,7 +92,13 @@ async def test_run_writes_five_files_meta_and_raw_gz(
         f"{m}{r}" for m in ("qm", "sl", "sl_low", "sl_high") for r in ("", "_kr", "_na", "_eu")
     ]
     assert sorted(p.name for p in latest.iterdir()) == sorted(
-        ["builds.json", "meta.json", "sl_length.json", *(f"{v}.json" for v in views)]
+        [
+            "builds.json",
+            "meta.json",
+            "sl_comps.json",
+            "sl_length.json",
+            *(f"{v}.json" for v in views),
+        ]
     )
     meta = json.loads((latest / "meta.json").read_text())
     assert meta["current_patch"] == "2.55.17" and meta["collected_at"] == "2026-09-28T01:02:03Z"
@@ -963,6 +969,48 @@ async def test_a_run_counts_game_length_rates_from_the_archive_and_the_days_game
 
 
 @respx.mock
+async def test_a_run_counts_team_compositions_from_the_archive_with_the_hero_table_roles(
+    tmp_path: Path, raw_by_map, patches_payload, fake_sleep
+) -> None:
+    """팀 조합 (collector/team_comps.py): the same archive as game length, roles from heroes_ko."""
+    import gzip
+
+    mock_api(raw_by_map, patches_payload)
+    team0 = ["Anduin", "Muradin", "Sonya", "Valla", "Jaina"]
+    team1 = ["Muradin", "Sonya", "Valla", "Jaina", "Zeratul"]
+    game = {
+        "id": 1,
+        "version": "2.55.17.97771",
+        "length": 900,
+        "winner": 0,
+        "players": [{"team": 0, "hero": h, "win": True, "score": {}} for h in team0]
+        + [{"team": 1, "hero": h, "win": False, "score": {}} for h in team1],
+    }
+    archive = tmp_path / "archive"
+    (archive / "2026-09-28").mkdir(parents=True)
+    with gzip.open(archive / "2026-09-28" / "replays_sl.jsonl.gz", "wt", encoding="utf-8") as f:
+        f.write(json.dumps(game) + "\n")
+    s = settings(tmp_path, replay_archive_dir=archive)
+    s.data_dir.mkdir(parents=True, exist_ok=True)
+    roles = {
+        "Anduin": "Healer",
+        "Muradin": "Tank",
+        "Sonya": "Bruiser",
+        "Valla": "Ranged Assassin",
+        "Jaina": "Ranged Assassin",
+        "Zeratul": "Melee Assassin",
+    }
+    (s.data_dir / "heroes_ko.json").write_text(
+        json.dumps({"roles": [], "heroes": [{"name": n, "role": r} for n, r in roles.items()]})
+    )
+    assert await run(s, sleep=fake_sleep, now=lambda: "2026-09-28T18:25:00Z") == 0
+    out = json.loads((s.data_dir / "latest" / "sl_comps.json").read_text())
+    assert out["patch"] == "2.55.17" and out["games"] == 1 and out["teams"] == 2
+    assert out["groups"]["healer"]["0"] == {"games": 1, "wins": 0}
+    assert out["groups"]["healer"]["1"] == {"games": 1, "wins": 1}
+
+
+@respx.mock
 async def test_game_length_rates_stand_on_the_archive_when_the_days_sampling_fails(
     tmp_path: Path, raw_by_map, patches_payload, fake_sleep
 ) -> None:
@@ -972,6 +1020,8 @@ async def test_game_length_rates_stand_on_the_archive_when_the_days_sampling_fai
     assert await run(s, sleep=fake_sleep, now=lambda: "2026-09-28T18:25:00Z") == 0
     out = json.loads((s.data_dir / "latest" / "sl_length.json").read_text())
     assert out["games"] == 0 and out["heroes"] == {}
+    comps = json.loads((s.data_dir / "latest" / "sl_comps.json").read_text())
+    assert comps["games"] == 0 and comps["teams"] == 0
 
 
 @respx.mock

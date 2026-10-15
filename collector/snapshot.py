@@ -592,7 +592,9 @@ def commit_atomic(
         stage_previous = stage / "previous"
         # 시간대별·티어별 승률 belong to the reference patch (hero_length.py, tiers.py)
         shutil.copytree(
-            latest, stage_previous, ignore=shutil.ignore_patterns("sl_length.json", "sl_tiers.json")
+            latest,
+            stage_previous,
+            ignore=shutil.ignore_patterns("sl_length.json", "sl_tiers.json", "sl_comps.json"),
         )
 
     # swap: keep the old trees around until the new ones are in place, then delete

@@ -15,6 +15,7 @@ import {
   type DraftHero,
   type Side,
 } from "@/lib/draft";
+import type { CompPenalties } from "@/lib/comps";
 import { filterHeroes } from "@/lib/heroes";
 import { MATCHUP_K, MATCHUP_MIN_GAMES } from "@/lib/matchups";
 import { Card, cx, Portrait, SELECT, Segmented } from "../ui";
@@ -29,11 +30,14 @@ export function DraftView({
   maps,
   roles,
   patch,
+  comps,
 }: {
   heroes: DraftHero[];
   maps: { name: string; ko: string }[];
   roles: { name: string; ko: string }[];
   patch: string;
+  /** Team composition costs (lib/comps.ts); null before the first collection: the term is 0. */
+  comps: CompPenalties | null;
 }) {
   const t = useT();
   const [usFirst, setUsFirst] = useState(true);
@@ -112,8 +116,8 @@ export function DraftView({
   const loading = picked.some((s) => !files.has(s));
   const suggestions = useMemo(
     () =>
-      recommend(heroes, seq, { matchups: loaded, map }).slice(0, SUGGEST_TOP),
-    [heroes, seq, loaded, map],
+      recommend(heroes, seq, { matchups: loaded, map, comps }).slice(0, SUGGEST_TOP),
+    [heroes, seq, loaded, map, comps],
   );
   const missing = picked.filter((s) => files.get(s) === null);
   const open = available(heroes, seq);
@@ -283,7 +287,7 @@ export function DraftView({
                           {s.hero.ko}
                         </span>
                         <span className="num flex flex-wrap gap-x-2 text-2xs text-muted">
-                          {(["base", "allies", "enemies", "map"] as const).map(
+                          {(["base", "allies", "enemies", "map", "comp"] as const).map(
                             (k) => (
                               <span key={k}>
                                 {

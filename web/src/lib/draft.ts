@@ -6,9 +6,11 @@
  *  Suggestion for the team to act (a ban: the other team's side — what they would most want):
  *    score = (WRs − 50) + Σ allies: gap(ally with h) + Σ enemies: −gap(enemy against h) + map gap(h)
  *  gaps shrunk by n / (n + MATCHUP_K) and pairs under MATCHUP_MIN_GAMES left out (the hero page's rule, lib/matchups.ts);
- *  pair gaps are read from the picked heroes' matchups files. Every term is shown next to the score. */
+ *  pair gaps are read from the picked heroes' matchups files; comp(h) is what h costs the team's composition
+ *  (lib/comps.ts: 0 while the remaining picks can still fix it). Every term is shown next to the score. */
 import type { HeroTable, MatchupsFile } from "../data";
 import { FORMULA, shrinkWinRate, type Snapshot } from "../formula";
+import { TEAM_SIZE, compTerm, groupOf, type CompPenalties, type PoolGroup } from "./comps";
 import { MATCHUP_MIN_GAMES, matchupScore } from "./matchups";
 
 export type Side = "first" | "second";
@@ -128,7 +130,7 @@ export function undo(seq: readonly string[]): string[] {
 export interface Suggestion {
   hero: DraftHero;
   score: number;
-  terms: { base: number; allies: number; enemies: number; map: number };
+  terms: { base: number; allies: number; enemies: number; map: number; comp: number };
   /** Picked heroes (on either team) whose matchups file is not loaded: their pairs add nothing. */
   missing: string[];
 }
@@ -136,10 +138,12 @@ export interface Suggestion {
 export interface RecommendOptions {
   matchups: ReadonlyMap<string, MatchupsFile>;
   map: string | null;
+  /** Team composition costs (lib/comps.ts); null or absent: the term is 0. */
+  comps?: CompPenalties | null;
 }
 
 /** Suggestions for the current step, best first. */
-export function recommend(heroes: readonly DraftHero[], seq: readonly string[], { matchups, map }: RecommendOptions): Suggestion[] {
+export function recommend(heroes: readonly DraftHero[], seq: readonly string[], { matchups, map, comps }: RecommendOptions): Suggestion[] {
   const st = draftState(seq);
   if (!st.next) return [];
   // a pick scores for the team picking; a ban scores for the other team (what it would most want)
@@ -153,7 +157,21 @@ export function recommend(heroes: readonly DraftHero[], seq: readonly string[], 
     const row = f?.[side].find((p) => p.hero === name);
     return f && row && row.games >= MATCHUP_MIN_GAMES ? matchupScore(row.win_rate, f.win_rate, row.games) : 0;
   };
-  return available(heroes, seq)
+  const open = available(heroes, seq);
+  const bySlug = new Map(heroes.map((h) => [h.slug, h]));
+  const groupOfSlug = (s: string): PoolGroup => groupOf(bySlug.get(s)?.role ?? "");
+  // the team's picks as groups (an unknown slug still takes a slot), the slots it has left and what is left to pick
+  const team = st[forSide].picks.map(groupOfSlug);
+  const slots = TEAM_SIZE - team.length;
+  const pool: Record<PoolGroup, number> = { healer: 0, front: 0, ranged: 0, other: 0 };
+  for (const h of open) pool[groupOf(h.role)] += 1;
+  const compOf = (h: DraftHero): number => {
+    if (!comps) return 0;
+    const partner = PARTNER[h.slug];
+    const cand = [groupOf(h.role), ...(partner && st.next!.kind === "pick" ? [groupOfSlug(partner)] : [])];
+    return compTerm(team, cand, slots, pool, comps);
+  };
+  return open
     .map((h) => {
       const m = map ? h.maps[map] : undefined;
       const terms = {
@@ -162,8 +180,9 @@ export function recommend(heroes: readonly DraftHero[], seq: readonly string[], 
         // an enemy's win rate against h going down is h's advantage
         enemies: enemies.reduce((a, s) => a - gap(s, "enemy", h.name), 0),
         map: m ? matchupScore(m.wr, h.wr, m.games) : 0,
+        comp: compOf(h),
       };
-      return { hero: h, score: terms.base + terms.allies + terms.enemies + terms.map, terms, missing };
+      return { hero: h, score: terms.base + terms.allies + terms.enemies + terms.map + terms.comp, terms, missing };
     })
     .sort((a, b) => b.score - a.score || a.hero.slug.localeCompare(b.hero.slug));
 }
