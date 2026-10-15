@@ -78,6 +78,8 @@ test("draft: our last pick without a healer — healers first, the rest pay the 
   const top = await rows.first().getAttribute("data-hero");
   expect(roles.get(top!)).toBe("Healer");
   await expect(rows.first().locator("[data-term=comp]")).toHaveText("0.0");
+  // 조합 never goes above 0: the note under the list says what 0 means
+  await expect(page.locator("#draft-comp-note")).toHaveText("조합: 0이 최선입니다. 이 영웅을 넣으면 남은 픽으로 만들 수 있는 가장 나은 팀보다 나빠지는 만큼 −로 표시합니다.");
   // every suggestion: a healer costs the team nothing, anything else costs at least what no healer costs
   for (const row of await rows.all()) {
     const comp = Number(await row.locator("[data-term=comp]").textContent());
