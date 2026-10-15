@@ -131,3 +131,100 @@ def test_each_team_counts_under_its_exact_make_up_too() -> None:
         "1-1-0-2-1-0": {"games": 1, "wins": 0},
         "2-0-1-2-0-0": {"games": 1, "wins": 1},
     }
+
+
+# --- 실제 역할 (owner 2026-10-15): heroes that also play another role, from the teams around them
+
+FLEX_ROLES = {
+    **ROLES,
+    "Johanna": "Tank",
+    "Arthas": "Tank",
+    "Dehaka": "Bruiser",
+    "Thrall": "Bruiser",
+    "Li Li": "Healer",
+    "Malfurion": "Healer",
+    "Tracer": "Ranged Assassin",
+    "Genji": "Ranged Assassin",
+    "Kael'thas": "Ranged Assassin",
+    "Illidan": "Melee Assassin",
+    "Alarak": "Melee Assassin",
+    "Flexy": "Melee Assassin",
+    "Abathur": "Support",
+}
+
+
+def _flex_games() -> list[dict[str, Any]]:
+    """Melee assassins usually join tank + healer + ranged + support; Flexy, half the time, takes
+    the bruiser's place (tank + healer + two ranged around it), else joins tank + bruiser + healer +
+    ranged."""
+    games: list[dict[str, Any]] = []
+    tanks, bruisers, healers = (
+        ["Muradin", "Johanna", "Arthas"],
+        ["Sonya", "Dehaka", "Thrall"],
+        [
+            "Anduin",
+            "Li Li",
+            "Malfurion",
+        ],
+    )
+    ranged = ["Valla", "Jaina", "Raynor", "Tracer", "Genji", "Kael'thas"]
+    gid = 0
+    for i in range(240):
+        t, b, h = tanks[i % 3], bruisers[(i // 3) % 3], healers[(i // 9) % 3]
+        r1, r2 = ranged[i % 6], ranged[(i + 1) % 6]
+        standard = [t, b, h, r1, r2]  # 1-1-1-2-0-0
+        melee = [t, h, r1, ["Illidan", "Alarak"][i % 2], "Abathur"]  # 1-0-1-1-1-1
+        # as a melee assassin, or in the bruiser's place
+        flexy = [t, b, h, r1, "Flexy"] if i % 2 else [t, h, r1, r2, "Flexy"]
+        for a, z in ((standard, melee), (flexy, standard)):
+            gid += 1
+            games.append(_game(gid, a, z))
+    return games
+
+
+def test_a_hero_whose_teams_look_like_another_roles_teams_plays_that_role_too() -> None:
+    from collector.team_comps import played_roles
+
+    out = played_roles(_flex_games(), FLEX_ROLES, min_games=100)
+    assert set(out) == {"Flexy"}
+    assert out["Flexy"]["second"] == "Bruiser"
+    # half its teams are a bruiser's; the other half sit between (a bruiser next to it, no support)
+    assert 0.5 <= out["Flexy"]["share"] <= 1
+    assert out["Flexy"]["low"] >= 0.2 and out["Flexy"]["games"] == 240
+
+
+def test_too_few_games_or_a_share_under_a_fifth_is_not_a_second_role() -> None:
+    from collector.team_comps import played_roles
+
+    assert played_roles(_flex_games(), FLEX_ROLES, min_games=1000) == {}
+    assert played_roles(_flex_games(), FLEX_ROLES, min_games=100, min_share=0.9) == {}
+
+
+def test_a_flex_hero_counts_in_the_role_that_makes_its_team_the_commoner_make_up() -> None:
+    out = comp_counts(_flex_games(), FLEX_ROLES, patch=PATCH, since=None, min_flex_games=100)
+    assert out["played"]["Flexy"]["second"] == "Bruiser"
+    # Flexy in the bruiser's place counts as the bruiser: no 1-0-1-2-1-0 team is left
+    assert "1-0-1-2-1-0" not in out["makeups"]
+    assert out["makeups"]["1-1-1-2-0-0"]["games"] == 240 + 240 + 120
+    # as a melee assassin next to a bruiser it stays one
+    assert out["makeups"]["1-1-1-1-1-0"]["games"] == 120
+    assert out["makeups"]["1-0-1-1-1-1"]["games"] == 240
+    # front-liners: the melee teams' lone tank only
+    assert out["groups"]["front"]["1"]["games"] == 240
+
+
+def test_cho_and_gall_are_one_hero_of_two_players_and_play_no_second_role() -> None:
+    """Gall's teams always hold Cho (a tank): they look like a melee assassin's, by construction."""
+    from collector.team_comps import played_roles
+
+    roles = {**FLEX_ROLES, "Cho": "Tank", "Gall": "Ranged Assassin"}
+    games = [
+        _game(
+            i,
+            ["Cho", "Gall", "Anduin", "Valla", "Illidan"],
+            ["Muradin", "Sonya", "Anduin", "Valla", "Jaina"],
+        )
+        for i in range(150)
+    ]
+    out = played_roles(games, roles, min_games=100)
+    assert "Gall" not in out and "Cho" not in out
