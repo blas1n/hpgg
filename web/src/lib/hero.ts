@@ -139,8 +139,6 @@ export interface BuildView {
 export interface HeroBuilds {
   /** brackets with builds, high first; each sorted by the build score (formula.ts). */
   brackets: { key: BuildBracketKey; builds: BuildView[] }[];
-  /** per level of the main line (the first bracket's first build): the low bracket's first build's talent where it differs. */
-  lowPicks: (BuildTalentView | null)[];
 }
 
 function talentView(t: BuildTalent, talents: TalentTable | null, locale: Locale): BuildTalentView {
@@ -179,13 +177,7 @@ export function heroBuilds(builds: BuildsFile | null, talents: TalentTable | nul
       },
     ];
   });
-  const main = brackets[0]?.key === "high" ? brackets[0].builds[0] : undefined;
-  const low = brackets.find((b) => b.key === "low")?.builds[0];
-  const lowPicks = (main?.talents ?? []).map((t) => {
-    const other = main && low ? low.talents.find((l) => l.level === t.level) : undefined;
-    return other && other.ko !== t.ko ? other : null;
-  });
-  return { brackets, lowPicks: lowPicks.length ? lowPicks : Array<null>(7).fill(null) };
+  return { brackets };
 }
 
 /** Game tooltip text: {{…}} marks a highlighted value. Text parts only — nothing is parsed as HTML. */

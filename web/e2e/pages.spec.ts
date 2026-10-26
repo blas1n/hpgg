@@ -110,7 +110,7 @@ test("hero detail: three stat cards, per-map rows (not links) in SL, region × b
   await expect(page.locator("#grid [data-cell]")).toHaveCount(12); // 4 regions × (전체, 브실골플, 다마그)
   // no vote buttons (owner 2026-09-28): outside the comments (2026-10-05: post, delete, report — opinions in words,
   // not a 👍👎 count), only the mode toggle, the grid cells, talent icons and the builds' bracket tabs are buttons
-  await expect(page.locator("main button:not([id^=mode-]):not([data-talent]):not([data-low-pick]):not([id^=builds-bracket-]):not([data-cell])").filter({ hasNot: page.locator("xpath=ancestor::*[@id='comment-form' or @id='comments']") })).toHaveCount(0);
+  await expect(page.locator("main button:not([id^=mode-]):not([data-talent]):not([id^=builds-bracket-]):not([data-cell])").filter({ hasNot: page.locator("xpath=ancestor::*[@id='comment-form' or @id='comments']") })).toHaveCount(0);
   await expect(page.locator("#comments button, #comment-form button").filter({ hasText: /👍|👎|추천|비추/ })).toHaveCount(0);
 });
 
@@ -525,16 +525,14 @@ test("hero detail: talent builds per bracket, the high one first, with pick rate
   const imgs = await first.locator("[data-talent] img").count();
   expect(imgs).toBeGreaterThan(0);
   await expect(page.locator("#builds-sub")).toContainText("폭풍 리그");
-  // the main line notes where 브론즈 – 플래티넘 picks otherwise (fixture: levels 13 and 16)
-  await expect(first.locator("[data-low-pick]")).toHaveCount(2);
-  await expect(page.locator("#builds [data-low-pick]")).toHaveCount(2); // only on the main line
+  // the other bracket is one tap away on the tabs: no comparison row under the main line (owner 2026-10-26)
+  await expect(page.locator("#builds [data-low-picks]")).toHaveCount(0);
   // the formula is printed, as everywhere on the site
   await expect(page.locator("#builds-formula")).toContainText("정렬 점수 = 게임수 × (WRs − (영웅 평균 − 5))");
   // the low bracket on its tab
   await page.locator("#builds-bracket-low").click();
   await expect(page.locator("#builds-bracket-low")).toHaveAttribute("aria-pressed", "true");
   await expect(page.locator('#builds [data-build="1"]')).toHaveAttribute("data-bracket", "low");
-  await expect(page.locator("#builds [data-low-pick]")).toHaveCount(0);
 });
 
 test("hero detail: a hero without builds hides the section", async ({ page }) => {

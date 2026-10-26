@@ -196,26 +196,7 @@ describe("heroBuilds order (owner 2026-10-26): by the build score, not by games"
   });
 });
 
-describe("heroBuilds main line: where the low bracket's first build picks otherwise", () => {
-  it("the high bracket's first build carries, per level, the low bracket's pick when it differs", () => {
-    const v = heroBuilds(builds, talents, "Illidan", "ko");
-    const main = v.brackets[0]!.builds[0]!;
-    const low = v.brackets[1]!.builds[0]!;
-    expect(v.lowPicks).toHaveLength(7);
-    v.lowPicks.forEach((p, i) => {
-      if (low.talents[i]!.ko === main.talents[i]!.ko) expect(p).toBeNull();
-      else expect(p).toEqual(low.talents[i]);
-    });
-    expect(v.lowPicks.filter(Boolean).map((p) => p!.level)).toEqual([13, 16]); // fixture: low settles 13 and 16 otherwise
-  });
-
-  it("no main-line note when only one bracket has builds", () => {
-    const only: BuildsFile = { ...builds, brackets: { low: builds.brackets!.low! } };
-    const v = heroBuilds(only, null, "Illidan", "ko");
-    expect(v.brackets.map((b) => b.key)).toEqual(["low"]);
-    expect(v.lowPicks.every((p) => p === null)).toBe(true);
-  });
-
+describe("heroBuilds file format", () => {
   it("a builds file from before the brackets (one QM + SL list) shows no builds rather than mislabelled ones", () => {
     const legacy = { patch: "p", game_type: "qm,sl", collected_at: "t", heroes: { Illidan: builds.brackets!.high!.heroes.Illidan! } } as unknown as BuildsFile;
     expect(heroBuilds(legacy, null, "Illidan", "ko").brackets).toEqual([]);

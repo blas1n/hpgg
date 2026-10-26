@@ -283,8 +283,6 @@ export const ko = {
     buildWinRate: "승률",
     buildPick: "픽률",
     buildsBracket: "리그 구간별 빌드",
-    lowPick: "브론즈 – 플래티넘은 이렇게 찍습니다",
-    lowPickAria: (level: string, name: string) => `브론즈 – 플래티넘의 ${level}레벨 선택 · ${name}, 설명 보기`,
     buildGames: "게임",
     talentDialog: (name: string) => `${name} 설명`,
     level: (n: string) => `${n}레벨`,

@@ -741,7 +741,6 @@ function Builds({ builds }: { builds: HeroBuilds }) {
 
   const [bracket, setBracket] = useState(builds.brackets[0]?.key ?? "high");
   const shown = builds.brackets.find((b) => b.key === bracket) ?? builds.brackets[0];
-  const main = shown?.key === builds.brackets[0]?.key;
   const [line, detail] = buildFormulaLines(locale);
 
   return (
@@ -757,7 +756,6 @@ function Builds({ builds }: { builds: HeroBuilds }) {
       )}
       {(shown?.builds ?? []).map((b, i) => (
         <Card as="div" key={`${shown!.key}-${i}`} data-build={i + 1} data-bracket={shown!.key} data-thin={b.thin || undefined} className="grid grid-cols-[1fr_76px] gap-2 p-2">
-          <div className="min-w-0">
           <div className="grid grid-cols-7 gap-1">
             {b.talents.map((tl) => (
               <button
@@ -782,16 +780,6 @@ function Builds({ builds }: { builds: HeroBuilds }) {
                 </span>
               </button>
             ))}
-          </div>
-          {/* the main line: where the low bracket's first build picks otherwise, under the same level */}
-          {main && i === 0 && builds.lowPicks.some(Boolean) && (
-            <div data-low-picks className="mt-1.5 border-t border-line pt-1">
-              <span className="text-2xs text-muted">{t.hero.lowPick}</span>
-              <div className="grid grid-cols-7 gap-1">
-                {builds.lowPicks.map((lp, li) => (lp ? <LowPick key={li} t={lp} onOpen={open} aria={t.hero.lowPickAria} /> : <span key={li} />))}
-              </div>
-            </div>
-          )}
           </div>
           <div className="num flex flex-col justify-center text-right">
             {/* a thin build's win rate is shown, but not as a finding */}
@@ -865,20 +853,5 @@ function Builds({ builds }: { builds: HeroBuilds }) {
           document.body, // document coordinates: no positioned ancestor may move it
         )}
     </div>
-  );
-}
-
-/** One talent the low bracket picks instead, in the column of its level. */
-function LowPick({ t, aria, onOpen }: { t: BuildTalentView; aria: (level: string, name: string) => string; onOpen: (e: React.MouseEvent<HTMLButtonElement>, t: BuildTalentView) => void }) {
-  return (
-    <button type="button" data-low-pick aria-label={aria(String(t.level), t.ko)} onClick={(e) => onOpen(e, t)} className="group flex min-w-0 flex-col items-center gap-0.5">
-      {t.icon ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={assetUrl(`img/talents/${t.icon}`)} alt="" loading="lazy" className="size-7 rounded border border-line bg-surface-3 group-hover:border-primary sm:size-8" />
-      ) : (
-        <span className="size-7 rounded border border-line bg-surface-3 sm:size-8" />
-      )}
-      <span className="line-clamp-2 w-full text-center text-2xs leading-tight text-muted [overflow-wrap:anywhere]">{t.ko}</span>
-    </button>
   );
 }

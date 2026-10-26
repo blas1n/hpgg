@@ -280,8 +280,6 @@ The same data gives different tiers under a different formula. This site always 
     buildWinRate: "win rate",
     buildPick: "pick rate",
     buildsBracket: "Builds by league bracket",
-    lowPick: "Bronze – Platinum picks instead",
-    lowPickAria: (level: string, name: string) => `Bronze – Platinum pick at level ${level} · ${name}, show description`,
     buildGames: "games",
     talentDialog: (name: string) => `${name} description`,
     level: (n: string) => `Level ${n}`,
