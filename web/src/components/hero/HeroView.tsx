@@ -755,7 +755,7 @@ function Builds({ builds }: { builds: HeroBuilds }) {
         />
       )}
       {(shown?.builds ?? []).map((b, i) => (
-        <Card as="div" key={`${shown!.key}-${i}`} data-build={i + 1} data-bracket={shown!.key} data-thin={b.thin || undefined} className="grid grid-cols-[1fr_76px] gap-2 p-2">
+        <Card as="div" key={`${shown!.key}-${i}`} data-build={i + 1} data-bracket={shown!.key} data-thin={b.thin || undefined} className="relative grid grid-cols-[1fr_76px] gap-2 p-2">
           <div className="grid grid-cols-7 gap-1">
             {b.talents.map((tl) => (
               <button
@@ -781,23 +781,26 @@ function Builds({ builds }: { builds: HeroBuilds }) {
               </button>
             ))}
           </div>
-          <div className="num flex flex-col justify-center text-right">
+          <div className="num flex flex-col justify-center text-right leading-tight">
             {/* a thin build's win rate is shown, but not as a finding */}
             <span data-wr title={b.thin ? t.hero.thinBuild : undefined} className={cx("text-lg", b.thin ? "font-semibold text-muted" : cx("font-extrabold", wrTone(b.win_rate)))}>
               {pct(b.win_rate)}
             </span>
             <span className="text-2xs text-muted">{b.thin ? t.hero.buildWinRateThin : t.hero.buildWinRate}</span>
+            {/* label and value on one line each: six stacked lines made the card taller than its talents (owner 2026-10-26) */}
             {b.pick !== null && (
-              <>
+              <span className="mt-1 text-2xs text-muted">
+                {t.hero.buildPick}{" "}
                 <span data-pick className="text-[13px] text-fg">
                   {pct(b.pick)}
                 </span>
-                <span className="text-2xs text-muted">{t.hero.buildPick}</span>
-              </>
+              </span>
             )}
-            <span className="text-[13px] text-fg">{int(b.games)}</span>
-            <span className="text-2xs text-muted">{t.hero.buildGames}</span>
-            <span className="mt-1 block h-[3px] rounded-full bg-surface-3">
+            <span className="text-2xs text-muted">
+              <span className="text-[13px] text-fg">{int(b.games)}</span> {t.hero.buildGames}
+            </span>
+            {/* in the card's bottom padding, not a line of its own */}
+            <span className="absolute right-2 bottom-1 block h-[3px] w-[76px] rounded-full bg-surface-3">
               <i className="block h-full rounded-full bg-accent" style={{ width: `${b.share * 100}%` }} />
             </span>
           </div>

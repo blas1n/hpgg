@@ -62,6 +62,21 @@ test.describe("desktop 1280", () => {
     expect(row.height).toBeLessThanOrEqual(44);
   });
 
+  test("hero detail: a build card is no taller than its talent row, so the builds do not stretch the right column", async ({ page }) => {
+    // owner 2026-10-26: with win rate, pick rate and games stacked as six lines the right column ran 150-400 px past the left
+    await page.goto("./heroes/illidan/?mode=sl");
+    for (const card of await page.locator("#builds [data-build]").all()) {
+      // the talents' own content (icon to name), not their grid track: grid items stretch to the card
+      const talents = Math.max(
+        ...(await card.locator("[data-talent]").evaluateAll((els) =>
+          els.map((e) => e.lastElementChild!.getBoundingClientRect().bottom - e.firstElementChild!.getBoundingClientRect().top),
+        )),
+      );
+      const box = (await card.boundingBox())!;
+      expect(box.height).toBeLessThanOrEqual(talents + 20); // the card's padding and border
+    }
+  });
+
   test("hero detail: win rate split by league and by game length sits under the maps, so the columns even out", async ({ page }) => {
     // owner 2026-10-14: with the league chart on the right the left column ended a screen early
     await page.goto("./heroes/abathur/");
