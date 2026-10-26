@@ -121,6 +121,7 @@ export function Segmented<T extends string>({
   label,
   idPrefix,
   disabled,
+  nowrap,
 }: {
   value: T;
   options: { value: T; label: string }[];
@@ -128,6 +129,8 @@ export function Segmented<T extends string>({
   label: string;
   idPrefix?: string;
   disabled?: boolean;
+  /** Labels never wrap: the row keeps its width, for a parent that scrolls sideways. */
+  nowrap?: boolean;
 }) {
   return (
     <div role="group" aria-label={label} className="inline-flex rounded-lg border border-line bg-surface-2 p-0.5">
@@ -141,6 +144,7 @@ export function Segmented<T extends string>({
           onClick={() => onChange(o.value)}
           className={cx(
             "rounded-md px-3 py-1.5 text-[13px] font-semibold transition-colors disabled:cursor-not-allowed",
+            nowrap && "shrink-0 whitespace-nowrap",
             value === o.value ? "bg-primary text-primary-ink shadow-sm" : "text-muted hover:text-fg",
           )}
         >

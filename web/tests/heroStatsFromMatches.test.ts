@@ -44,8 +44,8 @@ describe("heroRowsFromMatches", () => {
 });
 
 describe("무작위 영웅 대전 in the per-hero table", () => {
-  it("is a mode of its own, after Quick Match and Storm League (owner 2026-10-26)", () => {
-    expect(HERO_STATS_MODES).toEqual(["all", "qm", "sl", "ar"]);
+  it("is a mode of its own; Storm League comes first, as in 경기 기록 (owner 2026-10-26)", () => {
+    expect(HERO_STATS_MODES).toEqual(["all", "sl", "qm", "ar"]);
     const rows = heroRowsFromMatches([row("Alarak", "ar", true), row("Alarak", "qm", false), row("Raynor", "ar", false)], "ar");
     expect(rows.map((r) => [r.hero, r.games])).toEqual([["Alarak", 1], ["Raynor", 1]]);
   });
