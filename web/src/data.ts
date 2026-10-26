@@ -192,11 +192,20 @@ export interface Build {
   win_rate: number;
   talents: BuildTalent[];
 }
+export type BuildBracketKey = "high" | "low";
+/** One Storm League bracket's popular builds (league tiers as the stats' sl_high / sl_low views). */
+export interface BuildBracket {
+  league_tier: number[];
+  heroes: Record<string, Build[]>;
+  /** the hero's games in the same bracket's stats: a build's pick-rate denominator ({} when not of the same patch). */
+  hero_games: Record<string, number>;
+}
+/** latest/builds.json. Since 2026-10-26 per bracket; an older file (one QM + SL list) has no `brackets`. */
 export interface BuildsFile {
   patch: string;
   game_type: string;
   collected_at: string;
-  heroes: Record<string, Build[]>;
+  brackets?: Partial<Record<BuildBracketKey, BuildBracket>>;
 }
 export interface TalentInfo {
   ko: string;

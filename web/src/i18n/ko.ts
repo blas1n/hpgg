@@ -187,6 +187,11 @@ export const ko = {
     details: "자세히",
   },
   formula: {
+    buildLine: (m: string) => `정렬 점수 = 게임수 × (WRs − (영웅 평균 − ${m}))`,
+    buildDetail: (k: string, m: string) => `WRs = 영웅 평균 + (승률 − 영웅 평균) × 게임수 / (게임수 + ${k})
+영웅 평균 = 같은 구간 그 영웅 빌드들의 게임 가중 승률. 게임이 절반인 빌드는 약 ${m}%p 더 이겨야 같은 점수입니다.
+픽률 = 빌드 게임수 / 같은 구간 그 영웅의 게임수. 7개 특성이 모두 같은 게임만 한 빌드로 셉니다.
+점수는 정렬에만 씁니다. 이 사이트는 공식을 숨기지 않습니다.`,
     ban: (w: string) => ` + 밴률 × ${w}`,
     line: (w: string, ban: string) => `티어 점수 = 픽률 × (승률 − 50) × ${w}${ban}`,
     noBan: "   (빠른 대전은 밴이 없음)",
@@ -219,8 +224,8 @@ export const ko = {
     gridAria: (region: string, bracket: string) => `${region} · ${bracket} 보기`,
     noCell: "이 조합의 데이터가 없습니다",
     wholeOnly: "전체 지역·구간 기준",
-    buildsTitle: "인기 특성 빌드",
-    buildsSub: (patch: string) => `빠른 대전 + 폭풍 리그 합산 · 패치 ${patch} · 많이 쓴 순`,
+    buildsTitle: "특성 빌드",
+    buildsSub: (patch: string) => `폭풍 리그 · 패치 ${patch} · 점수순`,
     gridUncollected: "수집 전",
     noData: "데이터 없음",
     noDataSub: "이 모드에 표본이 없습니다",
@@ -276,6 +281,10 @@ export const ko = {
     thinBuild: "표본이 적어 승률을 판단하기 어렵습니다",
     buildWinRateThin: "승률 · 표본 적음",
     buildWinRate: "승률",
+    buildPick: "픽률",
+    buildsBracket: "리그 구간별 빌드",
+    lowPick: "브론즈 – 플래티넘은 이렇게 찍습니다",
+    lowPickAria: (level: string, name: string) => `브론즈 – 플래티넘의 ${level}레벨 선택 · ${name}, 설명 보기`,
     buildGames: "게임",
     talentDialog: (name: string) => `${name} 설명`,
     level: (n: string) => `${n}레벨`,

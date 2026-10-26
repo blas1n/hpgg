@@ -183,6 +183,11 @@ export const en: Messages = {
     details: "Details",
   },
   formula: {
+    buildLine: (m: string) => `sort score = games × (WRs − (hero average − ${m}))`,
+    buildDetail: (k: string, m: string) => `WRs = hero average + (win rate − hero average) × games / (games + ${k})
+hero average = the games-weighted win rate of the hero's builds in the same bracket. A build with half the games needs about ${m} %p more wins to tie.
+pick rate = the build's games / the hero's games in the same bracket. Only games with all seven talents the same count as one build.
+The score only sorts. This site never hides its formula.`,
     ban: (w: string) => ` + ban rate × ${w}`,
     line: (w: string, ban: string) => `tier score = pick rate × (win rate − 50) × ${w}${ban}`,
     noBan: "   (Quick Match has no bans)",
@@ -215,8 +220,8 @@ The same data gives different tiers under a different formula. This site always 
     gridAria: (region: string, bracket: string) => `Show ${region} · ${bracket}`,
     noCell: "No data for this combination",
     wholeOnly: "all regions and brackets",
-    buildsTitle: "Popular talent builds",
-    buildsSub: (patch: string) => `Quick Match + Storm League combined · patch ${patch} · most played first`,
+    buildsTitle: "Talent builds",
+    buildsSub: (patch: string) => `Storm League · patch ${patch} · by score`,
     gridUncollected: "not collected yet",
     noData: "No data",
     noDataSub: "No games in this mode",
@@ -273,6 +278,10 @@ The same data gives different tiers under a different formula. This site always 
     thinBuild: "Too few games to judge this win rate",
     buildWinRateThin: "win rate · few games",
     buildWinRate: "win rate",
+    buildPick: "pick rate",
+    buildsBracket: "Builds by league bracket",
+    lowPick: "Bronze – Platinum picks instead",
+    lowPickAria: (level: string, name: string) => `Bronze – Platinum pick at level ${level} · ${name}, show description`,
     buildGames: "games",
     talentDialog: (name: string) => `${name} description`,
     level: (n: string) => `Level ${n}`,

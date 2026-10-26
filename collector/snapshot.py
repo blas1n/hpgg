@@ -433,7 +433,7 @@ def heroes_without_assets(
         return None
     known = {h["name"] for h in json.loads(p.read_text(encoding="utf-8"))["heroes"]}
     seen = {r["hero"] for snap in snapshots.values() for r in snap["rows"]}
-    seen |= set((builds or {}).get("heroes", {}))
+    seen |= build_heroes(builds)
     return sorted(seen - known)
 
 
@@ -526,8 +526,28 @@ LEVEL_KEYS = (
 )
 
 
+# Talent builds per Storm League bracket (owner 2026-10-26): the high bracket is the hero page's
+# main line, the low one shows where lower leagues pick otherwise. The same league tiers as the
+# stats' bracket views, so a build's pick rate divides by that view's games. High first: when the
+# weekly allowance runs out between the two calls, the main line is the one already fresh.
+_TIERS_OF = {s.key: s.league_tier for s in SPECS}
+BUILD_BRACKETS: tuple[tuple[str, tuple[int, ...]], ...] = tuple(
+    (key, tiers) for key in ("high", "low") if (tiers := _TIERS_OF[f"sl_{key}"])
+)
+
+
+def build_heroes(builds: dict[str, Any] | None) -> set[str]:
+    """Every hero key of a builds.json, in any bracket (or the one list of a file before 10-26)."""
+    if not builds:
+        return set()
+    seen = set(builds.get("heroes") or {})
+    for b in (builds.get("brackets") or {}).values():
+        seen |= set(b.get("heroes") or {})
+    return seen
+
+
 def normalize_builds(raw: Any, *, patch: str, game_type: str, collected_at: str) -> dict[str, Any]:
-    """`/heroes/talents/builds/all` → latest/builds.json: per hero a list of popular builds
+    """`/heroes/talents/builds/all` → one bracket's builds: per hero a list of popular builds
     (games, win_rate, seven talents by level). Heroes that answered `{"error": ...}` get []."""
     if not isinstance(raw, dict) or not raw:
         raise ValueError("empty builds payload")

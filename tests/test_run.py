@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import gzip
 import json
 import logging
 from pathlib import Path
@@ -17,6 +18,7 @@ from tests.conftest import BASE, TOKEN
 # queryable), 2.55.9 one; HP is asked for every build of a patch (owner 2026-10-01)
 CUR_TF = "2.55.17.97650,2.55.17.97771"
 OLD_TF = "2.55.9.90000"
+QUOTA_SPENT = {"error": {"code": "quota_exceeded", "message": "week"}}
 
 
 def thin(raw_by_map: dict[str, Any]) -> dict[str, Any]:
@@ -115,8 +117,8 @@ async def test_run_writes_five_files_meta_and_raw_gz(
         + [f"raw_{c}.json.gz" for c in cells]
         + [f"raw_{c}_solo.json.gz" for c in cells]
     )
-    # 60 s spacing between the 24 group_by_map calls → 23 waits, + 1 before builds/all
-    assert fake_sleep.calls == [60.0] * 24
+    # 60 s spacing between the 24 group_by_map calls → 23 waits, + 1 before each builds/all
+    assert fake_sleep.calls == [60.0] * 25
 
 
 @respx.mock
@@ -374,35 +376,88 @@ def _builds_payload() -> dict[str, Any]:
 
 
 @respx.mock
-async def test_run_collects_popular_builds_after_stats(
+async def test_run_collects_storm_league_builds_per_bracket_after_stats(
     tmp_path: Path, raw_by_map, patches_payload, fake_sleep
 ) -> None:
+    """Owner 2026-10-26: builds of high (다마그) and low (브실골플) Storm League apart, ten each —
+    two builds/all calls a day of the 21 a week; Quick Match builds are no longer collected."""
     mock_api(raw_by_map, patches_payload)
     route = respx.get(f"{BASE}/heroes/talents/builds/all").mock(
         return_value=httpx.Response(200, json=_builds_payload())
     )
     s = settings(tmp_path)
     assert await run(s, sleep=fake_sleep, now=lambda: "2026-09-28T00:00:00Z") == 0
-    q = dict(httpx.QueryParams(route.calls[0].request.url.query))
-    assert (q["timeframe"], q["game_type"], q["talentbuildtype"], q["total_builds"]) == (
-        CUR_TF,
-        "qm,sl",
-        "Popular",
-        "5",
-    )
+    qs = [dict(httpx.QueryParams(c.request.url.query)) for c in route.calls]
+    assert [
+        (q["timeframe"], q["game_type"], q["league_tier"], q["talentbuildtype"], q["total_builds"])
+        for q in qs
+    ] == [
+        (CUR_TF, "sl", "5,6", "Popular", "10"),
+        (CUR_TF, "sl", "1,2,3,4", "Popular", "10"),
+    ]
     b = json.loads((s.data_dir / "latest" / "builds.json").read_text())
-    assert b["patch"] == "2.55.17" and b["game_type"] == "qm,sl"
-    assert [x["games"] for x in b["heroes"]["Illidan"]] == [386, 120]
-    assert b["heroes"]["Illidan"][0]["win_rate"] == 51.3
-    assert [t["level"] for t in b["heroes"]["Illidan"][0]["talents"]] == [1, 4, 7, 10, 13, 16, 20]
-    assert b["heroes"]["Illidan"][0]["talents"][0] == {
+    assert b["patch"] == "2.55.17" and b["game_type"] == "sl" and "heroes" not in b
+    assert sorted(b["brackets"]) == ["high", "low"]
+    high = b["brackets"]["high"]
+    assert high["league_tier"] == [5, 6] and b["brackets"]["low"]["league_tier"] == [1, 2, 3, 4]
+    assert [x["games"] for x in high["heroes"]["Illidan"]] == [386, 120]
+    assert high["heroes"]["Illidan"][0]["win_rate"] == 51.3
+    levels = [t["level"] for t in high["heroes"]["Illidan"][0]["talents"]]
+    assert levels == [1, 4, 7, 10, 13, 16, 20]
+    assert high["heroes"]["Illidan"][0]["talents"][0] == {
         "level": 1,
         "name": "IllidanUnendingHatredPassive",
         "title": "Unending Hatred",
     }
-    assert b["heroes"]["Nova"] == []
-    assert fake_sleep.calls == [60.0] * 24  # 23 between the 24 stats calls, 1 before builds
-    assert (s.snapshot_out_dir / "2026-09-28" / "raw_builds.json.gz").exists()
+    assert high["heroes"]["Nova"] == []
+    # the pick rate's denominator: the hero's games in the same bracket's stats (map "all")
+    sl_high = json.loads((s.data_dir / "latest" / "sl_high.json").read_text())
+    games = {r["hero"]: r["games"] for r in sl_high["rows"] if r["map"] == "all"}
+    assert high["hero_games"] == games and games["Illidan"] > 0
+    # 23 between the 24 stats calls, 1 before each builds call
+    assert fake_sleep.calls == [60.0] * 25
+    raw_gz = s.snapshot_out_dir / "2026-09-28" / "raw_builds.json.gz"
+    raw = json.loads(gzip.decompress(raw_gz.read_bytes()))
+    assert sorted(raw) == ["high", "low"]
+
+
+@respx.mock
+async def test_builds_quota_spent_after_the_high_bracket_keeps_yesterdays_low_bracket(
+    tmp_path: Path, raw_by_map, patches_payload, fake_sleep
+) -> None:
+    mock_api(raw_by_map, patches_payload)
+    respx.get(f"{BASE}/heroes/talents/builds/all").mock(
+        return_value=httpx.Response(200, json=_builds_payload())
+    )
+    s = settings(tmp_path)
+    assert await run(s, sleep=fake_sleep, now=lambda: "2026-09-28T00:00:00Z") == 0
+    spent = httpx.Response(429, json=QUOTA_SPENT, headers={"Retry-After": "1"})
+    fresh = _builds_payload()
+    fresh["Illidan"][0] = {**fresh["Illidan"][0], "games_played": 999}
+    route = respx.get(f"{BASE}/heroes/talents/builds/all").mock(
+        side_effect=[httpx.Response(200, json=fresh), spent]
+    )
+    before = len(route.calls)
+    assert await run(s, sleep=fake_sleep, now=lambda: "2026-09-29T00:00:00Z") == 0
+    assert len(route.calls) - before == 2
+    b = json.loads((s.data_dir / "latest" / "builds.json").read_text())
+    assert b["collected_at"] == "2026-09-29T00:00:00Z"
+    assert b["brackets"]["high"]["heroes"]["Illidan"][0]["games"] == 999
+    assert b["brackets"]["low"]["heroes"]["Illidan"][0]["games"] == 386  # yesterday's
+
+
+@respx.mock
+async def test_builds_quota_spent_on_the_first_call_asks_no_more(
+    tmp_path: Path, raw_by_map, patches_payload, fake_sleep
+) -> None:
+    mock_api(raw_by_map, patches_payload)
+    route = respx.get(f"{BASE}/heroes/talents/builds/all").mock(
+        return_value=httpx.Response(429, json=QUOTA_SPENT, headers={"Retry-After": "1"})
+    )
+    s = settings(tmp_path)
+    assert await run(s, sleep=fake_sleep, now=lambda: "2026-09-28T00:00:00Z") == 0
+    assert len(route.calls) == 1  # one bucket: the second bracket would be refused too
+    assert not (s.data_dir / "latest" / "builds.json").exists()
 
 
 @respx.mock
@@ -430,6 +485,8 @@ async def test_builds_are_collected_for_the_reference_patch(
     assert q["timeframe"] == OLD_TF
     b = json.loads((s.data_dir / "latest" / "builds.json").read_text())
     assert b["patch"] == "2.55.9"
+    # the stats are of the thin new patch: no pick-rate denominator for the previous patch's builds
+    assert b["brackets"]["high"]["hero_games"] == {}
 
 
 @respx.mock
@@ -556,7 +613,7 @@ async def test_run_collects_matchups_for_every_due_hero_after_the_stats(
     assert (m["patch"], m["collected_at"]) == ("2.55.17", "2026-09-28T00:00:00Z")
     assert (s.snapshot_out_dir / "2026-09-28" / "matchups.json.gz").exists()
     # 5 between 6 stats calls + 1 before builds, then one gap between the two matchups calls
-    assert fake_sleep.calls == [60.0] * 24 + [s.matchups_call_spacing_seconds]
+    assert fake_sleep.calls == [60.0] * 25 + [s.matchups_call_spacing_seconds]
     # next day: nothing is due (every other day) → no calls, files untouched
     respx.reset()
     mock_api(raw_by_map, patches_payload)
@@ -1102,7 +1159,7 @@ async def test_a_run_collects_aram_as_one_whole_view_with_its_solo_twin(
     meta = json.loads((latest / "meta.json").read_text())
     assert "ar" in meta["modes"] and not any(k.startswith("ar_") for k in meta["modes"])
     # every group_by_map call is a minute apart: 24 + 2, then the builds call
-    assert fake_sleep.calls == [60.0] * 26
+    assert fake_sleep.calls == [60.0] * 27
     assert (s.snapshot_out_dir / "2026-09-28" / "ar.json.gz").exists()
     # the weekly report stays on QM and SL
     day = json.loads((s.data_dir / "history" / "2026-09-28.json").read_text())

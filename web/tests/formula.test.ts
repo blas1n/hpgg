@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
-import { appliedParty, formulaDetail, formulaLine, computeTiers, scoreRow, shrinkWinRate, type Row, type Snapshot } from "../src/formula";
+import { appliedParty, BUILD_FORMULA, buildBase, buildFormulaLines, buildScore, formulaDetail, formulaLine, computeTiers, scoreRow, shrinkWinRate, type Row, type Snapshot } from "../src/formula";
 import { wilson } from "../src/wilson";
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -149,5 +149,32 @@ describe("party correction (#36): the collector's tier_win_rate is the formula's
     expect(en).toContain("WRs   = 50 + (corrected WR − 50) × games / (games + 500)");
     // without the correction the text is exactly what it was
     expect(formulaDetail(false, 200, "ko", null)).toBe(formulaDetail(false, 200, "ko"));
+  });
+});
+
+describe("build score (owner 2026-10-26): sorts a hero's talent builds within one bracket", () => {
+  it("hero average = the builds' games-weighted win rate", () => {
+    expect(buildBase([{ games: 100, win_rate: 60 }, { games: 300, win_rate: 40 }])).toBeCloseTo(45);
+    expect(buildBase([])).toBe(50);
+  });
+
+  it("games × (WRs − (average − 5)), WRs pulled toward the hero's average with k = 100", () => {
+    expect(BUILD_FORMULA).toEqual({ k: 100, margin: 5 });
+    // 225 games at 58.0 % against an average of 56.2: WRs = 56.2 + 1.8 × 225/325
+    expect(buildScore(225, 58, 56.2)).toBeCloseTo(225 * (56.2 + (1.8 * 225) / 325 - 51.2));
+    expect(buildScore(0, 70, 50)).toBe(0);
+    // a build at the average scores games × 5: half the games needs about 5 %p more to tie
+    expect(buildScore(1000, 50, 50)).toBeCloseTo(5000);
+    expect(buildScore(500, 56, 50)).toBeCloseTo(5000);
+  });
+
+  it("is printed under the builds, in both languages, with its numbers", () => {
+    const [line, detail] = buildFormulaLines("ko");
+    expect(line).toBe("정렬 점수 = 게임수 × (WRs − (영웅 평균 − 5))");
+    expect(detail).toContain("WRs = 영웅 평균 + (승률 − 영웅 평균) × 게임수 / (게임수 + 100)");
+    expect(detail).toContain("픽률 = 빌드 게임수 / 같은 구간 그 영웅의 게임수");
+    const [enLine, enDetail] = buildFormulaLines("en");
+    expect(enLine).toBe("sort score = games × (WRs − (hero average − 5))");
+    expect(enDetail).toContain("(games + 100)");
   });
 });

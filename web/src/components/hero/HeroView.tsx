@@ -7,7 +7,8 @@ import { HpCredit } from "@/components/HpCredit";
 import { ChangeGroups } from "@/components/patches/ChangeGroups";
 import { CommentThread } from "@/components/comments/CommentThread";
 import { useLocale, useT } from "@/i18n/client";
-import { descParts, type BuildTalentView, type BuildView, type GridRow, type HeroSummary, type MapRow } from "@/lib/hero";
+import { descParts, type BuildTalentView, type GridRow, type HeroBuilds, type HeroSummary, type MapRow } from "@/lib/hero";
+import { buildFormulaLines } from "@/formula";
 import { LENGTH_MIN_GAMES, type LengthView } from "@/lib/length";
 import { TIER_MIN_GAMES, type TiersView } from "@/lib/tiers";
 import { matchupRule, type MatchupRow, type MatchupsView } from "@/lib/matchups";
@@ -49,7 +50,7 @@ export function HeroView({
 }: {
   hero: HeroInfo;
   models: Record<Mode, HeroModeModel>;
-  builds: BuildView[];
+  builds: HeroBuilds;
   buildsPatch: string | null;
   /** Storm League counters/synergies; null until the first matchups collection. */
   matchups: MatchupsView | null;
@@ -118,7 +119,7 @@ export function HeroView({
     ...(length ? [{ id: "length-title", label: tab.length, nav: "nav-length" }] : []),
     { id: "grid-title", label: tab.grid, nav: "nav-grid" },
     ...(matchups ? [{ id: "matchups-title", label: tab.matchups, nav: "nav-matchups" }] : []),
-    ...(builds.length ? [{ id: "builds-title", label: tab.builds, nav: "nav-builds" }] : []),
+    ...(builds.brackets.length ? [{ id: "builds-title", label: tab.builds, nav: "nav-builds" }] : []),
     // long and not what people come for first: last, below both columns
     ...(patches.notes.length || patches.since ? [{ id: "patches-title", label: tab.patches, nav: "nav-patches" }] : []),
     // what players think of the numbers (owner 2026-10-05): the end of the page
@@ -216,7 +217,7 @@ export function HeroView({
 
       <Matchups hero={hero} v={matchups} wholeOnly={filtered} />
 
-      {builds.length > 0 && (
+      {builds.brackets.length > 0 && (
         <>
           <h2 id="builds-title" className={SECTION}>
             {t.hero.buildsTitle}{" "}
@@ -698,7 +699,7 @@ function MatchupList({ id, title, note, rows }: { id: string; title: string; not
 
 type Pop = { t: BuildTalentView; left: number; top: number; width: number; anchor: DOMRect };
 
-function Builds({ builds }: { builds: BuildView[] }) {
+function Builds({ builds }: { builds: HeroBuilds }) {
   const t = useT();
   const locale = useLocale();
   const [pop, setPop] = useState<Pop | null>(null);
@@ -738,10 +739,25 @@ function Builds({ builds }: { builds: BuildView[] }) {
     setPop({ t, left, top: a.bottom + 8 + window.scrollY, width, anchor: a });
   };
 
+  const [bracket, setBracket] = useState(builds.brackets[0]?.key ?? "high");
+  const shown = builds.brackets.find((b) => b.key === bracket) ?? builds.brackets[0];
+  const main = shown?.key === builds.brackets[0]?.key;
+  const [line, detail] = buildFormulaLines(locale);
+
   return (
     <div id="builds" className="grid gap-2">
-      {builds.map((b, i) => (
-        <Card as="div" key={i} data-build={i + 1} data-thin={b.thin || undefined} className="grid grid-cols-[1fr_76px] gap-2 p-2">
+      {builds.brackets.length > 1 && (
+        <Segmented
+          value={bracket}
+          options={builds.brackets.map((b) => ({ value: b.key, label: t.common.brackets[b.key] }))}
+          onChange={setBracket}
+          label={t.hero.buildsBracket}
+          idPrefix="builds-bracket"
+        />
+      )}
+      {(shown?.builds ?? []).map((b, i) => (
+        <Card as="div" key={`${shown!.key}-${i}`} data-build={i + 1} data-bracket={shown!.key} data-thin={b.thin || undefined} className="grid grid-cols-[1fr_76px] gap-2 p-2">
+          <div className="min-w-0">
           <div className="grid grid-cols-7 gap-1">
             {b.talents.map((tl) => (
               <button
@@ -767,12 +783,30 @@ function Builds({ builds }: { builds: BuildView[] }) {
               </button>
             ))}
           </div>
+          {/* the main line: where the low bracket's first build picks otherwise, under the same level */}
+          {main && i === 0 && builds.lowPicks.some(Boolean) && (
+            <div data-low-picks className="mt-1.5 border-t border-line pt-1">
+              <span className="text-2xs text-muted">{t.hero.lowPick}</span>
+              <div className="grid grid-cols-7 gap-1">
+                {builds.lowPicks.map((lp, li) => (lp ? <LowPick key={li} t={lp} onOpen={open} aria={t.hero.lowPickAria} /> : <span key={li} />))}
+              </div>
+            </div>
+          )}
+          </div>
           <div className="num flex flex-col justify-center text-right">
             {/* a thin build's win rate is shown, but not as a finding */}
             <span data-wr title={b.thin ? t.hero.thinBuild : undefined} className={cx("text-lg", b.thin ? "font-semibold text-muted" : cx("font-extrabold", wrTone(b.win_rate)))}>
               {pct(b.win_rate)}
             </span>
             <span className="text-2xs text-muted">{b.thin ? t.hero.buildWinRateThin : t.hero.buildWinRate}</span>
+            {b.pick !== null && (
+              <>
+                <span data-pick className="text-[13px] text-fg">
+                  {pct(b.pick)}
+                </span>
+                <span className="text-2xs text-muted">{t.hero.buildPick}</span>
+              </>
+            )}
             <span className="text-[13px] text-fg">{int(b.games)}</span>
             <span className="text-2xs text-muted">{t.hero.buildGames}</span>
             <span className="mt-1 block h-[3px] rounded-full bg-surface-3">
@@ -781,6 +815,15 @@ function Builds({ builds }: { builds: BuildView[] }) {
           </div>
         </Card>
       ))}
+      <div className="space-y-1">
+        <p id="builds-formula" className="max-w-[80ch] rounded-lg border border-line bg-surface px-3 py-2 font-mono text-xs break-keep [overflow-wrap:anywhere] text-fg-2">
+          {line}
+        </p>
+        <details className="text-[13px]">
+          <summary className="cursor-pointer text-secondary">{t.tier.details}</summary>
+          <pre className="mt-2 whitespace-pre-wrap rounded-lg bg-surface p-3 text-xs break-keep [overflow-wrap:anywhere] text-fg-2">{detail}</pre>
+        </details>
+      </div>
       {pop &&
         createPortal(
         <div
@@ -822,5 +865,20 @@ function Builds({ builds }: { builds: BuildView[] }) {
           document.body, // document coordinates: no positioned ancestor may move it
         )}
     </div>
+  );
+}
+
+/** One talent the low bracket picks instead, in the column of its level. */
+function LowPick({ t, aria, onOpen }: { t: BuildTalentView; aria: (level: string, name: string) => string; onOpen: (e: React.MouseEvent<HTMLButtonElement>, t: BuildTalentView) => void }) {
+  return (
+    <button type="button" data-low-pick aria-label={aria(String(t.level), t.ko)} onClick={(e) => onOpen(e, t)} className="group flex min-w-0 flex-col items-center gap-0.5">
+      {t.icon ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={assetUrl(`img/talents/${t.icon}`)} alt="" loading="lazy" className="size-7 rounded border border-line bg-surface-3 group-hover:border-primary sm:size-8" />
+      ) : (
+        <span className="size-7 rounded border border-line bg-surface-3 sm:size-8" />
+      )}
+      <span className="line-clamp-2 w-full text-center text-2xs leading-tight text-muted [overflow-wrap:anywhere]">{t.ko}</span>
+    </button>
   );
 }
