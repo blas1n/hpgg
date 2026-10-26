@@ -746,6 +746,8 @@ function Builds({ builds }: { builds: HeroBuilds }) {
   return (
     <div id="builds" className="grid gap-2">
       {builds.brackets.length > 1 && (
+        // a grid child stretches to the column: the wrapper keeps the group as wide as its buttons
+        <div className="justify-self-start">
         <Segmented
           value={bracket}
           options={builds.brackets.map((b) => ({ value: b.key, label: t.common.brackets[b.key] }))}
@@ -753,6 +755,7 @@ function Builds({ builds }: { builds: HeroBuilds }) {
           label={t.hero.buildsBracket}
           idPrefix="builds-bracket"
         />
+        </div>
       )}
       {(shown?.builds ?? []).map((b, i) => (
         <Card as="div" key={`${shown!.key}-${i}`} data-build={i + 1} data-bracket={shown!.key} data-thin={b.thin || undefined} className="relative grid grid-cols-[1fr_76px] gap-2 p-2">
