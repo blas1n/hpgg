@@ -535,6 +535,15 @@ test("hero detail: talent builds per bracket, the high one first, with pick rate
   await expect(page.locator('#builds [data-build="1"]')).toHaveAttribute("data-bracket", "low");
 });
 
+test("hero detail: the builds' bracket tabs hug their buttons instead of stretching across the column", async ({ page }) => {
+  // owner 2026-10-26 (phone): the group's border ran the full width with both buttons on its left
+  await page.goto("./heroes/illidan/");
+  const group = (await page.locator("#builds [role=group]").boundingBox())!;
+  const hi = (await page.locator("#builds-bracket-high").boundingBox())!;
+  const lo = (await page.locator("#builds-bracket-low").boundingBox())!;
+  expect(group.width).toBeLessThanOrEqual(hi.width + lo.width + 12); // the group's own padding and border
+});
+
 test("hero detail: a hero without builds hides the section", async ({ page }) => {
   await page.goto("./heroes/xal-atath/");
   await expect(page.locator("#meta-line")).toContainText("영웅이 없습니다"); // not in heroes_ko yet
