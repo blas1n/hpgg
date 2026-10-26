@@ -2,14 +2,14 @@
 
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { PageHead } from "@/components/PageHead";
-import { assetUrl, BRACKETS, hotsHref, loadSnapshot, REGIONS, referencePatch, regionSample, shortDate, snapshotKey, type Bracket, type HeroTable, type MapTable, type Meta, type Mode, type PatchChoice, type Region } from "@/data";
+import { assetUrl, BRACKETS, hotsHref, loadSnapshot, REGIONS, referencePatch, regionSample, shortDate, snapshotKey, type Bracket, type HeroTable, type MapTable, type Meta, type PatchChoice, type Region, type TierMode } from "@/data";
 import { useLocale, useT } from "@/i18n/client";
 import type { Locale } from "@/i18n/locale";
 import type { Messages } from "@/i18n/messages";
 import { formulaDetail, formulaLine, FORMULA, type Party, type Snapshot } from "@/formula";
 import { bracketMatches, regionMatches } from "@/lib/shown";
 import { windowNote } from "@/lib/window";
-import { DEFAULT_TIER_STATE, formatScore, nextSort, parseTierState, resolvePatch, tierSearch, tierTable, visibleRows, type SortKey, type TierRow, type TierState, type TierTable } from "@/lib/tier";
+import { DEFAULT_TIER_STATE, formatScore, nextSort, parseTierState, resolvePatch, tierModes, tierSearch, tierTable, visibleRows, type SortKey, type TierRow, type TierState, type TierTable } from "@/lib/tier";
 import { Card, cx, Portrait, SELECT, Segmented, TierBadge, wrTone } from "../ui";
 
 const pct = (n: number) => `${n.toFixed(1)}%`;
@@ -41,7 +41,9 @@ export function TierView({ meta, heroes, maps, initial }: { meta: Meta; heroes: 
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const s = parseTierState(location.search);
+    const parsed = parseTierState(location.search);
+    // a ?mode=ar link from before 무작위 영웅 대전 was published (or after it was dropped) shows Quick Match
+    const s = tierModes(meta).includes(parsed.mode) ? parsed : { ...parsed, mode: "qm" as const };
     setState(s);
     // a link from before a parameter was dropped (e.g. ?preset=, removed 2026-09-29) shows its canonical URL
     const qs = tierSearch(s);
@@ -61,6 +63,8 @@ export function TierView({ meta, heroes, maps, initial }: { meta: Meta; heroes: 
 
   const { mode, bracket, region, map, role, sort, dir } = state;
   const sl = mode === "sl";
+  // 무작위 영웅 대전 is one view of every region (owner 2026-10-26): no region, bracket or map to choose
+  const ar = mode === "ar";
   const file = snapshotKey(mode, bracket, region);
   // one reference patch for every view; a view with no file on it says so rather than showing another patch
   const { patch, auto } = resolvePatch(meta, state.patch);
@@ -172,11 +176,8 @@ export function TierView({ meta, heroes, maps, initial }: { meta: Meta; heroes: 
           label={t.common.gameMode}
           idPrefix="mode"
           value={mode}
-          onChange={(m: Mode) => m !== mode && update({ mode: m, map: "all", bracket: "all", patch: "auto" })}
-          options={[
-            { value: "qm", label: t.common.modes.qm },
-            { value: "sl", label: t.common.modes.sl },
-          ]}
+          onChange={(m: TierMode) => m !== mode && update({ mode: m, map: "all", bracket: "all", ...(m === "ar" ? { region: "all" as const } : {}), patch: "auto" })}
+          options={tierModes(meta).map((m) => ({ value: m, label: t.common.modes[m] }))}
         />
         <div id="roles" role="group" aria-label={t.common.role} className="scrollbar-none flex max-w-full gap-0.5 overflow-x-auto">
           {[{ name: "all", ko: t.common.allRoles }, ...heroes.roles].map((r) => (
@@ -196,6 +197,7 @@ export function TierView({ meta, heroes, maps, initial }: { meta: Meta; heroes: 
           ))}
         </div>
         <div className="flex w-full flex-wrap gap-1.5 sm:ml-auto sm:w-auto sm:flex-nowrap">
+          {!ar && (
           <label id="region-wrap" className="w-full sm:w-auto sm:flex-none">
             <span className="sr-only">{t.common.region}</span>
             <select
@@ -212,6 +214,7 @@ export function TierView({ meta, heroes, maps, initial }: { meta: Meta; heroes: 
               ))}
             </select>
           </label>
+          )}
           {sl && (
             <>
             <label id="bracket-wrap" className="flex-1 sm:flex-none">
@@ -326,7 +329,7 @@ function viewLabel(t: ReturnType<typeof useT>, region: Region, bracket: Bracket)
 }
 
 /** A region or bracket view: which one, when it was collected, and how thin its sample is. */
-function RegionNote({ meta, mode, region, bracket, patch, shown }: { meta: Meta; mode: Mode; region: Region; bracket: Bracket; patch: PatchChoice; shown: number }) {
+function RegionNote({ meta, mode, region, bracket, patch, shown }: { meta: Meta; mode: TierMode; region: Region; bracket: Bracket; patch: PatchChoice; shown: number }) {
   const t = useT();
   const s = regionSample(meta, mode, region, patch, bracket, shown);
   if (!s) return null;
@@ -348,9 +351,10 @@ function RegionNote({ meta, mode, region, bracket, patch, shown }: { meta: Meta;
   );
 }
 
-function HeroRow({ r, cols, hasPrevious, mode }: { r: TierRow; cols: typeof COLUMNS; hasPrevious: boolean; mode: Mode }) {
+function HeroRow({ r, cols, hasPrevious, mode }: { r: TierRow; cols: typeof COLUMNS; hasPrevious: boolean; mode: TierMode }) {
   const t = useT();
-  const link = hotsHref(useLocale()).hero(r.hero.slug, mode);
+  // the hero page has QM and SL; an ARAM row opens its Quick Match view
+  const link = hotsHref(useLocale()).hero(r.hero.slug, mode === "sl" ? "sl" : undefined);
   const cell: Record<SortKey, string> = {
     score: formatScore(r.score),
     win_rate: pct(r.win_rate),

@@ -102,7 +102,7 @@ One table of build-time flags; the site is a static export, so a switch is a one
 ## Quotas and costs (Heroes Profile Intermediate since 2026-10-02, $10/month; Basic before; rolling 7-day windows per endpoint)
 | Endpoint | Weekly cap | Daily use |
 |---|---|---|
-| Heroes/Stats | 210 | 12 views × region + 12 solo = 24 (168/week; 42 left — a rerun or a 24-call previous-patch backfill) |
+| Heroes/Stats | 210 | 12 views × region + 12 solo = 24, + 무작위 영웅 대전 whole + solo = 2 (182/week), + 티어별 승률 12 and average stats 5 about once a week → ~11 left. The 7-day window resets about when the daily run starts (≈ 18:21 UTC on 10-19), so a window can hold eight runs: 10-18 ran dry mid-run and that day's update was lost. ARAM is skipped (yesterday's file stays) unless its 2 calls leave tomorrow's 24 (`run.aram_skipped`). No room for a rerun or backfill in a normal week |
 | Heroes/Talents/Builds/All | 21 | 1 (quota_exceeded → collector keeps yesterday's builds.json, run still succeeds) |
 | Hero/Matchups | 2,100 | 90 every other day (315/week; a patch change adds one early round → ≤ 450) |
 | Patches, Heroes, Maps | 1,000,000 | 1 |

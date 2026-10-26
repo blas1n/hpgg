@@ -23,6 +23,9 @@ class Settings(BaseSettings):
     average_stats: bool = True
     # 티어별 승률 (collector/tiers.py): 12 Heroes/Stats calls about once a week
     tier_stats: bool = True
+    # 무작위 영웅 대전 on the tier table (owner 2026-10-26): one view of every region with its solo
+    # twin, 2 Heroes/Stats calls a day (no region split, for the quota)
+    aram_stats: bool = True
     # the weekly report: talent picks of the heroes a new issue cites (collector/talent_details.py)
     weekly_talents: bool = True
     # the weekly report's per-game records (collector/replay_sample.py, owner 2026-10-06)

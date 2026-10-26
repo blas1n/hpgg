@@ -410,8 +410,24 @@ test("players: stats per hero come from the match list, per mode, asking Heroes 
   await page.locator("#hero-stats-all").click();
   await expect(box.locator("tbody tr")).toHaveCount(all);
   expect(seen.filter((u) => u.pathname.endsWith("/heroes"))).toHaveLength(0);
+  // 무작위 영웅 대전 has a tab of its own (owner 2026-10-26); none of these games is one
+  await expect(page.locator("#hero-stats-ar")).toHaveText("무작위 영웅 대전");
+  await page.locator("#hero-stats-ar").click();
+  await expect(box).toContainText("이 모드의 경기가 없습니다");
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
   expect(overflow).toBeLessThanOrEqual(0); // the wide table scrolls inside its card
+});
+
+test("players: the per-hero table splits out 무작위 영웅 대전 games", async ({ page }) => {
+  const mixed = { ...games, matches: games.matches.map((m: Record<string, unknown>, i: number) => (i < 3 ? { ...m, mode: "ar" } : m)) };
+  await mockApi(page, withGames(mixed));
+  await page.goto("./players/?tag=blAs1N%233479&region=KR");
+  const box = page.locator("#hero-stats");
+  await expect(box).toHaveAttribute("data-state", "ok");
+  await page.locator("#hero-stats-ar").click();
+  await expect(page.locator("#hero-stats-ar")).toHaveAttribute("aria-pressed", "true");
+  const games3 = await box.locator("tbody tr td:nth-child(2)").allInnerTexts();
+  expect(games3.reduce((a, x) => a + Number(x.replace(/[^0-9]/g, "")), 0)).toBe(3);
 });
 
 test("players: past the detailed budget the per-hero table keeps games and win rate", async ({ page }) => {

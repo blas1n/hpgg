@@ -85,7 +85,7 @@ export const en: Messages = {
     heroes: "Hero list",
   },
   common: {
-    modes: { qm: "Quick Match", sl: "Storm League" },
+    modes: { qm: "Quick Match", sl: "Storm League", ar: "ARAM" },
     brackets: { all: "All leagues", low: "Bronze – Platinum", high: "Diamond – Grand Master" },
     regions: { all: "All regions", kr: "Asia (KR)", na: "Americas (NA)", eu: "Europe (EU)" },
     fallbackNote: (patch: string) => `new patch ${patch}: collecting games`,

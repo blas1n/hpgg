@@ -64,17 +64,18 @@ def _int_header(resp: httpx.Response, name: str) -> int | None:
         return None
 
 
-def _log_quota(resp: httpx.Response) -> None:
+def _log_quota(resp: httpx.Response) -> int | None:
     """Every charged endpoint answers with X-HP-Quota-Remaining for its own weekly bucket."""
     remaining = _int_header(resp, "X-HP-Quota-Remaining")
     if remaining is None:
-        return
+        return None
     log.info(
         "hp.quota",
         path=resp.request.url.path,
         remaining=remaining,
         limit=_int_header(resp, "X-HP-Quota-Limit"),
     )
+    return remaining
 
 
 class HPClient:
@@ -100,6 +101,7 @@ class HPClient:
         self._clock = clock
         self._http = http or httpx.AsyncClient(timeout=timeout)
         self._owns_http = http is None
+        self._quota: dict[str, int] = {}  # request path → its bucket's last X-HP-Quota-Remaining
 
     def __repr__(self) -> str:
         return f"HPClient(base_url={self._base!r}, token=***)"
@@ -110,6 +112,10 @@ class HPClient:
     async def __aexit__(self, *exc: object) -> None:
         if self._owns_http:
             await self._http.aclose()
+
+    def quota_remaining(self, path: str) -> int | None:
+        """The last X-HP-Quota-Remaining an endpoint (`/heroes/stats`) gave; None = not asked."""
+        return self._quota.get(httpx.URL(self._base + path).path)
 
     def _headers(self) -> dict[str, str]:
         return {"Authorization": f"Bearer {self._token}", "Accept": "application/json"}
@@ -142,7 +148,8 @@ class HPClient:
                 )
                 await self._sleep(1.0)
                 continue
-            _log_quota(resp)
+            if (left := _log_quota(resp)) is not None:
+                self._quota[resp.request.url.path] = left
             if resp.status_code == 429:
                 code, msg = _envelope(resp)
                 # the weekly allowance does not come back in Retry-After seconds: never wait it out

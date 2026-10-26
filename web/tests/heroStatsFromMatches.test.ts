@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { heroRowsFromMatches } from "../src/lib/heroStats";
+import { HERO_STATS_MODES, heroRowsFromMatches } from "../src/lib/heroStats";
 import type { MatchRow } from "../src/lib/matches";
 
 // owner 2026-10-09: the per-hero table comes from the match list already fetched, so it spends no
@@ -40,5 +40,13 @@ describe("heroRowsFromMatches", () => {
   it("a game with no result counts as played, not won or lost", () => {
     const [a] = heroRowsFromMatches([row("Alarak", "qm", null as unknown as boolean)], "all");
     expect(a).toMatchObject({ games: 1, wins: 0, losses: 0 });
+  });
+});
+
+describe("무작위 영웅 대전 in the per-hero table", () => {
+  it("is a mode of its own, after Quick Match and Storm League (owner 2026-10-26)", () => {
+    expect(HERO_STATS_MODES).toEqual(["all", "qm", "sl", "ar"]);
+    const rows = heroRowsFromMatches([row("Alarak", "ar", true), row("Alarak", "qm", false), row("Raynor", "ar", false)], "ar");
+    expect(rows.map((r) => [r.hero, r.games])).toEqual([["Alarak", 1], ["Raynor", 1]]);
   });
 });

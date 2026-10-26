@@ -42,6 +42,7 @@ def settings(tmp_path: Path, **kw: Any) -> Settings:
             "tier_stats": False,
             "weekly_talents": False,
             "replay_sample": False,
+            "aram_stats": False,
             **kw,
         },  # the three notes in fixtures/patchnotes
     )
@@ -67,6 +68,8 @@ def mock_api(
         if fail_key == "tiers" and q.get("league_tier") == "6":
             return httpx.Response(500, json={"error": {"code": "server_error", "message": "x"}})
         if fail_key == "sl_high" and q.get("league_tier") == "5,6":
+            return httpx.Response(500, json={"error": {"code": "server_error", "message": "x"}})
+        if fail_key == "ar" and q["game_type"] == "ar":
             return httpx.Response(500, json={"error": {"code": "server_error", "message": "x"}})
         if fail_key == "solo" and q.get("groupsize") == "Solo":
             return httpx.Response(500, json={"error": {"code": "server_error", "message": "x"}})
@@ -1067,3 +1070,145 @@ async def test_without_a_balance_hotfix_the_whole_patch_counts(
     assert await run(s, sleep=fake_sleep, now=lambda: "2026-09-28T18:25:00Z") == 0
     meta = json.loads((s.data_dir / "latest" / "meta.json").read_text())
     assert meta["window"] == {"since": None, "since_at": None, "pending": None}
+
+
+def _stats_calls() -> list[tuple[str, str | None, str | None, str | None]]:
+    qs = [
+        dict(httpx.QueryParams(c.request.url.query))
+        for c in respx.calls
+        if c.request.url.path.endswith("/heroes/stats")
+    ]
+    return [(q["game_type"], q.get("league_tier"), q.get("region"), q.get("groupsize")) for q in qs]
+
+
+@respx.mock
+async def test_a_run_collects_aram_as_one_whole_view_with_its_solo_twin(
+    tmp_path: Path, raw_by_map, patches_payload, fake_sleep
+) -> None:
+    """무작위 영웅 대전 (owner 2026-10-26): on the tier table like QM and SL, but one view of every
+    region (no region split, for the quota) — two Heroes/Stats calls a day, the party correction
+    with them."""
+    mock_api(raw_by_map, patches_payload)
+    s = settings(tmp_path, aram_stats=True)
+    assert await run(s, sleep=fake_sleep, now=lambda: "2026-09-28T00:00:00Z") == 0
+    ar_calls = [c for c in _stats_calls() if c[0] == "ar"]
+    assert ar_calls == [("ar", None, None, None), ("ar", None, None, "Solo")]
+    latest = s.data_dir / "latest"
+    ar = json.loads((latest / "ar.json").read_text())
+    assert ar["mode"] == "ar" and ar["game_type"] == "ar" and ar["region"] is None
+    assert ar["patch"] == "2.55.17" and "party" in ar
+    assert all("tier_win_rate" in r for r in ar["rows"])
+    assert not list(latest.glob("ar_*.json"))
+    meta = json.loads((latest / "meta.json").read_text())
+    assert "ar" in meta["modes"] and not any(k.startswith("ar_") for k in meta["modes"])
+    # every group_by_map call is a minute apart: 24 + 2, then the builds call
+    assert fake_sleep.calls == [60.0] * 26
+    assert (s.snapshot_out_dir / "2026-09-28" / "ar.json.gz").exists()
+    # the weekly report stays on QM and SL
+    day = json.loads((s.data_dir / "history" / "2026-09-28.json").read_text())
+    assert "ar" not in day["views"]
+
+
+@respx.mock
+async def test_a_failed_aram_call_keeps_yesterdays_aram_and_the_run_succeeds(
+    tmp_path: Path, raw_by_map, patches_payload, fake_sleep
+) -> None:
+    """ARAM is its own view: its failure never holds back QM and SL, and the table keeps
+    yesterday's ARAM numbers (same patch) rather than an uncorrected or empty view."""
+    mock_api(raw_by_map, patches_payload)
+    s = settings(tmp_path, aram_stats=True)
+    assert await run(s, sleep=fake_sleep, now=lambda: "2026-09-28T00:00:00Z") == 0
+    before = (s.data_dir / "latest" / "ar.json").read_text()
+    respx.reset()
+    mock_api(raw_by_map, patches_payload, fail_key="ar")
+    with capture_logs() as logs:
+        assert await run(s, sleep=fake_sleep, now=lambda: "2026-09-29T00:00:00Z") == 0
+    latest = s.data_dir / "latest"
+    assert (latest / "ar.json").read_text() == before
+    meta = json.loads((latest / "meta.json").read_text())
+    assert meta["collected_at"] == "2026-09-29T00:00:00Z" and "ar" in meta["modes"]
+    assert json.loads((latest / "qm.json").read_text())["collected_at"] == "2026-09-29T00:00:00Z"
+    assert any(e["event"] == "run.aram_failed" for e in logs)
+
+
+@respx.mock
+async def test_a_failed_solo_aram_call_publishes_no_uncorrected_aram(
+    tmp_path: Path, raw_by_map, patches_payload, fake_sleep
+) -> None:
+    def stats(request: httpx.Request) -> httpx.Response:
+        q = dict(httpx.QueryParams(request.url.query))
+        if q["game_type"] == "ar" and q.get("groupsize") == "Solo":
+            return httpx.Response(500, json={"error": {"code": "server_error", "message": "x"}})
+        return httpx.Response(200, json=raw_by_map)
+
+    mock_api(raw_by_map, patches_payload)
+    respx.get(f"{BASE}/heroes/stats").mock(side_effect=stats)
+    s = settings(tmp_path, aram_stats=True)
+    assert await run(s, sleep=fake_sleep, now=lambda: "2026-09-28T00:00:00Z") == 0
+    assert not (s.data_dir / "latest" / "ar.json").exists()
+    meta = json.loads((s.data_dir / "latest" / "meta.json").read_text())
+    assert "ar" not in meta["modes"]
+
+
+@respx.mock
+async def test_aram_from_another_patch_is_not_carried(
+    tmp_path: Path, raw_by_map, patches_payload, fake_sleep
+) -> None:
+    mock_api(raw_by_map, patches_payload)
+    s = settings(tmp_path, aram_stats=True)
+    assert await run(s, sleep=fake_sleep, now=lambda: "2026-09-28T00:00:00Z") == 0
+    p = s.data_dir / "latest" / "ar.json"
+    p.write_text(json.dumps({**json.loads(p.read_text()), "patch": "2.55.9"}))
+    respx.reset()
+    mock_api(raw_by_map, patches_payload, fail_key="ar")
+    assert await run(s, sleep=fake_sleep, now=lambda: "2026-09-29T00:00:00Z") == 0
+    assert not p.exists()
+
+
+@respx.mock
+async def test_a_recovery_run_skips_aram_and_keeps_yesterdays(
+    tmp_path: Path, raw_by_map, patches_payload, fake_sleep
+) -> None:
+    """--only spends what is left of the week on QM and SL alone."""
+    mock_api(raw_by_map, patches_payload)
+    s = settings(tmp_path, aram_stats=True)
+    assert await run(s, sleep=fake_sleep, now=lambda: "2026-09-28T00:00:00Z") == 0
+    before = (s.data_dir / "latest" / "ar.json").read_text()
+    respx.reset()
+    mock_api(raw_by_map, patches_payload)
+    assert (
+        await run(s, sleep=fake_sleep, now=lambda: "2026-09-29T00:00:00Z", only=("qm", "sl")) == 0
+    )
+    assert not [c for c in _stats_calls() if c[0] == "ar"]
+    assert (s.data_dir / "latest" / "ar.json").read_text() == before
+
+
+@respx.mock
+async def test_aram_never_spends_the_next_days_collection(
+    tmp_path: Path, raw_by_map, patches_payload, fake_sleep
+) -> None:
+    """10-18 the week ran dry and the day's QM/SL update was lost (HP's window resets about when
+    the run starts). ARAM is asked only if its 2 calls leave tomorrow's 24 — else yesterday's
+    ARAM stands."""
+    mock_api(raw_by_map, patches_payload)
+    s = settings(tmp_path, aram_stats=True)
+    assert await run(s, sleep=fake_sleep, now=lambda: "2026-09-28T00:00:00Z") == 0
+    before = (s.data_dir / "latest" / "ar.json").read_text()
+
+    def with_quota(left: int) -> None:
+        def stats(request: httpx.Request) -> httpx.Response:
+            return httpx.Response(200, json=raw_by_map, headers={"X-HP-Quota-Remaining": str(left)})
+
+        respx.reset()
+        mock_api(raw_by_map, patches_payload)
+        respx.get(f"{BASE}/heroes/stats").mock(side_effect=stats)
+
+    with_quota(25)
+    with capture_logs() as logs:
+        assert await run(s, sleep=fake_sleep, now=lambda: "2026-09-29T00:00:00Z") == 0
+    assert not [c for c in _stats_calls() if c[0] == "ar"]
+    assert (s.data_dir / "latest" / "ar.json").read_text() == before
+    assert [e["remaining"] for e in logs if e["event"] == "run.aram_skipped"] == [25]
+    with_quota(26)
+    assert await run(s, sleep=fake_sleep, now=lambda: "2026-09-30T00:00:00Z") == 0
+    assert len([c for c in _stats_calls() if c[0] == "ar"]) == 2
