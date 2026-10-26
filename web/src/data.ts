@@ -87,6 +87,8 @@ export function hotsHref(locale: Locale) {
 }
 
 export type Mode = "qm" | "sl";
+/** The tier table's modes: 무작위 영웅 대전 (ARAM) is one view of every region, no bracket (owner 2026-10-26). */
+export type TierMode = Mode | "ar";
 export type Bracket = "all" | "low" | "high";
 /** Labels: messages common.modes / common.brackets / common.regions. Two brackets while the player base is small
  *  (owner, 2026-09-29): league_tier 1-4 / 5-6; grandmasters are inside master.
@@ -101,7 +103,8 @@ export const REGIONS: Region[] = ["all", "kr", "na", "eu"];
 /** The `region` a file carries (HP's code); null = every region. */
 export const REGION_CODE: Record<Region, string | null> = { all: null, kr: "KR", na: "NA", eu: "EU" };
 /** Snapshot file key for a mode + bracket (Storm League only; QM ignores it) + region: `sl_low_kr`, `qm_na`, `sl`. */
-export function snapshotKey(mode: Mode, bracket: Bracket, region: Region = "all"): string {
+export function snapshotKey(mode: TierMode, bracket: Bracket, region: Region = "all"): string {
+  if (mode === "ar") return "ar";
   const view = mode === "sl" && bracket !== "all" ? `sl_${bracket}` : mode;
   return region === "all" ? view : `${view}_${region}`;
 }
@@ -163,7 +166,7 @@ const thin = (m: ModeSample | undefined): boolean => !!m?.heroes && m.heroes_ran
 /** A region's sample health and collection date on the patch a view shows; null = not collected on that patch yet. */
 /** `shown`: the heroes on the site — the note's denominator. The file only has rows for heroes that played in it
  *  (KR 다마그 on 10-02: 6), which read as "0/6" when 91 heroes are on the page. */
-export function regionSample(meta: Meta, mode: Mode, region: Region, patch: PatchChoice, bracket: Bracket = "all", shown?: number): { collectedAt: string | null; heroes: number; over: number; thin: boolean } | null {
+export function regionSample(meta: Meta, mode: TierMode, region: Region, patch: PatchChoice, bracket: Bracket = "all", shown?: number): { collectedAt: string | null; heroes: number; over: number; thin: boolean } | null {
   const m = (patch === "previous" ? meta.previous_modes : meta.modes)?.[snapshotKey(mode, bracket, region)];
   if (!m) return null;
   const heroes = Math.max(shown ?? 0, m.heroes);

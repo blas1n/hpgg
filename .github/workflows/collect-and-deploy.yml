@@ -78,7 +78,7 @@ jobs:
             git show "FETCH_HEAD:$f" > "data/.snapshots/$f"
           done
           ls data/.snapshots/snapshots | wc -l
-      - name: Collect (QM, SL, 브실골플, 다마그 × KR/NA/EU + solo twins = 24 stats calls, ~25 min at 1 req/min; 1 builds call; then Storm League matchups for heroes due, every other day)
+      - name: Collect (QM, SL, 브실골플, 다마그 × KR/NA/EU + solo twins = 24 stats calls, + 무작위 영웅 대전 whole and solo = 2, ~27 min at 1 req/min; 1 builds call; then Storm League matchups for heroes due, every other day)
         id: run
         env:
           HP_API_TOKEN: ${{ secrets.HP_API_TOKEN }}

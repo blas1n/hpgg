@@ -25,6 +25,8 @@ from collector.party import apply_party_correction
 from collector.patchnotes import collect_patchnotes
 from collector.replay_sample import load_cursor, sample_replays, save_cursor
 from collector.snapshot import (
+    ARAM_SOLO_SPEC,
+    ARAM_SPEC,
     CELL_SOLO_SPECS,
     CELL_SPECS,
     REFERENCE_MODES,
@@ -49,6 +51,12 @@ from collector.team_comps import comp_counts
 from collector.tiers import TIERS, tiers_file
 from collector.tiers import due as tiers_due
 from collector.weekly import build_weekly, history_entry, write_history
+
+# ARAM is asked only if its calls leave the next day's QM/SL collection in the week's Heroes/Stats
+# bucket: 10-18 the bucket ran dry mid-run and the day's update was lost (HP's 7-day window resets
+# about when the daily run starts, so one window can hold eight runs)
+ARAM_CALLS = 2
+DAILY_STATS_CALLS = len(CELL_SPECS) + len(CELL_SOLO_SPECS)
 
 BUILDS_GAME_TYPE = "qm,sl"
 BUILDS_TOTAL = 5
@@ -232,6 +240,41 @@ async def _collect_cube(
     return {**raw, **solo_raw}, out, wholes_solo
 
 
+async def _collect_aram(
+    c: HPClient,
+    settings: Settings,
+    *,
+    patch: str,
+    timeframe: str,
+    collected_at: str,
+    sleep: SleepFn,
+) -> tuple[dict[str, Any], dict[str, Any] | None]:
+    """무작위 영웅 대전: one view of every region and its solo twin, right after the cube (so the
+    first call waits its minute too) → (raw by key, the corrected view). A failure leaves the view
+    out (None) and never fails the run: it is a view of its own, and QM and SL do not wait on it;
+    without its correction it is not published at all."""
+    try:
+        raw, snaps = await _collect_all(
+            c,
+            settings,
+            patch=patch,
+            timeframe=timeframe,
+            collected_at=collected_at,
+            sleep=sleep,
+            specs=(ARAM_SPEC, ARAM_SOLO_SPEC),
+            after_a_call=True,
+        )
+        out = apply_party_correction(snaps[ARAM_SPEC.key], snaps[ARAM_SOLO_SPEC.key])
+    except HPError as e:
+        log.warning("run.aram_failed", status=e.status, code=e.code)
+        return {}, None
+    except ValueError as e:
+        log.warning("run.aram_failed", error=str(e))
+        return {}, None
+    log.info("run.party", view=ARAM_SPEC.key, **out["party"])
+    return raw, out
+
+
 def _view_of(cell_key: str) -> str:
     """`sl_low_kr` → `sl_low`."""
     return cell_key.rsplit("_", 1)[0]
@@ -372,7 +415,15 @@ async def run(
     own_client = client is None
     c = client or _client(settings, sleep)
     try:
-        code = await _run_stats(c, settings, collected_at=collected_at, sleep=sleep, views=views)
+        code = await _run_stats(
+            c,
+            settings,
+            collected_at=collected_at,
+            sleep=sleep,
+            views=views,
+            # a recovery run spends what is left of the week on QM and SL alone
+            aram=settings.aram_stats and only is None,
+        )
         if code == 0:
             await _run_matchups(c, settings, collected_at=collected_at, sleep=sleep)
         # Blizzard's notes do not depend on HP: collected even when the stats failed
@@ -628,6 +679,7 @@ async def _run_stats(
     collected_at: str,
     sleep: SleepFn,
     views: tuple[str, ...] = VIEWS,
+    aram: bool = False,
 ) -> int:
     try:
         patches = await c.get_json("/patches")
@@ -653,6 +705,29 @@ async def _run_stats(
             sleep=sleep,
             views=views,
         )
+        left = c.quota_remaining("/heroes/stats")
+        if aram and left is not None and left - ARAM_CALLS < DAILY_STATS_CALLS:
+            log.warning("run.aram_skipped", remaining=left, keeps=DAILY_STATS_CALLS)
+            aram = False
+        if aram:
+            aram_raw, aram_snap = await _collect_aram(
+                c,
+                settings,
+                patch=patch,
+                timeframe=timeframe,
+                collected_at=collected_at,
+                sleep=sleep,
+            )
+            raw_by_key.update(aram_raw)
+        else:
+            aram_snap = None
+        # not collected today: yesterday's view stands while it is on the same patch
+        if aram_snap is None:
+            kept_ar = _load_json(settings.data_dir / "latest" / ARAM_SPEC.filename)
+            if isinstance(kept_ar, dict) and kept_ar.get("patch") == patch:
+                aram_snap = kept_ar
+        if aram_snap is not None:
+            snapshots[ARAM_SPEC.key] = aram_snap
         prev_meta = load_meta(settings.data_dir)
         meta = build_meta(prev_meta, patch=patch, collected_at=collected_at, snapshots=snapshots)
         meta["window"] = window

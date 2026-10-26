@@ -235,3 +235,18 @@ async def test_the_job_url_is_logged_so_a_lost_result_can_be_fetched_again(fake_
     started = next(e for e in logs if e["event"] == "hp.job_started")
     assert started["job"] == f"{BASE}/jobs/j9"
     assert TOKEN not in str(logs)
+
+
+@respx.mock
+async def test_the_client_remembers_each_endpoints_last_quota_reading(fake_sleep) -> None:
+    """The run reads it to keep optional calls off the week's last daily collection."""
+    respx.get(f"{BASE}/heroes/stats").mock(
+        return_value=httpx.Response(200, json={}, headers={"X-HP-Quota-Remaining": "25"})
+    )
+    respx.get(f"{BASE}/patches").mock(return_value=httpx.Response(200, json={}))
+    async with make_client(fake_sleep) as c:
+        assert c.quota_remaining("/heroes/stats") is None
+        await c.get_json("/heroes/stats")
+        await c.get_json("/patches")
+        assert c.quota_remaining("/heroes/stats") == 25
+        assert c.quota_remaining("/patches") is None

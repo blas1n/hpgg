@@ -28,6 +28,12 @@ SPECS: tuple[JobSpec, ...] = (
 
 VIEWS: tuple[str, ...] = ("qm", "sl", "sl_low", "sl_high")  # the keys of SPECS
 
+# 무작위 영웅 대전 (owner 2026-10-26): on the tier table like QM and SL, but one view of every
+# region — no region split, for the quota (2 Heroes/Stats calls a day with its solo twin). It is
+# its own view: no bracket, no part in the reference patch or the weekly report.
+ARAM_SPEC = JobSpec("ar", "ar", None, "ar.json")
+ARAM_SOLO_SPEC = JobSpec("ar_solo", "ar", None, "", groupsize="Solo")
+
 # The region × bracket cube (owner 2026-10-02): every view in every region, each with its solo
 # twin for the party correction — 24 Heroes/Stats calls a day (Intermediate: 210/week). The
 # whole is their sum (`sum_regions`): a game is played on one server, and CN closed in 2023;
@@ -238,7 +244,8 @@ def match_count(games_per_hero: Iterable[int], game_type: str | None) -> float:
     can contribute fewer than ten rows (KR 다마그 2026-10-02: 6 games → 0.6 → "0 매치",
     pick 166 %)."""
     games = list(games_per_hero)
-    per_match = 2 if game_type == "qm" else 1
+    # QM and ARAM pick no draft: a hero may be on both sides (for ARAM assumed, not measured)
+    per_match = 2 if game_type in ("qm", "ar") else 1
     return max(sum(games) / 10, max(games, default=0) / per_match)
 
 

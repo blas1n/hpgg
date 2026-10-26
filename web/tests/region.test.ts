@@ -34,6 +34,8 @@ describe("region labels and keys", () => {
     expect(snapshotKey("sl", "all", "eu")).toBe("sl_eu");
     expect(snapshotKey("sl", "low", "all")).toBe("sl_low");
     expect(snapshotKey("sl", "low")).toBe("sl_low");
+    // 무작위 영웅 대전 is one view of every region
+    expect(snapshotKey("ar", "high", "kr")).toBe("ar");
     expect(snapshotKey("sl", "low", "kr")).toBe("sl_low_kr");
     expect(snapshotKey("sl", "high", "na")).toBe("sl_high_na");
     expect(snapshotKey("qm", "low", "kr")).toBe("qm_kr");
