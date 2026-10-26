@@ -35,6 +35,26 @@ test.describe("a visitor in Europe", () => {
     await expect(page.locator("#player-result")).toHaveAttribute("data-state", "not_found");
     expect(await page.evaluate(() => localStorage.getItem("hpgg-region"))).toBe("KR");
   });
+  test("a region picked before the page finished loading is kept, not reset to the time zone's", async ({ page }) => {
+    // CI 2026-10-26: the test above picked KR before hydration and the search went out on EU. Hold the scripts back
+    // so the pick always lands first, then let them run.
+    let release!: () => void;
+    const held = new Promise<void>((r) => (release = r));
+    await page.route("**/_next/static/**/*.js", async (r) => {
+      await held;
+      await r.continue();
+    });
+    await page.route("https://api.hpgg.win/**", (r) => r.fulfill(json(404, { error: { code: "player_not_found" } })));
+    await page.goto("/en/hots/players/", { waitUntil: "domcontentloaded" });
+    await page.locator("#player-search-region").selectOption("KR");
+    release();
+    await expect(page.locator("#player-search[data-ready]")).toHaveCount(1); // hydrated, start-up region applied
+    await expect(page.locator("#player-search-region")).toHaveValue("KR");
+    await page.locator("#player-search-tag").fill("Nobody#1234");
+    await page.locator("#player-search-tag").press("Enter");
+    await expect(page.locator("#player-result")).toHaveAttribute("data-state", "not_found");
+    expect(await page.evaluate(() => localStorage.getItem("hpgg-region"))).toBe("KR");
+  });
 });
 
 test.describe("a visitor in the Americas", () => {
