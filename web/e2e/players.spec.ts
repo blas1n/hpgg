@@ -435,7 +435,8 @@ test("players: stats per hero come from the match list, per mode, asking Heroes 
   await page.locator("#hero-stats-all").click();
   await expect(box.locator("tbody tr")).toHaveCount(all);
   expect(seen.filter((u) => u.pathname.endsWith("/heroes"))).toHaveLength(0);
-  // 무작위 영웅 대전 has a tab of its own (owner 2026-10-26); none of these games is one
+  // Storm League first, as in 경기 기록; 무작위 영웅 대전 has a tab of its own (owner 2026-10-26)
+  await expect(page.locator('[aria-labelledby="h-hero-stats"] [role="group"] button')).toHaveText(["전체 모드", "폭풍 리그", "빠른 대전", "무작위 영웅 대전"]);
   await expect(page.locator("#hero-stats-ar")).toHaveText("무작위 영웅 대전");
   await page.locator("#hero-stats-ar").click();
   await expect(box).toContainText("이 모드의 경기가 없습니다");
