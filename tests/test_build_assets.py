@@ -82,9 +82,11 @@ def test_stats_hero_names_are_every_hero_in_the_latest_stats_and_builds(tmp_path
     latest.mkdir()
     (latest / "qm.json").write_text(json.dumps({"rows": [{"hero": "Abathur", "map": "all"}]}))
     (latest / "sl_low.json").write_text(json.dumps({"rows": [{"hero": "Li-Ming", "map": "x"}]}))
-    (latest / "builds.json").write_text(json.dumps({"heroes": {"Xal'atath": []}}))
+    # builds per bracket (owner 2026-10-26): a hero seen in either bracket's builds counts
+    builds = {"brackets": {"high": {"heroes": {"Xal'atath": []}}, "low": {"heroes": {"Nova": []}}}}
+    (latest / "builds.json").write_text(json.dumps(builds))
     (latest / "meta.json").write_text(json.dumps({"modes": {}}))
-    assert ba.stats_hero_names(tmp_path) == {"Abathur", "Li-Ming", "Xal'atath"}
+    assert ba.stats_hero_names(tmp_path) == {"Abathur", "Li-Ming", "Xal'atath", "Nova"}
 
 
 def test_hero_rows_come_from_game_data_and_skip_heroes_it_does_not_have_yet() -> None:

@@ -84,6 +84,8 @@ def stats_hero_names(data_dir: Path) -> set[str]:
         d = json.loads(p.read_text(encoding="utf-8"))
         names |= {r["hero"] for r in d.get("rows", [])}
         names |= set(d.get("heroes", {}))
+        for b in (d.get("brackets") or {}).values():  # builds.json per bracket (2026-10-26)
+            names |= set(b.get("heroes") or {})
     return names
 
 

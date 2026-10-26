@@ -25,6 +25,7 @@ Preconditions: `HP_API_TOKEN` in `~/Works/hotsmeta/.env`. Test Data mode costs n
 - [ ] First cron run after merge: log `run.patch patch=2.57.0 builds=2.57.0.98285,2.57.0.98304`; exit 0
 - [ ] `data/latest/meta.json`: `current_patch` and `reference_patch` = `2.57.0`, `previous_patch` = `2.55.17.98025`; `data/previous/qm.json` still `2.55.17.98025`
 - [ ] `data/latest/builds.json` `patch` = `2.57.0` (builds/all accepted the list) — or, if it was refused, the run log names the code
+- [ ] `data/latest/builds.json` has `brackets.high` and `brackets.low` (league tiers [5,6] / [1,2,3,4]), each with `hero_games`; the run log shows two `builds_*` calls
 - [ ] Matchups: files rewritten with `patch` = `2.57.0` (all 90 due: other patch)
 - [ ] Site: tier page says 패치 2.57.0 with no "previous patch" banner; a hero page's 2.57 notes/hotfixes are not marked 수집 중
 - [ ] After the weekly reset (≈ 2026-10-05): `uv run python -m collector --previous 2.55.17` (6 calls) and `--previous-regions` (6) so the previous patch is all of 2.55.17, not only 98025

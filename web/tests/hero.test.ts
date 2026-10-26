@@ -5,7 +5,8 @@ import { dirname, join } from "node:path";
 import { knownOnly } from "../src/lib/known";
 import type { Snapshot } from "../src/formula";
 import type { BuildsFile, HeroTable, MapTable, TalentTable } from "../src/data";
-import { BUILD_MIN_GAMES, descParts, heroBuilds, heroGrid, heroSummary, mapRows } from "../src/lib/hero";
+import { BUILD_MIN_GAMES, BUILDS_SHOWN, descParts, heroBuilds, heroGrid, heroSummary, mapRows } from "../src/lib/hero";
+import { buildBase, buildScore } from "../src/formula";
 
 const dataDir = join(dirname(fileURLToPath(import.meta.url)), "e2e-data");
 const json = <T>(rel: string): T => JSON.parse(readFileSync(join(dataDir, rel), "utf-8")) as T;
@@ -123,24 +124,28 @@ describe("heroGrid", () => {
 });
 
 describe("heroBuilds", () => {
+  const high = builds.brackets!.high!.heroes.Illidan!;
+
   it("joins every build talent with its Korean name, icon and tooltip; English title when the game text is missing", () => {
-    const list = heroBuilds(builds, talents, "Illidan", "ko");
-    expect(list).toHaveLength(5);
+    const v = heroBuilds(builds, talents, "Illidan", "ko");
+    expect(v.brackets.map((b) => b.key)).toEqual(["high", "low"]); // the high bracket is the main line
+    const list = v.brackets[0]!.builds;
+    expect(list).toHaveLength(BUILDS_SHOWN);
     expect(list[0]!.talents).toHaveLength(7);
     expect(list[0]!.talents[0]).toMatchObject({ level: 1, ko: "끝없는 증오" });
     expect(list[0]!.talents[0]!.icon).toMatch(/\.png$/);
     expect(list[0]!.share).toBeCloseTo(list[0]!.games / Math.max(...list.map((b) => b.games)));
     const bare = heroBuilds(builds, null, "Illidan", "ko");
-    expect(bare[0]!.talents[0]!.ko).toBe("Unending Hatred");
-    expect(heroBuilds(builds, talents, "Nobody", "ko")).toEqual([]);
-    expect(heroBuilds(null, talents, "Illidan", "ko")).toEqual([]);
+    expect(bare.brackets[0]!.builds[0]!.talents[0]!.ko).toBe("Unending Hatred");
+    expect(heroBuilds(builds, talents, "Nobody", "ko").brackets).toEqual([]);
+    expect(heroBuilds(null, talents, "Illidan", "ko").brackets).toEqual([]);
   });
 
   it("in English: the game's English name, tooltip and cooldown", () => {
-    const en = heroBuilds(builds, talents, "Illidan", "en");
+    const en = heroBuilds(builds, talents, "Illidan", "en").brackets[0]!.builds;
     const first = en[0]!.talents[0]!;
     expect(first).toMatchObject({ level: 1, ko: "Unending Hatred" });
-    expect(first.icon).toBe(heroBuilds(builds, talents, "Illidan", "ko")[0]!.talents[0]!.icon);
+    expect(first.icon).toBe(heroBuilds(builds, talents, "Illidan", "ko").brackets[0]!.builds[0]!.talents[0]!.icon);
     const all = en.flatMap((b) => b.talents);
     expect(all.every((t) => !/[\uac00-\ud7a3]/.test(`${t.ko}${t.desc ?? ""}${t.cd ?? ""}`))).toBe(true);
     expect(all.filter((t) => t.desc).length).toBeGreaterThan(all.length / 2);
@@ -148,12 +153,53 @@ describe("heroBuilds", () => {
 
   // 2026-09-29 design review: right after a patch, builds with 1-3 games printed "100.0%" in bold green
   it("marks builds under the sample floor as thin; their win rate is not a finding", () => {
-    const hero = builds.heroes.Illidan!;
-    const few: BuildsFile = { ...builds, heroes: { Illidan: [{ ...hero[0]!, games: 3, win_rate: 100 }, { ...hero[1]!, games: BUILD_MIN_GAMES, win_rate: 52 }] } };
-    const list = heroBuilds(few, talents, "Illidan", "ko");
-    expect(list.map((b) => [b.games, b.thin])).toEqual([[BUILD_MIN_GAMES, false], [3, true]]); // most played first
+    const few: BuildsFile = { ...builds, brackets: { high: { league_tier: [5, 6], hero_games: {}, heroes: { Illidan: [{ ...high[0]!, games: 3, win_rate: 100 }, { ...high[1]!, games: BUILD_MIN_GAMES, win_rate: 52 }] } } } };
+    const list = heroBuilds(few, talents, "Illidan", "ko").brackets[0]!.builds;
+    expect(list.map((b) => [b.games, b.thin]).sort()).toEqual([[3, true], [BUILD_MIN_GAMES, false]].sort());
     expect(BUILD_MIN_GAMES).toBeGreaterThanOrEqual(20);
-    expect(heroBuilds(builds, talents, "Illidan", "ko").every((b) => b.thin === b.games < BUILD_MIN_GAMES)).toBe(true);
+    expect(heroBuilds(builds, talents, "Illidan", "ko").brackets.flatMap((b) => b.builds).every((b) => b.thin === b.games < BUILD_MIN_GAMES)).toBe(true);
+  });
+
+  it("pick rate = the build's games / the hero's games in the same bracket; none without that count", () => {
+    const v = heroBuilds(builds, null, "Illidan", "ko");
+    const n = builds.brackets!.high!.hero_games.Illidan!;
+    for (const b of v.brackets[0]!.builds) expect(b.pick).toBeCloseTo((b.games / n) * 100);
+    const bare: BuildsFile = { ...builds, brackets: { high: { ...builds.brackets!.high!, hero_games: {} } } };
+    expect(heroBuilds(bare, null, "Illidan", "ko").brackets[0]!.builds.every((b) => b.pick === null)).toBe(true);
+  });
+});
+
+describe("heroBuilds order (owner 2026-10-26): by the build score, not by games", () => {
+  const t = (name: string, level = 1) => ({ level, name, title: name });
+  const one = (games: number, win_rate: number, i: number) => ({ games, win_rate, talents: [t(`T${i}`)] });
+  const file = (rows: [number, number][]): BuildsFile => ({
+    patch: "p",
+    game_type: "sl",
+    collected_at: "t",
+    brackets: { high: { league_tier: [5, 6], hero_games: {}, heroes: { Tyrande: rows.map(([g, w], i) => one(g, w, i)) } } },
+  });
+
+  it("sorts by games × (WRs − (hero average − 5)); the printed score decides, ties by games", () => {
+    // Tyrande, 다이아+, 2.57.0 (measured 2026-10-26): the popular build stays first, the 63 % one with half the games second
+    const rows: [number, number][] = [[158, 48.5], [112, 63.4], [225, 58.0], [99, 53.6], [74, 59.0]];
+    const got = heroBuilds(file(rows), null, "Tyrande", "ko").brackets[0]!.builds;
+    const base = buildBase(rows.map(([games, win_rate]) => ({ games, win_rate })));
+    const want = [...rows].sort((a, b) => buildScore(b[0], b[1], base) - buildScore(a[0], a[1], base)).map((r) => r[0]);
+    expect(got.map((b) => b.games)).toEqual(want);
+    expect(got.map((b) => b.games).slice(0, 2)).toEqual([225, 112]);
+    expect(got).toHaveLength(BUILDS_SHOWN);
+  });
+
+  it("a weak hero's most played build does not sink below rare ones (the reference is the hero's own average, not 50)", () => {
+    const rows: [number, number][] = [[900, 45.0], [60, 47.0], [50, 46.0]];
+    expect(heroBuilds(file(rows), null, "Tyrande", "ko").brackets[0]!.builds[0]!.games).toBe(900);
+  });
+});
+
+describe("heroBuilds file format", () => {
+  it("a builds file from before the brackets (one QM + SL list) shows no builds rather than mislabelled ones", () => {
+    const legacy = { patch: "p", game_type: "qm,sl", collected_at: "t", heroes: { Illidan: builds.brackets!.high!.heroes.Illidan! } } as unknown as BuildsFile;
+    expect(heroBuilds(legacy, null, "Illidan", "ko").brackets).toEqual([]);
   });
 });
 
@@ -168,13 +214,5 @@ describe("descParts", () => {
     ]);
     expect(descParts(undefined, "ko")).toEqual([{ text: "설명이 아직 없습니다.", hl: false }]);
     expect(descParts(undefined, "en")).toEqual([{ text: "No description yet.", hl: false }]);
-  });
-});
-
-describe("heroBuilds order", () => {
-  it("most played first, as the section title says (Heroes Profile's own order is not by games)", () => {
-    const t = (name: string) => ({ level: 1, name, title: name });
-    const file = { patch: "p", game_type: "qm,sl", collected_at: "t", heroes: { Illidan: [386, 409, 306].map((games, i) => ({ games, win_rate: 50, talents: [t(`T${i}`)] })) } };
-    expect(heroBuilds(file, null, "Illidan", "ko").map((b) => b.games)).toEqual([409, 386, 306]);
   });
 });

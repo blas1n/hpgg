@@ -107,6 +107,30 @@ export function appliedParty(snap: Snapshot | null, rows: Row[]): Party | null {
   return snap?.party && rows.some((r) => r.tier_win_rate !== undefined) ? snap.party : null;
 }
 
+/** Talent builds of one hero in one bracket (owner 2026-10-26): sorted by this score, which is printed under the builds
+ *  but not shown per build. The reference is the hero's own average less a margin — not 50, or every build of a hero
+ *  below 50 % scores below zero and its most played one sinks furthest. */
+export const BUILD_FORMULA = { k: 100, margin: 5 } as const;
+
+/** The hero's average in a bracket: its builds' games-weighted win rate. */
+export function buildBase(builds: { games: number; win_rate: number }[]): number {
+  const games = builds.reduce((s, b) => s + b.games, 0);
+  return games > 0 ? builds.reduce((s, b) => s + b.games * b.win_rate, 0) / games : 50;
+}
+
+/** games × (WRs − (average − margin)), WRs = average + (WR − average) × games / (games + k). */
+export function buildScore(games: number, winRate: number, base: number): number {
+  if (games <= 0) return 0;
+  const wrs = base + ((winRate - base) * games) / (games + BUILD_FORMULA.k);
+  return games * (wrs - (base - BUILD_FORMULA.margin));
+}
+
+/** [line, detail] printed under the builds. */
+export function buildFormulaLines(locale: Locale): [string, string] {
+  const f = messages[locale].formula;
+  return [f.buildLine(String(BUILD_FORMULA.margin)), f.buildDetail(String(BUILD_FORMULA.k), String(BUILD_FORMULA.margin))];
+}
+
 /** The one-line explanation printed under the table. */
 export function formulaLine(hasBans: boolean, locale: Locale): string {
   const f = messages[locale].formula;

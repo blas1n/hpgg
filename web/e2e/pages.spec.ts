@@ -109,8 +109,8 @@ test("hero detail: three stat cards, per-map rows (not links) in SL, region × b
   await expect(page.locator("#maps a")).toHaveCount(0); // map rows do not navigate
   await expect(page.locator("#grid [data-cell]")).toHaveCount(12); // 4 regions × (전체, 브실골플, 다마그)
   // no vote buttons (owner 2026-09-28): outside the comments (2026-10-05: post, delete, report — opinions in words,
-  // not a 👍👎 count), only the mode toggle, the grid cells and talent icons are buttons
-  await expect(page.locator("main button:not([id^=mode-]):not([data-talent]):not([data-cell])").filter({ hasNot: page.locator("xpath=ancestor::*[@id='comment-form' or @id='comments']") })).toHaveCount(0);
+  // not a 👍👎 count), only the mode toggle, the grid cells, talent icons and the builds' bracket tabs are buttons
+  await expect(page.locator("main button:not([id^=mode-]):not([data-talent]):not([id^=builds-bracket-]):not([data-cell])").filter({ hasNot: page.locator("xpath=ancestor::*[@id='comment-form' or @id='comments']") })).toHaveCount(0);
   await expect(page.locator("#comments button, #comment-form button").filter({ hasText: /👍|👎|추천|비추/ })).toHaveCount(0);
 });
 
@@ -510,18 +510,29 @@ test("tier table: a previous-patch bracket file of an older bracket definition i
   await expect(page.locator("#meta-line")).not.toContainText("2.55.17.98025"); // nor the current patch's [1-4] file
 });
 
-test("hero detail: popular talent builds with Korean names, icons, games and win rate", async ({ page }) => {
+test("hero detail: talent builds per bracket, the high one first, with pick rate, win rate and the printed sort formula", async ({ page }) => {
   await page.goto("./heroes/illidan/");
   await expect(page.locator("#builds-title")).toBeVisible();
+  await expect(page.locator("#builds-bracket-high")).toHaveAttribute("aria-pressed", "true");
   await expect(page.locator("#builds [data-build]")).toHaveCount(5);
   const first = page.locator('#builds [data-build="1"]');
   await expect(first.locator("[data-talent]")).toHaveCount(7);
   await expect(first.locator("[data-talent] [data-level]").first()).toHaveText("1");
   await expect(first.locator("[data-talent] [data-tname]").first()).toContainText("끝없는 증오"); // Korean talent name from game strings
   await expect(first.locator("[data-wr]")).toContainText("%");
+  await expect(first.locator("[data-pick]")).toContainText("%");
+  await expect(first).toHaveAttribute("data-bracket", "high");
   const imgs = await first.locator("[data-talent] img").count();
   expect(imgs).toBeGreaterThan(0);
-  await expect(page.locator("#builds-sub")).toContainText("합산");
+  await expect(page.locator("#builds-sub")).toContainText("폭풍 리그");
+  // the other bracket is one tap away on the tabs: no comparison row under the main line (owner 2026-10-26)
+  await expect(page.locator("#builds [data-low-picks]")).toHaveCount(0);
+  // the formula is printed, as everywhere on the site
+  await expect(page.locator("#builds-formula")).toContainText("정렬 점수 = 게임수 × (WRs − (영웅 평균 − 5))");
+  // the low bracket on its tab
+  await page.locator("#builds-bracket-low").click();
+  await expect(page.locator("#builds-bracket-low")).toHaveAttribute("aria-pressed", "true");
+  await expect(page.locator('#builds [data-build="1"]')).toHaveAttribute("data-bracket", "low");
 });
 
 test("hero detail: a hero without builds hides the section", async ({ page }) => {

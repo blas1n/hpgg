@@ -27,6 +27,7 @@ from collector.replay_sample import load_cursor, sample_replays, save_cursor
 from collector.snapshot import (
     ARAM_SOLO_SPEC,
     ARAM_SPEC,
+    BUILD_BRACKETS,
     CELL_SOLO_SPECS,
     CELL_SPECS,
     REFERENCE_MODES,
@@ -58,8 +59,8 @@ from collector.weekly import build_weekly, history_entry, write_history
 ARAM_CALLS = 2
 DAILY_STATS_CALLS = len(CELL_SPECS) + len(CELL_SOLO_SPECS)
 
-BUILDS_GAME_TYPE = "qm,sl"
-BUILDS_TOTAL = 5
+BUILDS_GAME_TYPE = "sl"
+BUILDS_TOTAL = 10
 
 
 def _load_json(path: Path) -> Any:
@@ -74,31 +75,60 @@ async def _collect_builds(
     timeframe: str,
     collected_at: str,
     sleep: SleepFn,
-) -> tuple[Any, dict[str, Any]] | None:
-    """One `/heroes/talents/builds/all` call (1 req/min, 7 per week on Basic). Returns None when
-    the weekly allowance is spent — the caller keeps yesterday's builds.json in that case."""
-    await sleep(settings.map_call_spacing_seconds)
-    params = {
-        "timeframe_type": "minor",
-        "timeframe": timeframe,
+    kept: Any,
+    hero_games: dict[str, dict[str, int]],
+) -> tuple[dict[str, Any], dict[str, Any]] | None:
+    """One `/heroes/talents/builds/all` call per Storm League bracket (1 req/min, 21 a week on
+    Intermediate: two a day). A bracket the weekly allowance refused keeps yesterday's builds of
+    the same patch; None when no bracket has any — the caller keeps yesterday's builds.json."""
+    old = kept.get("brackets") if isinstance(kept, dict) and kept.get("patch") == patch else None
+    raw_by: dict[str, Any] = {}
+    brackets: dict[str, Any] = {}
+    spent = False
+    for key, tiers in BUILD_BRACKETS:
+        if not spent:
+            await sleep(settings.map_call_spacing_seconds)
+            params = {
+                "timeframe_type": "minor",
+                "timeframe": timeframe,
+                "game_type": BUILDS_GAME_TYPE,
+                "league_tier": ",".join(str(t) for t in tiers),
+                "talentbuildtype": "Popular",
+                "total_builds": str(BUILDS_TOTAL),
+                "mode": "json",
+            }
+            log.info("run.call", key=f"builds_{key}", patch=patch)
+            try:
+                raw = await c.get_json("/heroes/talents/builds/all", params=params)
+            except HPError as e:
+                if e.code in {"quota_exceeded", "rate_limited"} or e.status == 429:
+                    log.warning("run.builds_skipped", bracket=key, code=e.code, message=e.message)
+                    spent = True  # one bucket: the next bracket would be refused too
+                else:
+                    raise
+            else:
+                heroes = normalize_builds(
+                    raw, patch=patch, game_type=BUILDS_GAME_TYPE, collected_at=collected_at
+                )["heroes"]
+                raw_by[key] = raw
+                brackets[key] = {
+                    "league_tier": list(tiers),
+                    "heroes": heroes,
+                    "hero_games": hero_games.get(key, {}),
+                }
+                log.info("run.normalized", key=f"builds_{key}", heroes=len(heroes))
+                continue
+        if old and key in old:
+            brackets[key] = old[key]
+    if not raw_by:  # nothing new: yesterday's file stands as it is, its collected_at with it
+        return None
+    builds = {
+        "patch": patch,
         "game_type": BUILDS_GAME_TYPE,
-        "talentbuildtype": "Popular",
-        "total_builds": str(BUILDS_TOTAL),
-        "mode": "json",
+        "collected_at": collected_at,
+        "brackets": brackets,
     }
-    log.info("run.call", key="builds", patch=patch)
-    try:
-        raw = await c.get_json("/heroes/talents/builds/all", params=params)
-    except HPError as e:
-        if e.code in {"quota_exceeded", "rate_limited"} or e.status == 429:
-            log.warning("run.builds_skipped", code=e.code, message=e.message)
-            return None
-        raise
-    builds = normalize_builds(
-        raw, patch=patch, game_type=BUILDS_GAME_TYPE, collected_at=collected_at
-    )
-    log.info("run.normalized", key="builds", heroes=len(builds["heroes"]))
-    return raw, builds
+    return raw_by, builds
 
 
 log = structlog.get_logger(__name__)
@@ -731,7 +761,14 @@ async def _run_stats(
         prev_meta = load_meta(settings.data_dir)
         meta = build_meta(prev_meta, patch=patch, collected_at=collected_at, snapshots=snapshots)
         meta["window"] = window
-        # builds follow the one reference patch, like every page (thin new patch → previous)
+        # builds follow the one reference patch, like every page (thin new patch → previous);
+        # a build's pick rate divides by the same bracket's games, so only on the same patch
+        ref = meta["reference_patch"]
+        hero_games = {
+            key: {r["hero"]: int(r["games"]) for r in snap["rows"] if r["map"] == "all"}
+            for key, _ in BUILD_BRACKETS
+            if (snap := snapshots.get(f"sl_{key}")) and snap.get("patch") == ref
+        }
         builds_result = await _collect_builds(
             c,
             settings,
@@ -744,6 +781,8 @@ async def _run_stats(
             ),
             collected_at=collected_at,
             sleep=sleep,
+            kept=_load_json(settings.data_dir / "latest" / "builds.json"),
+            hero_games=hero_games,
         )
     except HPError as e:
         log.error("run.api_failed", status=e.status, code=e.code, message=e.message)
@@ -812,7 +851,7 @@ async def _run_stats(
     _run_length(
         settings, patch=meta["reference_patch"], since=window["since"], collected_at=collected_at
     )
-    if builds_result is not None:
+    if builds_result is not None and builds_result[0]:
         day_dir_b = settings.snapshot_out_dir / snapshot_day(collected_at)
         _write_gz(day_dir_b / "raw_builds.json.gz", builds_result[0])
         _write_gz(day_dir_b / "builds.json.gz", builds_result[1])

@@ -1,6 +1,6 @@
 /** Hero detail view models. Pure: computed at build time for both modes and serialised into each hero page. */
-import { computeTiers, type Snapshot, type Tier } from "../formula";
-import { REGIONS, type Bracket, type BuildsFile, type MapTable, type Region, type TalentTable } from "../data";
+import { buildBase, buildScore, computeTiers, type Snapshot, type Tier } from "../formula";
+import { REGIONS, type Bracket, type BuildBracketKey, type BuildsFile, type BuildTalent, type MapTable, type Region, type TalentTable } from "../data";
 import { DEFAULT_LOCALE, type Locale } from "../i18n/locale";
 import { localField } from "../i18n/names";
 import { messages } from "../i18n/messages";
@@ -120,35 +120,64 @@ export interface BuildTalentView {
 }
 /** Below this many games a build's win rate is noise (right after a patch: 1-3 games, "100 %"). */
 export const BUILD_MIN_GAMES = 30;
+/** Builds shown per bracket: the collector asks for ten so the score has more to choose from. */
+export const BUILDS_SHOWN = 5;
+const BUILD_BRACKETS: BuildBracketKey[] = ["high", "low"]; // high first: the main line
 
 export interface BuildView {
   games: number;
   /** games < BUILD_MIN_GAMES: listed, but its win rate is not presented as a finding. */
   thin: boolean;
   win_rate: number;
-  /** games relative to the most played build (bar length). */
+  /** % of the hero's games in the bracket; null without that count. */
+  pick: number | null;
+  /** games relative to the most played build shown (bar length). */
   share: number;
   talents: BuildTalentView[];
 }
 
+export interface HeroBuilds {
+  /** brackets with builds, high first; each sorted by the build score (formula.ts). */
+  brackets: { key: BuildBracketKey; builds: BuildView[] }[];
+}
+
+function talentView(t: BuildTalent, talents: TalentTable | null, locale: Locale): BuildTalentView {
+  const info = talents?.talents[t.name];
+  const icon = info?.icon || undefined;
+  if (locale !== DEFAULT_LOCALE) return { level: t.level, ko: localField(info, locale) ?? t.title, icon, desc: localField(info, `desc_${locale}`), cd: localField(info, `cd_${locale}`) };
+  return { level: t.level, ko: info?.ko ?? t.title, icon, desc: info?.desc, cd: info?.cd };
+}
+
 /** Each talent's name, tooltip and cooldown in the page language (English from gamestrings enus; HP's English
  *  title when the game data has no entry). */
-export function heroBuilds(builds: BuildsFile | null, talents: TalentTable | null, hero: string, locale: Locale): BuildView[] {
-  // most played first, as the section title says (Heroes Profile's "Popular" order is not by games)
-  const list = [...(builds?.heroes[hero] ?? [])].sort((a, b) => b.games - a.games);
-  const max = Math.max(1, ...list.map((b) => b.games));
-  return list.map((b) => ({
-    games: b.games,
-    thin: b.games < BUILD_MIN_GAMES,
-    win_rate: b.win_rate,
-    share: b.games / max,
-    talents: b.talents.map((t) => {
-      const info = talents?.talents[t.name];
-      const icon = info?.icon || undefined;
-      if (locale !== DEFAULT_LOCALE) return { level: t.level, ko: localField(info, locale) ?? t.title, icon, desc: localField(info, `desc_${locale}`), cd: localField(info, `cd_${locale}`) };
-      return { level: t.level, ko: info?.ko ?? t.title, icon, desc: info?.desc, cd: info?.cd };
-    }),
-  }));
+export function heroBuilds(builds: BuildsFile | null, talents: TalentTable | null, hero: string, locale: Locale): HeroBuilds {
+  const brackets = BUILD_BRACKETS.flatMap((key) => {
+    const b = builds?.brackets?.[key];
+    const list = b?.heroes[hero] ?? [];
+    if (!b || !list.length) return [];
+    const base = buildBase(list);
+    const shown = list
+      .map((x) => ({ x, score: buildScore(x.games, x.win_rate, base) }))
+      .sort((p, q) => q.score - p.score || q.x.games - p.x.games)
+      .slice(0, BUILDS_SHOWN)
+      .map((p) => p.x);
+    const max = Math.max(1, ...shown.map((x) => x.games));
+    const n = b.hero_games[hero];
+    return [
+      {
+        key,
+        builds: shown.map((x) => ({
+          games: x.games,
+          thin: x.games < BUILD_MIN_GAMES,
+          win_rate: x.win_rate,
+          pick: n ? (x.games / n) * 100 : null,
+          share: x.games / max,
+          talents: x.talents.map((t) => talentView(t, talents, locale)),
+        })),
+      },
+    ];
+  });
+  return { brackets };
 }
 
 /** Game tooltip text: {{…}} marks a highlighted value. Text parts only — nothing is parsed as HTML. */
