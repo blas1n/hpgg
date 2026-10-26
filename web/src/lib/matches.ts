@@ -357,11 +357,11 @@ export function matchRows(
 const MODE_ORDER = ["sl", "qm", "ar"];
 export type ModeFilter = "all" | string;
 
-/** 전체 then each mode in the loaded games with its count, Storm League first; nothing when there is one mode only. */
+/** 전체, then 폭풍 리그 · 빠른 대전 · 무작위 영웅 대전 always (owner 2026-10-26: the filter is always there, like
+ *  영웅별 통계's, 0 games included), then any other mode in the loaded games; each with its count. */
 export function modeFilters(rows: MatchRow[], locale: Locale): { value: ModeFilter; label: string; count: number }[] {
-  const n = new Map<string, number>();
+  const n = new Map<string, number>(MODE_ORDER.map((m) => [m, 0]));
   for (const m of rows) if (m.mode) n.set(m.mode, (n.get(m.mode) ?? 0) + 1);
-  if (n.size < 2) return [];
   const rank = (m: string) => (MODE_ORDER.includes(m) ? MODE_ORDER.indexOf(m) : MODE_ORDER.length);
   const modes = [...n.keys()].sort((a, b) => rank(a) - rank(b) || a.localeCompare(b));
   return [

@@ -292,9 +292,10 @@ function Profile({ v, games, season, me, region, heroes, maps }: { v: PlayerView
         )}
       </Card>
 
+      {/* the games column is min-w-0: its mode filter scrolls inside the card instead of widening the grid on a phone */}
       <div className="grid gap-4 lg:grid-cols-12">
         {games.kind === "ok" ? (
-          <div className="lg:col-span-8">
+          <div className="min-w-0 lg:col-span-8">
             <MatchHistory data={games.data} heroes={heroes} maps={maps} me={me} region={region} />
           </div>
         ) : (

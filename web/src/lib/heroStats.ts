@@ -7,8 +7,8 @@ import { localizedPath, type Locale } from "../i18n/locale";
 import type { MatchRow } from "./matches";
 
 export type HeroStatsMode = "all" | "qm" | "sl" | "ar";
-/** 무작위 영웅 대전 (ar) too (owner 2026-10-26): the match list has its games like any other mode's. */
-export const HERO_STATS_MODES: HeroStatsMode[] = ["all", "qm", "sl", "ar"];
+/** Storm League first, as in 경기 기록, and 무작위 영웅 대전 (ar) too (owner 2026-10-26). */
+export const HERO_STATS_MODES: HeroStatsMode[] = ["all", "sl", "qm", "ar"];
 
 export interface HeroStatsRow {
   hero: string;

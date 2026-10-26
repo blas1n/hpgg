@@ -567,6 +567,7 @@ export const ko = {
       listTitle: "경기 기록",
       listSub: (n: string) => `최근 ${n}경기`,
       filterAll: "전체",
+      filterEmpty: "이 모드의 경기가 없습니다.",
       filterLabel: "모드별로 보기",
       more: (n: string) => `${n}경기 더 보기`,
       loading: "경기 기록을 불러오는 중…",

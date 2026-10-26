@@ -153,8 +153,19 @@ describe("modeFilters (경기 기록 by mode, owner 2026-10-15: on the loaded ga
     expect(modeFilters(mixed, "en")[0]).toEqual({ value: "all", label: "All", count: 25 });
   });
 
-  it("one mode only: no filter to offer", () => {
-    expect(modeFilters(full.matches, "ko")).toEqual([]);
+  it("always offers 전체, 폭풍 리그, 빠른 대전, 무작위 영웅 대전, even at 0 games (owner 2026-10-26)", () => {
+    expect(modeFilters(full.matches, "ko")).toEqual([
+      { value: "all", label: "전체", count: 25 },
+      { value: "sl", label: "폭풍 리그", count: 0 },
+      { value: "qm", label: "빠른 대전", count: 25 },
+      { value: "ar", label: "무작위 영웅 대전", count: 0 },
+    ]);
+    expect(modeFilters([], "ko").map((f) => f.count)).toEqual([0, 0, 0, 0]);
+  });
+
+  it("another mode in the list gets its own tab after the fixed ones", () => {
+    const ud = full.matches.map((m, i) => ({ ...m, mode: i < 2 ? "ud" : "qm" }));
+    expect(modeFilters(ud, "ko").map((f) => [f.value, f.count])).toEqual([["all", 25], ["sl", 0], ["qm", 23], ["ar", 0], ["ud", 2]]);
   });
 
   it("each row keeps its mode code to filter on", () => {

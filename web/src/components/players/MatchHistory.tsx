@@ -90,19 +90,23 @@ export function MatchHistory({ data, heroes, maps, me, region }: { data: Matches
       <BriefingCard b={b} luck={luck} />
       <Card aria-labelledby="h-games">
         <CardHeader id="h-games" title={t.listTitle} sub={t.listSub(String(all.length))} />
-        {filters.length > 0 && (
-          <div id="games-filter" className="overflow-x-auto border-b border-line px-4 py-2">
-            <Segmented
-              value={mode}
-              onChange={(v) => {
-                setMode(v);
-                setShown(PAGE);
-              }}
-              label={t.filterLabel}
-              idPrefix="games-mode"
-              options={filters.map((f) => ({ value: f.value, label: `${f.label} ${f.count}` }))}
-            />
-          </div>
+        <div id="games-filter" className="overflow-x-auto border-b border-line px-4 py-2">
+          <Segmented
+            value={mode}
+            onChange={(v) => {
+              setMode(v);
+              setShown(PAGE);
+            }}
+            label={t.filterLabel}
+            idPrefix="games-mode"
+            nowrap
+            options={filters.map((f) => ({ value: f.value, label: `${f.label} ${f.count}` }))}
+          />
+        </div>
+        {rows.length === 0 && (
+          <p id="games-empty" className="px-4 py-3 text-xs text-muted">
+            {t.filterEmpty}
+          </p>
         )}
         <ul id="player-matches" className="divide-y divide-line">
           {visible.map((m) => (

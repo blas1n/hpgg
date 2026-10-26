@@ -562,6 +562,7 @@ The same data gives different tiers under a different formula. This site always 
       listTitle: "Match history",
       listSub: (n: string) => `Last ${plural(n, "game", "games")}`,
       filterAll: "All",
+      filterEmpty: "No games in this mode.",
       filterLabel: "Show by mode",
       more: (n: string) => `${plural(n, "more game", "more games")}`,
       loading: "Loading match history…",
