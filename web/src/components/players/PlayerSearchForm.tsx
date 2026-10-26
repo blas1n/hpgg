@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useLocale, useT } from "@/i18n/client";
 import { localizedPath } from "@/i18n/locale";
-import { parseBattletag, playersHref, REGIONS, rememberRegion, startRegion, type Region } from "@/lib/players";
+import { isRegion, parseBattletag, playersHref, REGIONS, rememberRegion, startRegion, type Region } from "@/lib/players";
 import { cx } from "../ui";
 
 /** BattleTag + region. On 홈 it opens the 전적 검색 page; on that page `onSearch` runs the search in place. */
@@ -25,9 +25,18 @@ export function PlayerSearchForm({
   const locale = useLocale();
   const [tag, setTag] = useState(initialTag);
   // the static page renders the language's default; the visitor's own region is set once in the browser
-  const [region, setRegion] = useState<Region>(initialRegion ?? (locale === "ko" ? "KR" : "NA"));
+  const rendered: Region = initialRegion ?? (locale === "ko" ? "KR" : "NA");
+  const [region, setRegion] = useState<Region>(rendered);
+  const [ready, setReady] = useState(false); // data-ready: hydrated and on its start region
+  // a region picked on the static page before the scripts ran is in the menu only until hydration resets it:
+  // read it on the first client render, while it is still there (CI 2026-10-26: KR picked, the search went on EU)
+  const early = useRef<Region | null | undefined>(undefined);
+  if (early.current === undefined) early.current = pickedBeforeHydration(`${id}-region`, rendered);
   useEffect(() => {
-    if (!initialRegion) setRegion(startRegion(locale));
+    hydrated = true;
+    if (early.current) setRegion(early.current);
+    else if (!initialRegion) setRegion(startRegion(locale));
+    setReady(true);
   }, [initialRegion, locale]);
   const [invalid, setInvalid] = useState(false);
 
@@ -43,7 +52,7 @@ export function PlayerSearchForm({
   };
 
   return (
-    <form id={id} role="search" aria-label={t.players.formLabel} action={localizedPath("/hots/players/", locale)} method="get" onSubmit={submit} className={className} noValidate>
+    <form id={id} data-ready={ready || undefined} role="search" aria-label={t.players.formLabel} action={localizedPath("/hots/players/", locale)} method="get" onSubmit={submit} className={className} noValidate>
       <div className={cx("flex h-11 items-stretch overflow-hidden rounded-lg border bg-surface-2 transition-colors focus-within:border-primary", invalid ? "border-neg" : "border-line")}>
         <label className="sr-only" htmlFor={`${id}-region`}>
           {t.players.region}
@@ -90,4 +99,15 @@ export function PlayerSearchForm({
       )}
     </form>
   );
+}
+
+// set once the page's first form has mounted: a form mounted later (a shared link's search remounts it) finds the
+// previous form's menu in the document, which is not a pick made before hydration
+let hydrated = false;
+
+/** The menu's value when it differs from what the static page rendered: the visitor picked it before hydration. */
+function pickedBeforeHydration(selectId: string, rendered: Region): Region | null {
+  if (hydrated || typeof document === "undefined") return null;
+  const v = (document.getElementById(selectId) as HTMLSelectElement | null)?.value;
+  return isRegion(v) && v !== rendered ? v : null;
 }
