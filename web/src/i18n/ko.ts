@@ -86,7 +86,7 @@ export const ko = {
     heroes: "영웅 목록",
   },
   common: {
-    modes: { qm: "빠른 대전", sl: "폭풍 리그" },
+    modes: { qm: "빠른 대전", sl: "폭풍 리그", ar: "무작위 영웅 대전" },
     brackets: { all: "전체 구간", low: "브론즈 – 플래티넘", high: "다이아 – 그랜드마스터" },
     regions: { all: "전체 지역", kr: "아시아 (KR)", na: "아메리카 (NA)", eu: "유럽 (EU)" },
     /** Appended to a page's meta line while it shows the previous patch (lib/shown.ts). */

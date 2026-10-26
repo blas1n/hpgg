@@ -2,16 +2,16 @@
 import { appliedParty, computeTiers, type Party, type Snapshot, type Tier } from "../formula";
 import { wilson } from "../wilson";
 import { sameCohort } from "./cohort";
-import { referencePatch, REGIONS, type Bracket, type HeroTable, type Meta, type Mode, type PatchChoice, type Region } from "../data";
+import { referencePatch, REGIONS, type Bracket, type HeroTable, type Meta, type PatchChoice, type Region, type TierMode } from "../data";
 import type { HeroRef } from "./home";
 
 export type SortKey = "score" | "win_rate" | "pick" | "ban_rate" | "games";
 const SORT_KEYS: SortKey[] = ["score", "win_rate", "pick", "ban_rate", "games"];
 
 export interface TierState {
-  mode: Mode;
+  mode: TierMode;
   bracket: Bracket; // Storm League only; combines with a region (owner 2026-10-02)
-  region: Region; // both modes
+  region: Region; // QM and SL; ARAM is one view of every region
   map: string; // "all" or a map name; Storm League only
   role: string; // "all" or a role name
   /** "auto" = current patch, or the previous one while the current sample is thin. */
@@ -24,7 +24,8 @@ export const DEFAULT_TIER_STATE: TierState = { mode: "qm", bracket: "all", regio
 
 export function parseTierState(search: string): TierState {
   const q = new URLSearchParams(search);
-  const mode: Mode = q.get("mode") === "sl" ? "sl" : "qm";
+  const m = q.get("mode");
+  const mode: TierMode = m === "sl" || m === "ar" ? m : "qm";
   const bracket = q.get("tier");
   const sort = q.get("sort") as SortKey | null;
   const patch = q.get("patch");
@@ -33,7 +34,7 @@ export function parseTierState(search: string): TierState {
   return {
     mode,
     bracket: mode === "sl" && (bracket === "low" || bracket === "high") ? bracket : "all",
-    region,
+    region: mode === "ar" ? "all" : region,
     map: mode === "sl" ? (q.get("map") ?? "all") : "all",
     role: q.get("role") ?? "all",
     patch: patch === "previous" || patch === "current" ? patch : "auto",
@@ -45,7 +46,7 @@ export function parseTierState(search: string): TierState {
 export function tierSearch(s: TierState): string {
   const q = new URLSearchParams();
   if (s.mode !== "qm") q.set("mode", s.mode);
-  if (s.region !== "all") q.set("region", s.region);
+  if (s.mode !== "ar" && s.region !== "all") q.set("region", s.region);
   if (s.mode === "sl" && s.bracket !== "all") q.set("tier", s.bracket);
   if (s.mode === "sl" && s.map !== "all") q.set("map", s.map);
   if (s.role !== "all") q.set("role", s.role);
@@ -53,6 +54,11 @@ export function tierSearch(s: TierState): string {
   if (s.sort !== "score") q.set("sort", s.sort);
   if (s.dir !== "desc") q.set("dir", s.dir);
   return q.toString();
+}
+
+/** The modes the table offers: 무작위 영웅 대전 once the collector has published it (meta.modes.ar). */
+export function tierModes(meta: Meta): TierMode[] {
+  return meta.modes.ar ? ["qm", "sl", "ar"] : ["qm", "sl"];
 }
 
 /** Which patch a view shows: "auto" is the site's one reference patch (meta.reference_patch); a patch chosen in the

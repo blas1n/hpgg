@@ -226,3 +226,31 @@ test("region menu follows the patch the table shows: a region backfilled into pr
   await expect(page.locator("#region-note")).toContainText("09/26 수집");
   await expect(page.locator("#rows tr").first()).toBeVisible();
 });
+
+// 무작위 영웅 대전 (owner 2026-10-26): one view of every region, like QM otherwise — no bans, no bracket, no map choice
+test("무작위 영웅 대전 is a mode of the tier table: one view of every region, no ban column", async ({ page }) => {
+  await page.goto("./tier/?region=kr");
+  await page.locator("#mode-ar").click();
+  await expect(page).toHaveURL(/mode=ar/);
+  await expect(page).not.toHaveURL(/region=/);
+  await expect(page.locator("#meta-line")).toContainText("무작위 영웅 대전");
+  await expect(page.locator("#meta-line")).toContainText("12,345");
+  await expect(page.locator("#region-wrap")).toHaveCount(0);
+  await expect(page.locator("#bracket-wrap")).toHaveCount(0);
+  await expect(page.locator("#map-wrap")).toHaveCount(0);
+  await expect(page.locator("#region-note")).toHaveCount(0);
+  await expect(page.locator('th[data-col="ban_rate"]')).toHaveCount(0);
+  await expect(page.locator("#rows tr[data-hero]")).toHaveCount(90);
+  // ranked on its own numbers, not Quick Match's
+  await expect(page.locator("#rows tr[data-hero]").first()).not.toHaveAttribute("data-hero", "qhira");
+  await expect(page.locator("#formula")).toContainText("1000");
+  // a hero row opens the hero page (which has QM and SL only)
+  await expect(page.locator('#rows tr[data-hero="illidan"] a[data-link]')).toHaveAttribute("href", "/ko/hots/heroes/illidan/");
+});
+
+test("a shared ?mode=ar link opens 무작위 영웅 대전 and drops a region in it", async ({ page }) => {
+  await page.goto("./tier/?mode=ar&region=kr&map=Silver%20City");
+  await expect(page.locator("#mode-ar")).toHaveAttribute("aria-pressed", "true");
+  await expect(page.locator("#meta-line")).toContainText("무작위 영웅 대전");
+  await expect(page).toHaveURL(/\?mode=ar$/);
+});

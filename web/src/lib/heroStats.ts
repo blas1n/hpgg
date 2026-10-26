@@ -6,8 +6,9 @@ import type { HeroInfo, HeroTable } from "../data";
 import { localizedPath, type Locale } from "../i18n/locale";
 import type { MatchRow } from "./matches";
 
-export type HeroStatsMode = "all" | "qm" | "sl";
-export const HERO_STATS_MODES: HeroStatsMode[] = ["all", "qm", "sl"];
+export type HeroStatsMode = "all" | "qm" | "sl" | "ar";
+/** 무작위 영웅 대전 (ar) too (owner 2026-10-26): the match list has its games like any other mode's. */
+export const HERO_STATS_MODES: HeroStatsMode[] = ["all", "qm", "sl", "ar"];
 
 export interface HeroStatsRow {
   hero: string;

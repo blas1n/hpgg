@@ -5,7 +5,7 @@ import { dirname, join } from "node:path";
 import { knownOnly } from "../src/lib/known";
 import type { Snapshot } from "../src/formula";
 import type { HeroTable, Meta } from "../src/data";
-import { DEFAULT_TIER_STATE, formatScore, nextSort, parseTierState, resolvePatch, tierSearch, tierTable, visibleRows, type TierState } from "../src/lib/tier";
+import { DEFAULT_TIER_STATE, formatScore, nextSort, parseTierState, resolvePatch, tierModes, tierSearch, tierTable, visibleRows, type TierState } from "../src/lib/tier";
 
 const dataDir = join(dirname(fileURLToPath(import.meta.url)), "e2e-data");
 const json = <T>(rel: string): T => JSON.parse(readFileSync(join(dataDir, rel), "utf-8")) as T;
@@ -34,6 +34,26 @@ describe("parseTierState / tierSearch", () => {
   it("keeps an explicit ?patch=current so a reload does not fall back to the previous patch again", () => {
     expect(parseTierState("?patch=current").patch).toBe("current");
     expect(tierSearch({ ...DEFAULT_TIER_STATE, patch: "current" })).toBe("patch=current");
+  });
+});
+
+// 무작위 영웅 대전 (owner 2026-10-26): one view of every region, no bracket, no map choice
+describe("무작위 영웅 대전 (ARAM) view", () => {
+  it("round-trips ?mode=ar", () => {
+    const s: TierState = { ...DEFAULT_TIER_STATE, mode: "ar", role: "Healer" };
+    expect(tierSearch(s)).toBe("mode=ar&role=Healer");
+    expect(parseTierState(tierSearch(s))).toEqual(s);
+  });
+
+  it("has no region, bracket or map: a shared link with them shows the one ARAM view", () => {
+    expect(parseTierState("?mode=ar&region=kr&tier=high&map=Silver%20City")).toMatchObject({ mode: "ar", region: "all", bracket: "all", map: "all" });
+    expect(tierSearch({ ...DEFAULT_TIER_STATE, mode: "ar", region: "kr" })).toBe("mode=ar");
+  });
+
+  it("is offered once the collector has published it", () => {
+    const meta = { modes: { qm: {}, sl: {} } } as unknown as Meta;
+    expect(tierModes(meta)).toEqual(["qm", "sl"]);
+    expect(tierModes({ ...meta, modes: { ...meta.modes, ar: {} } } as unknown as Meta)).toEqual(["qm", "sl", "ar"]);
   });
 });
 
