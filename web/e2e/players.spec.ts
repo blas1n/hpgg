@@ -314,11 +314,36 @@ test("players: 경기 기록 filters by mode over the loaded games, asking nothi
   expect(seen.length).toBe(asked);
 });
 
-test("players: a list of one mode offers no filter", async ({ page }) => {
+test("players: a list of one mode still shows every mode's filter; an empty one says so", async ({ page }) => {
+  // owner 2026-10-26: the filter is always there, like 영웅별 통계's
   await mockApi(page, withGames(games));
   await page.goto("./players/?tag=blAs1N%233479&region=KR");
   await expect(page.locator("#player-matches > li")).toHaveCount(20);
-  await expect(page.locator("#games-filter")).toHaveCount(0);
+  await expect(page.locator("#games-filter button")).toHaveText(["전체 25", "폭풍 리그 0", "빠른 대전 25", "무작위 영웅 대전 0"]);
+  await page.locator("#games-mode-ar").click();
+  await expect(page.locator("#player-matches > li")).toHaveCount(0);
+  await expect(page.locator("#games-empty")).toHaveText("이 모드의 경기가 없습니다.");
+  await page.locator("#games-mode-qm").click();
+  await expect(page.locator("#games-empty")).toHaveCount(0);
+  await expect(page.locator("#player-matches > li")).toHaveCount(20);
+});
+
+test("players: on a phone each mode filter stays on one line and the page does not scroll sideways", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await mockApi(page, withGames(games));
+  await page.goto("./players/?tag=blAs1N%233479&region=KR");
+  await expect(page.locator("#games-filter button")).toHaveCount(4);
+  // a flex row stretches every button to the tallest, so count the text's own lines
+  const lines = await page.locator("#games-filter button").evaluateAll((bs) =>
+    bs.map((b) => {
+      const r = document.createRange();
+      r.selectNodeContents(b);
+      return new Set([...r.getClientRects()].map((x) => Math.round(x.top))).size;
+    }),
+  );
+  expect(lines).toEqual([1, 1, 1, 1]);
+  const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+  expect(overflow).toBeLessThanOrEqual(0);
 });
 
 test("players: hovering the MMR line reads out that game", async ({ page }) => {
