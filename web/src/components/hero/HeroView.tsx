@@ -7,7 +7,7 @@ import { HpCredit } from "@/components/HpCredit";
 import { ChangeGroups } from "@/components/patches/ChangeGroups";
 import { CommentThread } from "@/components/comments/CommentThread";
 import { useLocale, useT } from "@/i18n/client";
-import { descParts, type BuildTalentView, type GridRow, type HeroBuilds, type HeroSummary, type MapRow } from "@/lib/hero";
+import { descParts, type BuildScope, type BuildTalentView, type BuildView, type GridRow, type HeroBuilds, type HeroSummary, type MapRow } from "@/lib/hero";
 import { buildFormulaLines } from "@/formula";
 import { LENGTH_MIN_GAMES, type LengthView } from "@/lib/length";
 import { TIER_MIN_GAMES, type TiersView } from "@/lib/tiers";
@@ -109,6 +109,10 @@ export function HeroView({
   const cell = m.cells[snapshotKey(mode, bracket, region)] ?? null;
   const s: HeroSummary = cell?.summary ?? { kind: "none" };
   const filtered = region !== "all" || bracket !== "all";
+  // the builds follow the page's bracket filter (owner 2026-10-27); 전체 구간 is both brackets added up
+  const want: BuildScope = bracket === "low" || bracket === "high" ? bracket : "all";
+  const buildsScope = (builds[want] ? want : (["all", "high", "low"] as const).find((k) => builds[k])) ?? null;
+  const buildsShown = buildsScope ? { scope: buildsScope, list: builds[buildsScope]! } : null;
   const viewLabel = [region !== "all" && t.common.regions[region], bracket !== "all" && t.common.brackets[bracket]].filter(Boolean).join(" · ");
 
   const tab = t.hero.sections;
@@ -119,7 +123,7 @@ export function HeroView({
     ...(length ? [{ id: "length-title", label: tab.length, nav: "nav-length" }] : []),
     { id: "grid-title", label: tab.grid, nav: "nav-grid" },
     ...(matchups ? [{ id: "matchups-title", label: tab.matchups, nav: "nav-matchups" }] : []),
-    ...(builds.brackets.length ? [{ id: "builds-title", label: tab.builds, nav: "nav-builds" }] : []),
+    ...(Object.keys(builds).length ? [{ id: "builds-title", label: tab.builds, nav: "nav-builds" }] : []),
     // long and not what people come for first: last, below both columns
     ...(patches.notes.length || patches.since ? [{ id: "patches-title", label: tab.patches, nav: "nav-patches" }] : []),
     // what players think of the numbers (owner 2026-10-05): the end of the page
@@ -217,16 +221,16 @@ export function HeroView({
 
       <Matchups hero={hero} v={matchups} wholeOnly={filtered} />
 
-      {builds.brackets.length > 0 && (
+      {buildsShown && (
         <>
           <h2 id="builds-title" className={SECTION}>
             {t.hero.buildsTitle}{" "}
             <span id="builds-sub" className="text-xs font-normal text-muted">
-              {t.hero.buildsSub(buildsPatch ?? "")}
-              {filtered && ` · ${t.hero.wholeOnly}`}
+              {t.hero.buildsSub(buildsPatch ?? "", buildsShown.scope === "all" ? t.hero.buildsAll : t.common.brackets[buildsShown.scope])}
+              {region !== "all" && ` · ${t.hero.wholeRegion}`}
             </span>
           </h2>
-          <Builds builds={builds} />
+          <Builds list={buildsShown.list} scope={buildsShown.scope} />
         </>
       )}
       </section>
@@ -699,7 +703,7 @@ function MatchupList({ id, title, note, rows }: { id: string; title: string; not
 
 type Pop = { t: BuildTalentView; left: number; top: number; width: number; anchor: DOMRect };
 
-function Builds({ builds }: { builds: HeroBuilds }) {
+function Builds({ list, scope }: { list: BuildView[]; scope: BuildScope }) {
   const t = useT();
   const locale = useLocale();
   const [pop, setPop] = useState<Pop | null>(null);
@@ -739,26 +743,12 @@ function Builds({ builds }: { builds: HeroBuilds }) {
     setPop({ t, left, top: a.bottom + 8 + window.scrollY, width, anchor: a });
   };
 
-  const [bracket, setBracket] = useState(builds.brackets[0]?.key ?? "high");
-  const shown = builds.brackets.find((b) => b.key === bracket) ?? builds.brackets[0];
   const [line, detail] = buildFormulaLines(locale);
 
   return (
     <div id="builds" className="grid gap-2">
-      {builds.brackets.length > 1 && (
-        // a grid child stretches to the column: the wrapper keeps the group as wide as its buttons
-        <div className="justify-self-start">
-        <Segmented
-          value={bracket}
-          options={builds.brackets.map((b) => ({ value: b.key, label: t.common.brackets[b.key] }))}
-          onChange={setBracket}
-          label={t.hero.buildsBracket}
-          idPrefix="builds-bracket"
-        />
-        </div>
-      )}
-      {(shown?.builds ?? []).map((b, i) => (
-        <Card as="div" key={`${shown!.key}-${i}`} data-build={i + 1} data-bracket={shown!.key} data-thin={b.thin || undefined} className="relative grid grid-cols-[1fr_76px] gap-2 p-2">
+      {list.map((b, i) => (
+        <Card as="div" key={`${scope}-${i}`} data-build={i + 1} data-bracket={scope} data-thin={b.thin || undefined} className="relative grid grid-cols-[1fr_76px] gap-2 p-2">
           <div className="grid grid-cols-7 gap-1">
             {b.talents.map((tl) => (
               <button
