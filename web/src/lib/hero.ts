@@ -1,6 +1,6 @@
 /** Hero detail view models. Pure: computed at build time for both modes and serialised into each hero page. */
 import { buildBase, buildScore, computeTiers, type Snapshot, type Tier } from "../formula";
-import { REGIONS, type Bracket, type BuildBracketKey, type BuildsFile, type BuildTalent, type MapTable, type Region, type TalentTable } from "../data";
+import { REGIONS, type Bracket, type Build, type BuildBracketKey, type BuildsFile, type BuildTalent, type MapTable, type Region, type TalentTable } from "../data";
 import { DEFAULT_LOCALE, type Locale } from "../i18n/locale";
 import { localField } from "../i18n/names";
 import { messages } from "../i18n/messages";
@@ -136,10 +136,9 @@ export interface BuildView {
   talents: BuildTalentView[];
 }
 
-export interface HeroBuilds {
-  /** brackets with builds, high first; each sorted by the build score (formula.ts). */
-  brackets: { key: BuildBracketKey; builds: BuildView[] }[];
-}
+/** The builds' views: one per Storm League bracket, and "all" (both added up) when both have builds. */
+export type BuildScope = "all" | BuildBracketKey;
+export type HeroBuilds = Partial<Record<BuildScope, BuildView[]>>;
 
 function talentView(t: BuildTalent, talents: TalentTable | null, locale: Locale): BuildTalentView {
   const info = talents?.talents[t.name];
@@ -148,36 +147,53 @@ function talentView(t: BuildTalent, talents: TalentTable | null, locale: Locale)
   return { level: t.level, ko: info?.ko ?? t.title, icon, desc: info?.desc, cd: info?.cd };
 }
 
-/** Each talent's name, tooltip and cooldown in the page language (English from gamestrings enus; HP's English
- *  title when the game data has no entry). */
+/** 전체 구간 (owner 2026-10-27): the same seven talents in both brackets are one build, games and wins added up.
+ *  Each bracket lists its top ten only, and games HP gives no league tier (about 23 %) are in neither. */
+function mergeBrackets(lists: Build[][]): Build[] {
+  const by = new Map<string, { games: number; wins: number; talents: BuildTalent[] }>();
+  for (const x of lists.flat()) {
+    const key = x.talents.map((t) => t.name).join("|");
+    const m = by.get(key) ?? { games: 0, wins: 0, talents: x.talents };
+    m.games += x.games;
+    m.wins += (x.win_rate * x.games) / 100;
+    by.set(key, m);
+  }
+  return [...by.values()].map((m) => ({ games: m.games, win_rate: m.games ? (m.wins / m.games) * 100 : 0, talents: m.talents }));
+}
+
+function view(list: Build[], heroGames: number | undefined, talents: TalentTable | null, locale: Locale): BuildView[] {
+  const base = buildBase(list);
+  const shown = list
+    .map((x) => ({ x, score: buildScore(x.games, x.win_rate, base) }))
+    .sort((p, q) => q.score - p.score || q.x.games - p.x.games)
+    .slice(0, BUILDS_SHOWN)
+    .map((p) => p.x);
+  const max = Math.max(1, ...shown.map((x) => x.games));
+  return shown.map((x) => ({
+    games: x.games,
+    thin: x.games < BUILD_MIN_GAMES,
+    win_rate: x.win_rate,
+    pick: heroGames ? (x.games / heroGames) * 100 : null,
+    share: x.games / max,
+    talents: x.talents.map((t) => talentView(t, talents, locale)),
+  }));
+}
+
+/** Each bracket's builds sorted by the build score (formula.ts), with each talent's name, tooltip and cooldown in the
+ *  page language (English from gamestrings enus; HP's English title when the game data has no entry). */
 export function heroBuilds(builds: BuildsFile | null, talents: TalentTable | null, hero: string, locale: Locale): HeroBuilds {
-  const brackets = BUILD_BRACKETS.flatMap((key) => {
+  const out: HeroBuilds = {};
+  const found = BUILD_BRACKETS.flatMap((key) => {
     const b = builds?.brackets?.[key];
     const list = b?.heroes[hero] ?? [];
-    if (!b || !list.length) return [];
-    const base = buildBase(list);
-    const shown = list
-      .map((x) => ({ x, score: buildScore(x.games, x.win_rate, base) }))
-      .sort((p, q) => q.score - p.score || q.x.games - p.x.games)
-      .slice(0, BUILDS_SHOWN)
-      .map((p) => p.x);
-    const max = Math.max(1, ...shown.map((x) => x.games));
-    const n = b.hero_games[hero];
-    return [
-      {
-        key,
-        builds: shown.map((x) => ({
-          games: x.games,
-          thin: x.games < BUILD_MIN_GAMES,
-          win_rate: x.win_rate,
-          pick: n ? (x.games / n) * 100 : null,
-          share: x.games / max,
-          talents: x.talents.map((t) => talentView(t, talents, locale)),
-        })),
-      },
-    ];
+    return b && list.length ? [{ key, list, n: b.hero_games[hero] }] : [];
   });
-  return { brackets };
+  if (found.length === BUILD_BRACKETS.length) {
+    const n = found.every((f) => f.n) ? found.reduce((s, f) => s + f.n!, 0) : undefined;
+    out.all = view(mergeBrackets(found.map((f) => f.list)), n, talents, locale);
+  }
+  for (const f of found) out[f.key] = view(f.list, f.n, talents, locale);
+  return out;
 }
 
 /** Game tooltip text: {{…}} marks a highlighted value. Text parts only — nothing is parsed as HTML. */

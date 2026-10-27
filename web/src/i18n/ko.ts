@@ -191,7 +191,9 @@ export const ko = {
     buildDetail: (k: string, m: string) => `WRs = 영웅 평균 + (승률 − 영웅 평균) × 게임수 / (게임수 + ${k})
 영웅 평균 = 같은 구간 그 영웅 빌드들의 게임 가중 승률. 게임이 절반인 빌드는 약 ${m}%p 더 이겨야 같은 점수입니다.
 픽률 = 빌드 게임수 / 같은 구간 그 영웅의 게임수. 7개 특성이 모두 같은 게임만 한 빌드로 셉니다.
-점수는 정렬에만 씁니다. 이 사이트는 공식을 숨기지 않습니다.`,
+점수는 정렬에만 씁니다. 이 사이트는 공식을 숨기지 않습니다.
+20레벨 전에 끝난 경기(폭풍 리그의 약 35%)는 들어가지 않습니다. 이런 경기는 대부분 진 경기라 빌드 승률은 영웅 승률보다 높게 나옵니다.
+브론즈 – 그랜드마스터 합산 = 두 구간의 상위 10개 빌드를 같은 특성끼리 더한 것. HP가 티어를 매기지 않은 경기(약 23%)는 빠집니다.`,
     ban: (w: string) => ` + 밴률 × ${w}`,
     line: (w: string, ban: string) => `티어 점수 = 픽률 × (승률 − 50) × ${w}${ban}`,
     noBan: "   (빠른 대전은 밴이 없음)",
@@ -225,7 +227,9 @@ export const ko = {
     noCell: "이 조합의 데이터가 없습니다",
     wholeOnly: "전체 지역·구간 기준",
     buildsTitle: "특성 빌드",
-    buildsSub: (patch: string) => `폭풍 리그 · 패치 ${patch} · 점수순`,
+    buildsSub: (patch: string, scope: string) => `폭풍 리그 · ${scope} · 패치 ${patch} · 20레벨까지 찍은 경기만 · 점수순`,
+    buildsAll: "브론즈 – 그랜드마스터 합산",
+    wholeRegion: "전체 지역 기준",
     gridUncollected: "수집 전",
     noData: "데이터 없음",
     noDataSub: "이 모드에 표본이 없습니다",
@@ -282,7 +286,6 @@ export const ko = {
     buildWinRateThin: "승률 · 표본 적음",
     buildWinRate: "승률",
     buildPick: "픽률",
-    buildsBracket: "리그 구간별 빌드",
     buildGames: "게임",
     talentDialog: (name: string) => `${name} 설명`,
     level: (n: string) => `${n}레벨`,

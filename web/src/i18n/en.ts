@@ -187,7 +187,9 @@ export const en: Messages = {
     buildDetail: (k: string, m: string) => `WRs = hero average + (win rate − hero average) × games / (games + ${k})
 hero average = the games-weighted win rate of the hero's builds in the same bracket. A build with half the games needs about ${m} %p more wins to tie.
 pick rate = the build's games / the hero's games in the same bracket. Only games with all seven talents the same count as one build.
-The score only sorts. This site never hides its formula.`,
+The score only sorts. This site never hides its formula.
+Games that ended before level 20 (about 35 % in Storm League) are not counted. Most of them are losses, so a build's win rate runs above the hero's.
+Bronze – Grand Master combined = both brackets' top ten builds, the same talents added up. Games HP gives no league tier (about 23 %) are left out.`,
     ban: (w: string) => ` + ban rate × ${w}`,
     line: (w: string, ban: string) => `tier score = pick rate × (win rate − 50) × ${w}${ban}`,
     noBan: "   (Quick Match has no bans)",
@@ -221,7 +223,9 @@ The same data gives different tiers under a different formula. This site always 
     noCell: "No data for this combination",
     wholeOnly: "all regions and brackets",
     buildsTitle: "Talent builds",
-    buildsSub: (patch: string) => `Storm League · patch ${patch} · by score`,
+    buildsSub: (patch: string, scope: string) => `Storm League · ${scope} · patch ${patch} · games that reached level 20 only · by score`,
+    buildsAll: "Bronze – Grand Master combined",
+    wholeRegion: "all regions",
     gridUncollected: "not collected yet",
     noData: "No data",
     noDataSub: "No games in this mode",
@@ -279,7 +283,6 @@ The same data gives different tiers under a different formula. This site always 
     buildWinRateThin: "win rate · few games",
     buildWinRate: "win rate",
     buildPick: "pick rate",
-    buildsBracket: "Builds by league bracket",
     buildGames: "games",
     talentDialog: (name: string) => `${name} description`,
     level: (n: string) => `Level ${n}`,
