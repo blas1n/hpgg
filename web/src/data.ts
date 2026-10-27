@@ -76,7 +76,16 @@ export function hotsHref(locale: Locale) {
     home: p("/hots/"),
     tier: (qs?: URLSearchParams | string) => p("/hots/tier/") + (qs && String(qs) ? `?${String(qs)}` : ""),
     heroes: p("/hots/heroes/"),
-    hero: (slug: string, mode?: Mode) => p(`/hots/heroes/${encodeURIComponent(slug)}/`) + (mode === "sl" ? "?mode=sl" : ""),
+    /** The tier table's view rides along (owner 2026-10-27): the hero page reads the same ?mode= ?region= ?tier=. */
+    hero: (slug: string, by: Mode | { mode?: Mode; region?: Region; bracket?: Bracket } = {}) => {
+      const view = typeof by === "string" ? { mode: by } : by;
+      const q = new URLSearchParams();
+      if (view.mode === "sl") q.set("mode", "sl");
+      if (view.region && view.region !== "all") q.set("region", view.region);
+      if (view.mode === "sl" && view.bracket && view.bracket !== "all") q.set("tier", view.bracket);
+      const qs = q.toString();
+      return p(`/hots/heroes/${encodeURIComponent(slug)}/`) + (qs ? `?${qs}` : "");
+    },
     maps: p("/hots/maps/"),
     players: p("/hots/players/"),
     patches: p("/hots/patches/"),

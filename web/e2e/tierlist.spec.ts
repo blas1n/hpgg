@@ -120,6 +120,21 @@ test("a row goes straight to the hero page: the name is the link, a click anywhe
   await expect(page.locator("h1")).toHaveText("일리단");
 });
 
+test("the tier table's mode, region and bracket carry into the hero page (owner 2026-10-27)", async ({ page }) => {
+  await page.goto("./tier/?mode=sl&region=kr&tier=high");
+  const link = row(page, "illidan").locator("a[data-link]");
+  await expect(link).toHaveAttribute("href", "/ko/hots/heroes/illidan/?mode=sl&region=kr&tier=high");
+  await link.click();
+  await expect(page.locator("h1")).toHaveText("일리단");
+  await expect(page.locator("#hero-region")).toHaveValue("kr");
+  await expect(page.locator("#hero-bracket")).toHaveValue("high");
+  await expect(page.locator('#grid [data-cell="kr-high"]')).toHaveAttribute("aria-pressed", "true");
+  // a filter changed on the table after load rides along too; Quick Match has no bracket
+  await page.goto("./tier/");
+  await page.locator("#region").selectOption("kr");
+  await expect(row(page, "illidan").locator("a[data-link]")).toHaveAttribute("href", "/ko/hots/heroes/illidan/?region=kr");
+});
+
 test("the table keeps its full width on a phone, with the name readable", async ({ page }) => {
   await page.goto("./tier/");
   const visibleCols = await page.locator("#table thead th:visible").count();
