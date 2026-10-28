@@ -8,7 +8,7 @@
  */
 import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
-import { DEFAULT_LOCALE, LOCALE_KEY, LOCALES, SITE_URL } from "../src/i18n/locales.ts";
+import { DEFAULT_LOCALE, LOCALE_KEY, LOCALES, NAVER_SITE_VERIFICATION, SITE_URL } from "../src/i18n/locales.ts";
 import type { HeroTable, MapTable } from "../src/data";
 
 export interface Forwarder {
@@ -25,7 +25,7 @@ const script = (section: string, rest = "location.search+location.hash", before 
 
 function page(path: string, section: string, js: string): Forwarder {
   const target = `/${DEFAULT_LOCALE}${section}`;
-  const html = `<!doctype html><html lang="${DEFAULT_LOCALE}"><meta charset="utf-8"><title>hpgg.win</title><meta name="robots" content="noindex"><link rel="canonical" href="${SITE_URL}${target}"><meta http-equiv="refresh" content="0; url=${target}"><script>${js}</script><a href="${target}">hpgg.win →</a></html>\n`;
+  const html = `<!doctype html><html lang="${DEFAULT_LOCALE}"><meta charset="utf-8"><title>hpgg.win</title><meta name="robots" content="noindex"><meta name="naver-site-verification" content="${NAVER_SITE_VERIFICATION}"><link rel="canonical" href="${SITE_URL}${target}"><meta http-equiv="refresh" content="0; url=${target}"><script>${js}</script><a href="${target}">hpgg.win →</a></html>\n`;
   return { path, target, html };
 }
 

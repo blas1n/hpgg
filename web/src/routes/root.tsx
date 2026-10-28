@@ -1,6 +1,7 @@
 /** Document parts shared by every language (#10): metadata defaults and the pre-paint scripts of app/[locale]/layout.tsx. */
 import type { Metadata, Viewport } from "next";
 import { LOCALE_REDIRECT_SCRIPT, localizedPath, type Locale } from "@/i18n/locale";
+import { NAVER_SITE_VERIFICATION } from "@/i18n/locales";
 import { messages } from "@/i18n/messages";
 import { THEME_INIT_SCRIPT } from "@/lib/theme";
 
@@ -9,6 +10,7 @@ export const rootMetadata = (locale: Locale): Metadata => ({
   title: { default: messages[locale].site.title, template: "%s | HPGG" },
   description: messages[locale].site.description,
   icons: { icon: "/img/brand/icon-sm.png", apple: "/img/brand/icon.png" },
+  verification: { other: { "naver-site-verification": NAVER_SITE_VERIFICATION } },
   openGraph: { siteName: "hpgg.win", locale: messages[locale].lang.og, type: "website", images: [`/img/brand/og-${locale}.png`] }, // 1200×630, scripts/og-card.mjs
 });
 

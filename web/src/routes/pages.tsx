@@ -120,7 +120,7 @@ export async function heroMetadata(locale: Locale, { params }: Params): Promise<
   const h = readHeroes(locale).heroes.find((x) => x.slug === slug);
   if (!h) return {};
   return {
-    title: h.ko,
+    title: messages[locale].meta.heroTitle(h.ko),
     description: messages[locale].meta.heroDescription(h.ko, h.name, h.role_ko),
     alternates: alternates(`/hots/heroes/${slug}/`, locale),
     openGraph: h.portrait ? { images: [`/${h.portrait}`] } : undefined,
@@ -195,7 +195,7 @@ export async function mapMetadata(locale: Locale, { params }: Params): Promise<M
   const m = readMaps(locale).maps.find((x) => x.slug === slug);
   if (!m) return {};
   return {
-    title: m.ko,
+    title: messages[locale].meta.mapTitle(m.ko),
     description: messages[locale].meta.mapDescription(m.ko, m.name),
     alternates: alternates(`/hots/maps/${slug}/`, locale),
     openGraph: m.image ? { images: [`/${m.image}`] } : undefined,
