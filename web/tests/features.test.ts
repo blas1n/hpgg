@@ -11,9 +11,9 @@ import { LOCALES } from "../src/i18n/locales";
 // sitemap and not in the export (GitHub Pages then answers 404); `next dev` still serves it, to work on it.
 
 describe("features", () => {
-  it("밴픽 is off on the live site (owner 2026-10-02)", () => {
-    expect(FEATURES.draft).toBe(false);
-    expect(sectionEnabled("draft")).toBe(false);
+  it("밴픽 is on again (owner: reopen once the first-pick counter re-measure is in — 2026-10-29, no signal)", () => {
+    expect(FEATURES.draft).toBe(true);
+    expect(sectionEnabled("draft")).toBe(true);
   });
 
   it("주간 메타 리포트 is off on the live site (owner 2026-10-06: until it is built on per-game replay data)", () => {
