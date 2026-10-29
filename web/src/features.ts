@@ -8,8 +8,9 @@
 export const FEATURES = {
   /** 밴픽 시뮬레이터 — off 2026-10-02 (owner): it sorted by score with a matchup correction and ignored the roles a
    *  team needs. Since 2026-10-15 it weighs the team's make-up (#174), each term by how much it showed in later games,
-   *  and pair gaps without the other hero's own strength (#175); reopening is the owner's call. */
-  draft: false,
+   *  and pair gaps without the other hero's own strength (#175). On again 2026-10-29 (owner: once the first-pick
+   *  counter re-measure is in): counters still left at a pick did not move the result (docs/ROADMAP.md). */
+  draft: true,
   /** 주간 메타 리포트 — off 2026-10-05 (owner: a top 10 and a diff is not a report), on again the same day with a
    *  Storm League analysis (#130), off again 2026-10-06 (owner: still hypotheses and lists). Back once it reads like
    *  a meta analysis built on per-game replay data: the central pick, how it changes games, how its counters work. */
