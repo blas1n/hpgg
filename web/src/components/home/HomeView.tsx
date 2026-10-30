@@ -6,7 +6,6 @@ import { useLocale, useT } from "@/i18n/client";
 import type { HomeModel, MapCard, Mover, TopRow } from "@/lib/home";
 import { MapCardLink } from "../MapCardLink";
 import { PageHead } from "@/components/PageHead";
-import { PlayerSearchForm } from "../players/PlayerSearchForm";
 import { Card, CardHeader, cx, MoreLink, Portrait, RankDelta, Segmented } from "../ui";
 
 const pct = (n: number) => `${n.toFixed(1)}%`;
@@ -29,13 +28,6 @@ export function HomeView({ models, maps }: { models: Record<Mode, HomeModel>; ma
   return (
     <>
       <main className="page-x mt-6 space-y-6">
-        <div className="space-y-2">
-          {/* what the site is, for a first visit (#30) */}
-          <p id="site-tagline" className="text-center text-[13px] font-semibold text-fg-2">
-            {t.home.tagline}
-          </p>
-          <PlayerSearchForm id="home-player-search" className="mx-auto max-w-xl" />
-        </div>
         <PageHead
           title={t.home.title}
           aside={

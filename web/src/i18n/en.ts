@@ -43,7 +43,6 @@ export const en: Messages = {
     playersDescription: "Heroes of the Storm player search: MMR per mode, recent matches and most played heroes by BattleTag.",
   },
   nav: {
-    home: "Home",
     tier: "Tier list",
     heroes: "Heroes",
     maps: "Battlegrounds",
@@ -52,7 +51,6 @@ export const en: Messages = {
     meta: "Weekly meta",
     draft: "Draft",
     main: "Main menu",
-    mobile: "Main menu (mobile)",
     homeLink: "hpgg.win home",
   },
   theme: {
@@ -61,10 +59,13 @@ export const en: Messages = {
     toLight: "Switch to the light theme",
   },
   search: {
-    label: "Hero search",
-    placeholder: "Search heroes (e.g. Illidan)",
-    results: "Hero search results",
+    label: "Search a hero or a BattleTag",
+    placeholder: "Hero name or BattleTag#1234",
+    results: "Search results",
     none: (q: string) => `No hero matches ‘${q}’`,
+    heroGroup: "Heroes",
+    playerGroup: "Player",
+    tagHint: "BattleTags look like Name#1234",
   },
   footer: {
     game: "Heroes of the Storm",
@@ -125,7 +126,6 @@ export const en: Messages = {
   },
   home: {
     title: "Today's meta",
-    tagline: "Heroes of the Storm hero tiers and player search",
     leaders: "Top hero per role",
     leadersSub: "The hero with the highest tier score in each role",
     fullTier: "Full tier list",

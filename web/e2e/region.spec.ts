@@ -13,11 +13,12 @@ test.beforeEach(async ({ page }) => {
 test.describe("a visitor in Europe", () => {
   test.use({ timezoneId: "Europe/Berlin" });
 
-  test("starts on EU, on the English and the Korean page, and on 홈's search box", async ({ page }) => {
+  // 홈's own search box is gone (owner 2026-10-30); the header's search starting on EU is in header.spec.ts
+  test("starts on EU, on the English and the Korean page", async ({ page }) => {
     await page.goto("/en/hots/players/");
     await expect(page.locator("#player-search-region")).toHaveValue("EU");
-    await page.goto("/ko/hots/");
-    await expect(page.locator("#home-player-search-region")).toHaveValue("EU");
+    await page.goto("/ko/hots/players/");
+    await expect(page.locator("#player-search-region")).toHaveValue("EU");
   });
 
   test("a region chosen before wins over the time zone", async ({ page }) => {
