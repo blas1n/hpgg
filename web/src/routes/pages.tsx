@@ -13,6 +13,7 @@ import { HomeView } from "@/components/home/HomeView";
 import { MapsView } from "@/components/maps/MapsView";
 import { MapView } from "@/components/maps/MapView";
 import { PlayerSearchView } from "@/components/players/PlayerSearchView";
+import { PrivacyView } from "@/components/PrivacyView";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 import { TierView } from "@/components/tier/TierView";
@@ -287,4 +288,15 @@ export function WeeklyPage({ locale, week }: { locale: Locale; week?: string }) 
   const model = issue ? weeklyModel(issue, heroes, readMeta().min_games_for_tier, all, { analysis: readWeeklyAnalysis(issue.week), locale }) : null;
   const evidence = issue ? readWeeklyEvidence(issue.week) : null;
   return <WeeklyView model={model} centre={evidence ? centreCard(evidence, heroes) : null} />;
+}
+
+// --- 개인정보처리방침 (#28): what Battle.net sign-in keeps and why; text only, the same for every visitor ---
+export const privacyMetadata = (locale: Locale): Metadata => ({
+  title: messages[locale].meta.privacyTitle,
+  description: messages[locale].meta.privacyDescription,
+  alternates: alternates("/hots/privacy/", locale),
+});
+
+export function PrivacyPage({ locale }: { locale: Locale }) {
+  return <PrivacyView t={messages[locale].privacy} />;
 }

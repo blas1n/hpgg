@@ -23,13 +23,17 @@ export const FEATURES = {
   /** 몇인분 on each game (PR #144) — built 2026-10-06, off until every hero has its own yardstick (owner: "안정 되고
    *  오픈을 하자 — 일부만 나오는건 오히려 이상해"): data/carry_baselines.json fills from the daily replay sample. */
   carry: false,
+  /** 로그인 (Battle.net, #28) — built 2026-10-30 (owner: personalised 밴픽 inside the member's own hero pool is
+   *  members-only). The header account control, the /v1/me check on every page and the privacy policy page stay
+   *  hidden until stage D (the 밴픽 "내 영웅풀만" toggle) ships; the server side (server/accounts/) is already live. */
+  accounts: false,
 } as const;
 
 export type Feature = keyof typeof FEATURES;
 export type Flags = Record<Feature, boolean>;
 
 /** The section under /<locale>/hots/ a feature owns; a feature inside a page (팀운) owns none. */
-const SECTION_OF: Partial<Record<Feature, string>> = { draft: "draft", weekly: "meta" };
+const SECTION_OF: Partial<Record<Feature, string>> = { draft: "draft", weekly: "meta", accounts: "privacy" };
 
 export const sectionEnabled = (section: string, flags: Flags = FEATURES): boolean =>
   (Object.keys(SECTION_OF) as Feature[]).every((f) => SECTION_OF[f] !== section || flags[f]);
