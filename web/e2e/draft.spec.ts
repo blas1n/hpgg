@@ -122,3 +122,12 @@ test("draft: in the header nav, and no horizontal scroll on a phone", async ({ p
   expect(overflow).toBeLessThanOrEqual(0);
   await expect(page.locator("#draft-rule")).toContainText("n/(n+100)");
 });
+
+test("draft: the formula under the board uses the page's full width, so it takes fewer lines (owner 2026-10-30)", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.goto("./draft/");
+  const rule = (await page.locator("#draft-rule").boundingBox())!;
+  const main = (await page.locator("main").first().boundingBox())!;
+  const pad = 2 * 16; // page-x gutter at least
+  expect(rule.width).toBeGreaterThanOrEqual(main.width - pad * 3);
+});

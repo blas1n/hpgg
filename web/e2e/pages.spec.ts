@@ -538,6 +538,13 @@ test("hero detail: talent builds follow the page's bracket filter, with pick rat
   await page.goto("./heroes/illidan/?mode=sl&tier=high");
   await expect(page.locator('#builds [data-build="1"]')).toHaveAttribute("data-bracket", "high");
   await expect(page.locator("#builds-sub")).toContainText("폭풍 리그 · 다이아 – 그랜드마스터");
+  // the formula box fills its column on desktop (owner 2026-10-30: no 80-character cap); the builds sit in
+  // one of the page's two columns, so that column is the full width here
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.goto("./heroes/illidan/?mode=sl");
+  const box = (await page.locator("#builds-formula").boundingBox())!;
+  const column = (await page.locator("#builds").boundingBox())!;
+  expect(box.width).toBeGreaterThanOrEqual(column.width - 2);
 });
 
 test("hero detail: a hero without builds hides the section", async ({ page }) => {

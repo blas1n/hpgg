@@ -800,7 +800,7 @@ function Builds({ list, scope }: { list: BuildView[]; scope: BuildScope }) {
         </Card>
       ))}
       <div className="space-y-1">
-        <p id="builds-formula" className="max-w-[80ch] rounded-lg border border-line bg-surface px-3 py-2 font-mono text-xs break-keep [overflow-wrap:anywhere] text-fg-2">
+        <p id="builds-formula" className="rounded-lg border border-line bg-surface px-3 py-2 font-mono text-xs break-keep [overflow-wrap:anywhere] text-fg-2">
           {line}
         </p>
         <details className="text-[13px]">

@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { PageHead } from "@/components/PageHead";
 import { loadMatchups, type MatchupsFile } from "@/data";
+import { FEATURES } from "@/features";
 import { useLocale, useT } from "@/i18n/client";
 import {
   applyPick,
@@ -18,7 +19,10 @@ import {
 } from "@/lib/draft";
 import type { CompModel } from "@/lib/comps";
 import { filterHeroes } from "@/lib/heroes";
+import { fetchMe, loginUrl, type Me } from "@/lib/account";
+import { getPool, onlyPool, readOnlyPool, readTab, withTab, writeOnlyPool, type DraftTab } from "@/lib/pool";
 import { Card, cx, Portrait, SELECT, Segmented } from "../ui";
+import { HeroPool, type PoolSource } from "./HeroPool";
 
 const SUGGEST_TOP = 8;
 const signed = (n: number): string =>
@@ -54,6 +58,15 @@ export function DraftView({
     () => new Map(heroes.map((h) => [h.slug, h])),
     [heroes],
   );
+  // 내 영웅풀 (#28, stage D): members only, and nothing is asked of the API while accounts are switched off
+  const [me, setMe] = useState<Me | null | "loading">(FEATURES.accounts ? "loading" : null);
+  const [pool, setPool] = useState<string[] | null>(null);
+  const [poolFailed, setPoolFailed] = useState(false);
+  const [sources, setSources] = useState<Record<string, PoolSource>>({});
+  const [tab, setTab] = useState<DraftTab>("draft");
+  const [only, setOnly] = useState(false);
+  const member = FEATURES.accounts && me !== null && me !== "loading";
+  const view: DraftTab = member ? tab : "draft";
 
   useEffect(() => {
     const d = decodeDraft(location.search, heroes);
@@ -62,13 +75,43 @@ export function DraftView({
     setSeq(d.seq);
   }, [heroes, maps]);
 
-  const sync = (next: {
-    usFirst: boolean;
-    map: string | null;
-    seq: string[];
-  }) => {
-    const qs = encodeDraft(next);
+  useEffect(() => {
+    if (!FEATURES.accounts) return;
+    setTab(readTab(location.search));
+    setOnly(readOnlyPool());
+    let live = true;
+    void fetchMe().then(async (m) => {
+      if (!live) return;
+      setMe(m);
+      if (!m) return;
+      const p = await getPool();
+      if (!live) return;
+      setPool(p ?? []);
+      setPoolFailed(p === null);
+    });
+    return () => {
+      live = false;
+    };
+  }, []);
+
+  const sync = (
+    next: {
+      usFirst: boolean;
+      map: string | null;
+      seq: string[];
+    },
+    tabNow: DraftTab = view,
+  ) => {
+    const qs = FEATURES.accounts ? withTab(encodeDraft(next), tabNow) : encodeDraft(next);
     history.replaceState(null, "", location.pathname + (qs ? `?${qs}` : ""));
+  };
+  const showTab = (next: DraftTab) => {
+    setTab(next);
+    sync({ usFirst, map, seq }, next);
+  };
+  const toggleOnly = () => {
+    setOnly(!only);
+    writeOnlyPool(!only);
   };
   const update = (
     patch: Partial<{ usFirst: boolean; map: string | null; seq: string[] }>,
@@ -115,15 +158,24 @@ export function DraftView({
     [files],
   );
   const loading = picked.some((s) => !files.has(s));
-  const suggestions = useMemo(
-    () =>
-      recommend(heroes, seq, { matchups: loaded, map, comps }).slice(0, SUGGEST_TOP),
+  const ranked = useMemo(
+    () => recommend(heroes, seq, { matchups: loaded, map, comps }),
     [heroes, seq, loaded, map, comps],
   );
   const missing = picked.filter((s) => files.get(s) === null);
   const open = available(heroes, seq);
   const grid = filterHeroes(open, role, query);
   const next = st.next;
+  // "내 영웅풀만": our team's picks inside the pool; bans and the other team's picks stay as they are
+  const filtering = member && only && pool !== null;
+  const ourPick = !!next && next.kind === "pick" && sideOf(next.side) === "us";
+  const suggestions = (
+    filtering && next
+      ? onlyPool(ranked, pool, { kind: next.kind, ours: sideOf(next.side) === "us" })
+      : ranked
+  ).slice(0, SUGGEST_TOP);
+  const poolEmpty = filtering && ourPick && pool.length === 0;
+  const poolCount = pool ? pool.filter((n) => heroes.some((h) => h.name === n)).length : 0;
   const choGallBlocked =
     next?.kind === "pick" &&
     !open.some((h) => h.slug === "cho") &&
@@ -132,14 +184,8 @@ export function DraftView({
 
   const choose = (slug: string) => update({ seq: applyPick(seq, slug) });
 
-  return (
-    <main className="page-x mt-6 space-y-4 pb-10">
-      <PageHead title={t.draft.title}>
-        <p className="num mt-0.5 text-xs text-muted">
-          {t.draft.metaLine(patch)}
-        </p>
-      </PageHead>
-
+  const board = (
+    <>
       <Card as="div" className="flex flex-wrap items-center gap-2 p-2.5">
         <Segmented
           label={t.draft.firstPick}
@@ -248,21 +294,73 @@ export function DraftView({
 
           {next && (
             <Card as="div" className="overflow-hidden">
-              <div className="border-b border-line px-3 py-2">
-                <h2
-                  id="draft-suggest-title"
-                  className="text-sm font-bold text-fg"
-                >
-                  {next.kind === "ban"
-                    ? t.draft.suggestBan
-                    : t.draft.suggestPick}
-                </h2>
-                <p className="text-2xs text-muted">
-                  {next.kind === "ban"
-                    ? t.draft.suggestBanSub
-                    : t.draft.suggestPickSub}
-                </p>
+              <div
+                className={cx(
+                  "border-b border-line px-3 py-2",
+                  member && "flex items-start justify-between gap-3",
+                )}
+              >
+                <div className="min-w-0">
+                  <h2
+                    id="draft-suggest-title"
+                    className="text-sm font-bold text-fg"
+                  >
+                    {next.kind === "ban"
+                      ? t.draft.suggestBan
+                      : t.draft.suggestPick}
+                  </h2>
+                  <p className="text-2xs text-muted">
+                    {next.kind === "ban"
+                      ? t.draft.suggestBanSub
+                      : t.draft.suggestPickSub}
+                  </p>
+                </div>
+                {member && (
+                  <button
+                    id="draft-only-pool"
+                    type="button"
+                    role="switch"
+                    aria-checked={only}
+                    onClick={toggleOnly}
+                    className="flex shrink-0 items-center gap-2 rounded-md py-0.5 text-xs font-semibold text-fg-2 hover:text-fg"
+                  >
+                    <span
+                      aria-hidden
+                      className={cx(
+                        "relative inline-block h-4 w-7 rounded-full border transition-colors",
+                        only ? "border-primary bg-primary" : "border-line-strong bg-surface-3",
+                      )}
+                    >
+                      <span
+                        className={cx(
+                          "absolute top-0.5 size-2.5 rounded-full transition-all",
+                          only ? "left-3.5 bg-primary-ink" : "left-0.5 bg-fg-2",
+                        )}
+                      />
+                    </span>
+                    {t.pool.onlyPool}
+                  </button>
+                )}
               </div>
+              {poolEmpty ? (
+                <div id="draft-pool-empty" className="space-y-2 px-3 py-4 text-center">
+                  <p className="text-[13px] text-fg-2">
+                    <b className="block text-fg">{t.pool.emptyHead}</b>
+                    {t.pool.emptyBody}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => showTab("pool")}
+                    className="rounded-lg bg-primary px-3 py-1.5 text-[13px] font-bold text-primary-ink hover:opacity-90"
+                  >
+                    {t.pool.emptyCta}
+                  </button>
+                </div>
+              ) : filtering && ourPick && suggestions.length === 0 ? (
+                <p id="draft-pool-none" className="px-3 py-4 text-center text-[13px] text-fg-2">
+                  {t.pool.noneLeft}
+                </p>
+              ) : (
               <ol
                 id="draft-suggest"
                 className={cx(
@@ -286,6 +384,11 @@ export function DraftView({
                       <span className="min-w-0 flex-1 sm:flex sm:items-center sm:justify-between sm:gap-2">
                         <span className="block truncate text-[13px] font-semibold text-fg">
                           {s.hero.ko}
+                          {member && !filtering && pool?.includes(s.hero.name) && (
+                            <span data-in-pool className="ml-1.5 text-2xs font-semibold text-primary">
+                              {t.pool.inPool}
+                            </span>
+                          )}
                         </span>
                         <span className="num flex flex-wrap gap-x-2 text-2xs text-muted">
                           {(["base", "allies", "enemies", "map", "comp"] as const).map(
@@ -315,6 +418,38 @@ export function DraftView({
                   </li>
                 ))}
               </ol>
+              )}
+              {member && !poolEmpty && (
+                <p id="draft-pool-note" className="border-t border-line px-3 py-1.5 text-2xs text-muted">
+                  {filtering && ourPick ? (
+                    <>
+                      {t.pool.noteFiltered(poolCount)}{" "}
+                      <button
+                        type="button"
+                        onClick={() => showTab("pool")}
+                        className="font-semibold text-primary underline-offset-2 hover:underline"
+                      >
+                        {t.pool.editPool}
+                      </button>
+                    </>
+                  ) : filtering ? (
+                    t.pool.noteOthers
+                  ) : (
+                    t.pool.noteAll
+                  )}
+                </p>
+              )}
+              {FEATURES.accounts && me === null && (
+                <p id="draft-pool-login" className="border-t border-line px-3 py-2 text-2xs text-fg-2">
+                  {t.pool.guest}{" "}
+                  <a
+                    href={loginUrl(location.pathname + location.search)}
+                    className="font-semibold text-primary underline-offset-2 hover:underline"
+                  >
+                    {t.pool.guestCta}
+                  </a>
+                </p>
+              )}
               <p id="draft-comp-note" className="border-t border-line px-3 py-1.5 text-2xs text-muted">
                 {t.draft.compNote}
               </p>
@@ -407,12 +542,85 @@ export function DraftView({
       <div className="space-y-1">
         <p
           id="draft-rule"
-          className="max-w-[80ch] rounded-lg border border-line bg-surface px-3 py-2 font-mono text-xs break-keep text-fg-2"
+          className="rounded-lg border border-line bg-surface px-3 py-2 font-mono text-xs break-keep [overflow-wrap:anywhere] text-fg-2"
         >
           {draftRule(locale)}
         </p>
         <p className="text-2xs text-muted">{t.draft.orderSource}</p>
       </div>
+    </>
+  );
+
+  return (
+    <main className="page-x mt-6 space-y-4 pb-10">
+      <PageHead
+        title={t.draft.title}
+        aside={
+          member ? (
+            <div
+              role="tablist"
+              aria-label={t.pool.tabsLabel}
+              className="flex gap-0.5 rounded-lg border border-line bg-surface p-0.5"
+            >
+              {(["draft", "pool"] as const).map((k) => (
+                <button
+                  key={k}
+                  type="button"
+                  role="tab"
+                  id={`draft-tab-${k}`}
+                  aria-selected={view === k}
+                  aria-controls={k === "pool" ? "pool-view" : "draft-view"}
+                  onClick={() => showTab(k)}
+                  className={cx(
+                    "flex items-center gap-1.5 whitespace-nowrap rounded-md px-3 py-1.5 text-[13px] font-bold transition-colors",
+                    view === k ? "bg-surface-3 text-fg" : "text-muted hover:text-fg",
+                  )}
+                >
+                  {k === "draft" ? t.pool.tabDraft : t.pool.tabPool}
+                  {k === "pool" && (
+                    <span
+                      id="pool-count"
+                      className="num min-w-5 rounded-full bg-primary px-1.5 text-center text-2xs font-bold text-primary-ink"
+                    >
+                      {poolCount}
+                    </span>
+                  )}
+                </button>
+              ))}
+            </div>
+          ) : undefined
+        }
+      >
+        <p className="num mt-0.5 text-xs text-muted">
+          {t.draft.metaLine(patch)}
+        </p>
+      </PageHead>
+
+      {view === "pool" && me && me !== "loading" && pool !== null ? (
+        <div id="pool-view" role="tabpanel" aria-labelledby="draft-tab-pool">
+          {poolFailed && (
+            <p role="alert" className="mb-3 rounded-lg border border-neg/60 bg-surface-2 px-3 py-2 text-[13px] text-neg">
+              {t.pool.loadFailed}
+            </p>
+          )}
+          <HeroPool
+            heroes={heroes}
+            roles={roles}
+            pool={pool}
+            setPool={setPool}
+            sources={sources}
+            setSources={setSources}
+            me={me}
+            setMe={setMe}
+          />
+        </div>
+      ) : member ? (
+        <div id="draft-view" role="tabpanel" aria-labelledby="draft-tab-draft" className="space-y-4">
+          {board}
+        </div>
+      ) : (
+        board
+      )}
     </main>
   );
 }
