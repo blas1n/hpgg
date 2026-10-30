@@ -42,6 +42,8 @@ export const ko = {
     patchesTitle: "히오스 패치 요약 (버프 · 너프 · 핫픽스)",
     patchesDescription: "히어로즈 오브 더 스톰 이번 패치 요약: 공식 패치 노트의 버프·너프, 공지 없는 핫픽스, 신규 영웅, 바뀐 영웅의 직전 패치 대비 순위·승률.",
     playersDescription: "히어로즈 오브 더 스톰 전적 검색: 배틀태그로 모드별 MMR, 최근 경기, 많이 한 영웅.",
+    privacyTitle: "개인정보처리방침",
+    privacyDescription: "hpgg.win 개인정보처리방침: Battle.net 로그인으로 받는 정보, 쓰는 곳, 보관 기간과 삭제, 쿠키, 문의처.",
   },
   nav: {
     home: "홈",
@@ -78,8 +80,99 @@ export const ko = {
     tagline: "Happy Good Game. 매치 데이터로 보는 메타 통계. 공식을 숨기지 않습니다.",
     dataBy: "Data provided by",
     daily: "매일 새벽 갱신",
+    privacy: "개인정보처리방침",
     legal:
       "초상화·전장·특성 이미지 © Blizzard Entertainment (HeroesToolChest 배포본). Heroes of the Storm™ is a trademark of Blizzard Entertainment, Inc. hpgg.win (Happy Good Game) is not affiliated with or endorsed by Blizzard Entertainment.",
+  },
+  account: {
+    login: "로그인",
+    loginTitle: "배틀넷 계정으로 로그인",
+    menu: (battletag: string) => `${battletag} 계정 메뉴`,
+    region: "히오스 지역",
+    regionPrompt: "히오스를 하는 지역을 골라 주세요.",
+    regionWhy: "회원 영웅풀(제공 예정)을 만들 때 이 지역의 전적을 씁니다. 나중에 바꿀 수 있습니다.",
+    regionFailed: "지역을 저장하지 못했습니다. 잠시 후 다시 시도하세요.",
+    myProfile: "내 전적",
+    privacy: "개인정보처리방침",
+    logout: "로그아웃",
+    delete: "계정 삭제",
+    deleteConfirm: "계정을 삭제하면 배틀태그, 지역, 로그인 기록이 바로 지워지고 모든 기기에서 로그아웃됩니다. 남긴 댓글은 그대로 남고 계정과의 연결만 끊깁니다.",
+    deleteYes: "삭제",
+    deleteNo: "취소",
+    failed: "요청을 처리하지 못했습니다. 잠시 후 다시 시도하세요.",
+    loginFailed: "로그인하지 못했습니다. 잠시 후 다시 시도하세요.",
+    loginCancelled: "로그인을 취소했습니다.",
+    deleted: "계정을 삭제했습니다.",
+    close: "닫기",
+  },
+  privacy: {
+    title: "개인정보처리방침",
+    effective: "시행일 2026-10-30",
+    intro: "hpgg.win(Happy Good Game)은 로그인하지 않아도 모든 통계와 전적 검색을 쓸 수 있습니다. 아래는 Battle.net으로 로그인한 회원의 정보를 어떻게 다루는지 적은 것입니다.",
+    sections: [
+      {
+        title: "운영자와 문의",
+        items: ["운영: hpgg.win", "문의: contact@hpgg.win", "개인정보 보호책임자: 운영자 (contact@hpgg.win)"],
+      },
+      {
+        title: "받는 정보",
+        items: [
+          "Battle.net 계정 고유번호와 배틀태그 (로그인할 때 Blizzard에서 받습니다)",
+          "회원이 고른 히오스 지역 (아시아·아메리카·유럽)",
+          "가입 시각과 최근 접속 시각",
+          "로그인 유지 세션: 브라우저에는 쿠키로, 서버에는 그 값의 해시만 저장합니다.",
+          "비밀번호, 이메일, 결제 정보는 요청하지도 저장하지도 않습니다. 로그인은 Blizzard Battle.net 화면에서 이루어집니다.",
+          "Blizzard가 주는 액세스 토큰은 로그인 때 배틀태그를 확인하는 데 한 번만 쓰고 저장하지 않습니다.",
+        ],
+      },
+      {
+        title: "쓰는 곳",
+        items: [
+          "로그인 상태 유지",
+          "회원 개인화: 본인 영웅풀 안에서 고르는 밴픽 추천 (제공 예정)",
+          "이후 커뮤니티 기능에서 작성자 표시",
+        ],
+      },
+      {
+        title: "보관 기간과 삭제",
+        items: [
+          "계정 정보는 탈퇴할 때까지 보관하고, 탈퇴하면 바로 삭제합니다. 남긴 댓글은 지워지지 않고 계정과의 연결만 끊깁니다.",
+          "로그인 세션은 30일 뒤 만료되고, 로그아웃하면 바로 삭제합니다.",
+          "로그인 중에만 쓰는 정보(확인값의 해시, 돌아갈 페이지 주소)는 로그인을 마치면 바로 지우고, 마치지 못한 것은 10분 뒤 무효가 됩니다.",
+        ],
+      },
+      {
+        title: "외부로 보내는 정보",
+        items: [
+          "영웅풀 기능이 열리면, 영웅풀을 만들 때 배틀태그와 지역으로 Heroes Profile API에서 공개 전적을 조회합니다.",
+          "회원 정보를 팔거나 다른 곳에 제공하지 않습니다.",
+        ],
+      },
+      {
+        title: "쿠키와 브라우저 저장소",
+        items: [
+          "hpgg_session: 로그인 유지 (api.hpgg.win, 30일)",
+          "hpgg_oauth_state: 로그인 과정 확인 (api.hpgg.win, 10분)",
+          "방문 통계는 GoatCounter로 집계합니다. GoatCounter는 쿠키를 쓰지 않습니다.",
+          "테마, 언어, 전적 검색 지역, 댓글 닉네임은 이 브라우저의 저장소에만 남고 서버로 보내지 않습니다.",
+        ],
+      },
+      {
+        title: "안전성",
+        items: [
+          "모든 연결은 HTTPS입니다. 세션 쿠키는 HttpOnly·Secure로 설정해 페이지 스크립트가 읽을 수 없습니다.",
+          "세션과 로그인 확인값은 해시로만 저장해, 저장된 파일이 새어도 그것으로 로그인할 수 없습니다.",
+          "서버 기록(로그)에 토큰과 쿠키 값을 남기지 않습니다.",
+        ],
+      },
+      {
+        title: "회원의 권리",
+        items: [
+          "로그인 후 헤더의 계정 메뉴에서 언제든 계정을 삭제할 수 있습니다.",
+          "열람, 정정, 삭제 요청과 그 밖의 문의는 contact@hpgg.win으로 보내 주세요.",
+        ],
+      },
+    ],
   },
   notFound: {
     title: "그런 페이지나 영웅이 없습니다",

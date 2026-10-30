@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { FEATURES, navIds, sectionEnabled } from "../src/features";
+import { disabledSections, FEATURES, navIds, sectionEnabled } from "../src/features";
 import { pruneDisabled } from "../scripts/prune-features";
 import { LOCALES } from "../src/i18n/locales";
 
@@ -23,11 +23,20 @@ describe("features", () => {
 
   it("팀운 is on hold (#90, owner 2026-10-07: HP's MMR is not the matchmaker's); it owns no section", () => {
     expect(FEATURES.teamluck).toBe(false);
-    expect(navIds({ draft: false, weekly: false, teamluck: true, carry: false })).toEqual(navIds({ draft: false, weekly: false, teamluck: false, carry: false }));
+    expect(navIds({ draft: false, weekly: false, teamluck: true, carry: false, accounts: false })).toEqual(navIds({ draft: false, weekly: false, teamluck: false, carry: false, accounts: false }));
   });
 
   it("몇인분 waits until every hero has its own yardstick (owner 2026-10-06)", () => {
     expect(FEATURES.carry).toBe(false);
+  });
+
+  it("accounts (#28) stay hidden until the members-only hero-pool 밴픽 (stage D): no privacy page, no menu entry", () => {
+    expect(FEATURES.accounts).toBe(false);
+    expect(sectionEnabled("privacy")).toBe(false);
+    expect(disabledSections({ draft: true, weekly: true, teamluck: false, carry: false, accounts: false })).toEqual(["privacy"]);
+    expect(sectionEnabled("privacy", { draft: true, weekly: true, teamluck: false, carry: false, accounts: true })).toBe(true);
+    // the privacy page is reached from the footer and the account menu, never from the main menu
+    expect(navIds({ draft: true, weekly: true, teamluck: false, carry: false, accounts: true })).toEqual(navIds({ draft: true, weekly: true, teamluck: false, carry: false, accounts: false }));
   });
 
   it("a section without a feature is always on", () => {
@@ -35,27 +44,28 @@ describe("features", () => {
   });
 
   it("the menu leaves out a switched-off section and keeps the order", () => {
-    expect(navIds({ draft: false, weekly: true, teamluck: false, carry: false })).toEqual(["home", "tier", "meta", "heroes", "maps", "patches", "players"]);
-    expect(navIds({ draft: true, weekly: true, teamluck: false, carry: false })).toEqual(["home", "tier", "meta", "heroes", "draft", "maps", "patches", "players"]);
-    expect(navIds({ draft: false, weekly: false, teamluck: false, carry: false })).toEqual(["home", "tier", "heroes", "maps", "patches", "players"]);
+    expect(navIds({ draft: false, weekly: true, teamluck: false, carry: false, accounts: false })).toEqual(["home", "tier", "meta", "heroes", "maps", "patches", "players"]);
+    expect(navIds({ draft: true, weekly: true, teamluck: false, carry: false, accounts: false })).toEqual(["home", "tier", "meta", "heroes", "draft", "maps", "patches", "players"]);
+    expect(navIds({ draft: false, weekly: false, teamluck: false, carry: false, accounts: false })).toEqual(["home", "tier", "heroes", "maps", "patches", "players"]);
   });
 
   it("the export loses a switched-off section in every language and keeps the rest", () => {
     const dist = mkdtempSync(join(tmpdir(), "prune-"));
     try {
       for (const l of LOCALES) {
-        for (const s of ["draft", "tier"]) {
+        for (const s of ["draft", "tier", "privacy"]) {
           mkdirSync(join(dist, l, "hots", s), { recursive: true });
           writeFileSync(join(dist, l, "hots", s, "index.html"), "x");
         }
       }
-      const removed = pruneDisabled(dist, { draft: false, weekly: true, teamluck: false, carry: false });
-      expect(removed.sort()).toEqual(LOCALES.map((l) => `${l}/hots/draft`).sort());
+      const removed = pruneDisabled(dist, { draft: false, weekly: true, teamluck: false, carry: false, accounts: false });
+      expect(removed.sort()).toEqual(LOCALES.flatMap((l) => [`${l}/hots/draft`, `${l}/hots/privacy`]).sort());
       for (const l of LOCALES) {
         expect(existsSync(join(dist, l, "hots", "draft"))).toBe(false);
+        expect(existsSync(join(dist, l, "hots", "privacy"))).toBe(false);
         expect(existsSync(join(dist, l, "hots", "tier", "index.html"))).toBe(true);
       }
-      expect(pruneDisabled(dist, { draft: true, weekly: true, teamluck: false, carry: false })).toEqual([]);
+      expect(pruneDisabled(dist, { draft: true, weekly: true, teamluck: false, carry: false, accounts: true })).toEqual([]);
     } finally {
       rmSync(dist, { recursive: true, force: true });
     }

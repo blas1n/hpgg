@@ -1,6 +1,7 @@
 import { assetUrl, hotsHref } from "@/data";
 import type { Locale } from "@/i18n/locale";
 import { messages } from "@/i18n/messages";
+import { FEATURES } from "@/features";
 
 export function SiteFooter({ locale }: { locale: Locale }) {
   const t = messages[locale].footer;
@@ -21,6 +22,8 @@ export function SiteFooter({ locale }: { locale: Locale }) {
         // no repository link (owner 2026-10-02): bugs and questions go to the contact address
         { href: "mailto:contact@hpgg.win", label: t.contact },
         { href: "https://www.heroesprofile.com/", label: t.data },
+        // with sign-in (#28): the policy is reachable from every page
+        ...(FEATURES.accounts ? [{ href: href.privacy, label: t.privacy }] : []),
       ],
     },
   ];

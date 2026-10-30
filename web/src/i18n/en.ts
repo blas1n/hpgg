@@ -41,6 +41,8 @@ export const en: Messages = {
     patchesTitle: "Heroes of the Storm Patch Summary (Buffs, Nerfs & Hotfixes)",
     patchesDescription: "Heroes of the Storm patch summary: buffs and nerfs from the official notes, unannounced hotfixes, new heroes, and each changed hero's rank and win rate against the previous patch.",
     playersDescription: "Heroes of the Storm player search: MMR per mode, recent matches and most played heroes by BattleTag.",
+    privacyTitle: "Privacy Policy",
+    privacyDescription: "hpgg.win privacy policy: what Battle.net sign-in gives us, what it is used for, how long it is kept and how to delete it, cookies, contact.",
   },
   nav: {
     home: "Home",
@@ -77,8 +79,99 @@ export const en: Messages = {
     tagline: "Happy Good Game. Meta statistics from match data. The formula is always shown.",
     dataBy: "Data provided by",
     daily: "updated daily",
+    privacy: "Privacy Policy",
     legal:
       "Portrait, battleground and talent images © Blizzard Entertainment (as distributed by HeroesToolChest). Heroes of the Storm™ is a trademark of Blizzard Entertainment, Inc. hpgg.win (Happy Good Game) is not affiliated with or endorsed by Blizzard Entertainment.",
+  },
+  account: {
+    login: "Log in",
+    loginTitle: "Log in with Battle.net",
+    menu: (battletag: string) => `Account menu for ${battletag}`,
+    region: "Heroes region",
+    regionPrompt: "Pick the region you play Heroes of the Storm in.",
+    regionWhy: "Your hero pool (coming later) is built from your games in this region. You can change it any time.",
+    regionFailed: "The region was not saved. Please try again in a moment.",
+    myProfile: "My stats",
+    privacy: "Privacy Policy",
+    logout: "Log out",
+    delete: "Delete account",
+    deleteConfirm: "Deleting your account removes your BattleTag, region and sign-in records at once and logs you out on every device. Comments you wrote stay, no longer linked to the account.",
+    deleteYes: "Delete",
+    deleteNo: "Cancel",
+    failed: "That did not go through. Please try again in a moment.",
+    loginFailed: "Sign-in did not work. Please try again in a moment.",
+    loginCancelled: "Sign-in was cancelled.",
+    deleted: "Your account was deleted.",
+    close: "Close",
+  },
+  privacy: {
+    title: "Privacy Policy",
+    effective: "Effective 2026-10-30",
+    intro: "Every statistic and the player search on hpgg.win (Happy Good Game) work without an account. This page says how we handle the information of members who log in with Battle.net.",
+    sections: [
+      {
+        title: "Who we are and how to reach us",
+        items: ["Operator: hpgg.win", "Contact: contact@hpgg.win", "Privacy officer: the site operator (contact@hpgg.win)"],
+      },
+      {
+        title: "What we receive",
+        items: [
+          "Your Battle.net account ID and BattleTag (from Blizzard, when you log in)",
+          "The Heroes of the Storm region you pick (Asia, Americas or Europe)",
+          "When you joined and when you last visited",
+          "A session that keeps you logged in: a cookie in your browser; the server keeps only a hash of it.",
+          "We never ask for or keep your password, email address or payment details. You log in on Blizzard's Battle.net page.",
+          "The access token Blizzard gives us is used once at login to read your BattleTag, and is not stored.",
+        ],
+      },
+      {
+        title: "What it is used for",
+        items: [
+          "Keeping you logged in",
+          "Member features: draft suggestions limited to your own hero pool (coming later)",
+          "Showing who wrote a post in community features later on",
+        ],
+      },
+      {
+        title: "How long we keep it",
+        items: [
+          "Your account is kept until you delete it, and deleted at once when you do. Comments you wrote stay, no longer linked to the account.",
+          "A login session expires after 30 days and is deleted at once when you log out.",
+          "What a login needs while it is in progress (a hash of its check value, the page to return to) is deleted when the login finishes; an unfinished one stops working after 10 minutes.",
+        ],
+      },
+      {
+        title: "What leaves the site",
+        items: [
+          "Once hero pools open, building yours looks up your public match history on the Heroes Profile API by BattleTag and region.",
+          "We do not sell member information or give it to anyone else.",
+        ],
+      },
+      {
+        title: "Cookies and browser storage",
+        items: [
+          "hpgg_session: keeps you logged in (api.hpgg.win, 30 days)",
+          "hpgg_oauth_state: checks the login in progress (api.hpgg.win, 10 minutes)",
+          "Visits are counted with GoatCounter, which uses no cookies.",
+          "Your theme, language, player-search region and comment nickname stay in this browser's storage and are not sent to the server.",
+        ],
+      },
+      {
+        title: "Security",
+        items: [
+          "Every connection is HTTPS. The session cookie is HttpOnly and Secure, so scripts on the page cannot read it.",
+          "Sessions and login check values are stored only as hashes: a leaked copy of the data cannot log anyone in.",
+          "Server logs never contain tokens or cookie values.",
+        ],
+      },
+      {
+        title: "Your rights",
+        items: [
+          "Once logged in, you can delete your account at any time from the account menu in the header.",
+          "For access, correction, deletion or any other question, write to contact@hpgg.win.",
+        ],
+      },
+    ],
   },
   notFound: {
     title: "No such page or hero",
