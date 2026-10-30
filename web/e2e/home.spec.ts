@@ -22,7 +22,7 @@ test("home: role leaders, top 10, movers, map cards and the mode toggle", async 
   await expect(page.locator('#role-top [data-card="role"]').first()).toHaveAttribute("href", /\?mode=sl$/);
 });
 
-test("home: one search on the page — the header's, which takes BattleTags; today's meta right under the tagline", async ({ page }) => {
+test("home: one search on the page — the header's, which takes BattleTags; today's meta right under the header", async ({ page }) => {
   // owner 2026-10-30: with the header's unified search (B안), 홈's own player-search box was a second copy
   await page.goto("./");
   await expect(page.locator("#hero-search")).toHaveCount(0);
@@ -89,12 +89,11 @@ test("footer links go only to the site, the contact address and the data source 
   }
 });
 
-test("홈 says what the site is in one short line, above today's meta (#30)", async ({ page }) => {
+test("홈 opens straight on today's meta: no tagline line above it (owner 2026-10-30, replacing #30's line)", async ({ page }) => {
+  // the header's search placeholder ("영웅 이름 또는 배틀태그#1234") now says what the site is for
   await page.goto("./");
-  const line = page.locator("#site-tagline");
-  await expect(line).toHaveText("히어로즈 오브 더 스톰 영웅 티어와 전적 검색");
-  const box = (await line.boundingBox())!;
-  expect(box.y + box.height).toBeLessThanOrEqual((await page.locator("#meta-line").boundingBox())!.y); // above it, not over it
-  await page.goto("/en/hots/");
-  await expect(page.locator("#site-tagline")).toHaveText("Heroes of the Storm hero tiers and player search");
+  await expect(page.locator("#site-tagline")).toHaveCount(0);
+  const header = (await page.locator("header").first().boundingBox())!;
+  const title = (await page.locator("h1").first().boundingBox())!;
+  expect(title.y - (header.y + header.height)).toBeLessThan(48); // the page title sits right under the header
 });

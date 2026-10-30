@@ -28,10 +28,6 @@ export function HomeView({ models, maps }: { models: Record<Mode, HomeModel>; ma
   return (
     <>
       <main className="page-x mt-6 space-y-6">
-        {/* what the site is, for a first visit (#30). The player search is the header's (owner 2026-10-30). */}
-        <p id="site-tagline" className="text-center text-[13px] font-semibold text-fg-2">
-          {t.home.tagline}
-        </p>
         <PageHead
           title={t.home.title}
           aside={
