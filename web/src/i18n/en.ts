@@ -107,7 +107,7 @@ export const en: Messages = {
   privacy: {
     title: "Privacy Policy",
     effective: "Effective 2026-10-30",
-    intro: "Every statistic and the player search on hpgg.win (Happy Good Game) work without an account. This page says how we handle the information of members who log in with Battle.net.",
+    intro: "Every statistic and the player search on hpgg.win (Happy Good Game) work without an account. This page says how we handle the information of members who log in with Battle.net, and of comments.",
     sections: [
       {
         title: "Who we are and how to reach us",
@@ -133,6 +133,13 @@ export const en: Messages = {
         ],
       },
       {
+        title: "Comments without signing in",
+        items: [
+          "A comment stores the nickname, the text, a hash of its delete password and an HMAC of the poster's IP address. The address itself is not stored.",
+          "The HMAC is used only for rate limits, reports and the 4-character tag that tells two people with one nickname apart.",
+        ],
+      },
+      {
         title: "How long we keep it",
         items: [
           "Your account is kept until you delete it, and deleted at once when you do. Comments you wrote stay, no longer linked to the account.",
@@ -145,6 +152,7 @@ export const en: Messages = {
         items: [
           "Once hero pools open, building yours looks up your public match history on the Heroes Profile API by BattleTag and region.",
           "We do not sell member information or give it to anyone else.",
+          "The site is served by GitHub Pages and the API through Cloudflare; both receive the visitor's IP address in doing so.",
         ],
       },
       {
