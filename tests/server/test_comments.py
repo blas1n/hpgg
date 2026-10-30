@@ -126,12 +126,13 @@ def test_one_address_writes_a_few_comments_at_a_time(
 
 
 def test_no_address_and_no_password_is_stored(client: TestClient, settings: Settings) -> None:
-    post(client)
+    # "zzzz" cannot occur in a hex digest; "1234" did, inside a random hash (CI 2026-10-30)
+    post(client, password="zzzz")
     with sqlite3.connect(settings.db_path) as db:
         rows = db.execute("select * from comments").fetchall()
         dump = repr(rows)
     assert "203.0.113.20" not in dump
-    assert "1234" not in dump.replace("1234567", "")  # the hash, not the password
+    assert "zzzz" not in dump  # the hash, not the password
 
 
 def test_the_browser_may_post(client: TestClient) -> None:
