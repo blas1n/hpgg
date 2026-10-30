@@ -101,6 +101,12 @@ def test_sync_adds_this_seasons_heroes_and_offers_the_rest_as_candidates(
     body: dict[str, Any] = r.json()
     assert body["status"] == "ok" and body["season"] == 21 and body["min_games"] == 5
     assert body["added"] == ["Valla", "Li Li", "Lúcio"]
+    # their record too, so the page can say "이번 시즌 31판" on each (owner's mock)
+    assert body["added_records"] == [
+        {"hero": "Valla", "games": 31, "wins": 17},
+        {"hero": "Li Li", "games": 12, "wins": 7},
+        {"hero": "Lúcio", "games": 5, "wins": 2},
+    ]
     assert body["candidates"] == [
         {"hero": "Zeratul", "games": 4, "wins": 3},
         {"hero": "Abathur", "games": 1, "wins": 0},
@@ -111,7 +117,8 @@ def test_sync_adds_this_seasons_heroes_and_offers_the_rest_as_candidates(
 
     # a second sync adds nothing new and says so
     again = member.post(SYNC, headers=ORIGIN).json()
-    assert again["added"] == [] and pool(member) == ["Anduin", "Valla", "Li Li", "Lúcio"]
+    assert again["added"] == [] and again["added_records"] == []
+    assert pool(member) == ["Anduin", "Valla", "Li Li", "Lúcio"]
 
 
 def test_a_hero_removed_by_hand_comes_back_only_on_the_next_sync(member: TestClient) -> None:

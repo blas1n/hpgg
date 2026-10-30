@@ -58,6 +58,7 @@ describe("pool client", () => {
       season: 13,
       min_games: 5,
       added: ["Valla", "Li Li", "Lúcio"],
+      added_records: [{ hero: "Valla", games: 31, wins: 17 }, { hero: "Li Li", games: 12, wins: 7 }, { hero: "Lúcio", games: 5, wins: 2 }],
       candidates: [{ hero: "Zeratul", games: 4, wins: 3 }, { hero: "Abathur", games: 1, wins: 0 }],
     };
     const f = vi.fn(async () => res(200, body));
@@ -67,8 +68,12 @@ describe("pool client", () => {
       season: 13,
       minGames: 5,
       added: ["Valla", "Li Li", "Lúcio"],
+      addedRecords: [{ hero: "Valla", games: 31, wins: 17 }, { hero: "Li Li", games: 12, wins: 7 }, { hero: "Lúcio", games: 5, wins: 2 }],
       candidates: [{ hero: "Zeratul", games: 4, wins: 3 }, { hero: "Abathur", games: 1, wins: 0 }],
     });
+    // a server from before added_records (the API deploys apart from the site): the same result, no records
+    const { added_records: _r, ...older } = body;
+    expect(await syncPool({ fetch: async () => res(200, older) })).toMatchObject({ status: "ok", addedRecords: [] });
     const [url, init] = f.mock.calls[0] as unknown as Call;
     expect(url).toBe("https://api.hpgg.win/v1/me/pool/sync");
     expect(init.method).toBe("POST");

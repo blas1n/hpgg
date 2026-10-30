@@ -14,7 +14,7 @@ export interface PoolCandidate {
 }
 
 export type SyncResult =
-  | { status: SyncStatus; stale: boolean; season: number | null; minGames: number; added: string[]; candidates: PoolCandidate[] }
+  | { status: SyncStatus; stale: boolean; season: number | null; minGames: number; added: string[]; addedRecords: PoolCandidate[]; candidates: PoolCandidate[] }
   | { status: "region_required" }
   | { status: "failed" };
 
@@ -55,6 +55,8 @@ export async function syncPool(opts: Opts = {}): Promise<SyncResult> {
   }
   if (r.status !== 200 || !isObj(body)) return { status: "failed" };
   const { status, stale, season, min_games, added, candidates } = body;
+  // the record of each added hero; absent from a server older than the site (they deploy apart)
+  const records = body.added_records ?? [];
   if (
     typeof status !== "string" ||
     !SYNC_STATUSES.includes(status) ||
@@ -63,7 +65,9 @@ export async function syncPool(opts: Opts = {}): Promise<SyncResult> {
     !isInt(min_games) ||
     !isNames(added) ||
     !Array.isArray(candidates) ||
-    !candidates.every(isCandidate)
+    !candidates.every(isCandidate) ||
+    !Array.isArray(records) ||
+    !records.every(isCandidate)
   )
     return { status: "failed" };
   return {
@@ -72,6 +76,7 @@ export async function syncPool(opts: Opts = {}): Promise<SyncResult> {
     season,
     minGames: min_games,
     added,
+    addedRecords: records.map((c) => ({ hero: c.hero, games: c.games, wins: c.wins })),
     candidates: candidates.map((c) => ({ hero: c.hero, games: c.games, wins: c.wins })),
   };
 }

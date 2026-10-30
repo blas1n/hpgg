@@ -45,6 +45,8 @@ class SyncResult:
     season: int | None
     min_games: int
     added: list[str] = field(default_factory=list)
+    # the record of each hero in `added`, same order (the page shows "이번 시즌 31판")
+    added_records: list[Candidate] = field(default_factory=list)
     candidates: list[Candidate] = field(default_factory=list)
 
 
@@ -92,6 +94,11 @@ class PoolService:
         have = set(await self.heroes(account_id))
         played = [r for r in rows if int(r.get("games", 0)) >= self._s.pool_min_games]
         added = await self._add(account_id, [r["hero"] for r in played])
+        record = {r["hero"]: r for r in played}
+        added_records = [
+            Candidate(h, int(record[h].get("games", 0)), int(record[h].get("wins", 0)))
+            for h in added
+        ]
         candidates = [
             Candidate(r["hero"], int(r.get("games", 0)), int(r.get("wins", 0)))
             for r in rows
@@ -103,6 +110,7 @@ class PoolService:
             season=lookup.season,
             min_games=self._s.pool_min_games,
             added=added,
+            added_records=added_records,
             candidates=candidates,
         )
 

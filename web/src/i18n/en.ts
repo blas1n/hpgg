@@ -178,7 +178,7 @@ export const en: Messages = {
         title: "What it is used for",
         items: [
           "Keeping you logged in",
-          "Member features: draft suggestions limited to your own hero pool (coming later)",
+          "Member features: the draft's hero pool (a list of heroes you pick) and suggestions limited to it",
           "Showing who wrote a post in community features later on",
         ],
       },
@@ -200,7 +200,7 @@ export const en: Messages = {
       {
         title: "What leaves the site",
         items: [
-          "Once hero pools open, building yours looks up your public match history on the Heroes Profile API by BattleTag and region.",
+          "Only when you press \"Fill from this season\" in the draft's hero pool do we look up your public match history on the Heroes Profile API by BattleTag and region. The record itself is not kept; the pool keeps hero names only.",
           "We do not sell member information or give it to anyone else.",
           "The site is served by GitHub Pages and the API through Cloudflare; both receive the visitor's IP address in doing so.",
         ],

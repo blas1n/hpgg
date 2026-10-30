@@ -24,9 +24,10 @@ export const FEATURES = {
    *  오픈을 하자 — 일부만 나오는건 오히려 이상해"): data/carry_baselines.json fills from the daily replay sample. */
   carry: false,
   /** 로그인 (Battle.net, #28) — built 2026-10-30 (owner: personalised 밴픽 inside the member's own hero pool is
-   *  members-only). The header account control, the /v1/me check on every page and the privacy policy page stay
-   *  hidden until stage D (the 밴픽 "내 영웅풀만" toggle) ships; the server side (server/accounts/) is already live. */
-  accounts: false,
+   *  members-only); on the same day once stage D (the 밴픽 내 영웅풀 tab and "내 영웅풀만") shipped (owner: "공개 PR
+   *  만들자"). It brings the header account control, the /v1/me check on every page, the privacy policy page and
+   *  the 밴픽 hero pool; switching it off again hides all of them (the server side stays). */
+  accounts: true,
 } as const;
 
 export type Feature = keyof typeof FEATURES;
