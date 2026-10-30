@@ -208,20 +208,12 @@ test("keyboard: the hero name is a real link (no <tr role=button>), Enter opens 
   await expect(page).toHaveURL(/\/ko\/hots\/heroes\/qhira\/\?mode=sl$/);
 });
 
-test("the formula line stays readable: at most about 90 characters wide on desktop (#30)", async ({ page }) => {
+test("the formula box uses the page's full width, so it takes fewer lines (owner 2026-10-30, replacing #30's 90-character line)", async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 900 });
   await page.goto("./tier/");
-  const ch = await page.locator("#formula").evaluate((el) => {
-    const s = getComputedStyle(el);
-    const c = document.createElement("span");
-    c.textContent = "0";
-    c.style.font = s.font;
-    document.body.appendChild(c);
-    const w = c.getBoundingClientRect().width;
-    c.remove();
-    return el.getBoundingClientRect().width / w;
-  });
-  expect(ch).toBeLessThanOrEqual(90);
+  const box = (await page.locator("#formula").boundingBox())!;
+  const main = (await page.locator("main").first().boundingBox())!;
+  expect(box.width).toBeGreaterThanOrEqual(main.width - 96);
 });
 
 test("a view with no file on the patch it shows says so, and never shows another patch's file in its place", async ({ page }) => {
