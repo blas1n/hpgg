@@ -11,7 +11,7 @@ import { LOCALES, SITE_URL } from "../src/i18n/locales.ts";
 import type { HeroTable, MapTable } from "../src/data";
 
 /** The static sections under app/[locale]/hots (tests/sitemap.test.ts fails when a directory is missing here). */
-const SECTIONS = ["tier", "meta", "heroes", "maps", "draft", "patches", "players"].filter((s) => sectionEnabled(s)); // src/features.ts
+const SECTIONS = ["tier", "meta", "heroes", "maps", "draft", "patches", "players", "privacy"].filter((s) => sectionEnabled(s)); // src/features.ts
 
 /** `weeks`: the weekly report issues (data/weekly/index.json), each with its own page. */
 export function sitemapUrls(heroes: HeroTable, maps: MapTable, weeks: string[] = []): string[] {

@@ -31,6 +31,7 @@ const ALL_PAGES = [
   { path: "/hots/draft/", h1: "Draft simulator", ko: "밴픽 시뮬레이터" },
   { path: "/hots/patches/", h1: "Patch summary", ko: "패치 요약" },
   { path: "/hots/meta/", h1: "Weekly meta report", ko: "주간 메타 리포트" },
+  { path: "/hots/privacy/", h1: "Privacy Policy", ko: "개인정보처리방침" },
 ];
 /** Without the sections switched off on the live site (src/features.ts): the export has no such pages. */
 const PAGES = ALL_PAGES.filter((p) => sectionEnabled(p.path.split("/")[2] ?? ""));

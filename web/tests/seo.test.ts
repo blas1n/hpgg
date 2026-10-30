@@ -35,6 +35,11 @@ describe("page titles per language", () => {
     expect(en.meta.hotsTitle).toContain("Heroes of the Storm");
   });
 
+  it("the privacy policy is titled the way each language names it (#28)", () => {
+    expect(ko.meta.privacyTitle).toBe("개인정보처리방침");
+    expect(en.meta.privacyTitle).toBe("Privacy Policy");
+  });
+
   it("the site name is a short suffix, not a second copy of the game's name", () => {
     expect(ko.meta.hotsTemplate).toBe("%s | HPGG");
     expect(en.meta.hotsTemplate).toBe("%s | HPGG");

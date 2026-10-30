@@ -5,8 +5,9 @@ import { usePathname } from "next/navigation";
 import { assetUrl, hotsHref } from "@/data";
 import { useLocale, useT } from "@/i18n/client";
 import { sectionPath } from "@/i18n/locale";
-import { navIds, type NavId } from "@/features";
+import { FEATURES, navIds, type NavId } from "@/features";
 import type { SearchItem } from "@/lib/search";
+import { AccountMenu } from "./AccountMenu";
 import { LanguageToggle } from "./LanguageToggle";
 import { SiteSearch } from "./SiteSearch";
 import { ThemeToggle } from "./ThemeToggle";
@@ -59,6 +60,7 @@ export function SiteHeader({ searchIndex }: { searchIndex: SearchItem[] }) {
         <div className="col-start-2 row-start-1 flex items-center gap-1.5 justify-self-end md:col-start-3">
           <LanguageToggle />
           <ThemeToggle />
+          {FEATURES.accounts && <AccountMenu />}
         </div>
       </div>
       <div className="page-x">
