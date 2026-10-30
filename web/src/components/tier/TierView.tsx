@@ -474,8 +474,8 @@ function PatchBanner({ meta, patch, auto, onCurrent }: { meta: Meta; patch: "cur
 function Formula({ sl, min, party, t, locale }: { sl: boolean; min: number; party: Party | null; t: Messages; locale: Locale }) {
   return (
     <div className="space-y-2">
-      {/* one readable line length (#30); Korean breaks only between words */}
-      <p id="formula" className="max-w-[80ch] rounded-lg border border-line bg-surface px-3 py-2 font-mono text-xs break-keep [overflow-wrap:anywhere] text-fg-2">
+      {/* full page width (owner 2026-10-30: fewer lines, less height); Korean breaks only between words */}
+      <p id="formula" className="rounded-lg border border-line bg-surface px-3 py-2 font-mono text-xs break-keep [overflow-wrap:anywhere] text-fg-2">
         {formulaLine(sl, locale)}
         {t.tier.formulaTail(String(FORMULA.k), party ? t.tier.formulaParty(String(party.k)) : "")}
         {t.tier.formulaCuts(String(min))}

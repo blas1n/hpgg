@@ -11,7 +11,7 @@ export interface Me {
 }
 
 type Fetch = (input: string, init?: RequestInit) => Promise<Response>;
-type Opts = { fetch?: Fetch };
+export type Opts = { fetch?: Fetch };
 
 export type LoginOutcome = "failed" | "cancelled";
 const LOGIN_PARAM = "login";
@@ -43,7 +43,8 @@ const isMe = (o: unknown): o is Me => {
   return !!m && typeof m === "object" && typeof m.battletag === "string" && BATTLETAG.test(m.battletag) && (m.region === null || (typeof m.region === "string" && isRegion(m.region)));
 };
 
-async function call(path: string, init: RequestInit, opts: Opts): Promise<Response | null> {
+/** A call to the API with the session cookie; null when it did not reach it (no network, a timeout). */
+export async function call(path: string, init: RequestInit, opts: Opts): Promise<Response | null> {
   try {
     return await (opts.fetch ?? fetch)(`${apiBase()}${path}`, { ...init, credentials: "include", signal: AbortSignal.timeout(15_000) });
   } catch {

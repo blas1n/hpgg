@@ -156,6 +156,10 @@ function toUploader() {
  *  it. Always on the page, folded; opened when a search finds nobody. Paths from the Heroes Profile uploaders' sources. */
 function UploadGuide({ open }: { open: boolean }) {
   const g = useT().players.guide;
+  // linked as #upload-guide (the 밴픽 내 영웅풀 when a member has no season record): open it there
+  useEffect(() => {
+    if (location.hash === "#upload-guide") document.getElementById("upload-guide")?.setAttribute("open", "");
+  }, []);
   const link = (
     <a href={HP_UPLOAD} target="_blank" rel="noopener" className="font-semibold text-primary underline-offset-2 hover:underline">
       {g.link}
