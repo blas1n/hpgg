@@ -20,6 +20,8 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
+from server.accounts.router import router as accounts_router
+from server.accounts.service import AccountService
 from server.comments.router import router as comments_router
 from server.comments.service import CommentService
 from server.config import Settings
@@ -44,6 +46,7 @@ def create_app(
     settings: Settings,
     *,
     hp_transport: httpx.AsyncBaseTransport | None = None,
+    bnet_transport: httpx.AsyncBaseTransport | None = None,
     clock: Callable[[], float] = time.time,
     privacy_poll: bool = True,
 ) -> FastAPI:
@@ -72,6 +75,8 @@ def create_app(
         poller = asyncio.create_task(app.state.privacy.run_forever()) if privacy_poll else None
         app.state.ip_limiter = SlidingWindowLimiter(settings.ip_requests_per_minute, 60.0, clock)
         app.state.comments = CommentService(db, settings, clock)
+        bnet_http = httpx.AsyncClient(transport=bnet_transport, timeout=settings.request_timeout)
+        app.state.accounts = AccountService(db, settings, bnet_http, clock)
         app.state.comment_read_limiter = SlidingWindowLimiter(
             settings.comment_reads_per_minute, 60.0, clock
         )
@@ -96,17 +101,21 @@ def create_app(
                 with contextlib.suppress(asyncio.CancelledError):
                     await poller
             await hp.aclose()
+            await bnet_http.aclose()
             await db.dispose()
 
     app = FastAPI(
         title="HPGG API", lifespan=lifespan, docs_url=None, redoc_url=None, openapi_url=None
     )
+    app.state.settings = settings
     app.add_middleware(
         CORSMiddleware,
         allow_origins=settings.cors_origins,
-        # comments are posted from the browser (JSON): POST and its Content-Type header
-        allow_methods=["GET", "POST"],
+        # comments are posted from the browser (JSON): POST and its Content-Type header;
+        # accounts (#28): the session cookie rides along (credentials), DELETE /v1/me
+        allow_methods=["GET", "POST", "DELETE"],
         allow_headers=["Content-Type"],
+        allow_credentials=True,
         max_age=3600,
     )
     app.add_exception_handler(RequestValidationError, on_validation_error)
@@ -149,4 +158,5 @@ def create_app(
     app.include_router(players_router)
     app.include_router(replays_router)
     app.include_router(comments_router)
+    app.include_router(accounts_router)
     return app
