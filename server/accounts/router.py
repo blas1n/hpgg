@@ -1,5 +1,7 @@
 """GET /v1/auth/battlenet/login · GET /v1/auth/battlenet/callback · POST /v1/auth/logout
 GET /v1/me · POST /v1/me/region · DELETE /v1/me
+GET /v1/me/pool · POST /v1/me/pool {hero, in} · POST /v1/me/pool/sync · DELETE /v1/me/pool
+(the hero pool, stage C: kept by hand; a sync adds this season's heroes from Heroes Profile)
 
 The session is an HttpOnly, Secure, SameSite=Lax cookie on api.hpgg.win; the site calls with
 `credentials: "include"`. Changes (logout, region, delete) also check the Origin header against
@@ -8,12 +10,14 @@ the site's origins, on top of SameSite and the JSON preflight.
 
 from __future__ import annotations
 
+from dataclasses import asdict
 from typing import Annotated, Literal
 
 from fastapi import APIRouter, Cookie, Query, Request
 from fastapi.responses import JSONResponse, RedirectResponse, Response
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
+from server.accounts.pool import PoolService, valid_hero
 from server.accounts.service import AccountService, Me
 from server.errors import error
 from server.ratelimit import SlidingWindowLimiter, client_ip
@@ -28,6 +32,19 @@ STATE_PATH = "/v1/auth"
 class RegionIn(BaseModel):
     model_config = ConfigDict(extra="forbid")
     region: Literal["KR", "NA", "EU"]
+
+
+class PoolChoiceIn(BaseModel):
+    model_config = ConfigDict(extra="forbid", populate_by_name=True)
+    hero: str = Field(min_length=1, max_length=40)
+    include: bool = Field(alias="in")
+
+    @field_validator("hero")
+    @classmethod
+    def _hero(cls, v: str) -> str:
+        if not valid_hero(v):
+            raise ValueError("not a hero name")
+        return v
 
 
 def _service(request: Request) -> AccountService:
@@ -51,6 +68,11 @@ def _foreign_origin(request: Request) -> JSONResponse | None:
 
 async def _me(request: Request, token: str | None) -> Me | None:
     return await _service(request).me(token)
+
+
+def _pool(request: Request) -> PoolService:
+    p: PoolService = request.app.state.pool
+    return p
 
 
 def _unauthorized() -> JSONResponse:
@@ -162,3 +184,59 @@ async def delete_me(
     r = Response(status_code=204)
     r.delete_cookie(SESSION_COOKIE, path="/", secure=True, httponly=True, samesite="lax")
     return r
+
+
+@router.get("/v1/me/pool")
+async def get_pool(
+    request: Request, session: Annotated[str | None, Cookie(alias=SESSION_COOKIE)] = None
+) -> JSONResponse:
+    m = await _me(request, session)
+    if m is None:
+        return _unauthorized()
+    heroes = await _pool(request).heroes(m.account_id)
+    return JSONResponse(
+        {"heroes": [{"hero": h} for h in heroes]}, headers={"Cache-Control": "no-store"}
+    )
+
+
+@router.post("/v1/me/pool")
+async def choose_pool_hero(
+    request: Request,
+    body: PoolChoiceIn,
+    session: Annotated[str | None, Cookie(alias=SESSION_COOKIE)] = None,
+) -> Response:
+    if (foreign := _foreign_origin(request)) is not None:
+        return foreign
+    m = await _me(request, session)
+    if m is None:
+        return _unauthorized()
+    await _pool(request).set(m.account_id, body.hero, body.include)
+    return Response(status_code=204)
+
+
+@router.post("/v1/me/pool/sync")
+async def sync_pool(
+    request: Request, session: Annotated[str | None, Cookie(alias=SESSION_COOKIE)] = None
+) -> JSONResponse:
+    if (foreign := _foreign_origin(request)) is not None:
+        return foreign
+    m = await _me(request, session)
+    if m is None:
+        return _unauthorized()
+    if m.region is None:
+        return error(409, "region_required", "지역을 먼저 골라 주세요.")
+    result = await _pool(request).sync(m.account_id, m.battletag, m.region)
+    return JSONResponse(asdict(result), headers={"Cache-Control": "no-store"})
+
+
+@router.delete("/v1/me/pool")
+async def clear_pool(
+    request: Request, session: Annotated[str | None, Cookie(alias=SESSION_COOKIE)] = None
+) -> Response:
+    if (foreign := _foreign_origin(request)) is not None:
+        return foreign
+    m = await _me(request, session)
+    if m is None:
+        return _unauthorized()
+    await _pool(request).clear(m.account_id)
+    return Response(status_code=204)

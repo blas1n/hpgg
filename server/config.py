@@ -91,6 +91,8 @@ class Settings(BaseSettings):
     # where a finished sign-in sends the browser back: the site, never anything else
     site_url: str = "https://hpgg.win"
     session_ttl_seconds: int = 30 * 86_400
+    # a member's hero pool (stage C): this season's Storm League heroes with this many games or more
+    pool_min_games: int = 5
     oauth_state_ttl_seconds: int = 600
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
