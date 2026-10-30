@@ -1,7 +1,8 @@
-"""A member's hero pool (stage C, owner 2026-10-30): the Storm League heroes they played this
-season (HP via the 이번 시즌 card's service, `pool_min_games` or more), plus heroes they add and
-minus heroes they take out. What they set by hand is never overwritten by the record, and stays
-when HP has nothing (private, no uploads, quota)."""
+"""A member's hero pool (stage C, owner 2026-10-30): a list the member keeps by hand — any hero,
+so a new player with no record can use it — plus a sync button that pulls this season's Storm
+League record from Heroes Profile (the 이번 시즌 card's service) and adds the heroes played
+`pool_min_games` times or more; heroes played fewer times come back as candidates to pick from.
+Reading the pool never calls Heroes Profile; only a sync does."""
 
 from __future__ import annotations
 
@@ -18,6 +19,7 @@ from server.players.season import SeasonLookup
 from tests.server.accounts_support import ORIGIN, sign_in
 
 URL = "/v1/me/pool"
+SYNC = "/v1/me/pool/sync"
 
 
 @dataclass
@@ -33,6 +35,7 @@ class FakeSeason:
                 {"hero": "Li Li", "games": 12, "wins": 7},
                 {"hero": "Lúcio", "games": 5, "wins": 2},
                 {"hero": "Zeratul", "games": 4, "wins": 3},
+                {"hero": "Abathur", "games": 1, "wins": 0},
             ],
         )
     )
@@ -49,93 +52,116 @@ def season() -> FakeSeason:
 
 
 @pytest.fixture
-def member(make_client: Callable[..., TestClient], season: FakeSeason) -> TestClient:
+def signed_in(make_client: Callable[..., TestClient], season: FakeSeason) -> TestClient:
     c = make_client()
     c.app.state.season = season  # type: ignore[attr-defined]
     sign_in(c)
-    assert c.post("/v1/me/region", json={"region": "KR"}, headers=ORIGIN).status_code == 204
     return c
 
 
-def names(body: dict[str, Any], key: str = "heroes") -> list[str]:
-    return [h["hero"] for h in body[key]]
+@pytest.fixture
+def member(signed_in: TestClient) -> TestClient:
+    assert signed_in.post("/v1/me/region", json={"region": "KR"}, headers=ORIGIN).status_code == 204
+    return signed_in
 
 
-def test_the_pool_is_this_seasons_heroes_played_often_enough(
-    member: TestClient, season: FakeSeason
-) -> None:
-    r = member.get(URL)
+def pool(c: TestClient) -> list[str]:
+    r = c.get(URL)
     assert r.status_code == 200
-    body = r.json()
-    assert body["status"] == "ok" and body["season"] == 21 and body["min_games"] == 5
-    assert names(body) == ["Valla", "Li Li", "Lúcio"]  # Zeratul: 4 games, under the line
-    assert body["heroes"][0] == {"hero": "Valla", "games": 31, "wins": 17, "origin": "record"}
-    assert body["removed"] == []
-    assert season.asked == [("blAs1N#3479", "KR")]  # the member's own BattleTag and region
     assert r.headers["cache-control"] == "no-store"
+    return [h["hero"] for h in r.json()["heroes"]]
 
 
-def test_heroes_added_and_taken_out_by_hand(member: TestClient) -> None:
-    assert member.post(URL, json={"hero": "Zeratul", "in": True}, headers=ORIGIN).status_code == 204
-    assert member.post(URL, json={"hero": "Li Li", "in": False}, headers=ORIGIN).status_code == 204
-    assert member.post(URL, json={"hero": "Anduin", "in": True}, headers=ORIGIN).status_code == 204
-    body = member.get(URL).json()
-    assert names(body) == ["Valla", "Lúcio", "Anduin", "Zeratul"]  # the record, then added by name
-    assert {h["hero"]: h["origin"] for h in body["heroes"]}["Zeratul"] == "added"
-    # an added hero carries its record when HP has one, zeros otherwise
-    assert [h for h in body["heroes"] if h["hero"] == "Anduin"][0]["games"] == 0
-    # a hero taken out is listed apart, so the page can put it back
-    assert names(body, "removed") == ["Li Li"]
-
-    # putting it back, and the reset
-    member.post(URL, json={"hero": "Li Li", "in": True}, headers=ORIGIN)
-    assert "Li Li" in names(member.get(URL).json())
-    assert member.delete(URL, headers=ORIGIN).status_code == 204
-    assert names(member.get(URL).json()) == ["Valla", "Li Li", "Lúcio"]
+def add(c: TestClient, hero: str, include: bool = True) -> int:
+    return c.post(URL, json={"hero": hero, "in": include}, headers=ORIGIN).status_code
 
 
-def test_what_was_set_by_hand_survives_when_hp_has_nothing(
+def test_a_new_member_starts_empty_and_picks_any_hero_without_a_record(
+    signed_in: TestClient, season: FakeSeason
+) -> None:
+    # no region, no record needed: a new player builds the pool by hand
+    assert pool(signed_in) == []
+    assert add(signed_in, "Anduin") == 204
+    assert add(signed_in, "Li-Ming") == 204
+    assert add(signed_in, "Anduin") == 204  # twice is still once
+    assert pool(signed_in) == ["Anduin", "Li-Ming"]
+    assert add(signed_in, "Anduin", include=False) == 204
+    assert pool(signed_in) == ["Li-Ming"]
+    assert signed_in.delete(URL, headers=ORIGIN).status_code == 204
+    assert pool(signed_in) == []
+    assert season.asked == []  # reading and editing the pool never asks Heroes Profile
+
+
+def test_sync_adds_this_seasons_heroes_and_offers_the_rest_as_candidates(
     member: TestClient, season: FakeSeason
 ) -> None:
-    member.post(URL, json={"hero": "Valla", "in": True}, headers=ORIGIN)
-    member.post(URL, json={"hero": "Li Li", "in": False}, headers=ORIGIN)
+    add(member, "Anduin")
+    r = member.post(SYNC, headers=ORIGIN)
+    assert r.status_code == 200
+    body: dict[str, Any] = r.json()
+    assert body["status"] == "ok" and body["season"] == 21 and body["min_games"] == 5
+    assert body["added"] == ["Valla", "Li Li", "Lúcio"]
+    assert body["candidates"] == [
+        {"hero": "Zeratul", "games": 4, "wins": 3},
+        {"hero": "Abathur", "games": 1, "wins": 0},
+    ]
+    assert season.asked == [("blAs1N#3479", "KR")]  # the member's own BattleTag and region
+    # added to what was there, nothing taken away; the list keeps the order heroes came in
+    assert pool(member) == ["Anduin", "Valla", "Li Li", "Lúcio"]
+
+    # a second sync adds nothing new and says so
+    again = member.post(SYNC, headers=ORIGIN).json()
+    assert again["added"] == [] and pool(member) == ["Anduin", "Valla", "Li Li", "Lúcio"]
+
+
+def test_a_hero_removed_by_hand_comes_back_only_on_the_next_sync(member: TestClient) -> None:
+    member.post(SYNC, headers=ORIGIN)
+    add(member, "Li Li", include=False)
+    assert "Li Li" not in pool(member)
+    assert member.post(SYNC, headers=ORIGIN).json()["added"] == ["Li Li"]
+
+
+def test_sync_without_a_record_changes_nothing_and_says_why(
+    member: TestClient, season: FakeSeason
+) -> None:
+    add(member, "Anduin")
     for outcome in ["private", "not_found", "quota_exceeded", "unavailable"]:
         season.result = SeasonLookup(outcome)
-        body = member.get(URL).json()
-        assert body["status"] == outcome
-        assert names(body) == ["Valla"]  # only what the member chose; nothing from HP
-        assert body["heroes"][0]["origin"] == "added"
+        body = member.post(SYNC, headers=ORIGIN).json()
+        assert body["status"] == outcome and body["added"] == [] and body["candidates"] == []
+    assert pool(member) == ["Anduin"]
 
 
-def test_a_stale_answer_is_used_and_says_so(member: TestClient, season: FakeSeason) -> None:
+def test_a_stale_record_still_syncs_and_says_so(member: TestClient, season: FakeSeason) -> None:
     season.result = SeasonLookup(
         "ok", season=21, heroes=[{"hero": "Valla", "games": 9, "wins": 4}], stale=True
     )
-    body = member.get(URL).json()
-    assert body["stale"] is True and names(body) == ["Valla"]
+    body = member.post(SYNC, headers=ORIGIN).json()
+    assert body["stale"] is True and body["added"] == ["Valla"]
 
 
-def test_the_region_comes_first(make_client: Callable[..., TestClient], season: FakeSeason) -> None:
-    c = make_client()
-    c.app.state.season = season  # type: ignore[attr-defined]
-    assert c.get(URL).status_code == 401
-    sign_in(c)
-    r = c.get(URL)
+def test_sync_needs_a_region_and_a_sign_in(
+    make_client: Callable[..., TestClient], signed_in: TestClient, season: FakeSeason
+) -> None:
+    r = signed_in.post(SYNC, headers=ORIGIN)
     assert r.status_code == 409 and r.json()["error"]["code"] == "region_required"
-    assert season.asked == []  # no HP call without a region
+    stranger = make_client()
+    assert stranger.get(URL).status_code == 401
+    assert stranger.post(SYNC, headers=ORIGIN).status_code == 401
+    assert season.asked == []
 
 
 def test_bad_hero_names_and_other_sites_are_refused(member: TestClient) -> None:
-    for bad in ["", "x" * 41, "<script>", "Valla\nZeratul"]:
-        r = member.post(URL, json={"hero": bad, "in": True}, headers=ORIGIN)
-        assert r.status_code == 422, bad
+    for bad in ["", "x" * 41, "<script>", "Valla\nZeratul", "1abc"]:
+        assert add(member, bad) == 422, bad
     evil = {"Origin": "https://evil.example"}
     assert member.post(URL, json={"hero": "Valla", "in": True}, headers=evil).status_code == 403
+    assert member.post(SYNC, headers=evil).status_code == 403
     assert member.delete(URL, headers=evil).status_code == 403
 
 
 def test_the_pool_goes_with_the_account(member: TestClient, settings: Settings) -> None:
-    member.post(URL, json={"hero": "Zeratul", "in": True}, headers=ORIGIN)
+    add(member, "Zeratul")
     assert member.delete("/v1/me", headers=ORIGIN).status_code == 204
     con = sqlite3.connect(settings.db_path)
     assert con.execute("select count(*) from hero_pool").fetchone() == (0,)

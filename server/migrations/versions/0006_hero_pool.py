@@ -1,4 +1,4 @@
-"""heroes a member put in or took out of their pool by hand (stage C)
+"""a member's hero pool: kept by hand, filled by a sync on request (stage C)
 
 Revision ID: 0006
 Revises: 0005
@@ -21,8 +21,8 @@ def upgrade() -> None:
         "hero_pool",
         sa.Column("account_id", sa.Integer(), nullable=False),
         sa.Column("hero", sa.String(), nullable=False),
-        sa.Column("include", sa.Boolean(), nullable=False),
-        sa.Column("updated_at", sa.Float(), nullable=False),
+        sa.Column("seq", sa.Integer(), nullable=False),
+        sa.Column("added_at", sa.Float(), nullable=False),
         sa.ForeignKeyConstraint(["account_id"], ["accounts.id"], ondelete="CASCADE"),
         sa.PrimaryKeyConstraint("account_id", "hero"),
     )

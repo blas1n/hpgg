@@ -19,7 +19,7 @@ import httpx
 import structlog
 from sqlalchemy import delete, select, update
 
-from server.accounts.models import Account, HeroPoolChoice, OAuthState, Session
+from server.accounts.models import Account, HeroPoolEntry, OAuthState, Session
 from server.comments.models import Comment
 from server.config import Settings
 from server.db import Database
@@ -250,6 +250,6 @@ class AccountService:
                 update(Comment).where(Comment.account_id == str(account_id)).values(account_id=None)
             )
             await s.execute(delete(Session).where(Session.account_id == account_id))
-            await s.execute(delete(HeroPoolChoice).where(HeroPoolChoice.account_id == account_id))
+            await s.execute(delete(HeroPoolEntry).where(HeroPoolEntry.account_id == account_id))
             await s.execute(delete(Account).where(Account.id == account_id))
         log.info("accounts.deleted", account_id=account_id)

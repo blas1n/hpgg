@@ -1,6 +1,7 @@
 """GET /v1/auth/battlenet/login · GET /v1/auth/battlenet/callback · POST /v1/auth/logout
 GET /v1/me · POST /v1/me/region · DELETE /v1/me
-GET /v1/me/pool · POST /v1/me/pool {hero, in} · DELETE /v1/me/pool (the hero pool, stage C)
+GET /v1/me/pool · POST /v1/me/pool {hero, in} · POST /v1/me/pool/sync · DELETE /v1/me/pool
+(the hero pool, stage C: kept by hand; a sync adds this season's heroes from Heroes Profile)
 
 The session is an HttpOnly, Secure, SameSite=Lax cookie on api.hpgg.win; the site calls with
 `credentials: "include"`. Changes (logout, region, delete) also check the Origin header against
@@ -16,7 +17,7 @@ from fastapi import APIRouter, Cookie, Query, Request
 from fastapi.responses import JSONResponse, RedirectResponse, Response
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
-from server.accounts.pool import Pool, PoolService, valid_hero
+from server.accounts.pool import PoolService, valid_hero
 from server.accounts.service import AccountService, Me
 from server.errors import error
 from server.ratelimit import SlidingWindowLimiter, client_ip
@@ -72,10 +73,6 @@ async def _me(request: Request, token: str | None) -> Me | None:
 def _pool(request: Request) -> PoolService:
     p: PoolService = request.app.state.pool
     return p
-
-
-def _pool_json(p: Pool) -> dict[str, object]:
-    return asdict(p)
 
 
 def _unauthorized() -> JSONResponse:
@@ -196,10 +193,10 @@ async def get_pool(
     m = await _me(request, session)
     if m is None:
         return _unauthorized()
-    if m.region is None:
-        return error(409, "region_required", "지역을 먼저 골라 주세요.")
-    pool = await _pool(request).get(m.account_id, m.battletag, m.region)
-    return JSONResponse(_pool_json(pool), headers={"Cache-Control": "no-store"})
+    heroes = await _pool(request).heroes(m.account_id)
+    return JSONResponse(
+        {"heroes": [{"hero": h} for h in heroes]}, headers={"Cache-Control": "no-store"}
+    )
 
 
 @router.post("/v1/me/pool")
@@ -213,12 +210,27 @@ async def choose_pool_hero(
     m = await _me(request, session)
     if m is None:
         return _unauthorized()
-    await _pool(request).choose(m.account_id, body.hero, body.include)
+    await _pool(request).set(m.account_id, body.hero, body.include)
     return Response(status_code=204)
 
 
+@router.post("/v1/me/pool/sync")
+async def sync_pool(
+    request: Request, session: Annotated[str | None, Cookie(alias=SESSION_COOKIE)] = None
+) -> JSONResponse:
+    if (foreign := _foreign_origin(request)) is not None:
+        return foreign
+    m = await _me(request, session)
+    if m is None:
+        return _unauthorized()
+    if m.region is None:
+        return error(409, "region_required", "지역을 먼저 골라 주세요.")
+    result = await _pool(request).sync(m.account_id, m.battletag, m.region)
+    return JSONResponse(asdict(result), headers={"Cache-Control": "no-store"})
+
+
 @router.delete("/v1/me/pool")
-async def reset_pool(
+async def clear_pool(
     request: Request, session: Annotated[str | None, Cookie(alias=SESSION_COOKIE)] = None
 ) -> Response:
     if (foreign := _foreign_origin(request)) is not None:
@@ -226,5 +238,5 @@ async def reset_pool(
     m = await _me(request, session)
     if m is None:
         return _unauthorized()
-    await _pool(request).reset(m.account_id)
+    await _pool(request).clear(m.account_id)
     return Response(status_code=204)

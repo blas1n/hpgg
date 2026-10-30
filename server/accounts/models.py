@@ -4,7 +4,7 @@ token is never stored."""
 
 from __future__ import annotations
 
-from sqlalchemy import Boolean, Float, ForeignKey, Integer, String
+from sqlalchemy import Float, ForeignKey, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column
 
 from server.db import Base
@@ -44,9 +44,9 @@ class OAuthState(Base):
     created_at: Mapped[float] = mapped_column(Float)
 
 
-class HeroPoolChoice(Base):
-    """A hero the member put in (`include`) or took out of their pool by hand. The record from HP
-    is never stored here; it is asked through the season card's cache each time."""
+class HeroPoolEntry(Base):
+    """One hero in a member's pool. The member keeps the list (any hero, by hand); a sync adds
+    this season's heroes from Heroes Profile. `seq` keeps the order heroes came in."""
 
     __tablename__ = "hero_pool"
 
@@ -55,5 +55,5 @@ class HeroPoolChoice(Base):
     )
     # Heroes Profile's hero name ("Li Li", "Lúcio"): the key the season rows and the site share
     hero: Mapped[str] = mapped_column(String, primary_key=True)
-    include: Mapped[bool] = mapped_column(Boolean)
-    updated_at: Mapped[float] = mapped_column(Float)
+    seq: Mapped[int] = mapped_column(Integer)
+    added_at: Mapped[float] = mapped_column(Float)
