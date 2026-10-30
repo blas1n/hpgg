@@ -56,7 +56,8 @@ async function mockApi(page: Page, { me, pool = [], sync = { status: "ok", recor
       const added = rows.filter(([h, g]) => g >= 5 && !have.has(h)).map(([h]) => h);
       state.pool.push(...added);
       const candidates = rows.filter(([h, g]) => g > 0 && g < 5 && !have.has(h)).map(([hero, games, wins]) => ({ hero, games, wins }));
-      return send(200, { status, stale, season: status === "ok" ? 13 : null, min_games: 5, added, candidates });
+      const added_records = added.map((h) => { const [hero, games, wins] = rows.find((r) => r[0] === h)!; return { hero, games, wins }; });
+      return send(200, { status, stale, season: status === "ok" ? 13 : null, min_games: 5, added, added_records, candidates });
     }
     return send(404, { error: { code: "not_found", message: "" } });
   });
@@ -150,6 +151,9 @@ test("sync: heroes played 5+ times go in, the rest come back as one-click candid
   await expect(result).toContainText("5판 이상");
   for (const s of ["valla", "li-li", "lucio"]) await expect(gridHero(page, s)).toHaveAttribute("aria-pressed", "true");
   await expect(page.locator("#pool-count")).toHaveText("3");
+  // each hero the sync added says how much it was played (the owner's mock)
+  await expect(chip(page, "valla")).toContainText("이번 시즌 31판");
+  await expect(chip(page, "li-li")).toContainText("이번 시즌 12판");
   const cand = page.locator('#pool-candidates button[data-hero="zeratul"]');
   await expect(cand).toContainText("제라툴");
   await expect(cand).toContainText("4판");

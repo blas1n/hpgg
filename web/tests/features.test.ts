@@ -30,9 +30,9 @@ describe("features", () => {
     expect(FEATURES.carry).toBe(false);
   });
 
-  it("accounts (#28) stay hidden until the members-only hero-pool 밴픽 (stage D): no privacy page, no menu entry", () => {
-    expect(FEATURES.accounts).toBe(false);
-    expect(sectionEnabled("privacy")).toBe(false);
+  it("accounts (#28) are on since the hero-pool 밴픽 shipped (owner 2026-10-30): the privacy page is up, no menu entry", () => {
+    expect(FEATURES.accounts).toBe(true);
+    expect(sectionEnabled("privacy")).toBe(true);
     expect(disabledSections({ draft: true, weekly: true, teamluck: false, carry: false, accounts: false })).toEqual(["privacy"]);
     expect(sectionEnabled("privacy", { draft: true, weekly: true, teamluck: false, carry: false, accounts: true })).toBe(true);
     // the privacy page is reached from the footer and the account menu, never from the main menu
