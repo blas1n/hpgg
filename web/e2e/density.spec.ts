@@ -9,7 +9,7 @@ test.beforeEach(async ({ page }) => {
 test.describe("desktop 1280", () => {
   test.use({ viewport: { width: 1280, height: 900 } });
 
-  test("tier table: its own tier column, compact rows, at least 14 heroes above the fold", async ({ page }) => {
+  test("tier table: its own tier column, compact rows, at least 13 heroes above the fold", async ({ page }) => {
     await page.goto("./tier/");
     const rows = page.locator("#rows tr[data-hero]");
     await expect(rows.first().locator('td[data-col="tier"] .tier-badge')).toHaveText("S");
@@ -18,7 +18,8 @@ test.describe("desktop 1280", () => {
     const h = (await rows.nth(3).boundingBox())!.height;
     expect(h).toBeLessThanOrEqual(42);
     const visible = await rows.evaluateAll((els) => els.filter((e) => e.getBoundingClientRect().bottom <= innerHeight).length);
-    expect(visible).toBeGreaterThanOrEqual(14);
+    // 14 with the one-row header; header B (owner 2026-10-30) adds a 40px tab row, one table row less
+    expect(visible).toBeGreaterThanOrEqual(13);
   });
 
   test("tier table: role column and win-rate interval on desktop, no wasted hero column", async ({ page }) => {
@@ -40,9 +41,9 @@ test.describe("desktop 1280", () => {
 
   test("tier table: the column header stays under the site header while scrolling", async ({ page }) => {
     await page.goto("./tier/");
-    await page.mouse.wheel(0, 2500);
-    await expect.poll(async () => (await page.locator('th[data-col="hero"]').boundingBox())!.y).toBeLessThan(80);
     const headerH = await page.evaluate(() => document.querySelector("header")!.getBoundingClientRect().height);
+    await page.mouse.wheel(0, 2500);
+    await expect.poll(async () => (await page.locator('th[data-col="hero"]').boundingBox())!.y).toBeLessThan(headerH + 20);
     const y = (await page.locator('th[data-col="hero"]').boundingBox())!.y;
     expect(Math.abs(y - headerH)).toBeLessThanOrEqual(2);
   });
