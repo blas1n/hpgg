@@ -101,7 +101,8 @@ export function HeroPool({
     setAskRegion(false);
     if (r.status === "ok") {
       setPool((cur) => [...(cur ?? []), ...r.added.filter((n) => !(cur ?? []).includes(n))]);
-      setSources((s) => ({ ...s, ...Object.fromEntries(r.added.map((n) => [n, {}])) }));
+      const games = new Map(r.addedRecords.map((c) => [c.hero, c.games]));
+      setSources((s) => ({ ...s, ...Object.fromEntries(r.added.map((n) => [n, games.has(n) ? { games: games.get(n) } : {}])) }));
       setResult({ kind: "ok", added: r.added, candidates: r.candidates, minGames: r.minGames, stale: r.stale });
     } else setResult({ kind: r.status === "not_found" ? "none" : r.status === "private" ? "private" : "unavailable" });
   }
