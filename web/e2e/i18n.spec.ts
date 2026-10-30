@@ -259,7 +259,7 @@ test("every page renders for every language in LOCALES, from the one route tree"
       const res = await page.goto(`/${locale}${p.path}`);
       expect(res?.status(), `${locale}${p.path}`).toBe(200);
       await expect(page.locator("html"), `${locale}${p.path}`).toHaveAttribute("lang", locale);
-      await expect(page.locator("header nav a[data-page=home]").first(), `${locale}${p.path}`).toHaveText(messages[locale].nav.home);
+      await expect(page.locator("header nav a[data-page=tier]").first(), `${locale}${p.path}`).toHaveText(messages[locale].nav.tier);
     }
   }
   // a language outside LOCALES has no pages

@@ -42,8 +42,9 @@ export const sectionEnabled = (section: string, flags: Flags = FEATURES): boolea
 export const disabledSections = (flags: Flags = FEATURES): string[] =>
   (Object.keys(SECTION_OF) as Feature[]).filter((f) => !flags[f]).map((f) => SECTION_OF[f]!);
 
-const NAV_IDS = ["home", "tier", "meta", "heroes", "draft", "maps", "patches", "players"] as const;
+/** Header tabs (design B, owner 2026-10-30): no 홈 tab — the logo is home; 주간 메타 follows 밴픽. */
+const NAV_IDS = ["tier", "heroes", "draft", "meta", "players", "maps", "patches"] as const;
 export type NavId = (typeof NAV_IDS)[number];
 
 /** The header menu, in order, without switched-off sections. */
-export const navIds = (flags: Flags = FEATURES): NavId[] => NAV_IDS.filter((id) => id === "home" || sectionEnabled(id, flags));
+export const navIds = (flags: Flags = FEATURES): NavId[] => NAV_IDS.filter((id) => sectionEnabled(id, flags));

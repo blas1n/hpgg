@@ -43,10 +43,11 @@ describe("features", () => {
     for (const s of ["tier", "heroes", "maps", "players"]) expect(sectionEnabled(s)).toBe(true);
   });
 
-  it("the menu leaves out a switched-off section and keeps the order", () => {
-    expect(navIds({ draft: false, weekly: true, teamluck: false, carry: false, accounts: false })).toEqual(["home", "tier", "meta", "heroes", "maps", "patches", "players"]);
-    expect(navIds({ draft: true, weekly: true, teamluck: false, carry: false, accounts: false })).toEqual(["home", "tier", "meta", "heroes", "draft", "maps", "patches", "players"]);
-    expect(navIds({ draft: false, weekly: false, teamluck: false, carry: false, accounts: false })).toEqual(["home", "tier", "heroes", "maps", "patches", "players"]);
+  it("the menu (header tabs, no 홈 — the logo is home) leaves out a switched-off section and keeps the order", () => {
+    expect(navIds({ draft: false, weekly: true, teamluck: false, carry: false, accounts: false })).toEqual(["tier", "heroes", "meta", "players", "maps", "patches"]);
+    expect(navIds({ draft: true, weekly: true, teamluck: false, carry: false, accounts: false })).toEqual(["tier", "heroes", "draft", "meta", "players", "maps", "patches"]);
+    expect(navIds({ draft: true, weekly: false, teamluck: false, carry: false, accounts: false })).toEqual(["tier", "heroes", "draft", "players", "maps", "patches"]);
+    expect(navIds({ draft: false, weekly: false, teamluck: false, carry: false, accounts: false })).toEqual(["tier", "heroes", "players", "maps", "patches"]);
   });
 
   it("the export loses a switched-off section in every language and keeps the rest", () => {
