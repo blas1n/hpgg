@@ -1,4 +1,6 @@
 import type { AlsoPlays } from "../data";
+import type { Locale } from "../i18n/locale";
+import { parseBattletag, playersHref, type Region } from "./players";
 /** Hero search for the header box: Korean, English (accent/punctuation-insensitive) and 초성 queries. */
 
 export interface SearchItem {
@@ -60,4 +62,28 @@ export function searchHeroes<T extends SearchItem>(items: T[], query: string, li
   });
   scored.sort((a, b) => a.score - b.score || a.i - b.i);
   return scored.slice(0, limit).map((s) => s.item);
+}
+
+/** The 전적 option of the header box: the BattleTag as the player search normalises it, on the visitor's region. */
+export interface PlayerOption {
+  tag: string;
+  region: Region;
+  href: string;
+}
+
+export interface UnifiedResult<T> {
+  heroes: T[];
+  player: PlayerOption | null;
+  /** Show "이름#1234" as a hint: an unfinished tag, letters with digits, or a name no hero matches. */
+  hint: boolean;
+}
+
+/** The header box takes a hero name or a BattleTag (design B, 2026-10-30). */
+export function unifiedSearch<T extends SearchItem>(items: T[], query: string, { locale, region }: { locale: Locale; region: Region }, limit = 8): UnifiedResult<T> {
+  const q = query.trim();
+  if (!q) return { heroes: [], player: null, hint: false };
+  const tag = parseBattletag(q);
+  if (tag) return { heroes: [], player: { tag, region, href: playersHref(locale, tag, region) }, hint: false };
+  const heroes = searchHeroes(items, q, limit);
+  return { heroes, player: null, hint: heroes.length === 0 || /[#＃]|\p{L}\d/u.test(q) };
 }

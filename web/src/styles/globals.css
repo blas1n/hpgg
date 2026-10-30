@@ -93,11 +93,11 @@
     --color-pop-fg: #384359;
   }
   :root {
-    --header-h: 98px; /* measured by SiteHeader at runtime; this is the phone value before hydration */
+    --header-h: 139px; /* measured by SiteHeader at runtime; this is the phone value before hydration */
   }
   @media (min-width: 768px) {
     :root {
-      --header-h: 57px;
+      --header-h: 97px;
     }
   }
   html {

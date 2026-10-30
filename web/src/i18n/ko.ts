@@ -44,7 +44,6 @@ export const ko = {
     playersDescription: "히어로즈 오브 더 스톰 전적 검색: 배틀태그로 모드별 MMR, 최근 경기, 많이 한 영웅.",
   },
   nav: {
-    home: "홈",
     tier: "영웅 티어",
     heroes: "영웅",
     maps: "전장",
@@ -53,7 +52,6 @@ export const ko = {
     meta: "주간 메타",
     draft: "밴픽",
     main: "주 메뉴",
-    mobile: "주 메뉴 (모바일)",
     homeLink: "hpgg.win 홈",
   },
   theme: {
@@ -62,10 +60,13 @@ export const ko = {
     toLight: "라이트 테마로 전환",
   },
   search: {
-    label: "영웅 검색",
-    placeholder: "영웅 검색 (예: 일리단, ㅇㄹㄷ)",
-    results: "영웅 검색 결과",
+    label: "영웅 또는 배틀태그 검색",
+    placeholder: "영웅 이름 또는 배틀태그#1234",
+    results: "검색 결과",
     none: (q: string) => `‘${q}’ 에 맞는 영웅이 없습니다`,
+    heroGroup: "영웅",
+    playerGroup: "전적",
+    tagHint: "배틀태그는 이름#1234 형식",
   },
   footer: {
     game: "히어로즈 오브 더 스톰",
