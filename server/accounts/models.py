@@ -42,3 +42,18 @@ class OAuthState(Base):
     verifier: Mapped[str] = mapped_column(String)
     next_path: Mapped[str] = mapped_column(String)
     created_at: Mapped[float] = mapped_column(Float)
+
+
+class HeroPoolEntry(Base):
+    """One hero in a member's pool. The member keeps the list (any hero, by hand); a sync adds
+    this season's heroes from Heroes Profile. `seq` keeps the order heroes came in."""
+
+    __tablename__ = "hero_pool"
+
+    account_id: Mapped[int] = mapped_column(
+        ForeignKey("accounts.id", ondelete="CASCADE"), primary_key=True
+    )
+    # Heroes Profile's hero name ("Li Li", "Lúcio"): the key the season rows and the site share
+    hero: Mapped[str] = mapped_column(String, primary_key=True)
+    seq: Mapped[int] = mapped_column(Integer)
+    added_at: Mapped[float] = mapped_column(Float)

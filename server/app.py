@@ -20,6 +20,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
+from server.accounts.pool import PoolService
 from server.accounts.router import router as accounts_router
 from server.accounts.service import AccountService
 from server.comments.router import router as comments_router
@@ -77,6 +78,7 @@ def create_app(
         app.state.comments = CommentService(db, settings, clock)
         bnet_http = httpx.AsyncClient(transport=bnet_transport, timeout=settings.request_timeout)
         app.state.accounts = AccountService(db, settings, bnet_http, clock)
+        app.state.pool = PoolService(db, settings, lambda: app.state.season, clock)
         app.state.comment_read_limiter = SlidingWindowLimiter(
             settings.comment_reads_per_minute, 60.0, clock
         )
