@@ -176,13 +176,12 @@ test("players: a malformed BattleTag is caught before any request", async ({ pag
   await expect(page.locator("#player-result")).toHaveAttribute("data-state", "idle");
 });
 
-test("home: the search box at the top opens 전적 검색 with the query", async ({ page }) => {
-  await mockApi(page, (route) => json(route, 200, fixture));
+test("home: a BattleTag in the header's search opens 전적 검색 with the query (홈's own box is gone, owner 2026-10-30)", async ({ page }) => {
+  await mockApi(page, (route, url) => json(route, 200, url.pathname.endsWith("/season") ? season : fixture));
   await page.goto("./");
-  await page.locator("#home-player-search-region").selectOption("NA");
-  await page.locator("#home-player-search-tag").fill("Zemill#1940");
-  await page.locator("#home-player-search button[type=submit]").click();
-  await expect(page).toHaveURL(/\/ko\/hots\/players\/\?tag=Zemill%231940&region=NA$/);
+  await page.locator("#site-search").fill("Zemill#1940");
+  await page.locator("#site-search").press("Enter");
+  await expect(page).toHaveURL(/\/ko\/hots\/players\/\?tag=Zemill%231940&region=KR$/);
   await expect(page.locator("#player-result")).toHaveAttribute("data-state", "ok");
 });
 
