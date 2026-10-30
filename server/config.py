@@ -81,4 +81,16 @@ class Settings(BaseSettings):
     privacy_poll_seconds: int = 3600
     stale_max_seconds: int = 24 * 3600
 
+    # Accounts (`server/accounts/`, #28, owner 2026-10-30): Battle.net sign-in for the members-only
+    # hero-pool 밴픽. No client id = sign-in is off (503). The secret comes from the vault through
+    # ~/Works/_infra/scripts/secrets-sync.sh into deploy/.env.
+    bnet_client_id: str = ""
+    bnet_client_secret: SecretStr = SecretStr("")
+    bnet_oauth_base: str = "https://oauth.battle.net"
+    bnet_redirect_uri: str = "https://api.hpgg.win/v1/auth/battlenet/callback"
+    # where a finished sign-in sends the browser back: the site, never anything else
+    site_url: str = "https://hpgg.win"
+    session_ttl_seconds: int = 30 * 86_400
+    oauth_state_ttl_seconds: int = 600
+
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")

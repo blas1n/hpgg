@@ -217,11 +217,13 @@ def test_cors_allowlist(client: TestClient) -> None:
         headers={"Origin": "https://hpgg.win", "Access-Control-Request-Method": "GET"},
     )
     assert pre.status_code == 200
-    # comments are posted from the browser since 2026-10-05; nothing else writes, and other
-    # origins are still refused (above)
+    # comments are posted from the browser since 2026-10-05; a member deletes their account with
+    # DELETE /v1/me since 2026-10-30 (#28); nothing else writes, and other origins are still
+    # refused (above)
     assert pre.headers["access-control-allow-methods"].replace(" ", "").split(",") == [
         "GET",
         "POST",
+        "DELETE",
     ]
 
 

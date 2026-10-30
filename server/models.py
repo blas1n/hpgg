@@ -1,5 +1,6 @@
 """Every feature's tables, imported in one place so `Base.metadata` (and Alembic) sees them all."""
 
+from server.accounts.models import Account, OAuthState, Session
 from server.comments.models import AppSecret, Comment, CommentReport
 from server.db import Base
 from server.players.models import (
@@ -12,6 +13,7 @@ from server.players.models import (
 )
 
 __all__ = [
+    "Account",
     "AppSecret",
     "Base",
     "Comment",
@@ -22,4 +24,6 @@ __all__ = [
     "HPFeedCursor",
     "HPPrivatePlayer",
     "HPQuota",
+    "OAuthState",
+    "Session",
 ]
