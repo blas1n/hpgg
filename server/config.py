@@ -24,13 +24,14 @@ class Settings(BaseSettings):
     # Exact origins allowed to call the API from a browser (JSON list in the env).
     cors_origins: list[str] = ["https://hpgg.win"]
 
-    # Player search. /players is on the 25,000/week bucket (Intermediate since 2026-10-02; 10,000
-    # on Basic). Weekly caps measured from HP's X-HP-Quota-Limit; tests/server/test_budgets.py.
+    # Player search. /players carries career totals: 500/week on Intermediate since HP cut it on
+    # 2026-11-02 (it was 25,000; 25 on Basic). /players/lookup kept the big bucket but has no
+    # totals. Weekly caps measured from HP's X-HP-Quota-Limit; tests/server/test_budgets.py.
     player_ttl_seconds: int = 6 * 3600
     # HP answers 404 for free; keep it short so someone who just uploaded sees their games soon.
     not_found_ttl_seconds: int = 600
-    quota_floor: int = 200  # stop live calls when HP reports this many left in the week
-    daily_live_budget: int = 3500  # ≈ (25,000 − floor) / 7, so one busy day cannot starve the week
+    quota_floor: int = 20  # stop live calls when HP reports this many left in the week
+    daily_live_budget: int = 68  # ≈ (500 − floor) / 7, so one busy day cannot starve the week
     ip_requests_per_minute: int = 20
     # 20 a minute alone is 28,800 a day: one address could spend the daily budget above in three
     # hours (security review 2026-10-02). A search is 3-4 requests, a game opened one more.
