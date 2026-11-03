@@ -9,7 +9,7 @@ from server.config import Settings
 
 # bucket: (weekly cap, daily budget field, floor field)
 PLAN = {
-    "player": (25_000, "daily_live_budget", "quota_floor"),
+    "player": (500, "daily_live_budget", "quota_floor"),  # 25,000 until HP cut it 2026-11-02
     "player_match_history": (500, "match_daily_budget", "match_quota_floor"),
     "player_hero_all": (500, "season_daily_budget", "season_quota_floor"),
     "player_mmr_history": (25_000, "mmr_history_daily_budget", "mmr_history_quota_floor"),
