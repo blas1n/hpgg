@@ -107,6 +107,7 @@ One table of build-time flags; the site is a static export, so a switch is a one
 | Hero/Matchups | 2,100 | 90 every other day (315/week; a patch change adds one early round → ≤ 450) |
 | Patches, Heroes, Maps | 1,000,000 | 1 |
 | Player/Privacy/Changes (server) | 10,080 | 24 (hourly poll, #74) |
+| Player (server, `/players`: career totals) | 500 (25,000 until HP cut it on 2026-11-02; `/players/lookup` kept 25,000 but has no totals) | ≤ 68 (전적 검색 profile, cached 6 h; `DAILY_LIVE_BUDGET`, floor 20) |
 | Player/Match/History (server) | 500 | ≤ 70 (full match lists; `MATCH_DAILY_BUDGET`, floor 10) |
 | Player/MMR History (server) | 25,000 | ≤ 3,500 (match lists once the full-list budget is spent) |
 | Replay/Data (server) | 25,000 | ≤ 3,500 (a game opened on 전적 검색; floor 50) |
