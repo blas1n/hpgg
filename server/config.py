@@ -60,6 +60,13 @@ class Settings(BaseSettings):
     # day, 2026-10-06): 2,000 a day here leaves both room. 팀운 (teamluck.py) spends from it too.
     replay_quota_floor: int = 50
     replay_daily_budget: int = 2000
+    # A hero's talent tree on one map (`server/heroes/talents.py`, owner 2026-11-05): HP
+    # /heroes/talents/details, bucket heroes_talents_details (210/week on Intermediate), one call
+    # per hero, map and bracket, asked when a visitor picks a map and kept a week. The weekly
+    # report spends up to 10 a week from it (collector/evidence.py MAX_CITED): 27 a day here.
+    talents_quota_floor: int = 10
+    talents_daily_budget: int = 27
+    talents_ttl_seconds: int = 7 * 24 * 3600
     # A cold /players/matches or /players/heroes query answers 202 with a job id, and /jobs/{id} is
     # polled (`hp.follow_job`): not charged, unlike asking the query again (2026-10-08, 10-15).
     hp_job_poll_seconds: float = 5.0

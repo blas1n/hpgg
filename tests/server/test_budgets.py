@@ -14,12 +14,18 @@ PLAN = {
     "player_hero_all": (500, "season_daily_budget", "season_quota_floor"),
     "player_mmr_history": (25_000, "mmr_history_daily_budget", "mmr_history_quota_floor"),
     "replay_data": (25_000, "replay_daily_budget", "replay_quota_floor"),
+    "heroes_talents_details": (210, "talents_daily_budget", "talents_quota_floor"),
 }
 
 
 def _shared(bucket: str, cap: int) -> int:
     """The server's share of a bucket another job also spends: the weekly report's replay sampler
-    (collector/replay_sample.py) opens its games from replay_data every day (2026-10-06)."""
+    (collector/replay_sample.py) opens its games from replay_data every day (2026-10-06); the
+    weekly report asks the talents of up to MAX_CITED heroes a week (talent_details.py)."""
+    if bucket == "heroes_talents_details":
+        from collector.evidence import MAX_CITED
+
+        return cap - MAX_CITED
     if bucket != "replay_data":
         return cap
     from collector.config import Settings as CollectorSettings

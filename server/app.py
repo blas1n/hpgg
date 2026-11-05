@@ -28,6 +28,8 @@ from server.comments.service import CommentService
 from server.config import Settings
 from server.db import Database, migrate
 from server.errors import on_validation_error
+from server.heroes.router import router as heroes_router
+from server.heroes.talents import TalentService
 from server.players.hp import HPClient
 from server.players.matches import MatchService
 from server.players.privacy import PrivacyFeed
@@ -71,6 +73,7 @@ def create_app(
         )
         app.state.replays = ReplayService(hp=hp, store=store, settings=settings, clock=clock)
         app.state.season = SeasonService(hp=hp, store=store, settings=settings, clock=clock)
+        app.state.talents = TalentService(hp=hp, store=store, settings=settings, clock=clock)
         app.state.teamluck = TeamLuckService(matches=app.state.matches, replays=app.state.replays)
         app.state.privacy = PrivacyFeed(hp=hp, store=store, settings=settings, clock=clock)
         poller = asyncio.create_task(app.state.privacy.run_forever()) if privacy_poll else None
@@ -152,12 +155,14 @@ def create_app(
                 **await request.app.state.matches.status(),
                 **await request.app.state.replays.status(),
                 **await request.app.state.season.status(),
+                **await request.app.state.talents.status(),
             },
             "privacy": await feed.status(),
         }
         return JSONResponse(body, headers={"Cache-Control": "no-store"})
 
     app.include_router(players_router)
+    app.include_router(heroes_router)
     app.include_router(replays_router)
     app.include_router(comments_router)
     app.include_router(accounts_router)
