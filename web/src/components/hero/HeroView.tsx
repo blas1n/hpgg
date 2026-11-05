@@ -2,12 +2,14 @@
 
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { assetUrl, BRACKETS, hotsHref, REGIONS, shortDate, snapshotKey, type Bracket, type HeroInfo, type Mode, type Region } from "@/data";
+import { assetUrl, BRACKETS, hotsHref, loadTalents, REGIONS, shortDate, snapshotKey, type Bracket, type HeroInfo, type Mode, type Region, type TalentTable } from "@/data";
+import { FEATURES } from "@/features";
 import { HpCredit } from "@/components/HpCredit";
 import { ChangeGroups } from "@/components/patches/ChangeGroups";
 import { CommentThread } from "@/components/comments/CommentThread";
 import { useLocale, useT } from "@/i18n/client";
-import { descParts, type BuildScope, type BuildTalentView, type BuildView, type GridRow, type HeroBuilds, type HeroSummary, type MapRow } from "@/lib/hero";
+import { BUILD_MIN_GAMES, descParts, type BuildScope, type BuildTalentView, type BuildView, type GridRow, type HeroBuilds, type HeroSummary, type MapRow } from "@/lib/hero";
+import { fetchMapTalents, mapTalentTree, patchLine, type MapTalentLevel, type MapTalentsResponse } from "@/lib/mapTalents";
 import { buildFormulaLines } from "@/formula";
 import { LENGTH_MIN_GAMES, type LengthView } from "@/lib/length";
 import { TIER_MIN_GAMES, type TiersView } from "@/lib/tiers";
@@ -47,6 +49,7 @@ export function HeroView({
   tiers,
   patches,
   minGames,
+  maps,
 }: {
   hero: HeroInfo;
   models: Record<Mode, HeroModeModel>;
@@ -61,21 +64,26 @@ export function HeroView({
   /** This hero in Blizzard's official patch notes (#62); the same in both modes. */
   patches: HeroPatchNotes;
   minGames: number;
+  /** The site's maps (HP name, slug, name in the page language): the 전장별 특성 choice. */
+  maps: { name: string; slug: string; ko: string }[];
 }) {
   const t = useT();
-  // ?mode=sl&region=kr&tier=low — the tier table's names, so a view reads the same on both pages
-  const [view, setView] = useState<{ mode: Mode; region: Region; bracket: Bracket }>({ mode: "qm", region: "all", bracket: "all" });
+  // ?mode=sl&region=kr&tier=low — the tier table's names, so a view reads the same on both pages; &map=<slug> picks
+  // the talent section's map (전장별 특성)
+  const [view, setView] = useState<{ mode: Mode; region: Region; bracket: Bracket; map: string }>({ mode: "qm", region: "all", bracket: "all", map: "" });
   useEffect(() => {
     const q = new URLSearchParams(location.search);
     const mode: Mode = q.get("mode") === "sl" ? "sl" : "qm";
     const r = q.get("region") as Region | null;
     const b = q.get("tier") as Bracket | null;
+    const mp = q.get("map") ?? "";
     const next = {
       mode,
       region: r && REGIONS.includes(r) ? r : "all",
       bracket: mode === "sl" && b && BRACKETS.includes(b) ? b : "all",
+      map: FEATURES.mapTalents && maps.some((x) => x.slug === mp) ? mp : "",
     } as const;
-    if (next.mode !== "qm" || next.region !== "all") setView(next);
+    if (next.mode !== "qm" || next.region !== "all" || next.map) setView(next);
     // a shared …#builds-title link lands on its section ourselves, once drawn and again once the fonts are in: the
     // browser jumps before the page settles (another view's sections, the font swap) and its own correction can come
     // seconds later on a slow phone. Not after the visitor has scrolled.
@@ -100,6 +108,7 @@ export function HeroView({
     if (next.mode === "sl") q.set("mode", "sl");
     if (next.region !== "all") q.set("region", next.region);
     if (next.bracket !== "all") q.set("tier", next.bracket);
+    if (next.map) q.set("map", next.map);
     const qs = q.toString();
     history.replaceState(null, "", location.pathname + (qs ? `?${qs}` : "") + location.hash);
   };
@@ -113,6 +122,8 @@ export function HeroView({
   const want: BuildScope = bracket === "low" || bracket === "high" ? bracket : "all";
   const buildsScope = (builds[want] ? want : (["all", "high", "low"] as const).find((k) => builds[k])) ?? null;
   const buildsShown = buildsScope ? { scope: buildsScope, list: builds[buildsScope]! } : null;
+  const mapPicked = maps.find((x) => x.slug === view.map) ?? null;
+  const mapTree = useMapTalents(hero, mapPicked, want, buildsPatch);
   const viewLabel = [region !== "all" && t.common.regions[region], bracket !== "all" && t.common.brackets[bracket]].filter(Boolean).join(" · ");
 
   const tab = t.hero.sections;
@@ -226,11 +237,35 @@ export function HeroView({
           <h2 id="builds-title" className={SECTION}>
             {t.hero.buildsTitle}{" "}
             <span id="builds-sub" className="text-xs font-normal text-muted">
-              {t.hero.buildsSub(buildsPatch ?? "", buildsShown.scope === "all" ? t.hero.buildsAll : t.common.brackets[buildsShown.scope])}
+              {mapTree.kind === "ok" && mapPicked
+                ? t.hero.mapTreeSub(buildsPatch ?? "", want === "all" ? t.hero.buildsAll : t.common.brackets[want], mapPicked.ko)
+                : t.hero.buildsSub(buildsPatch ?? "", buildsShown.scope === "all" ? t.hero.buildsAll : t.common.brackets[buildsShown.scope])}
               {region !== "all" && ` · ${t.hero.wholeRegion}`}
             </span>
           </h2>
-          <Builds list={buildsShown.list} scope={buildsShown.scope} />
+          {/* 전장별 특성 (owner 2026-11-05): a map swaps the builds for that map's tree once it is here; until then, and
+              when it cannot come, the builds stay on screen with a line that says so */}
+          {FEATURES.mapTalents && (
+            <div className="mb-2 flex flex-wrap items-center gap-2">
+              <label>
+                <span className="sr-only">{t.hero.mapLabel}</span>
+                <select id="builds-map" value={view.map} onChange={(e) => change({ map: e.target.value })} className={FILTER}>
+                  <option value="">{t.hero.mapAll}</option>
+                  {maps.map((x) => (
+                    <option key={x.slug} value={x.slug}>
+                      {x.ko}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              {mapTree.kind !== "none" && mapTree.kind !== "ok" && (
+                <p id="builds-map-status" role="status" className="text-xs text-muted">
+                  {mapTree.kind === "loading" ? t.hero.mapLoading : mapTree.kind === "quota" ? t.hero.mapQuota : t.hero.mapFailed}
+                </p>
+              )}
+            </div>
+          )}
+          {mapTree.kind === "ok" ? <MapTalentTree levels={mapTree.levels} /> : <Builds list={buildsShown.list} scope={buildsShown.scope} />}
         </>
       )}
       </section>
@@ -702,6 +737,87 @@ function MatchupList({ id, title, note, rows }: { id: string; title: string; not
 }
 
 type Pop = { t: BuildTalentView; left: number; top: number; width: number; anchor: DOMRect };
+
+type MapTree = { kind: "none" } | { kind: "loading" } | { kind: "ok"; levels: MapTalentLevel[] } | { kind: "quota" } | { kind: "error" };
+
+const talentTables = new Map<string, Promise<TalentTable | null>>();
+const talentsOnce = (slug: string): Promise<TalentTable | null> => {
+  let p = talentTables.get(slug);
+  if (!p) {
+    p = loadTalents(slug).catch(() => null);
+    talentTables.set(slug, p);
+  }
+  return p;
+};
+
+/** The picked map's talent tree from our API (lib/mapTalents.ts), for the page's bracket; "none" without a map. */
+function useMapTalents(hero: HeroInfo, map: { name: string } | null, tier: BuildScope, patch: string | null): MapTree {
+  const locale = useLocale();
+  const key = FEATURES.mapTalents && map && patch ? `${hero.name}|${map.name}|${tier}|${patch}` : "";
+  const [got, setGot] = useState<{ key: string; tree: MapTree }>({ key: "", tree: { kind: "none" } });
+  useEffect(() => {
+    if (!key || !map || !patch) return;
+    let live = true;
+    void Promise.all([fetchMapTalents(hero.name, map.name, tier, patchLine(patch)), talentsOnce(hero.slug)]).then(([r, table]) => {
+      if (!live) return;
+      const tree: MapTree = r.kind === "ok" ? { kind: "ok", levels: mapTalentTree(r.data as MapTalentsResponse, table, locale).levels } : { kind: r.kind === "quota" ? "quota" : "error" };
+      setGot({ key, tree });
+    });
+    return () => {
+      live = false;
+    };
+    // the key names everything the answer depends on
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [key, locale]);
+  if (!key) return { kind: "none" };
+  return got.key === key ? got.tree : { kind: "loading" };
+}
+
+/** One map's talents, level by level: each talent's pick share of the level (bar: against the most picked) and its
+ *  win rate, muted under BUILD_MIN_GAMES like a thin build's. */
+function MapTalentTree({ levels }: { levels: MapTalentLevel[] }) {
+  const t = useT();
+  return (
+    <div id="map-talents" className="grid gap-2">
+      {levels.map((l) => (
+        <Card as="div" key={l.level} data-level={l.level} className="p-2">
+          <p className="mb-1.5 text-xs font-bold text-muted">{t.hero.level(String(l.level))}</p>
+          {l.rows.length === 0 ? (
+            <p className="text-xs text-muted">{t.hero.mapNoGames}</p>
+          ) : (
+            <ul className="grid gap-1.5">
+              {l.rows.map((r) => (
+                <li key={r.talent} data-talent={r.talent} data-thin={r.thin} className="grid grid-cols-[28px_1fr_auto] items-center gap-2">
+                  {r.icon ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={assetUrl(`img/talents/${r.icon}`)} alt="" loading="lazy" className="size-7 rounded border border-line bg-surface-3" />
+                  ) : (
+                    <span className="size-7 rounded border border-line bg-surface-3" />
+                  )}
+                  <div className="min-w-0">
+                    <div className="truncate text-[13px] text-fg">{r.name}</div>
+                    <span className="mt-1 block h-[3px] rounded-full bg-surface-3">
+                      <i className="block h-full rounded-full bg-accent" style={{ width: `${r.share * 100}%` }} />
+                    </span>
+                  </div>
+                  <div className="num text-right text-[13px] leading-tight">
+                    <div className="text-fg">
+                      <span className="text-2xs text-muted">{t.hero.buildPick}</span> {pct(r.pick)}
+                    </div>
+                    <div title={r.thin ? t.hero.thinBuild : undefined} className={r.thin ? "text-muted" : cx("font-bold", wrTone(r.win_rate))}>
+                      <span className="text-2xs font-normal text-muted">{t.hero.buildWinRate}</span> {pct(r.win_rate)}
+                    </div>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Card>
+      ))}
+      <p className="text-2xs text-muted">{t.hero.mapRule(String(BUILD_MIN_GAMES))}</p>
+    </div>
+  );
+}
 
 function Builds({ list, scope }: { list: BuildView[]; scope: BuildScope }) {
   const t = useT();

@@ -165,6 +165,7 @@ export async function HeroPage({ locale, params }: { locale: Locale } & Params) 
       models={{ qm: model("qm"), sl: model("sl") }}
       builds={heroBuilds(builds, readTalents(slug), hero.name, locale)}
       buildsPatch={builds?.patch ?? null}
+      maps={maps.maps}
       matchups={matchupsView(readMatchups(slug), heroes, heroStrength(readShown("sl")?.snap ?? null))}
       length={lengthView(readLength(), hero.name, meta.window)}
       tiers={tiersView(readTiers(), hero.name)}

@@ -28,6 +28,10 @@ export const FEATURES = {
    *  만들자"). It brings the header account control, the /v1/me check on every page, the privacy policy page and
    *  the 밴픽 hero pool; switching it off again hides all of them (the server side stays). */
   accounts: true,
+  /** 전장별 특성 on the hero page (owner 2026-11-05) — a map in the talent section swaps the builds for that map's
+   *  whole talent tree, asked from Heroes Profile through our API when first wanted and kept a week
+   *  (server/heroes/talents.py, docs/DESIGN-2026-11-05-replay-vs-hp.md). Off until the owner has reviewed it. */
+  mapTalents: false,
 } as const;
 
 export type Feature = keyof typeof FEATURES;

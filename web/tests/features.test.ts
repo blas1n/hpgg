@@ -23,7 +23,7 @@ describe("features", () => {
 
   it("팀운 is on hold (#90, owner 2026-10-07: HP's MMR is not the matchmaker's); it owns no section", () => {
     expect(FEATURES.teamluck).toBe(false);
-    expect(navIds({ draft: false, weekly: false, teamluck: true, carry: false, accounts: false })).toEqual(navIds({ draft: false, weekly: false, teamluck: false, carry: false, accounts: false }));
+    expect(navIds({ draft: false, weekly: false, teamluck: true, carry: false, accounts: false, mapTalents: false })).toEqual(navIds({ draft: false, weekly: false, teamluck: false, carry: false, accounts: false, mapTalents: false }));
   });
 
   it("몇인분 waits until every hero has its own yardstick (owner 2026-10-06)", () => {
@@ -33,10 +33,10 @@ describe("features", () => {
   it("accounts (#28) are on since the hero-pool 밴픽 shipped (owner 2026-10-30): the privacy page is up, no menu entry", () => {
     expect(FEATURES.accounts).toBe(true);
     expect(sectionEnabled("privacy")).toBe(true);
-    expect(disabledSections({ draft: true, weekly: true, teamluck: false, carry: false, accounts: false })).toEqual(["privacy"]);
-    expect(sectionEnabled("privacy", { draft: true, weekly: true, teamluck: false, carry: false, accounts: true })).toBe(true);
+    expect(disabledSections({ draft: true, weekly: true, teamluck: false, carry: false, accounts: false, mapTalents: false })).toEqual(["privacy"]);
+    expect(sectionEnabled("privacy", { draft: true, weekly: true, teamluck: false, carry: false, accounts: true, mapTalents: false })).toBe(true);
     // the privacy page is reached from the footer and the account menu, never from the main menu
-    expect(navIds({ draft: true, weekly: true, teamluck: false, carry: false, accounts: true })).toEqual(navIds({ draft: true, weekly: true, teamluck: false, carry: false, accounts: false }));
+    expect(navIds({ draft: true, weekly: true, teamluck: false, carry: false, accounts: true, mapTalents: false })).toEqual(navIds({ draft: true, weekly: true, teamluck: false, carry: false, accounts: false, mapTalents: false }));
   });
 
   it("a section without a feature is always on", () => {
@@ -44,10 +44,10 @@ describe("features", () => {
   });
 
   it("the menu (header tabs, no 홈 — the logo is home) leaves out a switched-off section and keeps the order", () => {
-    expect(navIds({ draft: false, weekly: true, teamluck: false, carry: false, accounts: false })).toEqual(["tier", "heroes", "meta", "players", "maps", "patches"]);
-    expect(navIds({ draft: true, weekly: true, teamluck: false, carry: false, accounts: false })).toEqual(["tier", "heroes", "draft", "meta", "players", "maps", "patches"]);
-    expect(navIds({ draft: true, weekly: false, teamluck: false, carry: false, accounts: false })).toEqual(["tier", "heroes", "draft", "players", "maps", "patches"]);
-    expect(navIds({ draft: false, weekly: false, teamluck: false, carry: false, accounts: false })).toEqual(["tier", "heroes", "players", "maps", "patches"]);
+    expect(navIds({ draft: false, weekly: true, teamluck: false, carry: false, accounts: false, mapTalents: false })).toEqual(["tier", "heroes", "meta", "players", "maps", "patches"]);
+    expect(navIds({ draft: true, weekly: true, teamluck: false, carry: false, accounts: false, mapTalents: false })).toEqual(["tier", "heroes", "draft", "meta", "players", "maps", "patches"]);
+    expect(navIds({ draft: true, weekly: false, teamluck: false, carry: false, accounts: false, mapTalents: false })).toEqual(["tier", "heroes", "draft", "players", "maps", "patches"]);
+    expect(navIds({ draft: false, weekly: false, teamluck: false, carry: false, accounts: false, mapTalents: false })).toEqual(["tier", "heroes", "players", "maps", "patches"]);
   });
 
   it("the export loses a switched-off section in every language and keeps the rest", () => {
@@ -59,14 +59,14 @@ describe("features", () => {
           writeFileSync(join(dist, l, "hots", s, "index.html"), "x");
         }
       }
-      const removed = pruneDisabled(dist, { draft: false, weekly: true, teamluck: false, carry: false, accounts: false });
+      const removed = pruneDisabled(dist, { draft: false, weekly: true, teamluck: false, carry: false, accounts: false, mapTalents: false });
       expect(removed.sort()).toEqual(LOCALES.flatMap((l) => [`${l}/hots/draft`, `${l}/hots/privacy`]).sort());
       for (const l of LOCALES) {
         expect(existsSync(join(dist, l, "hots", "draft"))).toBe(false);
         expect(existsSync(join(dist, l, "hots", "privacy"))).toBe(false);
         expect(existsSync(join(dist, l, "hots", "tier", "index.html"))).toBe(true);
       }
-      expect(pruneDisabled(dist, { draft: true, weekly: true, teamluck: false, carry: false, accounts: true })).toEqual([]);
+      expect(pruneDisabled(dist, { draft: true, weekly: true, teamluck: false, carry: false, accounts: true, mapTalents: false })).toEqual([]);
     } finally {
       rmSync(dist, { recursive: true, force: true });
     }
