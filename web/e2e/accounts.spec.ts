@@ -130,6 +130,29 @@ test("signed in without a region: asked once, the choice is saved", async ({ pag
   await expect(page.locator("#account-panel")).toBeHidden();
 });
 
+test("the region prompt that opened by itself closes on an Escape that comes the moment it shows", async ({ page }) => {
+  // CI failed on the 밴픽 page (#204): the panel was on screen before its Escape listener was attached, and Chrome
+  // runs a key press ahead of other queued work, so an Escape in that gap did nothing. Here the Escape comes in the
+  // same task the panel appears in (a MutationObserver), the narrowest such gap.
+  await page.addInitScript(() => {
+    const seen = new MutationObserver(() => {
+      const panel = document.getElementById("account-panel");
+      if (panel && !panel.hidden) {
+        seen.disconnect();
+        (window as unknown as { escapeSent: boolean }).escapeSent = true;
+        document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
+      }
+    });
+    seen.observe(document, { subtree: true, childList: true, attributes: true, attributeFilter: ["hidden"] });
+  });
+  await mockAccount(page, { battletag: "blAs1N#3479", region: null });
+  await page.goto("./");
+  await expect(page.locator("header #account-button")).toBeVisible();
+  await expect.poll(() => page.evaluate(() => (window as unknown as { escapeSent?: boolean }).escapeSent)).toBe(true);
+  await expect(page.locator("#account-panel")).toBeHidden();
+  await expect(page.locator("header #account-button")).toBeFocused();
+});
+
 test("logout signs out and shows the login link again", async ({ page }) => {
   const api = await mockAccount(page, { battletag: "blAs1N#3479", region: "KR" });
   await page.goto("./");
