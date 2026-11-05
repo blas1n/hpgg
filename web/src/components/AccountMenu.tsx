@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { hotsHref } from "@/data";
 import { useLocale, useT } from "@/i18n/client";
 import { battletagName, chooseRegion, deleteAccount, fetchMe, loginOutcome, loginUrl, logout, withoutLoginParam, type Me } from "@/lib/account";
@@ -71,8 +71,10 @@ export function AccountMenu() {
     };
   }, []);
 
-  // closes on Escape (focus back on the button) and on a click outside
-  useEffect(() => {
+  // closes on Escape (focus back on the button) and on a click outside. A layout effect, so the listeners are there
+  // before the panel is painted: Chrome runs a key press ahead of queued work, and an Escape pressed the moment the
+  // region prompt opened by itself on a busy page (밴픽) was lost in the gap a passive effect leaves (#204).
+  useLayoutEffect(() => {
     if (!open && !notice) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== "Escape") return;
