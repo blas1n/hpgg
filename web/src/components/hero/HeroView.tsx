@@ -26,8 +26,9 @@ export interface HeroModeModel {
   collectedAt: string;
   /** The thin current patch when this model is the previous one (lib/shown.ts). */
   fallbackFrom: string | null;
-  /** Per region × bracket (`snapshotKey`; QM has no bracket): the stat cards and map rows; null = no file for it. */
-  cells: Record<string, { summary: HeroSummary; maps: MapRow[] } | null>;
+  /** Per region × bracket (`snapshotKey`; QM has no bracket): the stat cards (the whole pool, and per map slug for the
+   *  전장 filter) and map rows; null = no file for it. */
+  cells: Record<string, { summary: HeroSummary; byMap: Record<string, HeroSummary>; maps: MapRow[] } | null>;
   /** 지역 × 구간: this hero in every cell of the mode. */
   grid: { brackets: Bracket[]; rows: GridRow[] };
 }
@@ -47,6 +48,7 @@ export function HeroView({
   tiers,
   patches,
   minGames,
+  maps,
 }: {
   hero: HeroInfo;
   models: Record<Mode, HeroModeModel>;
@@ -61,21 +63,25 @@ export function HeroView({
   /** This hero in Blizzard's official patch notes (#62); the same in both modes. */
   patches: HeroPatchNotes;
   minGames: number;
+  /** The site's maps (slug, name in the page language): the 전장 filter. */
+  maps: { name: string; slug: string; ko: string }[];
 }) {
   const t = useT();
-  // ?mode=sl&region=kr&tier=low — the tier table's names, so a view reads the same on both pages
-  const [view, setView] = useState<{ mode: Mode; region: Region; bracket: Bracket }>({ mode: "qm", region: "all", bracket: "all" });
+  // ?mode=sl&region=kr&tier=low&map=cursed-hollow — the tier table's names, so a view reads the same on both pages
+  const [view, setView] = useState<{ mode: Mode; region: Region; bracket: Bracket; map: string }>({ mode: "qm", region: "all", bracket: "all", map: "" });
   useEffect(() => {
     const q = new URLSearchParams(location.search);
     const mode: Mode = q.get("mode") === "sl" ? "sl" : "qm";
     const r = q.get("region") as Region | null;
     const b = q.get("tier") as Bracket | null;
+    const mp = q.get("map") ?? "";
     const next = {
       mode,
       region: r && REGIONS.includes(r) ? r : "all",
       bracket: mode === "sl" && b && BRACKETS.includes(b) ? b : "all",
+      map: maps.some((x) => x.slug === mp) ? mp : "",
     } as const;
-    if (next.mode !== "qm" || next.region !== "all") setView(next);
+    if (next.mode !== "qm" || next.region !== "all" || next.map) setView(next);
     // a shared …#builds-title link lands on its section ourselves, once drawn and again once the fonts are in: the
     // browser jumps before the page settles (another view's sections, the font swap) and its own correction can come
     // seconds later on a slow phone. Not after the visitor has scrolled.
@@ -100,6 +106,7 @@ export function HeroView({
     if (next.mode === "sl") q.set("mode", "sl");
     if (next.region !== "all") q.set("region", next.region);
     if (next.bracket !== "all") q.set("tier", next.bracket);
+    if (next.map) q.set("map", next.map);
     const qs = q.toString();
     history.replaceState(null, "", location.pathname + (qs ? `?${qs}` : "") + location.hash);
   };
@@ -107,13 +114,15 @@ export function HeroView({
   const m = models[mode];
   const sl = mode === "sl";
   const cell = m.cells[snapshotKey(mode, bracket, region)] ?? null;
-  const s: HeroSummary = cell?.summary ?? { kind: "none" };
+  const mapPicked = maps.find((x) => x.slug === view.map) ?? null;
+  // the 전장 filter (owner 2026-11-06): the stat cards are the hero on that map, ranked among the heroes there
+  const s: HeroSummary = (mapPicked ? cell?.byMap[mapPicked.slug] : cell?.summary) ?? { kind: "none" };
   const filtered = region !== "all" || bracket !== "all";
   // the builds follow the page's bracket filter (owner 2026-10-27); 전체 구간 is both brackets added up
   const want: BuildScope = bracket === "low" || bracket === "high" ? bracket : "all";
   const buildsScope = (builds[want] ? want : (["all", "high", "low"] as const).find((k) => builds[k])) ?? null;
   const buildsShown = buildsScope ? { scope: buildsScope, list: builds[buildsScope]! } : null;
-  const viewLabel = [region !== "all" && t.common.regions[region], bracket !== "all" && t.common.brackets[bracket]].filter(Boolean).join(" · ");
+  const viewLabel = [region !== "all" && t.common.regions[region], bracket !== "all" && t.common.brackets[bracket], mapPicked?.ko].filter(Boolean).join(" · ");
 
   const tab = t.hero.sections;
   const sections = [
@@ -147,7 +156,7 @@ export function HeroView({
           </p>
           <p id="meta-line" className="num mt-0.5 text-xs text-muted">
             {t.common.modes[mode]}
-            {filtered && <span data-view> · {viewLabel}</span>} · {t.common.patch(m.patch)} · {t.common.updated(shortDate(m.collectedAt))}
+            {(filtered || mapPicked) && <span data-view> · {viewLabel}</span>} · {t.common.patch(m.patch)} · {t.common.updated(shortDate(m.collectedAt))}
             {m.fallbackFrom && <span data-fallback> · {t.common.fallbackNote(m.fallbackFrom)}</span>}
           </p>
         </div>
@@ -187,11 +196,22 @@ export function HeroView({
               </select>
             </label>
           )}
+          <label>
+            <span className="sr-only">{t.common.map}</span>
+            <select id="hero-map" value={view.map} onChange={(e) => change({ map: e.target.value })} className={FILTER}>
+              <option value="">{t.common.allMaps}</option>
+              {maps.map((x) => (
+                <option key={x.slug} value={x.slug}>
+                  {x.ko}
+                </option>
+              ))}
+            </select>
+          </label>
         </div>
       </div>
 
       <div id="stats" className="mt-4 grid grid-cols-3 gap-2 lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:mt-5">
-        {cell ? <StatCards s={s} sl={sl} minGames={minGames} /> : <p id="no-cell" className="col-span-3 rounded-lg border border-line bg-surface px-3 py-4 text-center text-[13px] text-muted">{t.hero.noCell}</p>}
+        {cell ? <StatCards s={s} sl={sl} minGames={minGames} onMap={mapPicked !== null} /> : <p id="no-cell" className="col-span-3 rounded-lg border border-line bg-surface px-3 py-4 text-center text-[13px] text-muted">{t.hero.noCell}</p>}
       </div>
       </div>
 
@@ -228,6 +248,8 @@ export function HeroView({
             <span id="builds-sub" className="text-xs font-normal text-muted">
               {t.hero.buildsSub(buildsPatch ?? "", buildsShown.scope === "all" ? t.hero.buildsAll : t.common.brackets[buildsShown.scope])}
               {region !== "all" && ` · ${t.hero.wholeRegion}`}
+              {/* no builds per map: HP's builds endpoint cannot be asked per map often enough (owner 2026-11-06) */}
+              {mapPicked && ` · ${t.hero.allMaps}`}
             </span>
           </h2>
           <Builds list={buildsShown.list} scope={buildsShown.scope} />
@@ -283,9 +305,9 @@ function SectionTabs({ sections }: { sections: { id: string; label: string; nav?
   );
 }
 
-function StatCards({ s, sl, minGames }: { s: HeroSummary; sl: boolean; minGames: number }) {
+function StatCards({ s, sl, minGames, onMap }: { s: HeroSummary; sl: boolean; minGames: number; onMap?: boolean }) {
   const t = useT();
-  if (s.kind === "none") return <Stat k={t.hero.noData} v="–" sub={t.hero.noDataSub} />;
+  if (s.kind === "none") return <Stat k={t.hero.noData} v="–" sub={onMap ? t.hero.noDataMap : t.hero.noDataSub} />;
   if (s.kind === "grey")
     return (
       <>
