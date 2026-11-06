@@ -5,8 +5,8 @@ import { dirname, join } from "node:path";
 import { knownOnly } from "../src/lib/known";
 import type { Snapshot } from "../src/formula";
 import type { BuildsFile, HeroTable, MapTable, TalentTable } from "../src/data";
-import { BUILD_MIN_GAMES, BUILDS_SHOWN, descParts, heroBuilds, heroGrid, heroSummary, mapRows } from "../src/lib/hero";
-import { buildBase, buildScore } from "../src/formula";
+import { BUILD_MIN_GAMES, BUILDS_SHOWN, descParts, heroBuilds, heroGrid, heroMapSummaries, heroSummary, mapRows } from "../src/lib/hero";
+import { buildBase, buildScore, computeTiers } from "../src/formula";
 
 const dataDir = join(dirname(fileURLToPath(import.meta.url)), "e2e-data");
 const json = <T>(rel: string): T => JSON.parse(readFileSync(join(dataDir, rel), "utf-8")) as T;
@@ -51,6 +51,30 @@ describe("heroSummary", () => {
     // KR 다마그 10-02: the file exists, the hero did not play in it — a thin sample, not "no data"
     const without: Snapshot = { ...qm, rows: qm.rows.filter((r) => r.hero !== "Illidan") };
     expect(heroSummary(without, null, "Illidan", 200)).toEqual({ kind: "grey", win_rate: null, games: 0, pick: 0 });
+  });
+});
+
+describe("heroSummary on one map (전장 filter, owner 2026-11-06)", () => {
+  it("the hero's tier and rank among the heroes on that map, as the tier table's map filter ranks them", () => {
+    const s = heroSummary(sl, null, "Illidan", 50, "Cursed Hollow");
+    const t = computeTiers(sl.rows.filter((r) => r.map === "Cursed Hollow"), 50);
+    const r = t.ranked.find((x) => x.row.hero === "Illidan");
+    if (r) {
+      expect(s).toMatchObject({ kind: "ranked", tier: r.tier, rank: r.rank, games: r.row.games, win_rate: r.row.win_rate, pick: r.row.pick });
+    } else {
+      expect(s.kind).toBe("grey");
+    }
+    // not the whole-pool numbers
+    const whole = heroSummary(sl, null, "Illidan", 50);
+    expect(s.kind !== "none" && whole.kind !== "none" && s.games).not.toBe(whole.kind !== "none" && whole.games);
+  });
+
+  it("every map the view has, by slug; a map the hero never played there is a thin sample, not missing", () => {
+    const by = heroMapSummaries(sl, null, "Illidan", maps, 50);
+    expect(Object.keys(by)).toEqual(["cursed-hollow"]); // the SL fixture has one real map
+    expect(by["cursed-hollow"]).toEqual(heroSummary(sl, null, "Illidan", 50, "Cursed Hollow"));
+    const without: Snapshot = { ...sl, rows: sl.rows.filter((r) => !(r.hero === "Illidan" && r.map === "Cursed Hollow")) };
+    expect(heroMapSummaries(without, null, "Illidan", maps, 50)["cursed-hollow"]).toEqual({ kind: "grey", win_rate: null, games: 0, pick: 0 });
   });
 });
 

@@ -28,10 +28,12 @@ const place = (snap: Snapshot, map: string, hero: string, minGames: number) => {
   return { r: t.ranked.find((x) => x.row.hero === hero), grey: t.grey.find((x) => x.hero === hero), n: t.ranked.length };
 };
 
-export function heroSummary(snap: Snapshot, previous: Snapshot | null, hero: string, minGames: number): HeroSummary {
-  const { r, grey } = place(snap, "all", hero, minGames);
+/** The hero in the view; with `map` (an HP map name), among the heroes on that map, as the tier table's map filter
+ *  ranks them (전장 filter on the hero page, owner 2026-11-06). */
+export function heroSummary(snap: Snapshot, previous: Snapshot | null, hero: string, minGames: number, map = "all"): HeroSummary {
+  const { r, grey } = place(snap, map, hero, minGames);
   if (r) {
-    const pr = previous ? (place(previous, "all", hero, minGames).r?.rank ?? null) : null;
+    const pr = previous ? (place(previous, map, hero, minGames).r?.rank ?? null) : null;
     return {
       kind: "ranked",
       tier: r.tier,
@@ -48,6 +50,12 @@ export function heroSummary(snap: Snapshot, previous: Snapshot | null, hero: str
   if (grey) return { kind: "grey", win_rate: grey.win_rate, games: grey.games, pick: grey.pick };
   // the view was collected and the hero did not play in it: a thin sample (0 games), not "no data"
   return { kind: "grey", win_rate: null, games: 0, pick: 0 };
+}
+
+/** heroSummary on every map the view has, by map slug: the stat cards under the hero page's 전장 filter. */
+export function heroMapSummaries(snap: Snapshot, previous: Snapshot | null, hero: string, maps: MapTable, minGames: number): Record<string, HeroSummary> {
+  const inView = new Set(snap.rows.map((r) => r.map));
+  return Object.fromEntries(maps.maps.filter((m) => inView.has(m.name)).map((m) => [m.slug, heroSummary(snap, previous, hero, minGames, m.name)]));
 }
 
 export interface MapRow {

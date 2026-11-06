@@ -297,6 +297,7 @@ export function TierView({ meta, heroes, maps, initial }: { meta: Meta; heroes: 
                 mode={mode}
                 region={region}
                 bracket={bracket}
+                mapSlug={mapInfo?.slug}
               />
               </Fragment>
             ))}
@@ -353,10 +354,10 @@ function RegionNote({ meta, mode, region, bracket, patch, shown }: { meta: Meta;
   );
 }
 
-function HeroRow({ r, cols, hasPrevious, mode, region, bracket }: { r: TierRow; cols: typeof COLUMNS; hasPrevious: boolean; mode: TierMode; region: Region; bracket: Bracket }) {
+function HeroRow({ r, cols, hasPrevious, mode, region, bracket, mapSlug }: { r: TierRow; cols: typeof COLUMNS; hasPrevious: boolean; mode: TierMode; region: Region; bracket: Bracket; mapSlug?: string }) {
   const t = useT();
   // the hero page has QM and SL; an ARAM row opens its Quick Match view, of every region (ARAM has no region split)
-  const link = hotsHref(useLocale()).hero(r.hero.slug, mode === "ar" ? {} : { mode: mode === "sl" ? "sl" : "qm", region, bracket });
+  const link = hotsHref(useLocale()).hero(r.hero.slug, mode === "ar" ? {} : { mode: mode === "sl" ? "sl" : "qm", region, bracket, map: mapSlug });
   const cell: Record<SortKey, string> = {
     score: formatScore(r.score),
     win_rate: pct(r.win_rate),
