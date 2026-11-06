@@ -14,6 +14,8 @@ test.beforeEach(async ({ page }) => {
 test("a map in the filter row: the cards are the hero on that map; the address keeps it with the view", async ({ page }) => {
   await page.goto("./heroes/illidan/?mode=sl&tier=high");
   const games = page.locator('[data-stat="wr"] [data-sub]');
+  // the address's view is read after hydration: read the cards only once it is on screen (CI caught Quick Match's)
+  await expect(page.locator("#hero-bracket")).toHaveValue("high");
   const before = await games.textContent();
   await page.locator("#hero-map").selectOption("cursed-hollow");
   await expect(page).toHaveURL(/mode=sl&tier=high&map=cursed-hollow/);
