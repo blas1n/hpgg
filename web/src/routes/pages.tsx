@@ -22,7 +22,7 @@ import { alternates, DEFAULT_LOCALE, type Locale } from "@/i18n/locale";
 import { messages } from "@/i18n/messages";
 import { compModel } from "@/lib/comps";
 import { draftHeroes } from "@/lib/draft";
-import { heroBuilds, heroGrid, heroSummary, mapRows } from "@/lib/hero";
+import { heroBuilds, heroGrid, heroMapSummaries, heroSummary, mapRows } from "@/lib/hero";
 import { homeModel, mapCards } from "@/lib/home";
 import { mapDetail } from "@/lib/maps";
 import { lengthView } from "@/lib/length";
@@ -147,7 +147,9 @@ export async function HeroPage({ locale, params }: { locale: Locale } & Params) 
       for (const b of brackets) {
         const s = readShown(mode, b, r);
         grid[r][b] = s?.snap ?? null;
-        cells[snapshotKey(mode, b, r)] = s ? { summary: heroSummary(s.snap, s.previous, hero.name, min), maps: mapRows(s.snap, hero.name, maps, min) } : null;
+        cells[snapshotKey(mode, b, r)] = s
+          ? { summary: heroSummary(s.snap, s.previous, hero.name, min), byMap: heroMapSummaries(s.snap, s.previous, hero.name, maps, min), maps: mapRows(s.snap, hero.name, maps, min) }
+          : null;
       }
     }
     return {

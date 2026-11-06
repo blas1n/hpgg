@@ -28,8 +28,9 @@ export interface HeroModeModel {
   collectedAt: string;
   /** The thin current patch when this model is the previous one (lib/shown.ts). */
   fallbackFrom: string | null;
-  /** Per region × bracket (`snapshotKey`; QM has no bracket): the stat cards and map rows; null = no file for it. */
-  cells: Record<string, { summary: HeroSummary; maps: MapRow[] } | null>;
+  /** Per region × bracket (`snapshotKey`; QM has no bracket): the stat cards (the whole pool, and per map slug for the
+   *  전장 filter) and map rows; null = no file for it. */
+  cells: Record<string, { summary: HeroSummary; byMap: Record<string, HeroSummary>; maps: MapRow[] } | null>;
   /** 지역 × 구간: this hero in every cell of the mode. */
   grid: { brackets: Bracket[]; rows: GridRow[] };
 }
@@ -116,15 +117,16 @@ export function HeroView({
   const m = models[mode];
   const sl = mode === "sl";
   const cell = m.cells[snapshotKey(mode, bracket, region)] ?? null;
-  const s: HeroSummary = cell?.summary ?? { kind: "none" };
+  const mapPicked = maps.find((x) => x.slug === view.map) ?? null;
+  // the 전장 filter (owner 2026-11-06): the stat cards are the hero on that map, ranked among the heroes there
+  const s: HeroSummary = (mapPicked ? cell?.byMap[mapPicked.slug] : cell?.summary) ?? { kind: "none" };
   const filtered = region !== "all" || bracket !== "all";
   // the builds follow the page's bracket filter (owner 2026-10-27); 전체 구간 is both brackets added up
   const want: BuildScope = bracket === "low" || bracket === "high" ? bracket : "all";
   const buildsScope = (builds[want] ? want : (["all", "high", "low"] as const).find((k) => builds[k])) ?? null;
   const buildsShown = buildsScope ? { scope: buildsScope, list: builds[buildsScope]! } : null;
-  const mapPicked = maps.find((x) => x.slug === view.map) ?? null;
   const mapTree = useMapTalents(hero, mapPicked, want, buildsPatch);
-  const viewLabel = [region !== "all" && t.common.regions[region], bracket !== "all" && t.common.brackets[bracket]].filter(Boolean).join(" · ");
+  const viewLabel = [region !== "all" && t.common.regions[region], bracket !== "all" && t.common.brackets[bracket], mapPicked?.ko].filter(Boolean).join(" · ");
 
   const tab = t.hero.sections;
   const sections = [
@@ -158,7 +160,7 @@ export function HeroView({
           </p>
           <p id="meta-line" className="num mt-0.5 text-xs text-muted">
             {t.common.modes[mode]}
-            {filtered && <span data-view> · {viewLabel}</span>} · {t.common.patch(m.patch)} · {t.common.updated(shortDate(m.collectedAt))}
+            {(filtered || mapPicked) && <span data-view> · {viewLabel}</span>} · {t.common.patch(m.patch)} · {t.common.updated(shortDate(m.collectedAt))}
             {m.fallbackFrom && <span data-fallback> · {t.common.fallbackNote(m.fallbackFrom)}</span>}
           </p>
         </div>
@@ -198,11 +200,24 @@ export function HeroView({
               </select>
             </label>
           )}
+          {FEATURES.mapTalents && (
+            <label>
+              <span className="sr-only">{t.common.map}</span>
+              <select id="hero-map" value={view.map} onChange={(e) => change({ map: e.target.value })} className={FILTER}>
+                <option value="">{t.hero.mapAll}</option>
+                {maps.map((x) => (
+                  <option key={x.slug} value={x.slug}>
+                    {x.ko}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
         </div>
       </div>
 
       <div id="stats" className="mt-4 grid grid-cols-3 gap-2 lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:mt-5">
-        {cell ? <StatCards s={s} sl={sl} minGames={minGames} /> : <p id="no-cell" className="col-span-3 rounded-lg border border-line bg-surface px-3 py-4 text-center text-[13px] text-muted">{t.hero.noCell}</p>}
+        {cell ? <StatCards s={s} sl={sl} minGames={minGames} onMap={mapPicked !== null} /> : <p id="no-cell" className="col-span-3 rounded-lg border border-line bg-surface px-3 py-4 text-center text-[13px] text-muted">{t.hero.noCell}</p>}
       </div>
       </div>
 
@@ -243,27 +258,12 @@ export function HeroView({
               {region !== "all" && ` · ${t.hero.wholeRegion}`}
             </span>
           </h2>
-          {/* 전장별 특성 (owner 2026-11-05): a map swaps the builds for that map's tree once it is here; until then, and
-              when it cannot come, the builds stay on screen with a line that says so */}
-          {FEATURES.mapTalents && (
-            <div className="mb-2 flex flex-wrap items-center gap-2">
-              <label>
-                <span className="sr-only">{t.hero.mapLabel}</span>
-                <select id="builds-map" value={view.map} onChange={(e) => change({ map: e.target.value })} className={FILTER}>
-                  <option value="">{t.hero.mapAll}</option>
-                  {maps.map((x) => (
-                    <option key={x.slug} value={x.slug}>
-                      {x.ko}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              {mapTree.kind !== "none" && mapTree.kind !== "ok" && (
-                <p id="builds-map-status" role="status" className="text-xs text-muted">
-                  {mapTree.kind === "loading" ? t.hero.mapLoading : mapTree.kind === "quota" ? t.hero.mapQuota : t.hero.mapFailed}
-                </p>
-              )}
-            </div>
+          {/* 전장별 특성 (owner 2026-11-05/06): the page's 전장 filter swaps the builds for that map's tree once it is here;
+              until then, and when it cannot come, the builds stay on screen with a line that says so */}
+          {mapTree.kind !== "none" && mapTree.kind !== "ok" && (
+            <p id="builds-map-status" role="status" className="mb-2 text-xs text-muted">
+              {mapTree.kind === "loading" ? t.hero.mapLoading : mapTree.kind === "quota" ? t.hero.mapQuota : t.hero.mapFailed}
+            </p>
           )}
           {mapTree.kind === "ok" ? <MapTalentTree levels={mapTree.levels} /> : <Builds list={buildsShown.list} scope={buildsShown.scope} />}
         </>
@@ -318,9 +318,9 @@ function SectionTabs({ sections }: { sections: { id: string; label: string; nav?
   );
 }
 
-function StatCards({ s, sl, minGames }: { s: HeroSummary; sl: boolean; minGames: number }) {
+function StatCards({ s, sl, minGames, onMap }: { s: HeroSummary; sl: boolean; minGames: number; onMap?: boolean }) {
   const t = useT();
-  if (s.kind === "none") return <Stat k={t.hero.noData} v="–" sub={t.hero.noDataSub} />;
+  if (s.kind === "none") return <Stat k={t.hero.noData} v="–" sub={onMap ? t.hero.noDataMap : t.hero.noDataSub} />;
   if (s.kind === "grey")
     return (
       <>

@@ -2,10 +2,11 @@ import { expect, test, type Page } from "@playwright/test";
 import { FEATURES } from "../src/features";
 import { lowContrast } from "./contrast";
 
-// 전장별 특성 (owner 2026-11-05): on the hero page a map in the talent section swaps the builds for that map's whole
-// talent tree, from our API (/v1/heroes/talents → Heroes Profile, kept a week). The first visitor of a hero, map and
-// bracket waits ~2 s: the builds stay on screen until the tree comes, and stay when it does not.
-test.skip(!FEATURES.mapTalents, "전장별 특성 is switched off (src/features.ts)");
+// 전장 filter on the hero page (owner 2026-11-05/06): a map in the page's own filter row (next to region and bracket)
+// turns the stat cards into the hero on that map and swaps the builds for that map's whole talent tree, from our API
+// (/v1/heroes/talents → Heroes Profile, kept a week). The talent section has no control of its own. The first visitor
+// of a hero, map and bracket waits ~2 s: the builds stay on screen until the tree comes, and stay when it does not.
+test.skip(!FEATURES.mapTalents, "the 전장 filter is switched off (src/features.ts)");
 
 const API = "https://api.hpgg.win/v1/heroes/talents**";
 const ORIGIN = `http://localhost:${process.env.E2E_PORT ?? 4173}`;
@@ -47,7 +48,7 @@ test("a map: the builds stay while it loads, then that map's tree replaces them;
   const asked = await mockTalents(page, { delay: 800 });
   await page.goto("./heroes/illidan/?mode=sl&tier=high");
   await expect(page.locator("#builds [data-build]").first()).toBeVisible();
-  await page.locator("#builds-map").selectOption("battlefield-of-eternity");
+  await page.locator("#hero-map").selectOption("battlefield-of-eternity");
   // picking a map at once keeps the view the address gave (Storm League, 다마그)
   await expect(page).toHaveURL(/mode=sl&tier=high&map=battlefield-of-eternity/);
   await expect(page.locator("#hero-bracket")).toHaveValue("high");
@@ -70,18 +71,46 @@ test("a map: the builds stay while it loads, then that map's tree replaces them;
   await expect(page.locator("#builds-sub")).toContainText("영원의 전쟁터");
   await expect(page).toHaveURL(/map=battlefield-of-eternity/);
   // back to every map: the builds again, the map leaves the address
-  await page.locator("#builds-map").selectOption("");
+  await page.locator("#hero-map").selectOption("");
   await expect(page.locator("#builds [data-build]").first()).toBeVisible();
   await expect(tree).toHaveCount(0);
   await expect(page).not.toHaveURL(/map=/);
   await expect(page).toHaveURL(/mode=sl&tier=high/);
 });
 
+test("the filter row has the map; the talent section has no control of its own; the cards are the hero on that map", async ({ page }) => {
+  await mockTalents(page);
+  await page.goto("./heroes/illidan/?mode=sl");
+  await expect(page.locator("#builds-map")).toHaveCount(0);
+  const games = page.locator('[data-stat="wr"] [data-sub]');
+  await expect(games).toHaveText("2,912게임");
+  await page.locator("#hero-map").selectOption("cursed-hollow");
+  // the e2e Storm League file has one real map: Cursed Hollow, 232 games
+  await expect(games).toHaveText("232게임");
+  await expect(page.locator("[data-view]")).toContainText("저주받은 골짜기");
+  // a map the view has no game on: the cards say so rather than keep the whole pool's numbers
+  await page.locator("#hero-map").selectOption("sky-temple");
+  await expect(page.locator("#stats")).toContainText("이 전장의 표본이 없습니다");
+  await page.locator("#hero-map").selectOption("");
+  await expect(games).toHaveText("2,912게임");
+});
+
+test("the tier table's map filter carries into the hero page", async ({ page }) => {
+  await mockTalents(page);
+  await page.goto("./tier/?mode=sl&map=Cursed+Hollow");
+  const link = page.locator('tr[data-hero="illidan"] a[data-link]');
+  await expect(link).toHaveAttribute("href", "/ko/hots/heroes/illidan/?mode=sl&map=cursed-hollow");
+  await link.click();
+  await expect(page.locator("#hero-map")).toHaveValue("cursed-hollow");
+  await expect(page.locator('[data-stat="wr"] [data-sub]')).toHaveText("232게임");
+  await expect(page.locator("#map-talents")).toBeVisible();
+});
+
 test("the bracket filter carries over, and a shared link opens on the map's tree", async ({ page }) => {
   const asked = await mockTalents(page);
   await page.goto("./heroes/illidan/?mode=sl&tier=high&map=sky-temple");
   await expect(page.locator("#map-talents")).toBeVisible();
-  await expect(page.locator("#builds-map")).toHaveValue("sky-temple");
+  await expect(page.locator("#hero-map")).toHaveValue("sky-temple");
   expect(asked).toEqual([{ hero: "Illidan", map: "Sky Temple", tier: "high", patch: "2.55.17" }]);
   // the bracket changes: the tree is asked again for it
   await page.locator("#hero-bracket").selectOption("low");
@@ -97,7 +126,7 @@ test("a spent budget or a server that does not answer: the builds stay, and it s
   await expect(page.locator("#map-talents")).toHaveCount(0);
   await page.unrouteAll();
   await mockTalents(page, { status: 503 });
-  await page.locator("#builds-map").selectOption("cursed-hollow");
+  await page.locator("#hero-map").selectOption("cursed-hollow");
   await expect(page.locator("#builds-map-status")).toContainText("불러오지 못해");
   await expect(page.locator("#builds [data-build]").first()).toBeVisible();
 });
