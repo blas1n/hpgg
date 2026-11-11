@@ -28,6 +28,11 @@ from server.comments.service import CommentService
 from server.config import Settings
 from server.db import Database, migrate
 from server.errors import on_validation_error
+from server.mcp.consent import router as mcp_consent_router
+from server.mcp.games import OwnerGames
+from server.mcp.names import GameNames
+from server.mcp.oauth import OwnerOAuthProvider
+from server.mcp.tools import build_mcp, mcp_app
 from server.players.hp import HPClient
 from server.players.matches import MatchService
 from server.players.privacy import PrivacyFeed
@@ -52,11 +57,20 @@ def create_app(
     privacy_poll: bool = True,
 ) -> FastAPI:
     """`privacy_poll=False` is for tests only: the feed poll is a licence condition (terms §5)."""
+    db = Database(settings.db_path)
+    # the owner's MCP (server/mcp/): its routes exist only when an owner is configured
+    mcp = None
+    if settings.mcp_owner_battletag:
+        provider = OwnerOAuthProvider(db, settings, clock)
+        mcp = build_mcp(
+            settings,
+            provider,
+            lambda: (app.state.owner_games, app.state.players, app.state.pool, db),
+        )
 
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         await asyncio.to_thread(migrate, settings.db_path)
-        db = Database(settings.db_path)
         http = httpx.AsyncClient(transport=hp_transport, timeout=settings.request_timeout)
         hp = HPClient(
             base_url=settings.hp_base_url,
@@ -94,17 +108,30 @@ def create_app(
         app.state.ip_day_limiter = SlidingWindowLimiter(
             settings.ip_requests_per_day, 86_400.0, clock
         )
+        app.state.owner_games = OwnerGames(
+            db=db,
+            hp=hp,
+            store=store,
+            replays=app.state.replays,
+            names=GameNames(settings.site_data_dir),
+            settings=settings,
+            clock=clock,
+        )
         log.info("server.started", db=str(settings.db_path), origins=settings.cors_origins)
-        try:
-            yield
-        finally:
-            if poller is not None:
-                poller.cancel()
-                with contextlib.suppress(asyncio.CancelledError):
-                    await poller
-            await hp.aclose()
-            await bnet_http.aclose()
-            await db.dispose()
+        async with contextlib.AsyncExitStack() as stack:
+            if mcp is not None:
+                await stack.enter_async_context(mcp.session_manager.run())
+            try:
+                yield
+            finally:
+                await app.state.owner_games.close()
+                if poller is not None:
+                    poller.cancel()
+                    with contextlib.suppress(asyncio.CancelledError):
+                        await poller
+                await hp.aclose()
+                await bnet_http.aclose()
+                await db.dispose()
 
     app = FastAPI(
         title="HPGG API", lifespan=lifespan, docs_url=None, redoc_url=None, openapi_url=None
@@ -161,4 +188,9 @@ def create_app(
     app.include_router(replays_router)
     app.include_router(comments_router)
     app.include_router(accounts_router)
+    if mcp is not None:
+        app.state.mcp_oauth = provider
+        app.include_router(mcp_consent_router)
+        # after every FastAPI route: OAuth metadata, /authorize, /token, /register, /mcp
+        app.mount("/", mcp_app(mcp, settings))
     return app

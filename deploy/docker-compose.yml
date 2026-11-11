@@ -12,10 +12,14 @@ services:
     env_file: .env # deploy/.env on the host (gitignored); keys in deploy/.env.example
     environment:
       DB_PATH: /data/hpgg.sqlite
+      SITE_DATA_DIR: /site-data
     ports:
       - "127.0.0.1:8800:8000"
     volumes:
       - hpgg-api-data:/data
+      # the repo's data/ (latest/, heroes_ko.json, maps_ko.json) for the owner's MCP baseline and
+      # names; the daily data commit updates it in place, no rebuild needed
+      - ../data:/site-data:ro
     logging:
       driver: json-file
       options:

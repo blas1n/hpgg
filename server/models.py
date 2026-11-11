@@ -3,6 +3,14 @@
 from server.accounts.models import Account, HeroPoolEntry, OAuthState, Session
 from server.comments.models import AppSecret, Comment, CommentReport
 from server.db import Base
+from server.mcp.models import (
+    McpAuthRequest,
+    McpClient,
+    McpCode,
+    McpToken,
+    OwnerMatch,
+    OwnerSync,
+)
 from server.players.models import (
     HPAwardMap,
     HPCache,
@@ -25,6 +33,12 @@ __all__ = [
     "HPPrivatePlayer",
     "HPQuota",
     "HeroPoolEntry",
+    "McpAuthRequest",
+    "McpClient",
+    "McpCode",
+    "McpToken",
     "OAuthState",
+    "OwnerMatch",
+    "OwnerSync",
     "Session",
 ]

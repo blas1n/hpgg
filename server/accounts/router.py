@@ -113,7 +113,9 @@ async def callback(
     result = await _service(request).finish(
         state=state, browser_state=browser_state, code=code, error=error_
     )
-    target = settings.site_url + result.next_path
+    # the owner MCP's consent page lives on the API, not the site (server/mcp/consent.py)
+    base = settings.api_url if result.next_path.startswith("/mcp/consent?") else settings.site_url
+    target = base + result.next_path
     if result.outcome != "ok":
         target += ("&" if "?" in result.next_path else "?") + f"login={result.outcome}"
     r = RedirectResponse(target, status_code=302, headers={"Cache-Control": "no-store"})
