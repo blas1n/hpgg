@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { readFileSync } from "node:fs";
+import { readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import { appliedParty, BUILD_FORMULA, buildBase, buildFormulaLines, buildScore, formulaDetail, formulaLine, computeTiers, scoreRow, shrinkWinRate, type Row, type Snapshot } from "../src/formula";
@@ -177,4 +177,25 @@ describe("build score (owner 2026-10-26): sorts a hero's talent builds within on
     expect(enLine).toBe("sort score = games × (WRs − (hero average − 5))");
     expect(enDetail).toContain("(games + 100)");
   });
+});
+
+// The owner MCP recomputes this table in Python (server/mcp/tiers.py). Both check the same expected ranking, written
+// from this formula: change the formula, regenerate `expected`, and the Python test tells the other copy to follow.
+describe("shared golden ranking (tests/fixtures/tier_formula_golden.json)", () => {
+  const path = fileURLToPath(new URL("../../tests/fixtures/tier_formula_golden.json", import.meta.url));
+  const golden = JSON.parse(readFileSync(path, "utf8"));
+  for (const name of Object.keys(golden.cases)) {
+    it(`ranks ${name} as recorded`, () => {
+      const r = computeTiers(golden.cases[name], golden.min_games);
+      // UPDATE_MCP_GOLDEN=1 npx vitest run tests/formula.test.ts rewrites `expected` from this formula
+      if (process.env.UPDATE_MCP_GOLDEN) {
+        golden.expected[name] = { ranked: r.ranked.map((x) => ({ hero: x.row.hero, tier: x.tier, rank: x.rank, score: x.score })), grey: r.grey.map((x) => x.hero) };
+        writeFileSync(path, JSON.stringify(golden, null, 1) + "\n");
+      }
+      const want = golden.expected[name];
+      expect(r.ranked.map((x) => [x.row.hero, x.tier, x.rank])).toEqual(want.ranked.map((x: { hero: string; tier: string; rank: number }) => [x.hero, x.tier, x.rank]));
+      r.ranked.forEach((x, i) => expect(x.score).toBeCloseTo(want.ranked[i].score, 9));
+      expect(r.grey.map((x) => x.hero).sort()).toEqual([...want.grey].sort());
+    });
+  }
 });

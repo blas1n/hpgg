@@ -96,4 +96,31 @@ class Settings(BaseSettings):
     pool_min_games: int = 5
     oauth_state_ttl_seconds: int = 600
 
+    # The owner's MCP (`server/mcp/`, docs/DESIGN-2026-11-11-owner-mcp.md): ChatGPT reads the
+    # owner's Storm League games. HP's API terms §3 allow HP data on our own API for personal use
+    # only, so tokens go to this one Battle.net account; empty = no MCP routes at all.
+    mcp_owner_battletag: str = ""
+    mcp_owner_region: str = "KR"
+    # the API's public origin: OAuth issuer, and the MCP resource is `<api_url>/mcp`
+    api_url: str = "https://api.hpgg.win"
+    mcp_allowed_hosts: list[str] = ["api.hpgg.win"]
+    # dynamic client registration accepts only these redirect URIs (exact, or prefix for "…/")
+    mcp_redirect_uris: list[str] = [
+        "https://chatgpt.com/connector_platform_oauth_redirect",
+        "https://chatgpt.com/connector/oauth/",
+    ]
+    mcp_access_ttl_seconds: int = 3600
+    mcp_refresh_ttl_seconds: int = 30 * 86_400
+    mcp_code_ttl_seconds: int = 300
+    # a tool call refreshes the owner's games when the last refresh is older than this; it waits
+    # up to mcp_sync_wait_seconds for it, then answers with what is stored
+    mcp_sync_interval_seconds: int = 1800
+    mcp_sync_wait_seconds: float = 10.0
+    mcp_list_pages_max: int = 10
+    # HP allows 60 calls a minute: replay details are fetched one at a time this far apart
+    mcp_replay_interval_seconds: float = 1.1
+    mcp_replays_per_sync: int = 400
+    # the repo's data/ (latest/, heroes_ko.json, maps_ko.json); mounted read-only in the container
+    site_data_dir: Path = Path("data")
+
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
