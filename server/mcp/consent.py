@@ -76,7 +76,7 @@ async def consent_page(
             "Cache-Control": "no-store",
             "Content-Security-Policy": csp,
             "X-Frame-Options": "DENY",
-            "Referrer-Policy": "no-referrer",
+            "Referrer-Policy": "same-origin",
         },
     )
 
