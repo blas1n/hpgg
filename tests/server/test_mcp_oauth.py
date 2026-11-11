@@ -143,6 +143,9 @@ def test_consent_page_names_the_client_and_where_the_code_goes(mcp_client: TestC
     assert OWNER in page.text
     assert page.headers["cache-control"] == "no-store"
     assert "frame-ancestors 'none'" in page.headers["content-security-policy"]
+    # "no-referrer" makes browsers send `Origin: null` on the page's own allow POST, which the
+    # Origin check then refuses (2026-11-11, the owner's first connect: forbidden_origin)
+    assert page.headers["referrer-policy"] == "same-origin"
 
 
 def test_someone_else_is_refused(mcp_client: TestClient, bnet: object) -> None:
