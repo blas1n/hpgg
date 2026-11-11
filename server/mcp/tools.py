@@ -26,6 +26,7 @@ from server.accounts.pool import PoolService
 from server.config import Settings
 from server.db import Database
 from server.mcp.games import LIMITS, Game, OwnerGames
+from server.mcp.hero import hero_page
 from server.mcp.names import GameNames
 from server.mcp.oauth import SCOPE, OwnerOAuthProvider
 from server.mcp.tiers import FORMULA, compute_tiers, load_view, snapshot_key
@@ -240,6 +241,32 @@ def build_mcp(settings: Settings, provider: OwnerOAuthProvider, services: Servic
         Same formula, files and reference patch as the site."""
         games, _, _, _ = services()
         return _tier_list(settings.site_data_dir, games.names, mode, bracket, region, map, role)
+
+    @mcp.tool(annotations=READ_ONLY)
+    async def get_hero(
+        hero: Annotated[str, Field(description="English or Korean hero name")],
+        mode: Literal["sl", "qm"] = "sl",
+        bracket: Annotated[
+            Literal["all", "low", "high"],
+            Field(description="Storm League only: low = bronze–platinum, high = diamond+"),
+        ] = "all",
+        region: Literal["all", "kr", "na", "eu"] = "all",
+        map: Annotated[str | None, Field(description="English or Korean map name")] = None,
+    ) -> dict[str, Any]:
+        """Everything hpgg.win's hero page shows for one hero: tier, rank (and change since the
+        previous patch), win/pick/ban rate in the view; win rate per map; every region × bracket;
+        win rate per league and per game length; counters and synergies; top talent builds;
+        recent patch notes and hotfixes. `rules` says the thresholds each section uses."""
+        games, _, _, _ = services()
+        n = games.names
+        h = n.hero(hero)
+        if h is None:
+            return {"error": "unknown_hero", "hero": hero}
+        m = n.map(map) if map else "all"
+        if m is None:
+            return {"error": "unknown_map", "map": map}
+        b = bracket if mode == "sl" else "all"
+        return hero_page(settings.site_data_dir, n, h, mode, b, region, m)
 
     return mcp
 

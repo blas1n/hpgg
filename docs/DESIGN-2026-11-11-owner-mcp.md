@@ -65,7 +65,9 @@ ChatGPT ─/register─▶ hpgg (DCR, 리다이렉트 URI는 chatgpt.com 두 형
 | `get_baseline` | 고티어 영웅 승률(전체, 맵별; 기본 전 지역, KR은 표본이 작음)과 영웅별 평균 통계 |
 | `get_tier_list` | 사이트 티어표와 같은 S~F 등급: 모드·구간·지역·맵·역할, 참조 패치, 표본 미달 영웅 따로 (오너 11-11 추가) |
 
-**티어 공식 두 벌.** 사이트는 `web/src/formula.ts`(TypeScript)로, MCP는 `server/mcp/tiers.py`로 계산한다. 둘 다 `tests/fixtures/tier_formula_golden.json`(TypeScript 공식이 쓴 기대 순위)과 비교하는 테스트가 있어서, 한쪽만 바꾸면 테스트가 실패한다. 공식을 바꿀 땐 `expected`를 다시 쓰고 Python도 맞춘다.
+| `get_hero` | 영웅 상세 전체: 등급·순위(이전 패치 대비)·승률·픽·밴, 맵별 승률, 지역×구간 표, 리그별·게임 시간별 승률, 상성·궁합, 특성 빌드, 최근 패치·핫픽스 (오너 11-11 추가) |
+
+**계산식 두 벌.** 티어 공식(`web/src/formula.ts`)과 영웅 상세의 상성·빌드·리그별·시간별 계산(`web/src/lib`)을 MCP는 Python(`server/mcp/tiers.py`, `hero.py`)으로 다시 계산한다. `tests/fixtures/tier_formula_golden.json`, `hero_views_golden.json`의 기대값을 TypeScript가 쓰고, 웹 vitest와 서버 pytest가 둘 다 그 값과 비교한다. 사이트 규칙을 바꾸면 `cd web && UPDATE_MCP_GOLDEN=1 npx vitest run tests/formula.test.ts tests/heroGolden.test.ts`로 기대값을 다시 쓰고, 실패하는 pytest에 맞춰 Python을 고친다. 패치 변경 내역은 파일 그대로 준다(사이트의 핫픽스 합치기는 옮기지 않음).
 
 원칙은 11-06 추출과 같다. 관측값과 파생값을 나누고(`_derived` 접미사), 없는 값은 null, 캐리력·플레이 스타일 같은 평가 값은 만들지 않는다. 영웅·맵 이름은 영어와 한국어 둘 다 받고, 응답에 둘 다 준다.
 

@@ -1,5 +1,5 @@
 {
- "_about": "Shared tier-formula fixture: input rows (sl_kr.json 2026-11-10, map all and Dragon Shire), minGames 50. `expected` is written by web/src/formula.ts computeTiers; web/tests/formula.test.ts and tests/server/test_mcp_tiers.py both check against it, so the two implementations cannot drift apart.",
+ "_about": "Shared tier-formula fixture: input rows (sl_kr.json 2026-11-10, map all and Dragon Shire), minGames 50. `expected` is written by the site's TypeScript: `cd web && UPDATE_MCP_GOLDEN=1 npx vitest run tests/formula.test.ts`. web/tests/formula.test.ts and the server's pytest both check it, so the site and the owner MCP (server/mcp/) cannot drift apart.",
  "min_games": 50,
  "cases": {
   "all": [

@@ -18,6 +18,7 @@ class GameNames:
         maps = _load(data_dir / "maps_ko.json")
         self._hero_ko = {h["name"]: h["ko"] for h in heroes.get("heroes", [])}
         self._hero_role = {h["name"]: h.get("role") for h in heroes.get("heroes", [])}
+        self._hero_slug = {h["name"]: h.get("slug") for h in heroes.get("heroes", [])}
         self._map_ko = {m["name"]: m["ko"] for m in maps.get("maps", [])}
         roles = heroes.get("roles", [])
         self._heroes = _index(self._hero_ko)
@@ -29,6 +30,9 @@ class GameNames:
 
     def hero_role(self, name: str | None) -> str | None:
         return self._hero_role.get(name) if name else None
+
+    def hero_slug(self, name: str | None) -> str | None:
+        return self._hero_slug.get(name) if name else None
 
     def map_ko(self, name: str | None) -> str | None:
         return self._map_ko.get(name) if name else None
