@@ -103,6 +103,7 @@ def test_owner_connects_and_lists_tools(mcp_client: TestClient) -> None:
         "summarize",
         "get_hero_pool",
         "get_baseline",
+        "get_tier_list",
     }
     for t in r.json()["result"]["tools"]:
         assert t["annotations"]["readOnlyHint"] is True

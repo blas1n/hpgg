@@ -178,3 +178,18 @@ describe("build score (owner 2026-10-26): sorts a hero's talent builds within on
     expect(enDetail).toContain("(games + 100)");
   });
 });
+
+// The owner MCP recomputes this table in Python (server/mcp/tiers.py). Both check the same expected ranking, written
+// from this formula: change the formula, regenerate `expected`, and the Python test tells the other copy to follow.
+describe("shared golden ranking (tests/fixtures/tier_formula_golden.json)", () => {
+  const golden = JSON.parse(readFileSync(fileURLToPath(new URL("../../tests/fixtures/tier_formula_golden.json", import.meta.url)), "utf8"));
+  for (const name of Object.keys(golden.cases)) {
+    it(`ranks ${name} as recorded`, () => {
+      const r = computeTiers(golden.cases[name], golden.min_games);
+      const want = golden.expected[name];
+      expect(r.ranked.map((x) => [x.row.hero, x.tier, x.rank])).toEqual(want.ranked.map((x: { hero: string; tier: string; rank: number }) => [x.hero, x.tier, x.rank]));
+      r.ranked.forEach((x, i) => expect(x.score).toBeCloseTo(want.ranked[i].score, 9));
+      expect(r.grey.map((x) => x.hero).sort()).toEqual([...want.grey].sort());
+    });
+  }
+});

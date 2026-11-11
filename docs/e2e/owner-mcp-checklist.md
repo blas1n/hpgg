@@ -34,6 +34,7 @@ Server on 127.0.0.1 with the real HP key, `MCP_OWNER_BATTLETAG=blAs1N#3479`,
 - [ ] The connect button opens the HP-GG consent page (Battle.net sign-in first if signed out);
       it names ChatGPT and a chatgpt.com address; 허용 → back in ChatGPT, connected
 - [ ] In a chat with the connector on: "내 상태 보여줘" → `get_status` runs and answers
+- [ ] "폭풍리그 티어표 보여줘" → `get_tier_list`; top heroes and tiers match hpgg.win's 티어표 (same view)
 - [ ] `docker logs hpgg-api`: `mcp.client_registered`, `mcp.consent_given`, `mcp.sync result=ok`;
       no token, code or BattleTag of another player
 - [ ] A day later: ChatGPT still connected (refresh token works without signing in again)

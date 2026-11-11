@@ -28,6 +28,7 @@ from server.db import Database
 from server.mcp.games import LIMITS, Game, OwnerGames
 from server.mcp.names import GameNames
 from server.mcp.oauth import SCOPE, OwnerOAuthProvider
+from server.mcp.tiers import FORMULA, compute_tiers, load_view, snapshot_key
 from server.players.service import PlayerService
 
 READ_ONLY = ToolAnnotations(read_only_hint=True, destructive_hint=False, open_world_hint=False)
@@ -223,7 +224,93 @@ def build_mcp(settings: Settings, provider: OwnerOAuthProvider, services: Servic
         games, _, _, _ = services()
         return _baseline(settings.site_data_dir, games.names, hero, region)
 
+    @mcp.tool(annotations=READ_ONLY)
+    async def get_tier_list(
+        mode: Literal["sl", "qm", "ar"] = "sl",
+        bracket: Annotated[
+            Literal["all", "low", "high"],
+            Field(description="Storm League only: low = bronze–platinum, high = diamond+"),
+        ] = "all",
+        region: Literal["all", "kr", "na", "eu"] = "all",
+        map: Annotated[str | None, Field(description="English or Korean map name")] = None,
+        role: Annotated[str | None, Field(description="filter shown heroes; ranks stay")] = None,
+    ) -> dict[str, Any]:
+        """HP-GG's tier table (hpgg.win) for one view: each hero's tier S–F, rank, score, win
+        rate, pick and ban rate, games; heroes under the sample floor are listed as unranked.
+        Same formula, files and reference patch as the site."""
+        games, _, _, _ = services()
+        return _tier_list(settings.site_data_dir, games.names, mode, bracket, region, map, role)
+
     return mcp
+
+
+def _tier_list(
+    data_dir: Path,
+    names: GameNames,
+    mode: str,
+    bracket: str,
+    region: str,
+    map_name: str | None,
+    role_name: str | None,
+) -> dict[str, Any]:
+    if mode != "sl":
+        bracket = "all"
+    if mode == "ar":
+        region, map_name = "all", None
+    m = names.map(map_name) if map_name else "all"
+    if m is None:
+        return {"error": "unknown_map", "map": map_name}
+    r = names.role(role_name) if role_name else None
+    if role_name and r is None:
+        return {"error": "unknown_role", "role": role_name}
+    meta, snap = load_view(data_dir, snapshot_key(mode, bracket, region))
+    want_region = None if region == "all" else region.upper()
+    if not snap or (snap.get("region") or None) != want_region:
+        return {"error": "view_unavailable"}
+    min_games = int(meta.get("min_games_for_tier") or 50)
+    rows = [
+        x
+        for x in snap.get("rows", [])
+        if isinstance(x, dict) and x.get("map") == m and names.hero_ko(x.get("hero"))
+    ]
+    result = compute_tiers(rows, min_games)
+
+    def shown(hero: str) -> bool:
+        return r is None or names.hero_role(hero) == r
+
+    return {
+        "view": {"mode": mode, "bracket": bracket, "region": region, "map": m},
+        "patch": snap.get("patch"),
+        "collected_at": snap.get("collected_at"),
+        "league_tier": snap.get("league_tier"),
+        "matches": snap.get("matches")
+        if m == "all"
+        else round(sum(int(x["games"]) for x in rows) / 10),
+        "min_games": min_games,
+        "party_corrected": bool(snap.get("party")) and any("tier_win_rate" in x for x in rows),
+        "formula": FORMULA,
+        "heroes": [
+            {
+                "hero": x.hero,
+                "hero_ko": names.hero_ko(x.hero),
+                "role": names.hero_role(x.hero),
+                "tier": x.tier,
+                "rank": x.rank,
+                "score": round(x.score, 2),
+                "win_rate": x.row.get("win_rate"),
+                "pick": x.row.get("pick"),
+                "ban_rate": x.row.get("ban_rate"),
+                "games": x.row.get("games"),
+            }
+            for x in result.ranked
+            if shown(x.hero)
+        ],
+        "unranked": [
+            {"hero": x["hero"], "hero_ko": names.hero_ko(x["hero"]), "games": x["games"]}
+            for x in rows
+            if x["games"] < min_games and shown(x["hero"])
+        ],
+    }
 
 
 def mcp_app(mcp: MCPServer, settings: Settings) -> Starlette:

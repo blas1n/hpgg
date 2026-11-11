@@ -47,7 +47,7 @@ ChatGPT ─/register─▶ hpgg (DCR, 리다이렉트 URI는 chatgpt.com 두 형
 | 한 경기의 10명 전체 통계 | `ReplayService` (기존, 24시간 캐시, 비공개 전환자 제외) | 저장 안 함. 응답에서 배틀태그를 `player_1…`로 바꿈 |
 | 현재 MMR·티어 | `PlayerService` (기존) | 기존 캐시 |
 | 영웅풀 | `PoolService` (기존) | 기존 |
-| 고티어 기준선 | `data/latest/sl_high_kr.json`, `sl_averages.json` | 컨테이너에 `data/`를 읽기 전용으로 붙임 |
+| 고티어 기준선, 티어표 | `data/latest/*.json`(+ `previous/`), `sl_averages.json`, `meta.json` | 컨테이너에 `data/`를 읽기 전용으로 붙임 |
 
 - **동기화는 쓸 때만 한다.** 도구를 부를 때 마지막 동기화가 30분보다 오래됐으면 백그라운드로 시작한다. 목록은 첫 페이지부터 받다가 이미 있는 경기가 나오면 멈춘다. 처음엔 3페이지(226경기), 이후엔 보통 1회.
 - 목록 버킷은 사이트와 같은 `player_match_history`(주 500)를 쓰고 기존 가드(`match_quota_floor`, `match_daily_budget`)를 지킨다. 리플레이는 `replay_data` 가드를 지키고, HP 분당 60회 한도에 맞춰 1.1초 간격으로 받는다.
@@ -62,7 +62,10 @@ ChatGPT ─/register─▶ hpgg (DCR, 리다이렉트 URI는 chatgpt.com 두 형
 | `get_match` | 한 경기 상세: 10명 통계·특성(익명), 밴·드래프트, 분당 팀 경험치 |
 | `summarize` | `hero`/`map`/`role`/`map_hero`/`first_pick`/`pick_order`/`party_size`/`first_to_ten`별 경기 수·승패·승률·합계·총 게임 시간 |
 | `get_hero_pool` | 사이트에 저장한 영웅풀 |
-| `get_baseline` | 고티어(KR) 영웅 승률(전체, 맵별)과 영웅별 평균 통계 |
+| `get_baseline` | 고티어 영웅 승률(전체, 맵별; 기본 전 지역, KR은 표본이 작음)과 영웅별 평균 통계 |
+| `get_tier_list` | 사이트 티어표와 같은 S~F 등급: 모드·구간·지역·맵·역할, 참조 패치, 표본 미달 영웅 따로 (오너 11-11 추가) |
+
+**티어 공식 두 벌.** 사이트는 `web/src/formula.ts`(TypeScript)로, MCP는 `server/mcp/tiers.py`로 계산한다. 둘 다 `tests/fixtures/tier_formula_golden.json`(TypeScript 공식이 쓴 기대 순위)과 비교하는 테스트가 있어서, 한쪽만 바꾸면 테스트가 실패한다. 공식을 바꿀 땐 `expected`를 다시 쓰고 Python도 맞춘다.
 
 원칙은 11-06 추출과 같다. 관측값과 파생값을 나누고(`_derived` 접미사), 없는 값은 null, 캐리력·플레이 스타일 같은 평가 값은 만들지 않는다. 영웅·맵 이름은 영어와 한국어 둘 다 받고, 응답에 둘 다 준다.
 
