@@ -111,8 +111,8 @@ describe("weeklyModel", () => {
     expect(m.older).toBe("2026-w40");
   });
 
-  it("reads the real first issue (2.57.0's first week) without surprises", () => {
-    const real = JSON.parse(readFileSync(join(here, "..", "..", "data", "weekly", "2026-w40.json"), "utf-8")) as WeeklyIssue;
+  it("reads the first issue (2.57.0's first week, synthetic numbers) without surprises", () => {
+    const real = JSON.parse(readFileSync(join(here, "e2e-data", "weekly", "2026-w40.json"), "utf-8")) as WeeklyIssue;
     const r = weeklyModel(real, heroes, 50, ["2026-w40"]);
     expect(r.kind).toBe("patch_start");
     expect(r.modes.qm!.fresh.map((x) => x.hero.name)).toContain("Xal'atath");
@@ -123,12 +123,12 @@ describe("weeklyModel", () => {
 describe("centreCard (the evidence behind the prose)", () => {
   it("reads the evidence: the centre's use, its ranks and its matchups with findings marked", async () => {
     const { centreCard } = await import("../src/lib/weekly");
-    const ev = JSON.parse(readFileSync(join(here, "..", "..", "data", "weekly", "2026-w40.evidence.json"), "utf-8"));
+    const ev = JSON.parse(readFileSync(join(here, "e2e-data", "weekly", "2026-w40.evidence.json"), "utf-8"));
     const c = centreCard(ev, heroes)!;
     expect(c.hero.name).toBe("Xal'atath");
-    expect(c.banRate).toBeCloseTo(81.6, 1);
-    expect(c.stats.find((s) => s.key === "hero_damage")).toMatchObject({ rankAll: 1, ofAll: 91 });
-    expect(c.life).toMatchObject({ value: 1330, rankRole: 26, ofRole: 31 });
+    expect(c.banRate).toBeCloseTo(36.5, 1);
+    expect(c.stats.find((s) => s.key === "hero_damage")).toMatchObject({ rankAll: 1, ofAll: 40 }); // synthetic counts
+    expect(c.life).toMatchObject({ value: 4368, rankRole: 48, ofRole: 81 });
     const tyrael = c.heldBy.find((x) => x.hero.name === "Tyrael")!;
     expect(tyrael.significant).toBe(true);
     expect(c.heldBy.find((x) => x.hero.name === "Illidan")!.significant).toBe(false);
@@ -137,7 +137,7 @@ describe("centreCard (the evidence behind the prose)", () => {
 
   it("is nothing when the centre is not in the hero table (a page without it, not a crash)", async () => {
     const { centreCard } = await import("../src/lib/weekly");
-    const ev = JSON.parse(readFileSync(join(here, "..", "..", "data", "weekly", "2026-w40.evidence.json"), "utf-8"));
+    const ev = JSON.parse(readFileSync(join(here, "e2e-data", "weekly", "2026-w40.evidence.json"), "utf-8"));
     const without = { ...heroes, heroes: heroes.heroes.filter((h) => h.name !== "Xal'atath") };
     expect(centreCard(ev, without)).toBeNull();
   });

@@ -3100,8 +3100,8 @@
     {
      "games": 4881,
      "wins": 2677,
-     "win_rate": 54.845,
-     "tier_win_rate": 54.8453
+     "tier_win_rate": 54.8453,
+     "win_rate": 54.845
     },
     {
      "games": 1387,
@@ -3194,8 +3194,8 @@
     {
      "games": 115,
      "wins": 58,
-     "win_rate": 50.4348,
-     "tier_win_rate": 50.435
+     "tier_win_rate": 50.435,
+     "win_rate": 50.4348
     }
    ],
    "Ana": [
@@ -3492,8 +3492,8 @@
     {
      "games": 6489,
      "wins": 2935,
-     "win_rate": 45.23,
-     "tier_win_rate": 45.2304
+     "tier_win_rate": 45.2304,
+     "win_rate": 45.23
     },
     {
      "games": 741,
@@ -3574,8 +3574,8 @@
     {
      "games": 259,
      "wins": 138,
-     "win_rate": 53.2819,
-     "tier_win_rate": 53.282
+     "tier_win_rate": 53.282,
+     "win_rate": 53.2819
     }
    ],
    "Chen": [
@@ -3606,8 +3606,8 @@
     {
      "games": 6930,
      "wins": 4146,
-     "win_rate": 59.8268,
-     "tier_win_rate": 59.827
+     "tier_win_rate": 59.827,
+     "win_rate": 59.8268
     },
     {
      "games": 8834,
@@ -4220,8 +4220,8 @@
     {
      "games": 396,
      "wins": 181,
-     "win_rate": 45.707,
-     "tier_win_rate": 45.7071
+     "tier_win_rate": 45.7071,
+     "win_rate": 45.707
     }
    ],
    "Hanzo": [
@@ -4290,14 +4290,14 @@
     {
      "games": 5401,
      "wins": 2194,
-     "win_rate": 40.622,
-     "tier_win_rate": 40.6221
+     "tier_win_rate": 40.6221,
+     "win_rate": 40.622
     },
     {
      "games": 7564,
      "wins": 3854,
-     "win_rate": 50.9519,
-     "tier_win_rate": 50.952
+     "tier_win_rate": 50.952,
+     "win_rate": 50.9519
     }
    ],
    "Illidan": [
@@ -4600,8 +4600,8 @@
     {
      "games": 397,
      "wins": 237,
-     "win_rate": 59.6977,
-     "tier_win_rate": 59.698
+     "tier_win_rate": 59.698,
+     "win_rate": 59.6977
     }
    ],
    "Kharazim": [
@@ -4740,8 +4740,8 @@
     {
      "games": 7650,
      "wins": 3814,
-     "win_rate": 49.856,
-     "tier_win_rate": 49.8562
+     "tier_win_rate": 49.8562,
+     "win_rate": 49.856
     },
     {
      "games": 6527,
@@ -4810,8 +4810,8 @@
     {
      "games": 2103,
      "wins": 1254,
-     "win_rate": 59.629,
-     "tier_win_rate": 59.6291
+     "tier_win_rate": 59.6291,
+     "win_rate": 59.629
     },
     {
      "games": 8134,
@@ -4848,8 +4848,8 @@
     {
      "games": 7203,
      "wins": 3703,
-     "win_rate": 51.409,
-     "tier_win_rate": 51.4091
+     "tier_win_rate": 51.4091,
+     "win_rate": 51.409
     },
     {
      "games": 5318,
@@ -4892,8 +4892,8 @@
     {
      "games": 399,
      "wins": 227,
-     "win_rate": 56.892,
-     "tier_win_rate": 56.8922
+     "tier_win_rate": 56.8922,
+     "win_rate": 56.892
     },
     {
      "games": 955,
@@ -5000,8 +5000,8 @@
     {
      "games": 1964,
      "wins": 1073,
-     "win_rate": 54.633,
-     "tier_win_rate": 54.6334
+     "tier_win_rate": 54.6334,
+     "win_rate": 54.633
     },
     {
      "games": 3170,
@@ -5184,8 +5184,8 @@
     {
      "games": 293,
      "wins": 166,
-     "win_rate": 56.655,
-     "tier_win_rate": 56.6553
+     "tier_win_rate": 56.6553,
+     "win_rate": 56.655
     },
     {
      "games": 198,
@@ -5278,8 +5278,8 @@
     {
      "games": 245,
      "wins": 109,
-     "win_rate": 44.4898,
-     "tier_win_rate": 44.49
+     "tier_win_rate": 44.49,
+     "win_rate": 44.4898
     },
     {
      "games": 29,
@@ -5722,8 +5722,8 @@
     {
      "games": 2209,
      "wins": 988,
-     "win_rate": 44.726,
-     "tier_win_rate": 44.7261
+     "tier_win_rate": 44.7261,
+     "win_rate": 44.726
     },
     {
      "games": 1687,
@@ -5766,8 +5766,8 @@
     {
      "games": 9940,
      "wins": 4339,
-     "win_rate": 43.6519,
-     "tier_win_rate": 43.652
+     "tier_win_rate": 43.652,
+     "win_rate": 43.6519
     },
     {
      "games": 5400,
@@ -6108,14 +6108,14 @@
     {
      "games": 9155,
      "wins": 3879,
-     "win_rate": 42.37,
-     "tier_win_rate": 42.3703
+     "tier_win_rate": 42.3703,
+     "win_rate": 42.37
     },
     {
      "games": 565,
      "wins": 308,
-     "win_rate": 54.513,
-     "tier_win_rate": 54.5133
+     "tier_win_rate": 54.5133,
+     "win_rate": 54.513
     },
     {
      "games": 524,
@@ -6190,8 +6190,8 @@
     {
      "games": 7396,
      "wins": 4344,
-     "win_rate": 58.734,
-     "tier_win_rate": 58.7345
+     "tier_win_rate": 58.7345,
+     "win_rate": 58.734
     },
     {
      "games": 5653,
@@ -6260,8 +6260,8 @@
     {
      "games": 4992,
      "wins": 2448,
-     "win_rate": 49.038,
-     "tier_win_rate": 49.0385
+     "tier_win_rate": 49.0385,
+     "win_rate": 49.038
     },
     {
      "games": 8133,
@@ -6348,8 +6348,8 @@
     {
      "games": 908,
      "wins": 369,
-     "win_rate": 40.6388,
-     "tier_win_rate": 40.639
+     "tier_win_rate": 40.639,
+     "win_rate": 40.6388
     }
    ],
    "Yrel": [

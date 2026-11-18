@@ -294,3 +294,10 @@ def test_quick_match_na_is_a_thin_region() -> None:
     for r in out:
         assert r["wins"] + r["losses"] == r["games"]
         assert r["win_rate"] == round(r["wins"] / r["games"] * 100, 1)
+
+
+def test_a_ranking_kept_as_dict_order_is_reordered_by_the_new_values() -> None:
+    src = {"hero_damage": {"A": 71782.49, "B": 70630.48, "C": 68779.28, "D": 61136.73}}
+    out = synth(src, seed="r")["hero_damage"]
+    values = list(out.values())
+    assert values == sorted(values, reverse=True)

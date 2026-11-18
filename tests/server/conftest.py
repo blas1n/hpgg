@@ -78,6 +78,8 @@ def settings(tmp_path: Path) -> Settings:
         ip_requests_per_day=12,
         daily_live_budget=100,
         quota_floor=10,
+        # the site's data as the tests see it: synthetic (the repository keeps no HP data)
+        site_data_dir=Path(__file__).parents[2] / "web" / "tests" / "e2e-data",
         _env_file=None,  # type: ignore[call-arg]
     )
 

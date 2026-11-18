@@ -209,7 +209,7 @@ def synth(obj: Any, seed: str, ids: Identities | None = None) -> Any:
             _repair(out, o, rng)
             if "per_page" in o:  # a page of a list: where it is, not a measurement
                 out.update({k: o[k] for k in _PAGING if k in o})
-            return out
+            return _keep_dict_order(o, out)
         if isinstance(o, list):
             return _keep_order(o, [walk(v, key) for v in o])
         if isinstance(o, str):
@@ -244,6 +244,19 @@ def _keep_order(src: list[Any], out: list[Any]) -> list[Any]:
         if len(set(vals)) > 1 and vals == sorted(vals, reverse=True):
             return sorted(out, key=lambda r: r[k], reverse=True)
     return out
+
+
+def _keep_dict_order(src: dict[str, Any], out: dict[str, Any]) -> dict[str, Any]:
+    """A ranking sent as a dict ordered by value (hero → damage) is reordered by the new values:
+    the old order would still tell the real ranking."""
+    vals = list(src.values())
+    if len(vals) < 3 or not all(
+        isinstance(v, (int, float)) and not isinstance(v, bool) for v in vals
+    ):
+        return out
+    if vals != sorted(vals, reverse=True) or len(set(vals)) == 1:
+        return out
+    return dict(sorted(out.items(), key=lambda kv: kv[1], reverse=True))
 
 
 def _spread(total: int, weights: list[float], cap: list[int] | None = None) -> list[int]:

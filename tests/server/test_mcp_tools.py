@@ -234,7 +234,7 @@ def test_baseline_for_a_hero(owner: tuple[TestClient, str]) -> None:
     assert b["bracket"]["league_tier"]
     overall = b["win_rate"]["all"]
     assert set(overall) >= {"games", "wins", "losses", "win_rate"}
-    assert "Dragon Shire" in b["win_rate"]["by_map"]
+    assert b["win_rate"]["by_map"]  # per map, from the replay sample
     assert "hero_damage" in b["average_stats"]
     assert b["patch"]
 
