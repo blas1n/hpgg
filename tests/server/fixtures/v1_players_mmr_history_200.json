@@ -1,0 +1,206 @@
+{
+ "status": 200,
+ "headers": {
+  "content-type": "application/json",
+  "x-ratelimit-limit": "60",
+  "x-ratelimit-remaining": "58",
+  "x-hp-quota-limit": "10000",
+  "x-hp-quota-remaining": "9998",
+  "x-hp-quota-reset": "604000"
+ },
+ "body": {
+  "history": [
+   {
+    "replayID": 78191829,
+    "game_date": "2026-09-30 15:06:00",
+    "game_map": 7,
+    "mmr_ran": 1,
+    "winner": "True",
+    "hero": {
+     "id": 2,
+     "name": "Alarak",
+     "short_name": "alarak",
+     "alt_name": null,
+     "role": "Assassin",
+     "new_role": "Melee Assassin",
+     "type": "Melee",
+     "release_date": "2016-09-13 00:00:00",
+     "rework_date": null,
+     "last_change_patch_version": "2.55.4.91769",
+     "attribute_id": "Alar",
+     "build_copy_name": "Alarak",
+     "last_updated": "2024-02-06 18:32:51"
+    },
+    "player_conservative_rating": 71.6564,
+    "player_change": 87.5786,
+    "hero_conservative_rating": 2.8251,
+    "hero_change": 84.7325,
+    "role_conservative_rating": 2.1109,
+    "role_change": 295.3712,
+    "mmr_date_parsed": "2026-09-30 15:12:55",
+    "hero_id": 2,
+    "mmr": 8194,
+    "mmr_change": 65.67,
+    "x_label": "2026-09-30 15:06:00"
+   },
+   {
+    "replayID": 38000431,
+    "game_date": "2026-09-30 14:41:18",
+    "game_map": 9,
+    "mmr_ran": 1,
+    "winner": "True",
+    "hero": {
+     "id": 30,
+     "name": "Leoric",
+     "short_name": "leoric",
+     "alt_name": null,
+     "role": "Warrior",
+     "new_role": "Bruiser",
+     "type": "Melee",
+     "release_date": "2015-07-21 00:00:00",
+     "rework_date": null,
+     "last_change_patch_version": "2.55.4.91769",
+     "attribute_id": "Leor",
+     "build_copy_name": "Leoric",
+     "last_updated": "2024-02-06 18:32:51"
+    },
+    "player_conservative_rating": 89.7222,
+    "player_change": 41.8359,
+    "hero_conservative_rating": 2.9802,
+    "hero_change": 283.9685,
+    "role_conservative_rating": 8.025,
+    "role_change": 71.6266,
+    "mmr_date_parsed": "2026-09-30 15:12:51",
+    "hero_id": 30,
+    "mmr": 7246,
+    "mmr_change": 91.86,
+    "x_label": "2026-09-30 14:41:18"
+   },
+   {
+    "replayID": 26160606,
+    "game_date": "2026-09-29 23:52:51",
+    "game_map": 5,
+    "mmr_ran": 1,
+    "winner": "True",
+    "hero": {
+     "id": 10,
+     "name": "Chen",
+     "short_name": "chen",
+     "alt_name": null,
+     "role": "Warrior",
+     "new_role": "Bruiser",
+     "type": "Melee",
+     "release_date": "2014-09-10 00:00:00",
+     "rework_date": null,
+     "last_change_patch_version": "2.55.4.91769",
+     "attribute_id": "Chen",
+     "build_copy_name": "Chen",
+     "last_updated": "2024-02-06 18:32:51"
+    },
+    "player_conservative_rating": 28.4294,
+    "player_change": 41.4165,
+    "hero_conservative_rating": 2.0195,
+    "hero_change": 183.7094,
+    "role_conservative_rating": 6.834,
+    "role_change": 558.4496,
+    "mmr_date_parsed": "2026-09-30 15:12:36",
+    "hero_id": 10,
+    "mmr": 7892,
+    "mmr_change": 31.22,
+    "x_label": "2026-09-29 23:52:51"
+   }
+  ],
+  "league_tiers": [
+   {
+    "league_breakdowns_id": 276119,
+    "type_role_hero": 10000,
+    "game_type": 1,
+    "league_tier": 1,
+    "min_mmr": 470,
+    "max_mmr": 3225.7,
+    "tier": "Bronze 5",
+    "tierFound": false
+   },
+   {
+    "league_breakdowns_id": 276119,
+    "type_role_hero": 10000,
+    "game_type": 1,
+    "league_tier": 1,
+    "min_mmr": 4999.8,
+    "max_mmr": 6004.4,
+    "tier": "Bronze 4",
+    "tierFound": false
+   },
+   {
+    "league_breakdowns_id": 276119,
+    "type_role_hero": 10000,
+    "game_type": 1,
+    "league_tier": 1,
+    "min_mmr": 9838.2,
+    "max_mmr": 3150.9722,
+    "tier": "Bronze 3",
+    "tierFound": false
+   },
+   {
+    "league_breakdowns_id": 276119,
+    "type_role_hero": 10000,
+    "game_type": 1,
+    "league_tier": 1,
+    "min_mmr": 4106.6909,
+    "max_mmr": 8095.7,
+    "tier": "Bronze 2",
+    "tierFound": false
+   },
+   {
+    "league_breakdowns_id": 276119,
+    "type_role_hero": 10000,
+    "game_type": 1,
+    "league_tier": 1,
+    "min_mmr": 9972.0,
+    "max_mmr": 6099,
+    "tier": "Bronze 1",
+    "tierFound": true
+   },
+   {
+    "league_breakdowns_id": 2576,
+    "type_role_hero": 10000,
+    "game_type": 1,
+    "league_tier": 2,
+    "min_mmr": 5453,
+    "max_mmr": 4822
+   },
+   {
+    "league_breakdowns_id": 2577,
+    "type_role_hero": 10000,
+    "game_type": 1,
+    "league_tier": 3,
+    "min_mmr": 3768,
+    "max_mmr": 5756
+   },
+   {
+    "league_breakdowns_id": 2578,
+    "type_role_hero": 10000,
+    "game_type": 1,
+    "league_tier": 4,
+    "min_mmr": 5662,
+    "max_mmr": 3252
+   },
+   {
+    "league_breakdowns_id": 2579,
+    "type_role_hero": 10000,
+    "game_type": 1,
+    "league_tier": 5,
+    "min_mmr": 2763,
+    "max_mmr": 2765
+   },
+   {
+    "league_breakdowns_id": 2580,
+    "type_role_hero": 10000,
+    "game_type": 1,
+    "league_tier": 6,
+    "min_mmr": 2000
+   }
+  ]
+ },
+ "_recorded": "2026-10-01 GET /players/mmr/history?battletag=Player11%231011&region=KR&game_type=qm; history trimmed to the newest 3 of 39"
+}

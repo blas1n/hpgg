@@ -93,7 +93,7 @@ async def test_an_opened_game_teaches_the_match_list_its_award(
 
     before = await ms.lookup("Player11#1011", "KR")
     assert before.matches[0]["award"] is None
-    game = (await rs.lookup(65597227)).replay
+    game = (await rs.lookup(78191829)).replay
     assert game is not None
     mine = next(p for t in game["teams"] for p in t["players"] if p["battletag"] == "Player11#1011")
     assert mine["award"] == "MostStuns"

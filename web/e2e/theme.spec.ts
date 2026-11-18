@@ -5,7 +5,7 @@ import { lowContrast } from "./contrast";
 /** Pages of switched-off sections (src/features.ts) are not in the export. */
 const live = (path: string): boolean => sectionEnabled(path.split("/")[1]?.split("?")[0] ?? "");
 
-const playerFixture = fileURLToPath(new URL("../tests/fixtures/api_player_zemill.json", import.meta.url));
+const playerFixture = fileURLToPath(new URL("../tests/fixtures/api_player_sample.json", import.meta.url));
 
 test.beforeEach(async ({ page }) => {
   await page.route("**/gc.zgo.at/**", (r) => r.abort());

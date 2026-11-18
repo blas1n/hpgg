@@ -115,28 +115,28 @@ async def test_the_current_seasons_storm_league_heroes(svc: SeasonService, fake_
     # the job is followed, not the query asked again
     (job,) = calls(fake_hp, "/jobs/")
     assert job.url.path.endswith("/jobs/b0dbdf0c-e296-496b-a780-aa4a082f439e")
-    assert len(r.heroes) == 22 and sum(h["games"] for h in r.heroes) == 66
-    assert sum(h["wins"] for h in r.heroes) == 41
-    ana = r.heroes[0]  # most played first
-    assert ana == {
-        "hero": "Ana",
-        "short_name": "ana",
-        "role": "Healer",
-        "games": 12,
-        "wins": 9,
-        "losses": 3,
-        "kills": 21,
-        "deaths": 19,
-        "assists": 179,
-        "takedowns": 200,
+    assert len(r.heroes) == 22 and sum(h["games"] for h in r.heroes) == 147
+    assert sum(h["wins"] for h in r.heroes) == 81
+    top = r.heroes[0]  # most played first
+    assert top == {
+        "hero": "Alarak",
+        "short_name": "alarak",
+        "role": "Melee Assassin",
+        "games": 49,
+        "wins": 29,
+        "losses": 20,
+        "kills": 90,
+        "deaths": 67,
+        "assists": 169,
+        "takedowns": 873,
         # the match card's stat line, as season sums (owner 2026-10-14)
-        "hero_damage": 171806,
-        "siege_damage": 228179,
-        "healing": 907905,
-        "damage_taken": 235644,
-        "experience": 87420,
+        "hero_damage": 329693,
+        "siege_damage": 123029,
+        "healing": 0,
+        "damage_taken": 744296,
+        "experience": 813103,
     }
-    assert sum(h["takedowns"] for h in r.heroes) == 906  # season sums, not per-game averages
+    assert sum(h["takedowns"] for h in r.heroes) == 2411  # season sums, not per-game averages
 
 
 async def test_only_the_charged_ask_counts_against_the_budget(
@@ -186,33 +186,33 @@ async def test_the_season_list_is_asked_once_a_day(
 async def test_a_new_season_does_not_serve_last_seasons_answer(
     svc: SeasonService, fake_hp: FakeHP, store: HPStore, clock: Clock
 ) -> None:
-    old = {"season": 33, "heroes": [{"hero": "Ana", "games": 99}]}
+    old = {"season": 33, "heroes": [{"hero": "Alarak", "games": 99}]}
     await store.put(CacheEntry(season_key(REGION, TAG), 200, old, clock.now, clock.now + 3600))
     fake_hp.responder = route(heroes=warm)
     r = await svc.lookup(TAG, REGION)
-    assert r.season == 34 and r.heroes[0]["games"] == 12
+    assert r.season == 34 and r.heroes[0]["games"] == 49
 
 
 async def test_an_answer_cached_before_the_stat_line_is_asked_again(
     svc: SeasonService, fake_hp: FakeHP, store: HPStore, clock: Clock
 ) -> None:
     """Rows from before 2026-10-14 lack the damage and healing sums: not served as fresh."""
-    old = {"season": 34, "heroes": [{"hero": "Ana", "games": 12, "kills": 21}]}
+    old = {"season": 34, "heroes": [{"hero": "Alarak", "games": 49, "kills": 90}]}
     await store.put(CacheEntry(season_key(REGION, TAG), 200, old, clock.now, clock.now + 3600))
     fake_hp.responder = route(heroes=warm)
     r = await svc.lookup(TAG, REGION)
     assert len(calls(fake_hp, "/players/heroes")) == 1
-    assert r.heroes[0]["hero_damage"] == 171806
+    assert r.heroes[0]["hero_damage"] == 329693
 
 
 async def test_an_old_format_answer_still_serves_as_stale(
     svc: SeasonService, fake_hp: FakeHP, store: HPStore, clock: Clock
 ) -> None:
-    old = {"season": 34, "heroes": [{"hero": "Ana", "games": 12}]}
+    old = {"season": 34, "heroes": [{"hero": "Alarak", "games": 49}]}
     await store.put(CacheEntry(season_key(REGION, TAG), 200, old, clock.now, clock.now + 3600))
     fake_hp.responder = route(heroes=quota_429)
     r = await svc.lookup(TAG, REGION)
-    assert (r.outcome, r.stale, r.heroes[0]["games"]) == ("ok", True, 12)
+    assert (r.outcome, r.stale, r.heroes[0]["games"]) == ("ok", True, 49)
 
 
 async def test_no_storm_league_this_season_is_an_empty_list(
@@ -311,7 +311,7 @@ def test_route(client: TestClient, fake_hp: FakeHP) -> None:
     assert r.status_code == 200
     body = r.json()
     assert set(body) == {"season", "mode", "heroes", "fetched_at", "stale", "notice"}
-    assert (body["season"], body["mode"], body["heroes"][0]["hero"]) == (34, "sl", "Ana")
+    assert (body["season"], body["mode"], body["heroes"][0]["hero"]) == (34, "sl", "Alarak")
     assert client.get("/healthz").json()["quota"][BUCKET]["live_calls_today"] == 1
     bad = client.get("/v1/players/season", params={"battletag": "nope", "region": REGION})
     assert bad.status_code == 422

@@ -37,14 +37,16 @@ def test_parse_quota_missing_or_garbage(headers: dict[str, str]) -> None:
 
 
 async def test_sends_bearer_and_params_and_reads_quota(fake_hp: FakeHP, clock: Clock) -> None:
-    up = await _client(fake_hp, clock).get("/players", {"battletag": "Player12#1012", "region": "NA"})
+    up = await _client(fake_hp, clock).get(
+        "/players", {"battletag": "Player12#1012", "region": "NA"}
+    )
     req = fake_hp.requests[0]
     assert req.headers["Authorization"] == f"Bearer {TOKEN}"
     assert req.url.path == "/v1/players"
     assert req.url.params["battletag"] == "Player12#1012"
     assert "api_token" not in str(req.url)
     assert up.status == 200 and up.code is None
-    assert up.body["account_level"] == 1802
+    assert up.body["account_level"] == 9485
     assert up.quota == Quota(limit=10000, remaining=9999, reset_at=clock.now + 604778)
 
 

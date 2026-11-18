@@ -20,7 +20,7 @@ from server.players.replays import ReplayService
 from server.players.store import HPStore
 from tests.server.conftest import BASE, TOKEN, Clock, FakeHP, hp_response, recorded
 
-RID = 65597227
+RID = 78191829
 
 
 @pytest.fixture
@@ -49,16 +49,16 @@ async def test_a_game_in_full(svc: ReplayService, fake_hp: FakeHP) -> None:
         RID,
         "qm",
         "Hanamura Temple",
-        1215,
+        3020,
         "KR",
     )
     assert [t["win"] for t in g["teams"]] == [True, False]
     assert [len(t["players"]) for t in g["teams"]] == [5, 5]
     me = next(p for p in g["teams"][0]["players"] if p["battletag"] == "Player11#1011")
     assert me["hero"] == "Alarak" and me["award"] == "MVP"
-    assert (me["kills"], me["deaths"], me["assists"]) == (9, 1, 25)
-    assert me["hero_damage"] == 72367 and me["experience"] == 11422
-    assert me["mmr_change"] == pytest.approx(43.05, abs=0.01)
+    assert (me["kills"], me["deaths"], me["assists"]) == (3, 1, 86)
+    assert me["hero_damage"] == 48098 and me["experience"] == 57491
+    assert me["mmr_change"] == pytest.approx(92.45, abs=0.01)
     assert len(me["talents"]) == 7 and me["talents"][0] == "AlarakOverwhelmingPowerDiscordStrike"
     bulwark = next(p for p in g["teams"][1]["players"] if p["hero"] == "Thrall")
     assert bulwark["award"] == "MostDamageTaken"  # HP id 6, sent with the Avenger icon

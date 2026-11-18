@@ -3,7 +3,7 @@ teammates minus the mean of the five opponents, before the game, over the newest
 
 - The MMR a replay answer carries is after the game: `player_conservative_rating` and
   `player_change` match the match list's "after each game" row for the same replay (checked on
-  tests/server/fixtures, replay 65597227). Before = mmr − mmr_change. With the MMR after, a won
+  tests/server/fixtures, replay 78191829). Before = mmr − mmr_change. With the MMR after, a won
   game would make the winners look stronger and 팀운 would restate the record.
 - A side needs at least three known players (private players are left out of a replay answer);
   otherwise the game is not counted.
@@ -24,7 +24,7 @@ from server.players.replays import ReplayLookup, normalize_replay
 from server.players.teamluck import GOOD, TeamLuckService, game_gap, summarize
 
 FIX = Path(__file__).parent / "fixtures"
-RID = 65597227
+RID = 78191829
 
 
 def _game() -> dict[str, Any]:

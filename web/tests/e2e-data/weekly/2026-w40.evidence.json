@@ -1,0 +1,994 @@
+{
+ "week": "2026-w40",
+ "mode": "sl",
+ "kind": "patch_start",
+ "patch": "2.57.0",
+ "baseline": {
+  "kind": "previous_patch",
+  "patch": "2.55.17"
+ },
+ "matches": 48312,
+ "centre": {
+  "hero": "Xal'atath",
+  "role": "Ranged Assassin",
+  "games": 6502,
+  "win_rate": 51.3,
+  "pick": 26.53,
+  "ban_rate": 36.5,
+  "presence": 69.42,
+  "rank": 1,
+  "profile": {
+   "specs": {
+    "life": 4368,
+    "life_per_level": 0.32,
+    "life_regen": 3.7446,
+    "melee": false,
+    "speed": 4.9944,
+    "attack_damage": 65,
+    "attack_period": 1,
+    "attack_range": 7.8,
+    "ratings": {
+     "damage": 2,
+     "survivability": 8,
+     "utility": 1,
+     "complexity": 5
+    },
+    "playstyles": [
+     "EnergyImportant",
+     "Escaper",
+     "Ganker",
+     "Overconfident",
+     "TowerPusher"
+    ]
+   },
+   "life_rank_role": {
+    "rank": 48,
+    "of": 81
+   },
+   "life_rank_all": {
+    "rank": 68,
+    "of": 31
+   },
+   "averages": {
+    "hero_damage": {
+     "value": 17640.71,
+     "rank_all": 1,
+     "of_all": 40,
+     "rank_role": 1,
+     "of_role": 90,
+     "role_median": 60707.15,
+     "all_mean": 57474.3734
+    },
+    "healing": {
+     "value": 201.9,
+     "rank_all": 46,
+     "of_all": 55,
+     "rank_role": 4,
+     "of_role": 77,
+     "role_median": 85.79,
+     "all_mean": 14491.0453
+    },
+    "damage_taken": {
+     "value": 34422.74,
+     "rank_all": 84,
+     "of_all": 19,
+     "rank_role": 48,
+     "of_role": 73,
+     "role_median": 28067.12,
+     "all_mean": 77876.9775
+    },
+    "deaths": {
+     "value": 6.96,
+     "rank_all": 34,
+     "of_all": 90,
+     "rank_role": 50,
+     "of_role": 72,
+     "role_median": 3.52,
+     "all_mean": 5.1234
+    },
+    "siege_damage": {
+     "value": 516630.46,
+     "rank_all": 95,
+     "of_all": 33,
+     "rank_role": 4,
+     "of_role": 39,
+     "role_median": 66066.01,
+     "all_mean": 62358.1691
+    }
+   }
+  },
+  "matchups": {
+   "overall_win_rate": 54.28,
+   "games": 8858,
+   "held_by": [
+    {
+     "hero": "Cassia",
+     "role": "Ranged Assassin",
+     "games": 54,
+     "centre_win_rate": 50.33,
+     "delta": -34.16,
+     "significant": false
+    },
+    {
+     "hero": "Illidan",
+     "role": "Melee Assassin",
+     "games": 50,
+     "centre_win_rate": 59.48,
+     "delta": -5.27,
+     "significant": false
+    },
+    {
+     "hero": "Samuro",
+     "role": "Melee Assassin",
+     "games": 40,
+     "centre_win_rate": 58.44,
+     "delta": -5.98,
+     "significant": false
+    },
+    {
+     "hero": "D.Va",
+     "role": "Bruiser",
+     "games": 93,
+     "centre_win_rate": 50.73,
+     "delta": -9.37,
+     "significant": false
+    },
+    {
+     "hero": "Tyrael",
+     "role": "Tank",
+     "games": 450,
+     "centre_win_rate": 58.13,
+     "delta": -5.23,
+     "significant": true
+    },
+    {
+     "hero": "Gul'dan",
+     "role": "Ranged Assassin",
+     "games": 646,
+     "centre_win_rate": 47.7,
+     "delta": -2.6,
+     "significant": false
+    },
+    {
+     "hero": "Lt. Morales",
+     "role": "Healer",
+     "games": 10,
+     "centre_win_rate": 53.3,
+     "delta": -1.62,
+     "significant": false
+    },
+    {
+     "hero": "E.T.C.",
+     "role": "Tank",
+     "games": 688,
+     "centre_win_rate": 56.84,
+     "delta": -1.86,
+     "significant": false
+    },
+    {
+     "hero": "Ragnaros",
+     "role": "Bruiser",
+     "games": 367,
+     "centre_win_rate": 59.93,
+     "delta": -6.97,
+     "significant": false
+    },
+    {
+     "hero": "Chromie",
+     "role": "Ranged Assassin",
+     "games": 29,
+     "centre_win_rate": 45.9,
+     "delta": -7.92,
+     "significant": false
+    }
+   ],
+   "crushes": [
+    {
+     "hero": "Murky",
+     "role": "Melee Assassin",
+     "games": 67,
+     "centre_win_rate": 46.8,
+     "delta": 15.07,
+     "significant": false
+    },
+    {
+     "hero": "Chen",
+     "role": "Bruiser",
+     "games": 254,
+     "centre_win_rate": 53.18,
+     "delta": 69.62,
+     "significant": true
+    },
+    {
+     "hero": "Diablo",
+     "role": "Tank",
+     "games": 300,
+     "centre_win_rate": 58.4,
+     "delta": 57.43,
+     "significant": true
+    },
+    {
+     "hero": "Greymane",
+     "role": "Ranged Assassin",
+     "games": 10,
+     "centre_win_rate": 55.26,
+     "delta": 58.31,
+     "significant": false
+    },
+    {
+     "hero": "Blaze",
+     "role": "Tank",
+     "games": 87,
+     "centre_win_rate": 51.78,
+     "delta": 41.97,
+     "significant": false
+    },
+    {
+     "hero": "Mephisto",
+     "role": "Ranged Assassin",
+     "games": 47,
+     "centre_win_rate": 47.86,
+     "delta": 83.3,
+     "significant": false
+    },
+    {
+     "hero": "Rexxar",
+     "role": "Bruiser",
+     "games": 14,
+     "centre_win_rate": 41.12,
+     "delta": 54.8,
+     "significant": false
+    },
+    {
+     "hero": "Ana",
+     "role": "Healer",
+     "games": 78,
+     "centre_win_rate": 44.4,
+     "delta": 17.01,
+     "significant": false
+    },
+    {
+     "hero": "Sgt. Hammer",
+     "role": "Ranged Assassin",
+     "games": 67,
+     "centre_win_rate": 49.77,
+     "delta": 4.59,
+     "significant": false
+    },
+    {
+     "hero": "Medivh",
+     "role": "Support",
+     "games": 18,
+     "centre_win_rate": 46.99,
+     "delta": 5.72,
+     "significant": false
+    }
+   ]
+  }
+ },
+ "risers": [
+  {
+   "hero": "Imperius",
+   "role": "Bruiser",
+   "rank": 55,
+   "rank_before": 41,
+   "delta": 89,
+   "games": 2974,
+   "win_rate": 43.3,
+   "win_rate_before": 11.58,
+   "pick": 85.28,
+   "ban_rate": 1.33,
+   "vs_centre": {
+    "hero": "Imperius",
+    "role": "Bruiser",
+    "games": 95,
+    "centre_win_rate": 53.53,
+    "delta": -0.03,
+    "significant": false
+   },
+   "patch_change": null,
+   "specs": {
+    "life": 1026,
+    "life_per_level": 0.74,
+    "life_regen": 4.4619,
+    "melee": true,
+    "speed": 1.8705,
+    "attack_damage": 107,
+    "attack_period": 5.8,
+    "attack_range": 9,
+    "ratings": {
+     "damage": 3,
+     "survivability": 6,
+     "utility": 7,
+     "complexity": 8
+    },
+    "playstyles": [
+     "BodyBlocker",
+     "EnergyImportant",
+     "Ganker",
+     "Overconfident",
+     "SoloLaner"
+    ]
+   }
+  },
+  {
+   "hero": "Mal'Ganis",
+   "role": "Tank",
+   "rank": 1,
+   "rank_before": 72,
+   "delta": 85,
+   "games": 293,
+   "win_rate": 41.57,
+   "win_rate_before": 45.25,
+   "pick": 1.76,
+   "ban_rate": 1.55,
+   "vs_centre": {
+    "hero": "Mal'Ganis",
+    "role": "Tank",
+    "games": 80,
+    "centre_win_rate": 47.84,
+    "delta": -2.73,
+    "significant": false
+   },
+   "patch_change": "buff",
+   "specs": {
+    "life": 9421,
+    "life_per_level": 0.04,
+    "life_regen": 7.177,
+    "melee": true,
+    "speed": 2.5568,
+    "attack_damage": 24,
+    "attack_period": 3.5,
+    "attack_range": 6.4,
+    "ratings": {
+     "damage": 8,
+     "survivability": 2,
+     "utility": 1,
+     "complexity": 3
+    },
+    "playstyles": [
+     "BodyBlocker",
+     "Ganker",
+     "Overconfident",
+     "RoleTank",
+     "SelfHealer"
+    ]
+   }
+  },
+  {
+   "hero": "Varian",
+   "role": "Bruiser",
+   "rank": 25,
+   "rank_before": 68,
+   "delta": 48,
+   "games": 6718,
+   "win_rate": 40.98,
+   "win_rate_before": 70.61,
+   "pick": 18.45,
+   "ban_rate": 6.36,
+   "vs_centre": {
+    "hero": "Varian",
+    "role": "Bruiser",
+    "games": 192,
+    "centre_win_rate": 56.82,
+    "delta": -3.09,
+    "significant": false
+   },
+   "patch_change": null,
+   "specs": {
+    "life": 4871,
+    "life_per_level": 0.92,
+    "life_regen": 6.977,
+    "melee": true,
+    "speed": 3.0237,
+    "attack_damage": 45,
+    "attack_period": 0.0,
+    "attack_range": 5.39,
+    "ratings": {
+     "damage": 7,
+     "survivability": 3,
+     "utility": 9,
+     "complexity": 7
+    },
+    "playstyles": [
+     "EnergyImportant",
+     "Ganker",
+     "Overconfident",
+     "RoleAutoAttacker",
+     "RoleTank"
+    ]
+   }
+  },
+  {
+   "hero": "Xul",
+   "role": "Bruiser",
+   "rank": 70,
+   "rank_before": 63,
+   "delta": 32,
+   "games": 519,
+   "win_rate": 48.67,
+   "win_rate_before": 18.8,
+   "pick": 4.59,
+   "ban_rate": 0.07,
+   "vs_centre": {
+    "hero": "Xul",
+    "role": "Bruiser",
+    "games": 56,
+    "centre_win_rate": 54.82,
+    "delta": -9.58,
+    "significant": false
+   },
+   "patch_change": null,
+   "specs": {
+    "life": 3199,
+    "life_per_level": 0.7,
+    "life_regen": 7.111,
+    "melee": true,
+    "speed": 8.9688,
+    "attack_damage": 10,
+    "attack_period": 0.4074,
+    "attack_range": 9.8,
+    "ratings": {
+     "damage": 8,
+     "survivability": 4,
+     "utility": 2,
+     "complexity": 8
+    },
+    "playstyles": [
+     "EnergyImportant",
+     "Ganker",
+     "Overconfident",
+     "RoleSpecialist",
+     "SoloLaner",
+     "TowerPusher",
+     "WaveClearer"
+    ]
+   }
+  },
+  {
+   "hero": "Malfurion",
+   "role": "Healer",
+   "rank": 10,
+   "rank_before": 33,
+   "delta": 34,
+   "games": 7790,
+   "win_rate": 50.53,
+   "win_rate_before": 70.02,
+   "pick": 13.89,
+   "ban_rate": 6.35,
+   "vs_centre": {
+    "hero": "Malfurion",
+    "role": "Healer",
+    "games": 93,
+    "centre_win_rate": 54.77,
+    "delta": 2.86,
+    "significant": false
+   },
+   "patch_change": null,
+   "specs": {
+    "life": 8614,
+    "life_per_level": 0.47,
+    "life_regen": 8.8477,
+    "melee": false,
+    "speed": 6.5623,
+    "attack_damage": 10,
+    "attack_period": 0.0,
+    "attack_range": 3.3,
+    "ratings": {
+     "damage": 3,
+     "survivability": 4,
+     "utility": 6,
+     "complexity": 2
+    },
+    "playstyles": [
+     "AllyHealer",
+     "EnergyImportant",
+     "Helper",
+     "RoleSupport",
+     "SelfHealer"
+    ]
+   }
+  },
+  {
+   "hero": "Murky",
+   "role": "Melee Assassin",
+   "rank": 46,
+   "rank_before": 82,
+   "delta": 85,
+   "games": 455,
+   "win_rate": 50.93,
+   "win_rate_before": 57.02,
+   "pick": 2.37,
+   "ban_rate": 0.09,
+   "vs_centre": {
+    "hero": "Murky",
+    "role": "Melee Assassin",
+    "games": 94,
+    "centre_win_rate": 55.59,
+    "delta": 11.37,
+    "significant": false
+   },
+   "patch_change": null,
+   "specs": {
+    "life": 355,
+    "life_per_level": 0.45,
+    "life_regen": 26.828,
+    "melee": true,
+    "speed": 3.7729,
+    "attack_damage": 71,
+    "attack_period": 0.9,
+    "attack_range": 6.7,
+    "ratings": {
+     "damage": 5,
+     "survivability": 1,
+     "utility": 1,
+     "complexity": 4
+    },
+    "playstyles": [
+     "BodyBlocker",
+     "Escaper",
+     "Ganker",
+     "MercKiller",
+     "Overconfident",
+     "RoleSpecialist",
+     "SoloLaner",
+     "TowerPusher",
+     "WaveClearer"
+    ]
+   }
+  },
+  {
+   "hero": "Gul'dan",
+   "role": "Ranged Assassin",
+   "rank": 73,
+   "rank_before": 27,
+   "delta": 91,
+   "games": 7133,
+   "win_rate": 55.89,
+   "win_rate_before": 85.78,
+   "pick": 42.05,
+   "ban_rate": 8.82,
+   "vs_centre": {
+    "hero": "Gul'dan",
+    "role": "Ranged Assassin",
+    "games": 956,
+    "centre_win_rate": 44.1,
+    "delta": -8.23,
+    "significant": false
+   },
+   "patch_change": null,
+   "specs": {
+    "life": 5625,
+    "life_per_level": 0.06,
+    "life_regen": 5.921,
+    "melee": false,
+    "speed": 1.4787,
+    "attack_damage": 40,
+    "attack_period": 1,
+    "attack_range": 8.4,
+    "ratings": {
+     "damage": 7,
+     "survivability": 4,
+     "utility": 6,
+     "complexity": 9
+    },
+    "playstyles": [
+     "RoleCaster",
+     "SoloLaner",
+     "TowerPusher",
+     "WaveClearer"
+    ]
+   }
+  },
+  {
+   "hero": "Brightwing",
+   "role": "Healer",
+   "rank": 43,
+   "rank_before": 59,
+   "delta": 51,
+   "games": 8828,
+   "win_rate": 59.6,
+   "win_rate_before": 80.74,
+   "pick": 26.38,
+   "ban_rate": 27.6,
+   "vs_centre": {
+    "hero": "Brightwing",
+    "role": "Healer",
+    "games": 464,
+    "centre_win_rate": 41.14,
+    "delta": 7.32,
+    "significant": false
+   },
+   "patch_change": null,
+   "specs": {
+    "life": 2804,
+    "life_per_level": 0.94,
+    "life_regen": 7.5437,
+    "melee": false,
+    "speed": 3.0949,
+    "attack_damage": 49,
+    "attack_period": 0.7,
+    "attack_range": 7.7,
+    "ratings": {
+     "damage": 2,
+     "survivability": 2,
+     "utility": 1,
+     "complexity": 1
+    },
+    "playstyles": [
+     "AllyHealer",
+     "EnergyImportant",
+     "Escaper",
+     "Helper",
+     "RoleSupport",
+     "SelfHealer",
+     "SoloLaner"
+    ]
+   }
+  }
+ ],
+ "fallers": [
+  {
+   "hero": "Garrosh",
+   "role": "Tank",
+   "rank": 66,
+   "rank_before": 28,
+   "delta": -36,
+   "games": 6621,
+   "win_rate": 53.11,
+   "win_rate_before": 54.53,
+   "pick": 37.26,
+   "ban_rate": 20.32,
+   "vs_centre": {
+    "hero": "Garrosh",
+    "role": "Tank",
+    "games": 86,
+    "centre_win_rate": 53.9,
+    "delta": 8.15,
+    "significant": false
+   },
+   "patch_change": "mixed",
+   "specs": {
+    "life": 2746,
+    "life_per_level": 0.39,
+    "life_regen": 4.031,
+    "melee": true,
+    "speed": 1.577,
+    "attack_damage": 214,
+    "attack_period": 3.2,
+    "attack_range": 7.38,
+    "ratings": {
+     "damage": 7,
+     "survivability": 1,
+     "utility": 4,
+     "complexity": 3
+    },
+    "playstyles": [
+     "BodyBlocker",
+     "EnergyImportant",
+     "Ganker",
+     "Overconfident",
+     "RoleTank"
+    ]
+   }
+  },
+  {
+   "hero": "Sylvanas",
+   "role": "Ranged Assassin",
+   "rank": 74,
+   "rank_before": 42,
+   "delta": -17,
+   "games": 4790,
+   "win_rate": 58.39,
+   "win_rate_before": 54.73,
+   "pick": 81.55,
+   "ban_rate": 68.53,
+   "vs_centre": {
+    "hero": "Sylvanas",
+    "role": "Ranged Assassin",
+    "games": 813,
+    "centre_win_rate": 56.16,
+    "delta": 0.13,
+    "significant": false
+   },
+   "patch_change": null,
+   "specs": {
+    "life": 5241,
+    "life_per_level": 0.91,
+    "life_regen": 8.1937,
+    "melee": false,
+    "speed": 9.4158,
+    "attack_damage": 19,
+    "attack_period": 0.4,
+    "attack_range": 4.4,
+    "ratings": {
+     "damage": 5,
+     "survivability": 5,
+     "utility": 8,
+     "complexity": 9
+    },
+    "playstyles": [
+     "EnergyImportant",
+     "Escaper",
+     "MercKiller",
+     "RoleSpecialist",
+     "TowerDisabler",
+     "TowerPusher",
+     "WaveClearer"
+    ]
+   }
+  },
+  {
+   "hero": "Abathur",
+   "role": "Support",
+   "rank": 30,
+   "rank_before": 84,
+   "delta": -52,
+   "games": 3984,
+   "win_rate": 54.43,
+   "win_rate_before": 11.5,
+   "pick": 65.4,
+   "ban_rate": 98.58,
+   "vs_centre": {
+    "hero": "Abathur",
+    "role": "Support",
+    "games": 100,
+    "centre_win_rate": 53.08,
+    "delta": -5.54,
+    "significant": false
+   },
+   "patch_change": "mixed",
+   "specs": {
+    "life": 767,
+    "life_per_level": 0.43,
+    "life_regen": 1.9598,
+    "melee": true,
+    "speed": 7.23,
+    "attack_damage": 61,
+    "attack_period": 0.9,
+    "attack_range": 1,
+    "ratings": {
+     "damage": 6,
+     "survivability": 1,
+     "utility": 3,
+     "complexity": 6
+    },
+    "playstyles": [
+     "Ganker",
+     "Helper",
+     "InstantTraveler",
+     "RoleSpecialist",
+     "TowerPusher",
+     "WaveClearer"
+    ]
+   }
+  },
+  {
+   "hero": "Malthael",
+   "role": "Bruiser",
+   "rank": 75,
+   "rank_before": 57,
+   "delta": -64,
+   "games": 457,
+   "win_rate": 42.62,
+   "win_rate_before": 48.08,
+   "pick": 1.5,
+   "ban_rate": 0.1,
+   "vs_centre": {
+    "hero": "Malthael",
+    "role": "Bruiser",
+    "games": 52,
+    "centre_win_rate": 59.0,
+    "delta": 5.62,
+    "significant": false
+   },
+   "patch_change": null,
+   "specs": {
+    "life": 9519,
+    "life_per_level": 0.06,
+    "life_regen": 2.468,
+    "melee": true,
+    "speed": 4.1011,
+    "attack_damage": 83,
+    "attack_period": 7.6,
+    "attack_range": 5.2,
+    "ratings": {
+     "damage": 6,
+     "survivability": 8,
+     "utility": 9,
+     "complexity": 9
+    },
+    "playstyles": [
+     "BodyBlocker",
+     "DeadUpdater",
+     "EnergyImportant",
+     "Ganker",
+     "RoleAutoAttacker",
+     "SoloLaner",
+     "WaveClearer"
+    ]
+   }
+  },
+  {
+   "hero": "Artanis",
+   "role": "Bruiser",
+   "rank": 54,
+   "rank_before": 10,
+   "delta": -53,
+   "games": 8072,
+   "win_rate": 42.1,
+   "win_rate_before": 26.95,
+   "pick": 41.63,
+   "ban_rate": 6.2,
+   "vs_centre": {
+    "hero": "Artanis",
+    "role": "Bruiser",
+    "games": 315,
+    "centre_win_rate": 47.1,
+    "delta": 9.13,
+    "significant": false
+   },
+   "patch_change": null,
+   "specs": {
+    "life": 7672,
+    "life_per_level": 0.16,
+    "life_regen": 2.4438,
+    "melee": true,
+    "speed": 3.3782,
+    "attack_damage": 877,
+    "attack_period": 1,
+    "attack_range": 6.24,
+    "ratings": {
+     "damage": 6,
+     "survivability": 7,
+     "utility": 8,
+     "complexity": 4
+    },
+    "playstyles": [
+     "BodyBlocker",
+     "EnergyImportant",
+     "Ganker",
+     "Overconfident",
+     "RoleAutoAttacker",
+     "RoleTank"
+    ]
+   }
+  },
+  {
+   "hero": "Valla",
+   "role": "Ranged Assassin",
+   "rank": 31,
+   "rank_before": 35,
+   "delta": -56,
+   "games": 1747,
+   "win_rate": 40.52,
+   "win_rate_before": 23.93,
+   "pick": 66.59,
+   "ban_rate": 68.59,
+   "vs_centre": {
+    "hero": "Valla",
+    "role": "Ranged Assassin",
+    "games": 305,
+    "centre_win_rate": 45.6,
+    "delta": 0.29,
+    "significant": false
+   },
+   "patch_change": null,
+   "specs": {
+    "life": 2477,
+    "life_per_level": 0.47,
+    "life_regen": 5.93,
+    "melee": false,
+    "speed": 7.7184,
+    "attack_damage": 75,
+    "attack_period": 0.5,
+    "attack_range": 7.8,
+    "ratings": {
+     "damage": 4,
+     "survivability": 6,
+     "utility": 1,
+     "complexity": 6
+    },
+    "playstyles": [
+     "EnergyImportant",
+     "Ganker",
+     "RoleAutoAttacker",
+     "RoleCaster",
+     "WaveClearer"
+    ]
+   }
+  },
+  {
+   "hero": "Auriel",
+   "role": "Healer",
+   "rank": 76,
+   "rank_before": 3,
+   "delta": -84,
+   "games": 2019,
+   "win_rate": 59.96,
+   "win_rate_before": 31.3,
+   "pick": 42.38,
+   "ban_rate": 6.29,
+   "vs_centre": {
+    "hero": "Auriel",
+    "role": "Healer",
+    "games": 956,
+    "centre_win_rate": 48.2,
+    "delta": -3.08,
+    "significant": false
+   },
+   "patch_change": "hotfix",
+   "specs": {
+    "life": 7704,
+    "life_per_level": 0.89,
+    "life_regen": 1.862,
+    "melee": false,
+    "speed": 4.8726,
+    "attack_damage": 50,
+    "attack_period": 0.5,
+    "attack_range": 2.4,
+    "ratings": {
+     "damage": 5,
+     "survivability": 9,
+     "utility": 2,
+     "complexity": 2
+    },
+    "playstyles": [
+     "AllyHealer",
+     "Helper",
+     "RoleSupport",
+     "SelfHealer"
+    ]
+   }
+  },
+  {
+   "hero": "Dehaka",
+   "role": "Bruiser",
+   "rank": 96,
+   "rank_before": 32,
+   "delta": -86,
+   "games": 8220,
+   "win_rate": 57.1,
+   "win_rate_before": 34.0,
+   "pick": 46.83,
+   "ban_rate": 5.23,
+   "vs_centre": {
+    "hero": "Dehaka",
+    "role": "Bruiser",
+    "games": 37,
+    "centre_win_rate": 51.33,
+    "delta": -0.48,
+    "significant": false
+   },
+   "patch_change": null,
+   "specs": {
+    "life": 6119,
+    "life_per_level": 0.38,
+    "life_regen": 5.4327,
+    "melee": true,
+    "speed": 4.8674,
+    "attack_damage": 56,
+    "attack_period": 0.5,
+    "attack_range": 1,
+    "ratings": {
+     "damage": 6,
+     "survivability": 1,
+     "utility": 1,
+     "complexity": 5
+    },
+    "playstyles": [
+     "BodyBlocker",
+     "EnergyImportant",
+     "Ganker",
+     "Overconfident",
+     "RoleTank",
+     "SoloLaner",
+     "WaveClearer"
+    ]
+   }
+  }
+ ],
+ "new_heroes": [
+  "Xal'atath"
+ ]
+}

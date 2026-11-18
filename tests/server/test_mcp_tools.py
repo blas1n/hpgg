@@ -21,7 +21,7 @@ from tests.server.accounts_support import ORIGIN
 from tests.server.conftest import Clock, FakeHP, hp_response
 from tests.server.mcp_support import OWNER, call_tool, connect
 
-NEWEST = 66623506  # Malthael, Dragon Shire, loss, 1,261 s; the one game with a recorded replay
+NEWEST = 16896343  # Malthael, Dragon Shire, loss; the one game with a recorded replay
 
 
 def hp_routes(request: httpx.Request) -> httpx.Response:
@@ -53,7 +53,7 @@ def test_status_counts_what_is_stored(owner: tuple[TestClient, str]) -> None:
     assert s["owner"] == OWNER
     assert s["mode"] == "sl"
     assert s["storm_league"]["tier"] == "Diamond 2"
-    assert s["storm_league"]["wins"] == 48
+    assert s["storm_league"]["wins"] == 17
     assert s["games_stored"] == 3
     assert s["first_game"] == "2026-11-10 16:22:18"
     assert s["last_game"] == "2026-11-10 17:20:20"
@@ -68,15 +68,15 @@ def test_matches_newest_first_with_draft_and_party(owner: tuple[TestClient, str]
     out = call_tool(c, token, "list_matches")
     assert out["total"] == 3
     ids = [m["match_id"] for m in out["matches"]]
-    assert ids == [66623506, 66623504, 66623501]
+    assert ids == [16896343, 55333917, 38758556]
     m = out["matches"][0]
     assert m["hero"] == "Malthael"
     assert m["hero_ko"] == "말티엘"
     assert m["map"] == "Dragon Shire"
     assert m["map_ko"] == "용의 둥지"
     assert m["win"] is False
-    assert m["game_length_s"] == 1261
-    assert (m["kills"], m["deaths"], m["assists"]) == (6, 3, 6)
+    assert m["game_length_s"] == 3967
+    assert (m["kills"], m["deaths"], m["assists"]) == (8, 6, 3)
     assert m["party_size_derived"] == 1
     assert m["my_team_first_pick_derived"] is False
     assert m["my_pick_within_team_derived"] == 4
@@ -86,7 +86,7 @@ def test_matches_newest_first_with_draft_and_party(owner: tuple[TestClient, str]
     other = out["matches"][1]
     assert other["game_length_s"] is None
     assert other["party_size_derived"] is None
-    assert other["kills"] == 4
+    assert other["kills"] == 5
 
 
 def test_filters_take_english_or_korean(owner: tuple[TestClient, str]) -> None:
@@ -97,7 +97,7 @@ def test_filters_take_english_or_korean(owner: tuple[TestClient, str]) -> None:
     assert call_tool(c, token, "list_matches", role="Healer")["total"] == 2
     assert call_tool(c, token, "list_matches", since="2026-11-10 17:00:00")["total"] == 1
     page = call_tool(c, token, "list_matches", limit=1, offset=1)
-    assert [m["match_id"] for m in page["matches"]] == [66623504]
+    assert [m["match_id"] for m in page["matches"]] == [55333917]
     assert page["total"] == 3
 
 
@@ -112,12 +112,12 @@ def test_one_game_in_full_without_battletags(owner: tuple[TestClient, str]) -> N
     c, token = owner
     g = call_tool(c, token, "get_match", match_id=NEWEST)
     assert g["match_id"] == NEWEST
-    assert g["game_length_s"] == 1261
+    assert g["game_length_s"] == 3967
     assert [len(t["players"]) for t in g["teams"]] == [5, 5]
     me = [p for t in g["teams"] for p in t["players"] if p["is_me"]]
     assert len(me) == 1 and me[0]["hero"] == "Malthael"
-    assert me[0]["stats"]["hero_damage"] == 94038
-    assert me[0]["stats"]["experience_contribution"] == 21137  # HP's names, as in list rows
+    assert me[0]["stats"]["hero_damage"] == 10185
+    assert me[0]["stats"]["experience_contribution"] == 23128  # HP's names, as in list rows
     assert len(me[0]["talents"]) == 7
     ids = {p["player_id"] for t in g["teams"] for p in t["players"]}
     assert len(ids) == 10
@@ -139,8 +139,8 @@ def test_summarize_by_hero(owner: tuple[TestClient, str]) -> None:
     assert rows["Rehgar"]["games"] == 2
     assert rows["Rehgar"]["wins"] == 2
     assert rows["Rehgar"]["win_rate"] == 100.0
-    assert rows["Rehgar"]["kills"] == 6
-    assert rows["Malthael"]["total_game_seconds"] == 1261
+    assert rows["Rehgar"]["kills"] == 13
+    assert rows["Malthael"]["total_game_seconds"] == 3967
     assert rows["Malthael"]["games_with_length"] == 1
     assert rows["Rehgar"]["games_with_length"] == 0
     assert sum(r["games"] for r in out["rows"]) == 3
@@ -213,7 +213,7 @@ def test_owner_tables_hold_no_other_battletag(
     finally:
         con.close()
     assert len(rows) == 3
-    assert "Other1#1001" not in str(rows)
+    assert "Player27#1027" not in str(rows)
 
 
 def test_hero_pool(owner: tuple[TestClient, str]) -> None:
@@ -234,7 +234,7 @@ def test_baseline_for_a_hero(owner: tuple[TestClient, str]) -> None:
     assert b["bracket"]["league_tier"]
     overall = b["win_rate"]["all"]
     assert set(overall) >= {"games", "wins", "losses", "win_rate"}
-    assert "Dragon Shire" in b["win_rate"]["by_map"]
+    assert b["win_rate"]["by_map"]  # per map, from the replay sample
     assert "hero_damage" in b["average_stats"]
     assert b["patch"]
 

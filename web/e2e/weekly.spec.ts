@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 import { FEATURES } from "../src/features";
 
-// 주간 메타 리포트 (owner 2026-10-05). The e2e data carries the real first issue, 2026-w40 (2.57.0's first week,
+// 주간 메타 리포트 (owner 2026-10-05). The e2e data carries the first issue, 2026-w40 (2.57.0's first week, numbers synthetic,
 // against 2.55.17); the model is tested in tests/weekly.test.ts and collector/weekly.py in tests/test_weekly.py.
 
 // a switch (src/features.ts): when off, the export has no report pages

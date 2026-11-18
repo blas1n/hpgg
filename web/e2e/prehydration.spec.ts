@@ -48,7 +48,7 @@ for (const [width, cols] of [[1280, DESKTOP], [800, TABLET], [390, PHONE]] as co
     } else await expect(portraitBadge).toBeVisible(); // on a phone the tier stays on the portrait
     if (width >= 1024) {
       await expect(row.locator('td[data-col="role"] [data-role-name]')).toHaveText("근접 암살자");
-      await expect(interval).toHaveText("±1.2");
+      await expect(interval).toHaveText("±1.1"); // Wilson 95 %, 58.2 % of 7,964 games
     } else await expect(interval).toBeHidden(); // the ± interval is desktop-only
     const hydrated = await open(browser, true, width, url);
     expect(await layout(hydrated)).toEqual(before);

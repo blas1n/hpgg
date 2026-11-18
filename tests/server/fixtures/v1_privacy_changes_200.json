@@ -1,0 +1,49 @@
+{
+ "status": 200,
+ "headers": {
+  "content-type": "application/json",
+  "x-hp-quota-limit": "10080",
+  "x-hp-quota-remaining": "10079",
+  "x-hp-quota-reset": "604799",
+  "x-ratelimit-limit": "60",
+  "x-ratelimit-remaining": "59"
+ },
+ "body": {
+  "changes": [
+   {
+    "battletag": "Player13#1013",
+    "region": 2,
+    "state": "private",
+    "changed_at": "2026-09-01T00:00:00+00:00"
+   },
+   {
+    "battletag": "Player14#1014",
+    "region": 1,
+    "state": "private",
+    "changed_at": "2026-09-01T00:00:00+00:00"
+   },
+   {
+    "battletag": "Player15#1015",
+    "region": 1,
+    "state": "private",
+    "changed_at": "2026-09-01T00:00:00+00:00"
+   },
+   {
+    "battletag": "Player16#1016",
+    "region": 2,
+    "state": "private",
+    "changed_at": "2026-09-01T00:00:00+00:00"
+   },
+   {
+    "battletag": "Player17#1017",
+    "region": 2,
+    "state": "private",
+    "changed_at": "2026-09-01T00:00:00+00:00"
+   }
+  ],
+  "next_since": "2026-09-01T00:00:00+00:00",
+  "next_after_id": 319,
+  "has_more": true
+ },
+ "_recorded": "2026-10-01 GET /players/privacy/changes?limit=5 (first sync, no since); headers filtered to quota/rate-limit"
+}

@@ -41,7 +41,7 @@ def test_live_fixture_has_the_recorded_shape() -> None:
     assert set(raw) == {"ally", "enemy", "combined"}
     row = raw["enemy"][0]
     assert set(row) == {"hero", "role", "wins", "losses", "games_played", "win_rate", "hovertext"}
-    assert row["hero"]["name"] == "Fenix"
+    assert row["hero"]["name"] == "Tychus"
 
 
 def test_normalize_keeps_the_heros_own_wins_on_both_sides() -> None:
@@ -54,14 +54,14 @@ def test_normalize_keeps_the_heros_own_wins_on_both_sides() -> None:
         "sl",
         "2026-09-29T00:00:00Z",
     )
-    # enemy win_rate in the payload is the LOSS rate ("Lost against a team with Fenix 59.62% of
+    # enemy win_rate in the payload is the LOSS rate ("Lost against a team with Fenix …% of
     # games"); wins/losses are Abathur's on both lists
     fenix = next(r for r in m["enemy"] if r["hero"] == "Fenix")
-    assert fenix == {"hero": "Fenix", "games": 104, "wins": 42, "win_rate": 40.38}
+    assert fenix == {"hero": "Fenix", "games": 805, "wins": 436, "win_rate": 54.16}
     samuro = next(r for r in m["ally"] if r["hero"] == "Samuro")
-    assert samuro == {"hero": "Samuro", "games": 168, "wins": 105, "win_rate": 62.5}
+    assert samuro == {"hero": "Samuro", "games": 482, "wins": 247, "win_rate": 51.24}
     # the hero's own record, from the same sample: every game appears 4× in ally, 5× in enemy
-    assert (m["games"], m["wins"], m["win_rate"]) == (4855, 2466, 50.79)
+    assert (m["games"], m["wins"], m["win_rate"]) == (10262, 5218, 50.85)
     # rows with no games (Xal'atath, not yet in this patch) are dropped
     assert len(m["ally"]) == 89 and len(m["enemy"]) == 89
     assert all(r["games"] > 0 for r in m["ally"] + m["enemy"])

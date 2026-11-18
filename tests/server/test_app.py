@@ -47,7 +47,7 @@ def test_player_lookup(client: TestClient) -> None:
     r = client.get(URL, params=OK)
     assert r.status_code == 200
     body = r.json()
-    assert body["player"]["account_level"] == 1802
+    assert body["player"]["account_level"] == 9485
     assert body["stale"] is False and body["notice"] is None
     assert body["fetched_at"].endswith("Z")
     assert r.headers["cache-control"].startswith("public, max-age=")
@@ -56,8 +56,8 @@ def test_player_lookup(client: TestClient) -> None:
 @pytest.mark.parametrize(
     "params",
     [
-        {"battletag": "Zemill", "region": "NA"},
-        {"battletag": "Zemill#abc", "region": "NA"},
+        {"battletag": "Player12", "region": "NA"},
+        {"battletag": "Player12#abc", "region": "NA"},
         {"battletag": "Ze mill#1940", "region": "NA"},
         {"battletag": "Player12#1012", "region": "XX"},
         {"battletag": "Player12#1012"},
@@ -299,7 +299,7 @@ def test_match_list_errors(
 
 
 def test_match_list_validates_like_the_profile(client: TestClient, fake_hp: FakeHP) -> None:
-    r = client.get(URL + "/matches", params={"battletag": "Zemill", "region": "KR"})
+    r = client.get(URL + "/matches", params={"battletag": "Player12", "region": "KR"})
     assert r.status_code == 422 and fake_hp.requests == []
 
 
@@ -307,7 +307,7 @@ def test_replay_in_full(client: TestClient, fake_hp: FakeHP) -> None:
     from tests.server.conftest import hp_response
 
     fake_hp.responder = lambda r: hp_response("v1_replay_200.json")
-    r = client.get("/v1/replays/65597227")
+    r = client.get("/v1/replays/78191829")
     assert r.status_code == 200
     body = r.json()
     assert body["replay"]["map"] == "Hanamura Temple" and len(body["replay"]["teams"]) == 2

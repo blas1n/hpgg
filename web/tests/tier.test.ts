@@ -82,12 +82,12 @@ describe("resolvePatch", () => {
 });
 
 describe("tierTable", () => {
-  it("ranks the fixture like the formula: Qhira #1, Azmodan S, Illidan B in Quick Match", () => {
+  it("ranks the fixture like the formula: Raynor #1, Illidan S, Azmodan C in Quick Match", () => {
     const t = tierTable(qm, null, "all", heroes, 200);
-    expect(t.rows[0]!.hero.slug).toBe("qhira");
+    expect(t.rows[0]!.hero.slug).toBe("raynor");
     expect(t.rows[0]!.rank).toBe(1);
-    expect(t.rows.find((r) => r.hero.slug === "azmodan")!.tier).toBe("S");
-    expect(t.rows.find((r) => r.hero.slug === "illidan")!.tier).toBe("B");
+    expect(t.rows.find((r) => r.hero.slug === "illidan")!.tier).toBe("S");
+    expect(t.rows.find((r) => r.hero.slug === "azmodan")!.tier).toBe("C");
     expect(t.hasPrevious).toBe(false);
     expect(t.patch).toBe(qm.patch);
     expect(t.collectedAt).toBe(qm.collected_at);
@@ -167,7 +167,7 @@ describe("visibleRows", () => {
 
   it("sorts by the chosen column; ties keep the score rank", () => {
     const byPick = visibleRows(t.rows, "all", "pick", "desc");
-    expect(byPick[0]!.hero.slug).toBe("abathur");
+    expect(byPick[0]!.hero.slug).toBe("arthas"); // the QM fixture's highest pick rate
     const asc = visibleRows(t.rows, "all", "pick", "asc");
     expect(asc[0]!.pick).toBeLessThanOrEqual(asc[1]!.pick);
   });
@@ -187,7 +187,7 @@ describe("visibleRows", () => {
   it("filters by role without re-ranking", () => {
     const healers = visibleRows(t.rows, "Healer", "score", "desc");
     expect(healers.every((r) => r.hero.role === "Healer")).toBe(true);
-    expect(healers.find((r) => r.hero.slug === "brightwing")!.tier).toBe("A");
+    expect(healers.find((r) => r.hero.slug === "brightwing")!.tier).toBe("F");
     expect(healers[0]!.rank).toBeGreaterThan(0);
   });
 });

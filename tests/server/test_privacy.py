@@ -122,7 +122,7 @@ async def test_going_private_removes_the_cached_profile_in_any_letter_case(
     feed: PrivacyFeed, fake_hp: FakeHP, db: Database, clock: Clock
 ) -> None:
     store = HPStore(db)
-    typed = await cache_player(store, "Player13#1013", "EU", clock)  # as a visitor typed it
+    typed = await cache_player(store, "player13#1013", "EU", clock)  # as a visitor typed it
     kept = await cache_player(store, "Someone#1234", "EU", clock)
     fake_hp.responder = lambda r: page([change("Player13#1013", 2)])
     await feed.poll_once()
@@ -136,7 +136,7 @@ async def test_a_private_player_is_not_served_from_cache_nor_asked_again(
     fake_hp.responder = lambda r: page([change("Player13#1013", 2)])
     await feed.poll_once()
     asked = len(fake_hp.requests)
-    r = await svc.lookup("Player13#1013", "EU")
+    r = await svc.lookup("PLAYER13#1013", "EU")
     assert r.outcome == "private" and r.profile is None
     assert len(fake_hp.requests) == asked
 
@@ -144,7 +144,9 @@ async def test_a_private_player_is_not_served_from_cache_nor_asked_again(
 async def test_going_public_again_lets_the_player_be_looked_up(
     feed: PrivacyFeed, svc: PlayerService, fake_hp: FakeHP, db: Database
 ) -> None:
-    answers = iter([page([change("Player13#1013", 2)]), page([change("Player13#1013", 2, "public")])])
+    answers = iter(
+        [page([change("Player13#1013", 2)]), page([change("Player13#1013", 2, "public")])]
+    )
     fake_hp.responder = lambda r: next(answers)
     await feed.poll_once()
     await feed.poll_once()

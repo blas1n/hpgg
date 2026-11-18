@@ -6,8 +6,8 @@ import { messages } from "../src/i18n/messages";
 // Header design B · 검색 중심 (owner 2026-10-30): row 1 logo · one search box for a hero or a BattleTag · toggles;
 // row 2 the section tabs (no 홈 — the logo is home). Phones: logo + toggles, the search at full width, scrolling tabs.
 
-const fixture = JSON.parse(readFileSync(new URL("../tests/fixtures/api_player_zemill.json", import.meta.url), "utf-8"));
-const season = JSON.parse(readFileSync(new URL("../tests/fixtures/api_season_blas1n.json", import.meta.url), "utf-8"));
+const fixture = JSON.parse(readFileSync(new URL("../tests/fixtures/api_player_sample.json", import.meta.url), "utf-8"));
+const season = JSON.parse(readFileSync(new URL("../tests/fixtures/api_season_sample.json", import.meta.url), "utf-8"));
 
 test.use({ timezoneId: "Asia/Seoul" });
 
@@ -98,7 +98,7 @@ test.describe("a visitor in Europe", () => {
 
 test("search: an unfinished BattleTag shows the format hint", async ({ page }) => {
   await page.goto("./");
-  await page.locator("#site-search").fill("Zemill#19");
+  await page.locator("#site-search").fill("Player12#19");
   await expect(page.locator("[data-hint]")).toHaveText(messages.ko.search.tagHint);
   await expect(page.locator("[data-player]")).toHaveCount(0);
 });

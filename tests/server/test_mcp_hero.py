@@ -89,8 +89,9 @@ def test_by_league_and_length_as_the_site(hero: str) -> None:
 
 def test_get_hero_every_section(owner: tuple[TestClient, str]) -> None:  # noqa: F811
     c, token = owner
-    h = call_tool(c, token, "get_hero", hero="말티엘")
-    assert h["hero"] == "Malthael" and h["hero_ko"] == "말티엘"
+    # Abathur: the hero the synthetic site data has in every section (league chart included)
+    h = call_tool(c, token, "get_hero", hero="아바투르")
+    assert h["hero"] == "Abathur" and h["hero_ko"] == "아바투르"
     assert h["view"] == {"mode": "sl", "bracket": "all", "region": "all", "map": "all"}
     s = h["summary"]
     assert s["kind"] in ("ranked", "unranked")
@@ -111,7 +112,7 @@ def test_get_hero_every_section(owner: tuple[TestClient, str]) -> None:  # noqa:
 
 def test_get_hero_view_and_map(owner: tuple[TestClient, str]) -> None:  # noqa: F811
     c, token = owner
-    h = call_tool(c, token, "get_hero", hero="Ana", mode="qm", region="kr", map="용의 둥지")
+    h = call_tool(c, token, "get_hero", hero="Abathur", mode="qm", region="kr", map="용의 둥지")
     assert h["view"] == {"mode": "qm", "bracket": "all", "region": "kr", "map": "Dragon Shire"}
     assert [c["bracket"] for c in h["grid"][0]["cells"]] == ["all"]
     # Storm League-only sections stay world-wide Storm League, as on the site

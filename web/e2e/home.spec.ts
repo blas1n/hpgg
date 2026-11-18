@@ -4,15 +4,15 @@ test.beforeEach(async ({ page }) => {
   await page.route("**/gc.zgo.at/**", (r) => r.abort());
 });
 
-// Home + global header, against the frozen e2e data set (web/tests/e2e-data).
+// Home + global header, against the frozen synthetic e2e data set (web/tests/e2e-data).
 
 test("home: role leaders, top 10, movers, map cards and the mode toggle", async ({ page }) => {
   await page.goto("./");
   await expect(page.locator("#meta-line")).toContainText("빠른 대전");
   await expect(page.locator('#role-top [data-card="role"]')).toHaveCount(6);
-  await expect(page.locator('#role-top [data-card="role"][data-role="Healer"]')).toContainText("화이트메인"); // top QM healer in the fixture
+  await expect(page.locator('#role-top [data-card="role"][data-role="Healer"]')).toContainText("티란데"); // top QM healer in the fixture
   await expect(page.locator("#top10 tbody tr")).toHaveCount(10);
-  await expect(page.locator("#top10 tbody tr").first()).toHaveAttribute("data-hero", "qhira");
+  await expect(page.locator("#top10 tbody tr").first()).toHaveAttribute("data-hero", "raynor");
   await expect(page.locator("#movers-sub")).toContainText("직전 패치"); // previous data exists in the fixture
   await expect(page.locator('#map-grid [data-card="map"]')).toHaveCount(1); // the fixture's SL has one real map
   await expect(page.locator('#map-grid [data-card="map"][data-map="cursed-hollow"]')).toHaveAttribute("href", "/ko/hots/maps/cursed-hollow/"); // the map page (#9)

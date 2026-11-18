@@ -4,7 +4,7 @@ test.beforeEach(async ({ page }) => {
   await page.route("**/gc.zgo.at/**", (r) => r.abort());
 });
 
-// Built against web/tests/e2e-data (frozen 2026-09-28 fixtures), see `npm run e2e`.
+// Built against web/tests/e2e-data (synthetic fixtures dated 2026-09-28), see `npm run e2e`.
 
 const row = (page: Page, slug: string) => page.locator(`#rows tr[data-hero="${slug}"]`);
 const tierOf = async (page: Page, slug: string) => row(page, slug).getAttribute("data-tier");
@@ -15,11 +15,11 @@ test("default view is Quick Match, all maps, no map dropdown, ban column hidden;
   await expect(page.locator("#mode-qm")).toHaveAttribute("aria-pressed", "true");
   await expect(page.locator("#map-wrap")).toBeHidden();
   await expect(page.locator('th[data-col="ban_rate"]')).toBeHidden();
-  expect(await tierOf(page, "illidan")).toBe("B");
-  expect(await tierOf(page, "azmodan")).toBe("S");
-  expect(await tierOf(page, "brightwing")).toBe("A");
+  expect(await tierOf(page, "illidan")).toBe("S");
+  expect(await tierOf(page, "azmodan")).toBe("C");
+  expect(await tierOf(page, "brightwing")).toBe("F");
   // default order is by score: first row is rank #1
-  await expect(page.locator("#rows tr[data-hero]").first()).toHaveAttribute("data-hero", "qhira");
+  await expect(page.locator("#rows tr[data-hero]").first()).toHaveAttribute("data-hero", "raynor");
   await expect(page.locator("#rows tr[data-hero]").first().locator('td[data-col="rank"] [data-v]')).toHaveText("1");
 });
 
@@ -29,7 +29,7 @@ test("score, win rate, pick rate and sample size all show plain numbers (no sing
   const r = row(page, "illidan");
   for (const col of ["score", "win_rate", "pick", "games"]) await expect(r.locator(`td[data-col="${col}"] [data-v]`)).not.toHaveText("");
   await expect(r.locator('td[data-col="win_rate"] [data-v]')).toContainText("%");
-  await expect(r.locator('td[data-col="tier"] .tier-badge')).toHaveText("B");
+  await expect(r.locator('td[data-col="tier"] .tier-badge')).toHaveText("S");
 });
 
 test("sorting by pick rate reorders rows and is reflected in the URL; tiers stay", async ({ page }) => {
@@ -37,8 +37,8 @@ test("sorting by pick rate reorders rows and is reflected in the URL; tiers stay
   await page.locator('th[data-sort="pick"] button').click();
   await expect(page).toHaveURL(/sort=pick/);
   await expect(page.locator('th[data-sort="pick"]')).toHaveAttribute("aria-sort", "descending");
-  await expect(page.locator("#rows tr[data-hero]").first()).toHaveAttribute("data-hero", "abathur"); // 35% pick in QM
-  expect(await tierOf(page, "abathur")).toBe("S");
+  await expect(page.locator("#rows tr[data-hero]").first()).toHaveAttribute("data-hero", "arthas"); // the highest pick rate in QM
+  expect(await tierOf(page, "arthas")).toBe("A");
   await page.locator('th[data-sort="pick"] button').click();
   await expect(page.locator('th[data-sort="pick"]')).toHaveAttribute("aria-sort", "ascending");
   await expect(page).toHaveURL(/dir=asc/);
@@ -52,7 +52,7 @@ test("the rank and tier headers return a re-sorted table to the ranked order", a
     await page.locator(`th[data-col="${col}"] button`).click();
     await expect(page).not.toHaveURL(/sort=|dir=/);
     await expect(page.locator('th[data-sort="score"]')).toHaveAttribute("aria-sort", "descending");
-    await expect(page.locator("#rows tr[data-hero]").first()).toHaveAttribute("data-hero", "qhira");
+    await expect(page.locator("#rows tr[data-hero]").first()).toHaveAttribute("data-hero", "raynor");
     await expect(page.locator("#rows tr[data-tier-group]").first()).toBeVisible(); // tier dividers are back
   }
 });
@@ -62,7 +62,7 @@ test("the rank header is a button on a phone too (the tier column is folded ther
   await page.goto("./tier/?sort=pick");
   await page.locator('th[data-col="rank"] button').click();
   await expect(page).not.toHaveURL(/sort=/);
-  await expect(page.locator("#rows tr[data-hero]").first()).toHaveAttribute("data-hero", "qhira");
+  await expect(page.locator("#rows tr[data-hero]").first()).toHaveAttribute("data-hero", "raynor");
 });
 
 test("role filter hides other roles but keeps tiers (computed on everyone)", async ({ page }) => {
@@ -71,7 +71,7 @@ test("role filter hides other roles but keeps tiers (computed on everyone)", asy
   await expect(page).toHaveURL(/role=Healer/);
   await expect(row(page, "brightwing")).toBeVisible();
   await expect(row(page, "illidan")).toHaveCount(0);
-  expect(await tierOf(page, "brightwing")).toBe("A");
+  expect(await tierOf(page, "brightwing")).toBe("F");
 });
 
 test("Storm League: map dropdown and ban column appear, tiers change", async ({ page }) => {
@@ -90,8 +90,8 @@ test("Storm League: map dropdown and ban column appear, tiers change", async ({ 
   await expect(page.locator("#map-wrap")).toBeVisible();
   await expect(page.locator('th[data-col="ban_rate"]')).toBeVisible();
   await expect(page).toHaveURL(/mode=sl/);
-  expect(await tierOf(page, "illidan")).toBe("A");
-  expect(await tierOf(page, "brightwing")).toBe("F");
+  expect(await tierOf(page, "illidan")).toBe("C");
+  expect(await tierOf(page, "brightwing")).toBe("A");
   await expect(row(page, "brightwing").locator('td[data-col="ban_rate"] [data-v]')).toContainText("%");
   // in Storm League the row goes to the hero page in Storm League
   await expect(row(page, "brightwing").locator("a[data-link]")).toHaveAttribute("href", "/ko/hots/heroes/brightwing/?mode=sl");
@@ -121,18 +121,19 @@ test("a row goes straight to the hero page: the name is the link, a click anywhe
 });
 
 test("the tier table's mode, region and bracket carry into the hero page (owner 2026-10-27)", async ({ page }) => {
+  // Raynor: ranked in KR high (Illidan is under 200 games there, a grey row with no link)
   await page.goto("./tier/?mode=sl&region=kr&tier=high");
-  const link = row(page, "illidan").locator("a[data-link]");
-  await expect(link).toHaveAttribute("href", "/ko/hots/heroes/illidan/?mode=sl&region=kr&tier=high");
+  const link = row(page, "raynor").locator("a[data-link]");
+  await expect(link).toHaveAttribute("href", "/ko/hots/heroes/raynor/?mode=sl&region=kr&tier=high");
   await link.click();
-  await expect(page.locator("h1")).toHaveText("일리단");
+  await expect(page.locator("h1")).toHaveText("레이너");
   await expect(page.locator("#hero-region")).toHaveValue("kr");
   await expect(page.locator("#hero-bracket")).toHaveValue("high");
   await expect(page.locator('#grid [data-cell="kr-high"]')).toHaveAttribute("aria-pressed", "true");
   // a filter changed on the table after load rides along too; Quick Match has no bracket
   await page.goto("./tier/");
   await page.locator("#region").selectOption("kr");
-  await expect(row(page, "illidan").locator("a[data-link]")).toHaveAttribute("href", "/ko/hots/heroes/illidan/?region=kr");
+  await expect(row(page, "raynor").locator("a[data-link]")).toHaveAttribute("href", "/ko/hots/heroes/raynor/?region=kr");
 });
 
 test("the table keeps its full width on a phone, with the name readable", async ({ page }) => {
@@ -169,12 +170,12 @@ test("no horizontal scroll on a phone and the formula is printed", async ({ page
 
 test("party correction (#36): Quick Match ranks by the corrected win rate, shows the raw one, and prints how", async ({ page }) => {
   await page.goto("./tier/");
-  // the fixture corrects only The Butcher (52.56% → 44): it sinks to F, its win-rate cell stays raw
+  // the fixture corrects only The Butcher (raw 55.8% → 44): it sinks to F, its win-rate cell stays raw
   expect(await tierOf(page, "the-butcher")).toBe("F");
-  await expect(row(page, "the-butcher").locator('td[data-col="win_rate"]')).toContainText("52.6");
+  await expect(row(page, "the-butcher").locator('td[data-col="win_rate"]')).toContainText("55.8");
   await expect(page.locator("#formula")).toContainText("승률은 파티 보정(솔로 큐 기준, k=1000) 후 표본 수축(k=500)");
   await page.locator("#formula + details summary").click();
-  await expect(page.locator("#formula + details pre")).toContainText("보정승률 = 승률 + (솔로승률 + 1.37 − 승률)");
+  await expect(page.locator("#formula + details pre")).toContainText("보정승률 = 승률 + (솔로승률 + 1.60 − 승률)");
   // the Storm League fixture has no correction: nothing is claimed
   await page.goto("./tier/?mode=sl");
   await expect(page.locator("#formula")).toContainText("픽률 × (승률 − 50) × 3");
@@ -241,7 +242,7 @@ test("무작위 영웅 대전 is a mode of the tier table: one view of every reg
   await expect(page).toHaveURL(/mode=ar/);
   await expect(page).not.toHaveURL(/region=/);
   await expect(page.locator("#meta-line")).toContainText("무작위 영웅 대전");
-  await expect(page.locator("#meta-line")).toContainText("12,345");
+  await expect(page.locator("#meta-line")).toContainText("97,009");
   await expect(page.locator("#region-wrap")).toHaveCount(0);
   await expect(page.locator("#bracket-wrap")).toHaveCount(0);
   await expect(page.locator("#map-wrap")).toHaveCount(0);
@@ -249,7 +250,7 @@ test("무작위 영웅 대전 is a mode of the tier table: one view of every reg
   await expect(page.locator('th[data-col="ban_rate"]')).toHaveCount(0);
   await expect(page.locator("#rows tr[data-hero]")).toHaveCount(90);
   // ranked on its own numbers, not Quick Match's
-  await expect(page.locator("#rows tr[data-hero]").first()).not.toHaveAttribute("data-hero", "qhira");
+  await expect(page.locator("#rows tr[data-hero]").first()).not.toHaveAttribute("data-hero", "raynor");
   await expect(page.locator("#formula")).toContainText("1000");
   // a hero row opens the hero page (which has QM and SL only)
   await expect(page.locator('#rows tr[data-hero="illidan"] a[data-link]')).toHaveAttribute("href", "/ko/hots/heroes/illidan/");
