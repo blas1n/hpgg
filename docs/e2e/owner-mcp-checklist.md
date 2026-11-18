@@ -6,7 +6,7 @@ the real HP, the live tunnel and ChatGPT can answer.
 
 ## Local, real HP (done 2026-11-11, before the PR)
 
-Server on 127.0.0.1 with the real HP key, `MCP_OWNER_BATTLETAG=blAs1N#3479`,
+Server on 127.0.0.1 with the real HP key, `MCP_OWNER_BATTLETAG=Player11#1011`,
 `MCP_REPLAYS_PER_SYNC=5`, an access token inserted by hand (no ChatGPT, no Battle.net).
 
 - [x] `get_status` → 267 games stored, 2026-10-08 ~ 11-10; HP profile SL 142W 125L = 267
@@ -22,7 +22,7 @@ Server on 127.0.0.1 with the real HP key, `MCP_OWNER_BATTLETAG=blAs1N#3479`,
 
 ## After deploy (owner)
 
-`deploy/.env` on the Mac mini: `MCP_OWNER_BATTLETAG=blAs1N#3479`, then redeploy.
+`deploy/.env` on the Mac mini: `MCP_OWNER_BATTLETAG=Player11#1011`, then redeploy.
 
 - [ ] `curl -s https://api.hpgg.win/.well-known/oauth-authorization-server` → issuer
       `https://api.hpgg.win`, `registration_endpoint`, `S256`
