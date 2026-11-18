@@ -218,6 +218,8 @@ test("blocked storage: the switch still changes the language, no page error", as
   const errors: string[] = [];
   page.on("pageerror", (e) => errors.push(e.message));
   await page.goto("./heroes/");
+  // blocked storage cannot remember "hide for today": the shutdown notice opens, and closing it works without storage
+  await page.getByRole("dialog").getByRole("button", { name: "닫기" }).click();
   await page.locator("#lang-toggle").click();
   await expect(page).toHaveURL(/\/en\/hots\/heroes\/$/);
   await expect(page.locator("h1")).toHaveText("Heroes");

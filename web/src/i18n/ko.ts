@@ -61,6 +61,17 @@ export const ko = {
     toDark: "다크 테마로 전환",
     toLight: "라이트 테마로 전환",
   },
+  shutdown: {
+    title: "hpgg.win 서비스 종료 안내",
+    body: [
+      "hpgg.win은 2026년 11월 28일에 서비스를 종료합니다.",
+      "그날까지 통계는 매일 갱신되고, 모든 기능을 지금처럼 쓸 수 있습니다.",
+      "종료와 함께 Battle.net 로그인 계정 정보와 댓글을 포함한 모든 데이터를 삭제합니다.",
+      "그동안 hpgg.win을 이용해 주셔서 진심으로 감사합니다.",
+    ],
+    hideToday: "오늘 하루 보지 않기",
+    close: "닫기",
+  },
   search: {
     label: "영웅 또는 배틀태그 검색",
     placeholder: "영웅 이름 또는 배틀태그#1234",

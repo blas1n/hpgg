@@ -60,6 +60,8 @@ test("theme: blocked storage still renders navy and the toggle still works for t
   const errors: string[] = [];
   page.on("pageerror", (e) => errors.push(e.message));
   await page.goto("./");
+  // blocked storage cannot remember "hide for today": the shutdown notice opens, and closing it works without storage
+  await page.getByRole("dialog").getByRole("button", { name: "닫기" }).click();
   expect(await bodyBg(page)).toBe("rgb(14, 17, 24)");
   await page.locator("#theme-toggle").click();
   await expect(page.locator("html")).toHaveAttribute("data-theme", "light");

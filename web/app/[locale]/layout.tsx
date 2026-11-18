@@ -1,5 +1,6 @@
 import { localeParams } from "@/i18n/locale";
 import { LocaleProvider } from "@/i18n/client";
+import { ShutdownNotice } from "@/components/ShutdownNotice";
 import { pageLocale, type LocaleProps } from "@/routes/params";
 import { HeadScripts, rootMetadata, rootViewport } from "@/routes/root";
 import Script from "next/script";
@@ -20,7 +21,10 @@ export default async function RootLayout(props: LocaleProps & { children: React.
         <HeadScripts locale={locale} />
       </head>
       <body>
-        <LocaleProvider locale={locale}>{props.children}</LocaleProvider>
+        <LocaleProvider locale={locale}>
+          {props.children}
+          <ShutdownNotice />
+        </LocaleProvider>
         <Script data-goatcounter="https://hpgg.goatcounter.com/count" src="https://gc.zgo.at/count.js" strategy="afterInteractive" />
       </body>
     </html>
