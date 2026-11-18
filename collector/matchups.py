@@ -4,7 +4,7 @@ Recorded 2026-09-29 (Abathur, sl, minor 2.55.17.98025 — tests/fixtures/live_pr
 - one hero per call; answer `{"ally": [...], "enemy": [...], "combined": [...]}` with one row per
   other hero: `{hero: {name, ...}, role, wins, losses, games_played, win_rate, hovertext}`.
 - `wins`/`losses` are the asked hero's on both lists, but `win_rate` is not: on `enemy` it is the
-  LOSS rate ("Lost against a team with Fenix 59.62% of games"). We recompute from wins/games.
+  LOSS rate ("Lost against a team with <hero> 58.1% of games"). We recompute from wins/games.
 - `combined` repeats ally/enemy with the other hero's overall stats — not stored.
 - bucket Hero/Matchups 700/rolling week; 60 requests/minute (X-RateLimit-Limit without
   group_by_map); cache hits answer 200 straight away, misses go through 202 polling.
