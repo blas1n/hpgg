@@ -60,6 +60,17 @@ export const en: Messages = {
     toDark: "Switch to the dark theme",
     toLight: "Switch to the light theme",
   },
+  shutdown: {
+    title: "hpgg.win is shutting down",
+    body: [
+      "hpgg.win will shut down on November 28, 2026.",
+      "Until then the stats keep updating daily and every feature works as it does today.",
+      "When the service ends, all data is deleted, including Battle.net sign-in accounts and comments.",
+      "Thank you for using hpgg.win.",
+    ],
+    hideToday: "Don't show again today",
+    close: "Close",
+  },
   search: {
     label: "Search a hero or a BattleTag",
     placeholder: "Hero name or BattleTag#1234",
