@@ -9,61 +9,34 @@
   "x-ratelimit-remaining": "55"
  },
  "body": {
-  "wins": 3502,
-  "losses": 3182,
-  "first_to_ten_wins": 938,
-  "first_to_ten_losses": 469,
-  "first_to_ten_win_rate": 66.67,
-  "second_to_ten_wins": 2564,
-  "second_to_ten_losses": 2713,
-  "second_to_ten_win_rate": 48.59,
-  "kdr": 1.12,
-  "kda": 4.54,
-  "account_level": 1802,
-  "win_rate": 52.39,
-  "bruiser_win_rate": 56.46,
-  "support_win_rate": 46.46,
-  "ranged_assassin_win_rate": 52.78,
-  "melee_assassin_win_rate": 50.74,
-  "healer_win_rate": 52.41,
-  "tank_win_rate": 48.52,
-  "mvp_rate": 17.82,
-  "total_time_played": "88 days, 9 hours, 4 minutes, 8 seconds",
-  "average_time_on_fire": "1 minutes, 49 seconds",
+  "wins": 1634,
+  "losses": 1190,
+  "first_to_ten_wins": 130,
+  "first_to_ten_losses": 695,
+  "first_to_ten_win_rate": 15.76,
+  "second_to_ten_wins": 7742,
+  "second_to_ten_losses": 7484,
+  "second_to_ten_win_rate": 50.85,
+  "kdr": 5.28,
+  "kda": 5.88,
+  "account_level": 9485,
+  "win_rate": 57.86,
+  "bruiser_win_rate": 55.78,
+  "support_win_rate": 53.07,
+  "ranged_assassin_win_rate": 59.48,
+  "melee_assassin_win_rate": 59.8,
+  "healer_win_rate": 43.93,
+  "tank_win_rate": 52.78,
+  "mvp_rate": 85.81,
+  "total_time_played": "89 days, 1 hours, 2 minutes, 2 seconds",
+  "average_time_on_fire": "9 minutes, 83 seconds",
   "heroes_three_highest_win_rate": [
    {
-    "wins": 47,
-    "losses": 22,
-    "games_played": 69,
-    "game_date": "2026-09-22 21:17:15",
-    "win_rate": 68.12,
-    "hero_id": 51,
-    "hero": {
-     "id": 51,
-     "name": "Stitches",
-     "short_name": "stitches",
-     "alt_name": null,
-     "role": "Warrior",
-     "new_role": "Tank",
-     "type": "Melee",
-     "release_date": "2014-03-13 00:00:00",
-     "rework_date": null,
-     "last_change_patch_version": "2.55.4.91769",
-     "attribute_id": "Stit",
-     "build_copy_name": "Stitches",
-     "last_updated": "2024-02-06 18:32:51"
-    },
-    "blizz_id": 67280,
-    "region": 1,
-    "battletag": "Zemill#1940",
-    "hovertext": "68.12% win rate over 69 games"
-   },
-   {
-    "wins": 74,
-    "losses": 38,
-    "games_played": 112,
+    "wins": 418,
+    "losses": 342,
+    "games_played": 760,
     "game_date": "2026-08-24 17:07:02",
-    "win_rate": 66.07,
+    "win_rate": 55.0,
     "hero_id": 44,
     "hero": {
      "id": 44,
@@ -80,17 +53,17 @@
      "build_copy_name": "Ragnaros",
      "last_updated": "2024-02-06 18:32:51"
     },
-    "blizz_id": 67280,
+    "blizz_id": 41679,
     "region": 1,
-    "battletag": "Zemill#1940",
-    "hovertext": "66.07% win rate over 112 games"
+    "battletag": "Player12#1012",
+    "hovertext": "55.0% win rate over 760 games"
    },
    {
-    "wins": 13,
-    "losses": 7,
-    "games_played": 20,
+    "wins": 33,
+    "losses": 27,
+    "games_played": 60,
     "game_date": "2025-06-10 00:30:06",
-    "win_rate": 65,
+    "win_rate": 55,
     "hero_id": 49,
     "hero": {
      "id": 49,
@@ -107,19 +80,46 @@
      "build_copy_name": "SgtHammer",
      "last_updated": "2024-02-02 15:34:06"
     },
-    "blizz_id": 67280,
+    "blizz_id": 41679,
     "region": 1,
-    "battletag": "Zemill#1940",
-    "hovertext": "65% win rate over 20 games"
+    "battletag": "Player12#1012",
+    "hovertext": "55% win rate over 60 games"
+   },
+   {
+    "wins": 41,
+    "losses": 50,
+    "games_played": 91,
+    "game_date": "2026-09-22 21:17:15",
+    "win_rate": 45.05,
+    "hero_id": 51,
+    "hero": {
+     "id": 51,
+     "name": "Stitches",
+     "short_name": "stitches",
+     "alt_name": null,
+     "role": "Warrior",
+     "new_role": "Tank",
+     "type": "Melee",
+     "release_date": "2014-03-13 00:00:00",
+     "rework_date": null,
+     "last_change_patch_version": "2.55.4.91769",
+     "attribute_id": "Stit",
+     "build_copy_name": "Stitches",
+     "last_updated": "2024-02-06 18:32:51"
+    },
+    "blizz_id": 41679,
+    "region": 1,
+    "battletag": "Player12#1012",
+    "hovertext": "45.05% win rate over 91 games"
    }
   ],
   "heroes_three_most_played": [
    {
-    "wins": 175,
-    "losses": 125,
-    "games_played": 300,
+    "wins": 436,
+    "losses": 450,
+    "games_played": 886,
     "game_date": "2026-09-26 02:32:09",
-    "win_rate": 58.33,
+    "win_rate": 49.21,
     "hero_id": 34,
     "hero": {
      "id": 34,
@@ -136,44 +136,17 @@
      "build_copy_name": "Lucio",
      "last_updated": "2024-02-06 18:32:51"
     },
-    "blizz_id": 67280,
+    "blizz_id": 41679,
     "region": 1,
-    "battletag": "Zemill#1940",
-    "hovertext": "58.33% win rate over 300 games"
+    "battletag": "Player12#1012",
+    "hovertext": "49.21% win rate over 886 games"
    },
    {
-    "wins": 143,
-    "losses": 118,
-    "games_played": 261,
-    "game_date": "2026-09-22 14:13:26",
-    "win_rate": 54.79,
-    "hero_id": 32,
-    "hero": {
-     "id": 32,
-     "name": "Li-Ming",
-     "short_name": "liming",
-     "alt_name": "Wizard",
-     "role": "Assassin",
-     "new_role": "Ranged Assassin",
-     "type": "Ranged",
-     "release_date": "2016-02-02 00:00:00",
-     "rework_date": null,
-     "last_change_patch_version": "2.55.4.91769",
-     "attribute_id": "Wiza",
-     "build_copy_name": "LiMing",
-     "last_updated": "2024-02-06 18:32:51"
-    },
-    "blizz_id": 67280,
-    "region": 1,
-    "battletag": "Zemill#1940",
-    "hovertext": "54.79% win rate over 261 games"
-   },
-   {
-    "wins": 122,
-    "losses": 119,
-    "games_played": 241,
+    "wins": 165,
+    "losses": 139,
+    "games_played": 304,
     "game_date": "2026-09-26 02:01:10",
-    "win_rate": 50.62,
+    "win_rate": 54.28,
     "hero_id": 71,
     "hero": {
      "id": 71,
@@ -190,19 +163,46 @@
      "build_copy_name": "KelThuzad",
      "last_updated": "2024-02-02 15:34:06"
     },
-    "blizz_id": 67280,
+    "blizz_id": 41679,
     "region": 1,
-    "battletag": "Zemill#1940",
-    "hovertext": "50.62% win rate over 241 games"
+    "battletag": "Player12#1012",
+    "hovertext": "54.28% win rate over 304 games"
+   },
+   {
+    "wins": 100,
+    "losses": 81,
+    "games_played": 181,
+    "game_date": "2026-09-22 14:13:26",
+    "win_rate": 55.25,
+    "hero_id": 32,
+    "hero": {
+     "id": 32,
+     "name": "Li-Ming",
+     "short_name": "liming",
+     "alt_name": "Wizard",
+     "role": "Assassin",
+     "new_role": "Ranged Assassin",
+     "type": "Ranged",
+     "release_date": "2016-02-02 00:00:00",
+     "rework_date": null,
+     "last_change_patch_version": "2.55.4.91769",
+     "attribute_id": "Wiza",
+     "build_copy_name": "LiMing",
+     "last_updated": "2024-02-06 18:32:51"
+    },
+    "blizz_id": 41679,
+    "region": 1,
+    "battletag": "Player12#1012",
+    "hovertext": "55.25% win rate over 181 games"
    }
   ],
   "heroes_three_latest_played": [
    {
-    "wins": 59,
-    "losses": 54,
-    "games_played": 113,
+    "wins": 186,
+    "losses": 274,
+    "games_played": 460,
     "game_date": "2026-09-28 01:20:39",
-    "win_rate": 52.21,
+    "win_rate": 40.43,
     "hero_id": 80,
     "hero": {
      "id": 80,
@@ -219,17 +219,17 @@
      "build_copy_name": "Deckard",
      "last_updated": "2024-02-06 18:32:51"
     },
-    "blizz_id": 67280,
+    "blizz_id": 41679,
     "region": 1,
-    "battletag": "Zemill#1940",
-    "hovertext": "52.21% win rate over 113 games"
+    "battletag": "Player12#1012",
+    "hovertext": "40.43% win rate over 460 games"
    },
    {
-    "wins": 32,
-    "losses": 35,
-    "games_played": 67,
+    "wins": 57,
+    "losses": 42,
+    "games_played": 99,
     "game_date": "2026-09-28 00:42:19",
-    "win_rate": 47.76,
+    "win_rate": 57.58,
     "hero_id": 87,
     "hero": {
      "id": 87,
@@ -246,17 +246,17 @@
      "build_copy_name": "Anduin",
      "last_updated": "2024-02-06 18:32:51"
     },
-    "blizz_id": 67280,
+    "blizz_id": 41679,
     "region": 1,
-    "battletag": "Zemill#1940",
-    "hovertext": "47.76% win rate over 67 games"
+    "battletag": "Player12#1012",
+    "hovertext": "57.58% win rate over 99 games"
    },
    {
-    "wins": 55,
-    "losses": 46,
-    "games_played": 101,
+    "wins": 360,
+    "losses": 388,
+    "games_played": 748,
     "game_date": "2026-09-27 20:46:06",
-    "win_rate": 54.46,
+    "win_rate": 48.13,
     "hero_id": 74,
     "hero": {
      "id": 74,
@@ -273,88 +273,67 @@
      "build_copy_name": "Alexstrasza",
      "last_updated": "2024-02-02 15:34:06"
     },
-    "blizz_id": 67280,
+    "blizz_id": 41679,
     "region": 1,
-    "battletag": "Zemill#1940",
-    "hovertext": "54.46% win rate over 101 games"
+    "battletag": "Player12#1012",
+    "hovertext": "48.13% win rate over 748 games"
    }
   ],
   "qm_mmr_data": {
-   "conservative_rating": 26.172046344553124,
-   "win": 1898,
-   "loss": 1761,
+   "conservative_rating": 52.845,
+   "win": 7822,
+   "loss": 5362,
    "rank_tier": "Master",
-   "win_rate": 51.87,
-   "mmr": 2847
+   "win_rate": 59.3,
+   "mmr": 4032
   },
   "ud_mmr_data": {
-   "conservative_rating": 27.2455344183549,
-   "win": 96,
-   "loss": 65,
+   "conservative_rating": 42.2678,
+   "win": 83,
+   "loss": 48,
    "rank_tier": "Master",
-   "win_rate": 59.63,
-   "mmr": 2890
+   "win_rate": 63.36,
+   "mmr": 6684
   },
   "hl_mmr_data": {
-   "conservative_rating": 26.482500631407536,
-   "win": 568,
-   "loss": 506,
+   "conservative_rating": 30.9309,
+   "win": 271,
+   "loss": 198,
    "rank_tier": "Master",
-   "win_rate": 52.89,
-   "mmr": 2859
+   "win_rate": 57.78,
+   "mmr": 7120
   },
   "tl_mmr_data": {
-   "conservative_rating": 28.1994094095073,
-   "win": 39,
-   "loss": 31,
+   "conservative_rating": 61.059,
+   "win": 13,
+   "loss": 98,
    "rank_tier": "Diamond 1",
-   "win_rate": 55.71,
-   "mmr": 2928
+   "win_rate": 11.71,
+   "mmr": 6711
   },
   "sl_mmr_data": {
-   "conservative_rating": 27.7064399127825,
-   "win": 48,
-   "loss": 45,
+   "conservative_rating": 35.113,
+   "win": 17,
+   "loss": 62,
    "rank_tier": "Diamond 2",
-   "win_rate": 51.61,
-   "mmr": 2908
+   "win_rate": 21.52,
+   "mmr": 5524
   },
   "ar_mmr_data": {
-   "conservative_rating": 25.056415957597245,
-   "win": 853,
-   "loss": 773,
+   "conservative_rating": 47.0688,
+   "win": 937,
+   "loss": 764,
    "rank_tier": "Diamond 5",
-   "win_rate": 52.46,
-   "mmr": 2802
+   "win_rate": 55.09,
+   "mmr": 5341
   },
   "maps_three_highest_win_rate": [
    {
-    "wins": 265,
-    "losses": 190,
-    "games_played": 455,
-    "game_date": "2022-11-29 03:42:52",
-    "win_rate": 58.24,
-    "map_id": 4,
-    "game_map": {
-     "map_id": 4,
-     "name": "Cursed Hollow",
-     "short_name": "CursedHollow",
-     "type": "standard",
-     "ranked_rotation": 1,
-     "playable": 1,
-     "sanitized_map_name": "cursed_hollow"
-    },
-    "blizz_id": 67280,
-    "region": 1,
-    "battletag": "Zemill#1940",
-    "hovertext": "58.24% win rate over 455 games"
-   },
-   {
-    "wins": 96,
-    "losses": 69,
-    "games_played": 165,
+    "wins": 221,
+    "losses": 302,
+    "games_played": 523,
     "game_date": "2025-06-10 00:48:38",
-    "win_rate": 58.18,
+    "win_rate": 42.26,
     "map_id": 7,
     "game_map": {
      "map_id": 7,
@@ -365,17 +344,38 @@
      "playable": 1,
      "sanitized_map_name": "hanamura_temple"
     },
-    "blizz_id": 67280,
+    "blizz_id": 41679,
     "region": 1,
-    "battletag": "Zemill#1940",
-    "hovertext": "58.18% win rate over 165 games"
+    "battletag": "Player12#1012",
+    "hovertext": "42.26% win rate over 523 games"
    },
    {
-    "wins": 91,
-    "losses": 70,
-    "games_played": 161,
+    "wins": 245,
+    "losses": 225,
+    "games_played": 470,
+    "game_date": "2022-11-29 03:42:52",
+    "win_rate": 52.13,
+    "map_id": 4,
+    "game_map": {
+     "map_id": 4,
+     "name": "Cursed Hollow",
+     "short_name": "CursedHollow",
+     "type": "standard",
+     "ranked_rotation": 1,
+     "playable": 1,
+     "sanitized_map_name": "cursed_hollow"
+    },
+    "blizz_id": 41679,
+    "region": 1,
+    "battletag": "Player12#1012",
+    "hovertext": "52.13% win rate over 470 games"
+   },
+   {
+    "wins": 108,
+    "losses": 136,
+    "games_played": 244,
     "game_date": "2022-07-22 16:19:28",
-    "win_rate": 56.52,
+    "win_rate": 44.26,
     "map_id": 15,
     "game_map": {
      "map_id": 15,
@@ -386,40 +386,19 @@
      "playable": 1,
      "sanitized_map_name": "alterac_pass"
     },
-    "blizz_id": 67280,
+    "blizz_id": 41679,
     "region": 1,
-    "battletag": "Zemill#1940",
-    "hovertext": "56.52% win rate over 161 games"
+    "battletag": "Player12#1012",
+    "hovertext": "44.26% win rate over 244 games"
    }
   ],
   "maps_three_most_played": [
    {
-    "wins": 257,
-    "losses": 242,
-    "games_played": 499,
-    "game_date": "2026-09-27 20:46:06",
-    "win_rate": 51.5,
-    "map_id": 21,
-    "game_map": {
-     "map_id": 21,
-     "name": "Braxis Outpost",
-     "short_name": "BraxisOutpost",
-     "type": "ARAM",
-     "ranked_rotation": 0,
-     "playable": 1,
-     "sanitized_map_name": "braxis_outpost"
-    },
-    "blizz_id": 67280,
-    "region": 1,
-    "battletag": "Zemill#1940",
-    "hovertext": "51.5% win rate over 499 games"
-   },
-   {
-    "wins": 248,
-    "losses": 228,
-    "games_played": 476,
+    "wins": 313,
+    "losses": 429,
+    "games_played": 742,
     "game_date": "2026-09-26 23:47:57",
-    "win_rate": 52.1,
+    "win_rate": 42.2,
     "map_id": 20,
     "game_map": {
      "map_id": 20,
@@ -430,17 +409,17 @@
      "playable": 1,
      "sanitized_map_name": "silver_city"
     },
-    "blizz_id": 67280,
+    "blizz_id": 41679,
     "region": 1,
-    "battletag": "Zemill#1940",
-    "hovertext": "52.1% win rate over 476 games"
+    "battletag": "Player12#1012",
+    "hovertext": "42.2% win rate over 742 games"
    },
    {
-    "wins": 264,
-    "losses": 211,
-    "games_played": 475,
+    "wins": 187,
+    "losses": 261,
+    "games_played": 448,
     "game_date": "2026-09-26 04:01:41",
-    "win_rate": 55.58,
+    "win_rate": 41.74,
     "map_id": 18,
     "game_map": {
      "map_id": 18,
@@ -451,19 +430,40 @@
      "playable": 1,
      "sanitized_map_name": "lost_cavern"
     },
-    "blizz_id": 67280,
+    "blizz_id": 41679,
     "region": 1,
-    "battletag": "Zemill#1940",
-    "hovertext": "55.58% win rate over 475 games"
+    "battletag": "Player12#1012",
+    "hovertext": "41.74% win rate over 448 games"
+   },
+   {
+    "wins": 109,
+    "losses": 77,
+    "games_played": 186,
+    "game_date": "2026-09-27 20:46:06",
+    "win_rate": 58.6,
+    "map_id": 21,
+    "game_map": {
+     "map_id": 21,
+     "name": "Braxis Outpost",
+     "short_name": "BraxisOutpost",
+     "type": "ARAM",
+     "ranked_rotation": 0,
+     "playable": 1,
+     "sanitized_map_name": "braxis_outpost"
+    },
+    "blizz_id": 41679,
+    "region": 1,
+    "battletag": "Player12#1012",
+    "hovertext": "58.6% win rate over 186 games"
    }
   ],
   "maps_three_latest_played": [
    {
-    "wins": 108,
-    "losses": 117,
-    "games_played": 225,
+    "wins": 148,
+    "losses": 165,
+    "games_played": 313,
     "game_date": "2026-09-28 01:20:39",
-    "win_rate": 48,
+    "win_rate": 47,
     "map_id": 14,
     "game_map": {
      "map_id": 14,
@@ -474,17 +474,17 @@
      "playable": 1,
      "sanitized_map_name": "volskaya_foundry"
     },
-    "blizz_id": 67280,
+    "blizz_id": 41679,
     "region": 1,
-    "battletag": "Zemill#1940",
-    "hovertext": "48% win rate over 225 games"
+    "battletag": "Player12#1012",
+    "hovertext": "47% win rate over 313 games"
    },
    {
-    "wins": 174,
-    "losses": 150,
-    "games_played": 324,
+    "wins": 83,
+    "losses": 97,
+    "games_played": 180,
     "game_date": "2026-09-28 00:42:19",
-    "win_rate": 53.7,
+    "win_rate": 46.1,
     "map_id": 6,
     "game_map": {
      "map_id": 6,
@@ -495,17 +495,17 @@
      "playable": 1,
      "sanitized_map_name": "garden_of_terror"
     },
-    "blizz_id": 67280,
+    "blizz_id": 41679,
     "region": 1,
-    "battletag": "Zemill#1940",
-    "hovertext": "53.7% win rate over 324 games"
+    "battletag": "Player12#1012",
+    "hovertext": "46.1% win rate over 180 games"
    },
    {
-    "wins": 204,
-    "losses": 197,
-    "games_played": 401,
+    "wins": 212,
+    "losses": 152,
+    "games_played": 364,
     "game_date": "2026-09-28 00:00:47",
-    "win_rate": 50.87,
+    "win_rate": 58.24,
     "map_id": 5,
     "game_map": {
      "map_id": 5,
@@ -516,30 +516,30 @@
      "playable": 1,
      "sanitized_map_name": "dragon_shire"
     },
-    "blizz_id": 67280,
+    "blizz_id": 41679,
     "region": 1,
-    "battletag": "Zemill#1940",
-    "hovertext": "50.87% win rate over 401 games"
+    "battletag": "Player12#1012",
+    "hovertext": "58.24% win rate over 364 games"
    }
   ],
-  "stack_one_wins": 649,
-  "stack_one_losses": 592,
-  "stack_one_win_rate": 52.3,
-  "stack_two_wins": 265,
-  "stack_two_losses": 251,
-  "stack_two_win_rate": 51.36,
-  "stack_three_wins": 282,
-  "stack_three_losses": 255,
-  "stack_three_win_rate": 52.51,
-  "stack_four_wins": 195,
-  "stack_four_losses": 188,
-  "stack_four_win_rate": 50.91,
-  "stack_five_wins": 187,
-  "stack_five_losses": 152,
-  "stack_five_win_rate": 55.16,
+  "stack_one_wins": 294,
+  "stack_one_losses": 237,
+  "stack_one_win_rate": 55.4,
+  "stack_two_wins": 675,
+  "stack_two_losses": 283,
+  "stack_two_win_rate": 70.46,
+  "stack_three_wins": 633,
+  "stack_three_losses": 745,
+  "stack_three_win_rate": 45.94,
+  "stack_four_wins": 888,
+  "stack_four_losses": 823,
+  "stack_four_win_rate": 51.9,
+  "stack_five_wins": 590,
+  "stack_five_losses": 779,
+  "stack_five_win_rate": 43.1,
   "matchData": [
    {
-    "replayID": 65513747,
+    "replayID": 91585299,
     "game_type": {
      "type_id": 5,
      "name": "Storm League",
@@ -572,12 +572,12 @@
      "build_copy_name": "Deckard",
      "last_updated": "2024-02-06 18:32:51"
     },
-    "player_conservative_rating": 27.71,
-    "player_change": 2.58,
-    "hero_conservative_rating": 14.73,
-    "hero_change": 39.91,
-    "role_conservative_rating": 26.16,
-    "role_change": 3.52,
+    "player_conservative_rating": 83.15,
+    "player_change": 4.33,
+    "hero_conservative_rating": 69.65,
+    "hero_change": 72.03,
+    "role_conservative_rating": 92.37,
+    "role_change": 9.0,
     "level_one": {
      "talent_id": 407,
      "hero_name": "Deckard",
@@ -697,12 +697,12 @@
      "icon": "storm_ui_icon_deckard_stay_awhile_and_listen.png",
      "required_talent_id": null
     },
-    "player_mmr": 2908,
-    "hero_mmr": 2389,
-    "role_mmr": 2846
+    "player_mmr": 5139,
+    "hero_mmr": 9439,
+    "role_mmr": 6922
    },
    {
-    "replayID": 65513434,
+    "replayID": 88337512,
     "game_type": {
      "type_id": 5,
      "name": "Storm League",
@@ -735,12 +735,12 @@
      "build_copy_name": "Anduin",
      "last_updated": "2024-02-06 18:32:51"
     },
-    "player_conservative_rating": 27.64,
-    "player_change": -6.48,
-    "hero_conservative_rating": 0.82,
-    "hero_change": -36.6,
-    "role_conservative_rating": 26.07,
-    "role_change": -8.36,
+    "player_conservative_rating": 67.09,
+    "player_change": -2.49,
+    "hero_conservative_rating": 0.49,
+    "hero_change": -54.4,
+    "role_conservative_rating": 28.53,
+    "role_change": -9.07,
     "level_one": {
      "talent_id": 2859,
      "hero_name": "Anduin",
@@ -860,12 +860,12 @@
      "icon": "storm_ui_icon_anduin_chastise.png",
      "required_talent_id": null
     },
-    "player_mmr": 2906,
-    "hero_mmr": 1833,
-    "role_mmr": 2843
+    "player_mmr": 4970,
+    "hero_mmr": 8547,
+    "role_mmr": 8740
    },
    {
-    "replayID": 65513084,
+    "replayID": 68837378,
     "game_type": {
      "type_id": 5,
      "name": "Storm League",
@@ -898,12 +898,12 @@
      "build_copy_name": "Deckard",
      "last_updated": "2024-02-06 18:32:51"
     },
-    "player_conservative_rating": 27.8,
-    "player_change": -4.79,
-    "hero_conservative_rating": 13.73,
-    "hero_change": -65.8,
-    "role_conservative_rating": 26.28,
-    "role_change": -7.68,
+    "player_conservative_rating": 44.0,
+    "player_change": -8.02,
+    "hero_conservative_rating": 24.52,
+    "hero_change": -50.9,
+    "role_conservative_rating": 25.18,
+    "role_change": -6.21,
     "level_one": {
      "talent_id": 407,
      "hero_name": "Deckard",
@@ -1023,12 +1023,12 @@
      "icon": "storm_ui_icon_deckard_stay_awhile_and_listen.png",
      "required_talent_id": null
     },
-    "player_mmr": 2912,
-    "hero_mmr": 2349,
-    "role_mmr": 2851
+    "player_mmr": 8328,
+    "hero_mmr": 6781,
+    "role_mmr": 3531
    },
    {
-    "replayID": 65509023,
+    "replayID": 40627763,
     "game_type": {
      "type_id": 6,
      "name": "ARAM",
@@ -1061,12 +1061,12 @@
      "build_copy_name": "Alexstrasza",
      "last_updated": "2024-02-02 15:34:06"
     },
-    "player_conservative_rating": 25.06,
-    "player_change": 4.6,
-    "hero_conservative_rating": 11.97,
-    "hero_change": 30.85,
-    "role_conservative_rating": 24.22,
-    "role_change": 3.56,
+    "player_conservative_rating": 75.56,
+    "player_change": 5.5,
+    "hero_conservative_rating": 92.68,
+    "hero_change": 47.69,
+    "role_conservative_rating": 77.01,
+    "role_change": 6.94,
     "level_one": {
      "talent_id": 52,
      "hero_name": "Alexstrasza",
@@ -1186,12 +1186,12 @@
      "icon": "storm_ui_icon_alexstrasza_life_binder.png",
      "required_talent_id": 61
     },
-    "player_mmr": 2802,
-    "hero_mmr": 2279,
-    "role_mmr": 2769
+    "player_mmr": 1458,
+    "hero_mmr": 1486,
+    "role_mmr": 5372
    },
    {
-    "replayID": 65484996,
+    "replayID": 53974431,
     "game_type": {
      "type_id": 5,
      "name": "Storm League",
@@ -1224,12 +1224,12 @@
      "build_copy_name": "Auriel",
      "last_updated": "2024-02-06 18:32:51"
     },
-    "player_conservative_rating": 27.92,
-    "player_change": -3.83,
-    "hero_conservative_rating": 4.98,
-    "hero_change": -15.74,
-    "role_conservative_rating": 26.47,
-    "role_change": -2.73,
+    "player_conservative_rating": 87.94,
+    "player_change": -5.03,
+    "hero_conservative_rating": 4.97,
+    "hero_change": -95.8,
+    "role_conservative_rating": 15.75,
+    "role_change": -1.34,
     "level_one": {
      "talent_id": 185,
      "hero_name": "Auriel",
@@ -1333,9 +1333,9 @@
      "required_talent_id": null
     },
     "level_twenty": null,
-    "player_mmr": 2917,
-    "hero_mmr": 1999,
-    "role_mmr": 2859
+    "player_mmr": 3157,
+    "hero_mmr": 8030,
+    "role_mmr": 9550
    }
   ],
   "weekday_data": null

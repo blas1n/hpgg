@@ -8,8 +8,8 @@ import { navIds, sectionEnabled } from "../src/features";
 // #10: every language under /<locale>/ from one route tree (/ko/hots/…, /en/hots/…); the header switch moves between
 // them; the URLs from before (/hots/…) forward.
 
-const playerFixture = fileURLToPath(new URL("../tests/fixtures/api_player_zemill.json", import.meta.url));
-const seasonFixture = fileURLToPath(new URL("../tests/fixtures/api_season_blas1n.json", import.meta.url));
+const playerFixture = fileURLToPath(new URL("../tests/fixtures/api_player_sample.json", import.meta.url));
+const seasonFixture = fileURLToPath(new URL("../tests/fixtures/api_season_sample.json", import.meta.url));
 const HANGUL = /[가-힣ㄱ-ㆎ]/;
 
 test.beforeEach(async ({ page }) => {
@@ -97,7 +97,7 @@ test("English pages show no Korean text, including views built in the browser", 
     "/en/hots/tier/?region=kr",
     ...(sectionEnabled("draft") ? ["/en/hots/draft/?map=Cursed%20Hollow&d=illidan.zeratul.tracer.genji.abathur.uther.muradin"] : []),
     "/en/hots/heroes/illidan/?mode=sl",
-    "/en/hots/players/?tag=Zemill%231940&region=NA",
+    "/en/hots/players/?tag=Player12%231012&region=NA",
   ];
   // control: the same check finds Korean on a Korean page
   await page.goto("/ko/hots/");
@@ -117,22 +117,22 @@ test("English pages show no Korean text, including views built in the browser", 
 });
 
 test("English player page: modes, heroes and ARAM maps by their English names; links stay in English", async ({ page }) => {
-  await page.goto("/en/hots/players/?tag=Zemill%231940&region=NA");
+  await page.goto("/en/hots/players/?tag=Player12%231012&region=NA");
   await expect(page.locator("#player-result")).toHaveAttribute("data-state", "ok");
   await expect(page.locator('#player-modes [data-mode="sl"]')).toContainText("Storm League");
-  await expect(page.locator('#player-modes [data-mode="sl"]')).toContainText("2,908");
+  await expect(page.locator('#player-modes [data-mode="sl"]')).toContainText("3,168");
   await expect(page.locator('#player-modes [data-mode="ar"]')).toContainText("ARAM");
   await expect(page.locator('#player-modes [data-mode="ar"]')).toContainText("ARAM");
   await expect(page.locator("#player-maps")).toContainText("Braxis Outpost");
-  await expect(page.locator("#season-heroes li a").first()).toHaveAttribute("href", "/en/hots/heroes/ana/");
-  await expect(page.locator("#season-heroes li").first()).toContainText("Ana");
+  await expect(page.locator("#season-heroes li a").first()).toHaveAttribute("href", "/en/hots/heroes/alarak/");
+  await expect(page.locator("#season-heroes li").first()).toContainText("Alarak");
   await page.locator("#player-search-tag").fill("Someone#1234");
   await page.locator("#player-search-tag").press("Enter");
   await expect(page).toHaveURL(/\/en\/hots\/players\/\?tag=Someone%231234&region=NA$/);
 });
 
 test("Korean player page: 일반 선발전 and 무작위 영웅 대전, ARAM maps in Korean", async ({ page }) => {
-  await page.goto("./players/?tag=Zemill%231940&region=NA");
+  await page.goto("./players/?tag=Player12%231012&region=NA");
   await expect(page.locator('#player-modes [data-mode="ar"]')).toContainText("무작위 영웅 대전");
   await expect(page.locator('#player-modes [data-mode="ar"]')).toContainText("무작위 영웅 대전");
   await expect(page.locator("#player-maps")).toContainText("브락시스 전초기지");

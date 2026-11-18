@@ -45,10 +45,10 @@ def test_each_level_lists_its_talents_most_played_first() -> None:
     first = levels["1"][0]
     assert first == {
         "talent": "XalatathAnchoredCore",
-        "games": 1307,
-        "wins": 926,
-        "popularity": 73.34,
-        "win_rate": 70.85,
+        "games": 6577,
+        "wins": 3088,
+        "popularity": 49.92,
+        "win_rate": 46.95,
     }
     assert [t["talent"] for t in levels["10"]] == [
         "XalatathHeroicAbilityVoidEruption",

@@ -1,28 +1,63 @@
 # HPGG (hpgg.win)
 
-A Heroes of the Storm tier list built from match data, in Korean (default, https://hpgg.win/ko/hots/) and English (https://hpgg.win/en/hots/): Quick Match first, Storm League per map and per rank bracket, and the formula printed on the page. Data comes from the Heroes Profile API v1 once a day and is served as a static site. Design: `docs/DESIGN-2026-09-28.md`. Current state: `docs/STATUS.md`. How to operate and extend: `docs/HANDOFF.md`.
+A Heroes of the Storm statistics site, in Korean and English, that ran from 2026-09-28 to 2026-11-28. It was shut
+down when its owner stopped playing; this repository stays up as a record of how it was built.
 
-## Layout
-- `collector/` — Python 3.11+ collector. `uv run python -m collector` makes the four daily stats calls (Quick Match, Storm League overall, Storm League league_tier 1-4 / 5-6 (브실골플 / 다마그), all with `group_by_map=true`) 60 seconds apart and **atomically** replaces `data/latest/{qm,sl,sl_low,sl_high,builds,meta}.json`. Raw responses are kept as `data/.snapshot_out/<date>/*.json.gz` and archived on the `snapshots` branch.
-- `data/latest/` — the frontend contract (schema in the design doc, "latest JSON schema"); `builds.json` holds the popular talent builds per hero, per Storm League bracket (high / low).
-- `tools/build_assets.py` — regenerates `data/talents/<hero>.json` (Korean talent names, descriptions, cooldowns) and talent icons from HeroesToolChest game data (run it after a new hero ships; hero tables were produced the same way).
-- `web/` — Next.js 16 (App Router, static export, Turbopack) + React 19 + Tailwind 4 frontend. `src/formula.ts` is the tier formula (printed on the page); `npm test` runs vitest against the 2026-09-28 fixtures (13-hero verification table, cuts), `npm run e2e` runs Playwright against a frozen data set in `tests/e2e-data`. Hero/map names and roles (Korean and English) come from `data/heroes_ko.json` and `data/maps_ko.json`; UI text from `src/i18n/{ko,en}.ts`; every language is pre-rendered from one route tree `app/[locale]` (languages: `src/i18n/locales.ts`).
-- `.github/workflows/collect-and-deploy.yml` — daily cron: collect → commit → archive snapshots → deploy to Pages. A push to `main` only rebuilds and deploys.
+> **No match data in this repository.** The site's statistics came from the [Heroes Profile](https://www.heroesprofile.com)
+> API, whose terms do not allow passing that data on and require deleting it when the licence ends. The daily
+> snapshots were removed from the history at shutdown, and every test fixture that came from Heroes Profile was
+> replaced with synthetic data of the same shape (`tools/synth_fixtures.py`): random numbers, fake players.
+> Screenshots below were taken from the live site on 2026-11-18.
 
-## Local run
+| Tier list | Hero page | Player search |
+|---|---|---|
+| ![Tier list](docs/screenshots/tier-desktop.png) | ![Hero page](docs/screenshots/hero-desktop.png) | ![Player search](docs/screenshots/player-desktop.png) |
+| **Draft simulator** | **Patch notes** | **Phone** |
+| ![Draft](docs/screenshots/draft-desktop.png) | ![Patches](docs/screenshots/patches-desktop.png) | ![Phone](docs/screenshots/hero-mobile.png) |
+
+## What it did
+
+- **Tier list with the formula on the page.** Quick Match and Storm League, per map, per region and per rank
+  bracket. The score shrinks small samples toward 50 % and corrects for party play; the page prints the exact formula
+  and its numbers (`web/src/formula.ts`).
+- **Hero pages.** Win rate by map, region × bracket, rank tier and game length; counters and synergies measured
+  against the expected win rate of the two heroes; popular talent builds sorted by a sample-aware score; buffs and
+  nerfs parsed from the official patch notes and from hotfix game files.
+- **Draft simulator.** Pick and ban suggestions in the real Storm League draft order, weighing hero strength,
+  matchups, map and team make-up; each term's weight was measured on later games.
+- **Player search.** Profile, MMR by mode, recent games with full stat lines, single-replay detail, season summary —
+  served by a small API with caching and quota budgeting against a tightly rationed upstream.
+- **Accounts.** Battle.net OAuth login, a personal hero pool that narrows the draft simulator, per-hero comments.
+- **Owner MCP server.** A remote MCP endpoint with owner-only OAuth so ChatGPT could read the owner's own games;
+  its Python formulas are pinned to the TypeScript ones through shared golden fixtures.
+- Korean and English from one route tree, a light theme, every page checked for WCAG AA contrast.
+
+## How it was built
+
+| Part | Stack |
+|---|---|
+| `collector/` | Python 3.11+, httpx, asyncio. A daily job (dispatched from a Mac mini, GitHub Actions as fallback) that collects within the API's weekly quota, writes JSON atomically and commits it. |
+| `web/` | Next.js 16 static export, React 19, Tailwind 4, deployed to GitHub Pages on every push. |
+| `server/` | FastAPI, SQLAlchemy (async SQLite), Alembic, structlog; Docker on a Mac mini behind a Cloudflare tunnel. Player search, accounts, comments, MCP. |
+| `tools/` | Game-data builders (talents, awards, hero tables from HeroesToolChest) and hotfix diffing of the game's own files. |
+
+Engineering habits that held for the whole project: test first, unit tests on both sides (pytest about 630,
+vitest about 500), Playwright end-to-end tests over the static export (about 250, including contrast checks for both
+themes at two widths), strict mypy and ruff in CI, and design notes for every larger decision in `docs/`.
+
+## Run it locally
+
 ```bash
-cp .env.example .env   # fill HP_API_TOKEN (api account → API Keys)
-uv sync
-uv run pytest tests/ --cov=collector --cov-fail-under=80
-uv run ruff check collector/ tests/ && uv run ruff format --check collector/ tests/ && uv run mypy collector/
-uv run python -m collector      # ~5 min (group_by_map is limited to 1 request/min)
-
-cd web && npm ci && npm test && npm run e2e && npm run build   # frontend; `npm run dev` serves ../data live at http://localhost:5173/ko/hots/
+uv sync && uv run pytest                    # collector + server
+cd web && npm ci && npm test                # unit tests
+npm run e2e                                 # builds against the synthetic data in web/tests/e2e-data
+DATA_DIR=tests/e2e-data npm run dev         # browse the site on synthetic data at http://localhost:5173/ko/hots/
 ```
-If the Heroes Profile account is in **Test Data** mode, calls cost no quota and return placeholder rows (and `group_by_map` is ignored, so only `map: "all"` rows are produced). In **Live Data** mode the real per-map payload arrives; Heroes/Stats allows 70 calls per rolling week on the Basic plan and one run uses 8 (see `docs/HANDOFF.md` "Quotas").
 
-## Rules
-- The token lives only in `.env`. It never appears in logs, exceptions or commits (asserted by tests).
-- Error responses and 202 job polling are not charged by Heroes Profile. Retries: one on 5xx/transport errors; one wait-and-retry on 429 honouring `Retry-After`.
-- Attribution on every page: "Data provided by Heroes Profile".
-- The workflow bot commits `data/latest` straight to `main`: `git pull --rebase` before you push, and never commit a local `data/latest`.
+The collector and the API need a Heroes Profile API key (`.env.example`); without one, everything above still runs
+on the synthetic fixtures.
+
+## Docs
+
+`docs/DESIGN-*.md` are the design notes in order, `docs/HANDOFF.md` the operating notes, `docs/ROADMAP.md` what was
+planned and dropped, and `docs/SHUTDOWN-2026-11-28.md` how the service was shut down.

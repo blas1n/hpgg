@@ -20,7 +20,7 @@ from server.players.replays import ReplayService
 from server.players.store import HPStore
 from tests.server.conftest import BASE, TOKEN, Clock, FakeHP, hp_response, recorded
 
-RID = 65597227
+RID = 78191829
 
 
 @pytest.fixture
@@ -49,16 +49,16 @@ async def test_a_game_in_full(svc: ReplayService, fake_hp: FakeHP) -> None:
         RID,
         "qm",
         "Hanamura Temple",
-        1215,
+        3020,
         "KR",
     )
     assert [t["win"] for t in g["teams"]] == [True, False]
     assert [len(t["players"]) for t in g["teams"]] == [5, 5]
-    me = next(p for p in g["teams"][0]["players"] if p["battletag"] == "blAs1N#3479")
+    me = next(p for p in g["teams"][0]["players"] if p["battletag"] == "Player11#1011")
     assert me["hero"] == "Alarak" and me["award"] == "MVP"
-    assert (me["kills"], me["deaths"], me["assists"]) == (9, 1, 25)
-    assert me["hero_damage"] == 72367 and me["experience"] == 11422
-    assert me["mmr_change"] == pytest.approx(43.05, abs=0.01)
+    assert (me["kills"], me["deaths"], me["assists"]) == (3, 1, 86)
+    assert me["hero_damage"] == 48098 and me["experience"] == 57491
+    assert me["mmr_change"] == pytest.approx(92.45, abs=0.01)
     assert len(me["talents"]) == 7 and me["talents"][0] == "AlarakOverwhelmingPowerDiscordStrike"
     bulwark = next(p for p in g["teams"][1]["players"] if p["hero"] == "Thrall")
     assert bulwark["award"] == "MostDamageTaken"  # HP id 6, sent with the Avenger icon
@@ -85,11 +85,11 @@ async def test_a_player_who_went_private_is_left_out_of_a_cached_game(
     svc: ReplayService, db: Database
 ) -> None:
     await svc.lookup(RID)
-    await HPStore(db).mark_private("KR", "히가라#3577", "2026-10-01T00:00:00+00:00")
+    await HPStore(db).mark_private("KR", "Player18#1018", "2026-10-01T00:00:00+00:00")
     g = (await svc.lookup(RID)).replay
     assert g is not None
     tags = [p["battletag"] for t in g["teams"] for p in t["players"]]
-    assert "히가라#3577" not in tags and len(tags) == 9
+    assert "Player18#1018" not in tags and len(tags) == 9
 
 
 async def test_unknown_game_is_not_found(svc: ReplayService, fake_hp: FakeHP) -> None:

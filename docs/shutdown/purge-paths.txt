@@ -1,0 +1,19 @@
+# Paths removed from the whole history at shutdown (git filter-repo --invert-paths --paths-from-file).
+# Heroes Profile data (API terms §3/§9) and other sites' captures. Game facts in data/ (heroes_ko, maps_ko,
+# talents, awards, hero_specs, maps_meta, patchnotes, hotfixes, img) are not HP data and stay.
+data/latest/
+data/previous/
+data/history/
+data/matchups/
+data/weekly/
+data/replays/
+data/carry_baselines.json
+data/CNAME
+snapshots/
+tests/fixtures/2026-09-28/
+docs/aichi-formula-capture-1.png
+docs/aichi-formula-capture-2.png
+docs/aichi-formula-capture-3.png
+docs/aichi-formula-capture-4.png
+docs/hp-api-limits-basic-2026-09-28.png
+docs/refs/hiosu-banpick-2026-09-29.png

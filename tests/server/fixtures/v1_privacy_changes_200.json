@@ -10,11 +10,36 @@
  },
  "body": {
   "changes": [
-   {"battletag": "Razhag#2142", "region": 2, "state": "private", "changed_at": "2026-09-01T00:00:00+00:00"},
-   {"battletag": "FUNKB0T#1899", "region": 1, "state": "private", "changed_at": "2026-09-01T00:00:00+00:00"},
-   {"battletag": "Zen#1643", "region": 1, "state": "private", "changed_at": "2026-09-01T00:00:00+00:00"},
-   {"battletag": "fEn0z#2350", "region": 2, "state": "private", "changed_at": "2026-09-01T00:00:00+00:00"},
-   {"battletag": "Radio#2147", "region": 2, "state": "private", "changed_at": "2026-09-01T00:00:00+00:00"}
+   {
+    "battletag": "Player13#1013",
+    "region": 2,
+    "state": "private",
+    "changed_at": "2026-09-01T00:00:00+00:00"
+   },
+   {
+    "battletag": "Player14#1014",
+    "region": 1,
+    "state": "private",
+    "changed_at": "2026-09-01T00:00:00+00:00"
+   },
+   {
+    "battletag": "Player15#1015",
+    "region": 1,
+    "state": "private",
+    "changed_at": "2026-09-01T00:00:00+00:00"
+   },
+   {
+    "battletag": "Player16#1016",
+    "region": 2,
+    "state": "private",
+    "changed_at": "2026-09-01T00:00:00+00:00"
+   },
+   {
+    "battletag": "Player17#1017",
+    "region": 2,
+    "state": "private",
+    "changed_at": "2026-09-01T00:00:00+00:00"
+   }
   ],
   "next_since": "2026-09-01T00:00:00+00:00",
   "next_after_id": 319,

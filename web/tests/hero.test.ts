@@ -24,16 +24,16 @@ describe("heroSummary", () => {
     const s = heroSummary(qm, qmPrev, "Illidan", 200);
     expect(s.kind).toBe("ranked");
     if (s.kind !== "ranked") return;
-    expect(s.tier).toBe("B");
+    expect(s.tier).toBe("S");
     expect(s.delta).toBe(0);
     expect(s.prevRank).toBe(s.rank);
     expect(s.games).toBeGreaterThan(200);
     expect(s.win_rate).toBeGreaterThan(0);
   });
 
-  it("uses the mode's own snapshot (Storm League: A)", () => {
+  it("uses the mode's own snapshot (Storm League: C, not Quick Match's S)", () => {
     const s = heroSummary(sl, null, "Illidan", 200);
-    expect(s.kind === "ranked" && s.tier).toBe("A");
+    expect(s.kind === "ranked" && s.tier).toBe("C");
     expect(s.kind === "ranked" && s.delta).toBeNull();
     expect(s.kind === "ranked" && s.hasPrevious).toBe(false);
   });
@@ -123,7 +123,7 @@ describe("heroGrid", () => {
     expect(g.rows.map((r) => r.region)).toEqual(["all", "kr", "na", "eu"]);
     const all = g.rows[0]!.cells;
     expect(all.map((c) => c.bracket)).toEqual(["all", "low", "high"]);
-    expect(all[0]).toMatchObject({ bracket: "all", tier: "A", sample: "ranked" });
+    expect(all[0]).toMatchObject({ bracket: "all", tier: "C", sample: "ranked" });
     expect(all[0]!.games).toBeGreaterThan(200);
     expect(all[2]).toEqual({ bracket: "high", tier: null, rank: null, n: 0, win_rate: null, games: 0, sample: "uncollected" });
     expect(g.rows[2]!.cells[0]!.win_rate).toBeNull();

@@ -167,9 +167,9 @@ def test_live_probe_fixture_normalizes_per_map() -> None:
     maps = {r.map for r in snap.rows}
     assert "all" in maps and "Cursed Hollow" in maps and len(maps) > 10
     qhira = {(r.map, r.hero): r for r in snap.rows}[("all", "Qhira")]
-    assert qhira.games > 1000 and 50 < qhira.win_rate < 65 and qhira.ci is None
+    assert qhira.games == 8125 and qhira.win_rate == pytest.approx(47.7046) and qhira.ci is None
     per_map_qhira = next(r for r in snap.rows if r.hero == "Qhira" and r.map == "Alterac Pass")
-    assert per_map_qhira.ci == 3.63 and per_map_qhira.games == 706
+    assert per_map_qhira.ci == 1.69 and per_map_qhira.games == 150
 
 
 def test_normalize_rejects_empty_payload() -> None:

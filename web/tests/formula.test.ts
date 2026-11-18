@@ -10,11 +10,6 @@ const load = (f: string): Snapshot => JSON.parse(readFileSync(join(here, "fixtur
 const sl = load("sl_2026-09-28.json");
 const qm = load("qm_2026-09-28.json");
 const allRows = (s: Snapshot): Row[] => s.rows.filter((r) => r.map === "all");
-const tierOf = (s: Snapshot) => {
-  const t = computeTiers(allRows(s), 200);
-  return Object.fromEntries(t.ranked.map((x) => [x.row.hero, x.tier]));
-};
-const rankOf = (s: Snapshot, hero: string) => computeTiers(allRows(s), 200).ranked.findIndex((x) => x.row.hero === hero) + 1;
 
 describe("shrinkWinRate", () => {
   it("pulls small samples toward 50 with k=500", () => {
@@ -36,32 +31,63 @@ describe("scoreRow", () => {
   });
 });
 
-describe("design-doc verification table (2026-09-28 fixtures)", () => {
-  const expected: Record<string, [string, string]> = {
-    Qhira: ["S", "S"], Johanna: ["S", "A"], Rehgar: ["S", "B"], Falstad: ["A", "A"], Illidan: ["A", "B"],
-    Azmodan: ["A", "S"], Abathur: ["A", "S"], Gazlowe: ["A", "B"], Samuro: ["B", "B"], Anduin: ["B", "B"],
-    Brightwing: ["F", "A"], Stitches: ["F", "D"], Diablo: ["F", "F"],
+// This block used to pin our tiers against a real-world reference (hots.gg) on the real 2026-09-28 Heroes Profile
+// snapshots. Those snapshots were replaced by synthetic numbers when the service shut down (HP data may not stay in the
+// public repo, docs/SHUTDOWN-2026-11-28.md), so a comparison with another site cannot hold any more. What stays is the
+// formula itself on these fixtures: who is ranked, where the tier cuts fall for that N, and ranks that follow the scores.
+describe("tier formula on the 2026-09-28 fixtures (synthetic numbers)", () => {
+  // the cut shares written out here, not read from CUTS, so a changed cut fails this test
+  const expectedCounts = (n: number): number[] => {
+    const shares = [0.06, 0.24, 0.54, 0.82, 0.94];
+    const bounds: number[] = [];
+    let prev = 0;
+    for (const share of shares) {
+      prev = Math.min(n, Math.max(Math.floor(share * n), prev + 1));
+      bounds.push(prev);
+    }
+    bounds.push(n);
+    return bounds.map((b, i) => b - (i === 0 ? 0 : bounds[i - 1]!));
   };
-  const tSl = tierOf(sl);
-  const tQm = tierOf(qm);
-  for (const [hero, [eSl, eQm]] of Object.entries(expected)) {
-    it(`${hero}: SL ${eSl}, QM ${eQm}`, () => {
-      expect(tSl[hero]).toBe(eSl);
-      expect(tQm[hero]).toBe(eQm);
+  for (const [name, snap] of [["Storm League", sl], ["Quick Match", qm]] as const) {
+    describe(name, () => {
+      const rows = allRows(snap);
+      const t = computeTiers(rows, 200);
+      const n = rows.filter((r) => r.games >= 200).length;
+
+      it("ranks every hero with 200+ games and greys the rest", () => {
+        expect(t.ranked).toHaveLength(n);
+        expect(t.grey.map((r) => r.hero).sort()).toEqual(rows.filter((r) => r.games < 200).map((r) => r.hero).sort());
+        expect(t.ranked.length + t.grey.length).toBe(rows.length);
+      });
+
+      it("the tier counts are the cuts for the N actually ranked", () => {
+        const count = (tier: string) => t.ranked.filter((x) => x.tier === tier).length;
+        const counts = ["S", "A", "B", "C", "D", "F"].map(count);
+        expect(counts).toEqual(expectedCounts(n));
+        expect(counts.every((c) => c > 0)).toBe(true);
+      });
+
+      it("ranks follow the scores: rank 1..N, scores never rise, tiers never improve going down", () => {
+        const order = ["S", "A", "B", "C", "D", "F"];
+        t.ranked.forEach((x, i) => {
+          expect(x.rank).toBe(i + 1);
+          expect(x.score).toBeCloseTo(scoreRow(x.row), 9);
+          if (i > 0) {
+            const prev = t.ranked[i - 1]!;
+            expect(x.score).toBeLessThanOrEqual(prev.score);
+            expect(order.indexOf(x.tier)).toBeGreaterThanOrEqual(order.indexOf(prev.tier));
+          }
+        });
+      });
     });
   }
-  it("ranks match the table", () => {
-    expect(rankOf(sl, "Qhira")).toBe(1);
-    expect(rankOf(sl, "Illidan")).toBe(11);
-    expect(rankOf(sl, "Brightwing")).toBe(87);
-    expect(rankOf(qm, "Azmodan")).toBe(3);
-    expect(rankOf(qm, "Illidan")).toBe(35);
-  });
-  it("N=90 boundaries are 5/21/48/73/84 → S5 A16 B27 C25 D11 F6", () => {
-    const t = computeTiers(allRows(sl), 200);
-    const count = (tier: string) => t.ranked.filter((x) => x.tier === tier).length;
-    expect([count("S"), count("A"), count("B"), count("C"), count("D"), count("F")]).toEqual([5, 16, 27, 25, 11, 6]);
-    expect(t.grey).toHaveLength(0);
+
+  it("the two fixtures' Ns: Storm League ranks 89 (one hero under 200 games), Quick Match 90", () => {
+    expect(computeTiers(allRows(sl), 200).ranked).toHaveLength(89);
+    expect(computeTiers(allRows(qm), 200).ranked).toHaveLength(90);
+    // N=89: 5/21/48/72/83 → S5 A16 B27 C24 D11 F6; N=90: 5/21/48/73/84 → S5 A16 B27 C25 D11 F6
+    expect(expectedCounts(89)).toEqual([5, 16, 27, 24, 11, 6]);
+    expect(expectedCounts(90)).toEqual([5, 16, 27, 25, 11, 6]);
   });
 });
 

@@ -24,7 +24,7 @@ FIX = Path(__file__).parent / "fixtures" / "replays"
 
 
 def _detail() -> dict[str, Any]:
-    with gzip.open(FIX / "replay_65753195_sl.json.gz", "rt", encoding="utf-8") as f:
+    with gzip.open(FIX / "replay_84045499_sl.json.gz", "rt", encoding="utf-8") as f:
         return json.load(f)
 
 
@@ -41,13 +41,13 @@ def _settings(tmp_path: Path, **kw: Any) -> Settings:
 
 
 def test_a_record_keeps_the_draft_the_players_builds_and_the_experience_curve() -> None:
-    r = compact(_detail(), replay_id=65753195, version="2.57.0.98304")
+    r = compact(_detail(), replay_id=84045499, version="2.57.0.98304")
     assert r is not None
     assert (r["id"], r["type"], r["map"], r["length"], r["version"]) == (
-        65753195,
+        84045499,
         "sl",
         "Sky Temple",
-        1104,
+        8101,
         "2.57.0.98304",
     )
     assert r["winner"] == 0
@@ -63,17 +63,17 @@ def test_a_record_keeps_the_draft_the_players_builds_and_the_experience_curve() 
     assert len(r["players"]) == 10
     arthas = next(p for p in r["players"] if p["hero"] == "Arthas")
     assert arthas["team"] == 0 and arthas["win"] == 1
-    assert arthas["mmr"] == 1927 and arthas["hero_mmr"] == 1907
+    assert arthas["mmr"] == 8952 and arthas["hero_mmr"] == 8245
     assert arthas["party"] >= 1
     assert arthas["talents"][0] == "ArthasMasteryFrostPresenceHowlingBlast"
     assert len(arthas["talents"]) == 7
     assert arthas["score"]["deaths"] == 1
-    assert arthas["score"]["teamfight_hero_damage"] == 12027
+    assert arthas["score"]["teamfight_hero_damage"] == 42462
     assert arthas["score"]["outnumbered_deaths"] == 1
     assert "kills_rank" not in arthas["score"]
     # each team's level and experience at each minute
     assert len(r["xp"][0]) == len(r["level"][0]) == 19
-    assert r["level"][0][-1] == 22 and r["xp"][1][-1] == 85018
+    assert r["level"][0][-1] == 25 and r["xp"][1][-1] == 46085
 
 
 def test_a_record_names_no_player() -> None:

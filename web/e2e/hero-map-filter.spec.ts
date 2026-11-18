@@ -29,8 +29,8 @@ test("a map in the filter row: the cards are the hero on that map; the address k
 
 test("the cards are that map's row, the same numbers as the map list below", async ({ page }) => {
   await page.goto("./heroes/illidan/?mode=sl&map=cursed-hollow");
-  // the e2e Storm League file has one real map: Cursed Hollow, 232 games
-  await expect(page.locator('[data-stat="wr"] [data-sub]')).toHaveText("232게임");
+  // the e2e Storm League file has one real map: Cursed Hollow, 790 games for Illidan
+  await expect(page.locator('[data-stat="wr"] [data-sub]')).toHaveText("790게임");
   const row = page.locator('#maps [data-map="cursed-hollow"] [data-wr]');
   await expect(page.locator('[data-stat="wr"] > div').nth(1)).toHaveText((await row.textContent())!);
 });
@@ -54,13 +54,13 @@ test("the tier table's map filter carries into the hero page", async ({ page }) 
   await expect(link).toHaveAttribute("href", "/ko/hots/heroes/illidan/?mode=sl&map=cursed-hollow");
   await link.click();
   await expect(page.locator("#hero-map")).toHaveValue("cursed-hollow");
-  await expect(page.locator('[data-stat="wr"] [data-sub]')).toHaveText("232게임");
+  await expect(page.locator('[data-stat="wr"] [data-sub]')).toHaveText("790게임");
 });
 
 test("a map the site does not have is ignored", async ({ page }) => {
   await page.goto("./heroes/illidan/?mode=sl&map=nowhere");
   await expect(page.locator("#hero-map")).toHaveValue("");
-  await expect(page.locator('[data-stat="wr"] [data-sub]')).toHaveText("2,912게임");
+  await expect(page.locator('[data-stat="wr"] [data-sub]')).toHaveText("8,227게임"); // every map's row
 });
 
 for (const width of [390, 1280]) {

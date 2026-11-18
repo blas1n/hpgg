@@ -11,7 +11,7 @@
  "body": {
   "history": [
    {
-    "replayID": 65597227,
+    "replayID": 78191829,
     "game_date": "2026-09-30 15:06:00",
     "game_map": 7,
     "mmr_ran": 1,
@@ -31,20 +31,20 @@
      "build_copy_name": "Alarak",
      "last_updated": "2024-02-06 18:32:51"
     },
-    "player_conservative_rating": 13.545745528802989,
-    "player_change": 43.049119345611416,
-    "hero_conservative_rating": 3.863854280866846,
-    "hero_change": 92.34343062598782,
-    "role_conservative_rating": 6.13040399644483,
-    "role_change": 157.9315528106206,
+    "player_conservative_rating": 71.6564,
+    "player_change": 87.5786,
+    "hero_conservative_rating": 2.8251,
+    "hero_change": 84.7325,
+    "role_conservative_rating": 2.1109,
+    "role_change": 295.3712,
     "mmr_date_parsed": "2026-09-30 15:12:55",
     "hero_id": 2,
-    "mmr": 2342,
-    "mmr_change": 43.05,
+    "mmr": 8194,
+    "mmr_change": 65.67,
     "x_label": "2026-09-30 15:06:00"
    },
    {
-    "replayID": 65597225,
+    "replayID": 38000431,
     "game_date": "2026-09-30 14:41:18",
     "game_map": 9,
     "mmr_ran": 1,
@@ -64,20 +64,20 @@
      "build_copy_name": "Leoric",
      "last_updated": "2024-02-06 18:32:51"
     },
-    "player_conservative_rating": 12.469517545162702,
-    "player_change": 17.64431089763957,
-    "hero_conservative_rating": 3.4385723418509713,
-    "hero_change": 137.54289367403885,
-    "role_conservative_rating": 8.457745926851445,
-    "role_change": 77.80179040664007,
+    "player_conservative_rating": 89.7222,
+    "player_change": 41.8359,
+    "hero_conservative_rating": 2.9802,
+    "hero_change": 283.9685,
+    "role_conservative_rating": 8.025,
+    "role_change": 71.6266,
     "mmr_date_parsed": "2026-09-30 15:12:51",
     "hero_id": 30,
-    "mmr": 2299,
-    "mmr_change": 17.64,
+    "mmr": 7246,
+    "mmr_change": 91.86,
     "x_label": "2026-09-30 14:41:18"
    },
    {
-    "replayID": 65597223,
+    "replayID": 26160606,
     "game_date": "2026-09-29 23:52:51",
     "game_map": 5,
     "mmr_ran": 1,
@@ -97,16 +97,16 @@
      "build_copy_name": "Chen",
      "last_updated": "2024-02-06 18:32:51"
     },
-    "player_conservative_rating": 12.028409772721716,
-    "player_change": 26.46433459891432,
-    "hero_conservative_rating": 7.407036732318538,
-    "hero_change": 111.0745510810575,
-    "role_conservative_rating": 6.512701166685439,
-    "role_change": 139.92271921709062,
+    "player_conservative_rating": 28.4294,
+    "player_change": 41.4165,
+    "hero_conservative_rating": 2.0195,
+    "hero_change": 183.7094,
+    "role_conservative_rating": 6.834,
+    "role_change": 558.4496,
     "mmr_date_parsed": "2026-09-30 15:12:36",
     "hero_id": 10,
-    "mmr": 2281,
-    "mmr_change": 26.46,
+    "mmr": 7892,
+    "mmr_change": 31.22,
     "x_label": "2026-09-29 23:52:51"
    }
   ],
@@ -116,8 +116,8 @@
     "type_role_hero": 10000,
     "game_type": 1,
     "league_tier": 1,
-    "min_mmr": 785,
-    "max_mmr": 1115.8,
+    "min_mmr": 470,
+    "max_mmr": 3225.7,
     "tier": "Bronze 5",
     "tierFound": false
    },
@@ -126,8 +126,8 @@
     "type_role_hero": 10000,
     "game_type": 1,
     "league_tier": 1,
-    "min_mmr": 1115.8,
-    "max_mmr": 1446.6,
+    "min_mmr": 4999.8,
+    "max_mmr": 6004.4,
     "tier": "Bronze 4",
     "tierFound": false
    },
@@ -136,8 +136,8 @@
     "type_role_hero": 10000,
     "game_type": 1,
     "league_tier": 1,
-    "min_mmr": 1446.6,
-    "max_mmr": 1777.3999999999999,
+    "min_mmr": 9838.2,
+    "max_mmr": 3150.9722,
     "tier": "Bronze 3",
     "tierFound": false
    },
@@ -146,8 +146,8 @@
     "type_role_hero": 10000,
     "game_type": 1,
     "league_tier": 1,
-    "min_mmr": 1777.3999999999999,
-    "max_mmr": 2108.2,
+    "min_mmr": 4106.6909,
+    "max_mmr": 8095.7,
     "tier": "Bronze 2",
     "tierFound": false
    },
@@ -156,8 +156,8 @@
     "type_role_hero": 10000,
     "game_type": 1,
     "league_tier": 1,
-    "min_mmr": 2108.2,
-    "max_mmr": 2439,
+    "min_mmr": 9972.0,
+    "max_mmr": 6099,
     "tier": "Bronze 1",
     "tierFound": true
    },
@@ -166,41 +166,41 @@
     "type_role_hero": 10000,
     "game_type": 1,
     "league_tier": 2,
-    "min_mmr": 2439,
-    "max_mmr": 2555
+    "min_mmr": 5453,
+    "max_mmr": 4822
    },
    {
     "league_breakdowns_id": 2577,
     "type_role_hero": 10000,
     "game_type": 1,
     "league_tier": 3,
-    "min_mmr": 2555,
-    "max_mmr": 2643
+    "min_mmr": 3768,
+    "max_mmr": 5756
    },
    {
     "league_breakdowns_id": 2578,
     "type_role_hero": 10000,
     "game_type": 1,
     "league_tier": 4,
-    "min_mmr": 2643,
-    "max_mmr": 2728
+    "min_mmr": 5662,
+    "max_mmr": 3252
    },
    {
     "league_breakdowns_id": 2579,
     "type_role_hero": 10000,
     "game_type": 1,
     "league_tier": 5,
-    "min_mmr": 2728,
-    "max_mmr": 2821
+    "min_mmr": 2763,
+    "max_mmr": 2765
    },
    {
     "league_breakdowns_id": 2580,
     "type_role_hero": 10000,
     "game_type": 1,
     "league_tier": 6,
-    "min_mmr": 2821
+    "min_mmr": 2000
    }
   ]
  },
- "_recorded": "2026-10-01 GET /players/mmr/history?battletag=blAs1N%233479&region=KR&game_type=qm; history trimmed to the newest 3 of 39"
+ "_recorded": "2026-10-01 GET /players/mmr/history?battletag=Player11%231011&region=KR&game_type=qm; history trimmed to the newest 3 of 39"
 }

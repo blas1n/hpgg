@@ -22,7 +22,7 @@ from server.players.service import PlayerService
 from server.players.store import CacheEntry, HPStore, matches_key, player_key
 from tests.server.conftest import BASE, TOKEN, Clock, FakeHP, hp_response
 
-TAG, REGION = "blAs1N#3479", "KR"
+TAG, REGION = "Player11#1011", "KR"
 Responder = Callable[[httpx.Request], httpx.Response]
 
 
@@ -105,7 +105,7 @@ async def test_full_stat_lines_live_then_cached(svc: MatchService, fake_hp: Fake
     assert r.outcome == "ok" and r.source == "full" and not r.stale
     assert len(r.matches) == 3
     m = r.matches[0]
-    assert m["replay_id"] == 65597227 and m["date"] == "2026-09-30 15:06:00"
+    assert m["replay_id"] == 78191829 and m["date"] == "2026-09-30 15:06:00"
     assert (m["mode"], m["map"], m["hero"], m["short_name"]) == (
         "qm",
         "Hanamura Temple",
@@ -113,11 +113,11 @@ async def test_full_stat_lines_live_then_cached(svc: MatchService, fake_hp: Fake
         "alarak",
     )
     assert m["win"] is True and m["role"] == "Melee Assassin"
-    assert (m["kills"], m["deaths"], m["assists"]) == (9, 1, 25)
-    assert m["hero_damage"] == 72367 and m["siege_damage"] == 33278
-    assert m["healing"] is None and m["self_healing"] == 24304
-    assert m["experience"] == 11422 and m["level"] == 22
-    assert m["mmr"] == 2342 and m["mmr_change"] == pytest.approx(43.05, abs=0.01)
+    assert (m["kills"], m["deaths"], m["assists"]) == (9, 1, 76)
+    assert m["hero_damage"] == 36756 and m["siege_damage"] == 61680
+    assert m["healing"] is None and m["self_healing"] == 50205
+    assert m["experience"] == 53108 and m["level"] == 22
+    assert m["mmr"] == 6200 and m["mmr_change"] == pytest.approx(82.87, abs=0.01)
     assert len(m["talents"]) == 7 and m["talents"][0] == "AlarakOverwhelmingPowerDiscordStrike"
     q = calls(fake_hp, "/players/matches")[0]
     assert q.url.params["battletag"] == TAG and q.url.params["region"] == REGION
@@ -171,16 +171,16 @@ async def test_basic_rows_come_from_the_mmr_history_of_the_most_played_mode(
     r = await svc.lookup(TAG, REGION)
     assert r.outcome == "ok" and r.source == "basic"
     assert calls(fake_hp, "/players/matches") == []
-    # the recorded profile (Zemill#1940) plays Quick Match most (3,659 games)
+    # the recorded profile (Player12#1012) has the most games in Quick Match
     assert calls(fake_hp, "/players/mmr/history")[0].url.params["game_type"] == "qm"
     m = r.matches[0]
     assert (m["replay_id"], m["hero"], m["map"], m["win"]) == (
-        65597227,
+        78191829,
         "Alarak",
         "Hanamura Temple",  # from the map id through HP's /maps table
         True,
     )
-    assert m["mode"] == "qm" and m["mmr"] == 2342 and m["mmr_change"] == 43.05
+    assert m["mode"] == "qm" and m["mmr"] == 8194 and m["mmr_change"] == 65.67
     assert m["kills"] is None and m["talents"] == []
     assert r.matches[1]["win"] is True
 

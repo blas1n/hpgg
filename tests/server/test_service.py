@@ -15,7 +15,7 @@ from server.players.service import PlayerService
 from server.players.store import HPStore
 from tests.server.conftest import BASE, TOKEN, Clock, FakeHP, hp_response
 
-TAG, REGION = "Zemill#1940", "NA"
+TAG, REGION = "Player12#1012", "NA"
 
 
 @pytest.fixture
@@ -49,7 +49,7 @@ def quota_429(retry_after: str = "7200") -> httpx.Response:
 async def test_live_then_cached(svc: PlayerService, fake_hp: FakeHP, clock: Clock) -> None:
     first = await svc.lookup(TAG, REGION)
     assert first.outcome == "ok" and first.source == "live" and not first.stale
-    assert first.profile is not None and first.profile["account_level"] == 1802
+    assert first.profile is not None and first.profile["account_level"] == 9485
     assert first.profile["battletag"] == TAG and first.profile["region"] == REGION
     assert fake_hp.requests[0].url.params["region"] == "NA"
     clock.now += 60
@@ -132,7 +132,7 @@ async def test_hp_quota_exceeded_serves_stale_then_stops_calling(
     fake_hp.responder = lambda r: quota_429()
     stale = await svc.lookup(TAG, REGION)
     assert stale.outcome == "ok" and stale.stale and stale.notice == "quota_exceeded"
-    assert stale.profile is not None and stale.profile["account_level"] == 1802
+    assert stale.profile is not None and stale.profile["account_level"] == 9485
     # another player: nothing cached → explicit quota state, and HP is not asked again
     other = await svc.lookup("Other#1234", REGION)
     assert other.outcome == "quota_exceeded" and other.retry_after is not None

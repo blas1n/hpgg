@@ -25,7 +25,7 @@ const here = dirname(fileURLToPath(import.meta.url));
 const json = <T>(rel: string): T => JSON.parse(readFileSync(join(here, rel), "utf-8")) as T;
 const heroes = json<HeroTable>("e2e-data/heroes_ko.json");
 const maps = json<MapTable>("e2e-data/maps_ko.json");
-const zemill = json<PlayerResponse>("fixtures/api_player_zemill.json");
+const sample = json<PlayerResponse>("fixtures/api_player_sample.json");
 
 const res = (status: number, body: unknown, headers: Record<string, string> = {}) =>
   new Response(typeof body === "string" ? body : JSON.stringify(body), {
@@ -35,13 +35,13 @@ const res = (status: number, body: unknown, headers: Record<string, string> = {}
 
 describe("parseBattletag", () => {
   it.each([
-    ["Zemill#1940", "Zemill#1940"],
-    ["  Zemill#1940 ", "Zemill#1940"],
-    ["Zemill ＃ 1940", "Zemill#1940"],
+    ["Player12#1012", "Player12#1012"],
+    ["  Player12#1012 ", "Player12#1012"],
+    ["Player12 ＃ 1012", "Player12#1012"],
     ["하늘바람#31234", "하늘바람#31234"],
   ])("%s → %s", (input, out) => expect(parseBattletag(input)).toBe(out));
 
-  it.each(["", "Zemill", "Zemill#", "Zemill#abc", "Ze mill#1234", "#1234", "A".repeat(25) + "#1234"])("rejects %j", (input) => {
+  it.each(["", "Player12", "Player12#", "Player12#abc", "Ze mill#1234", "#1234", "A".repeat(25) + "#1234"])("rejects %j", (input) => {
     expect(parseBattletag(input)).toBeNull();
   });
 });
@@ -53,23 +53,23 @@ describe("regions and links", () => {
 
   it("builds the page URL with an encoded battletag, in the page language", () => {
     expect(playersHref("ko")).toBe("/ko/hots/players/");
-    expect(playersHref("ko", "Zemill#1940", "NA")).toBe("/ko/hots/players/?tag=Zemill%231940&region=NA");
-    expect(playersHref("en", "Zemill#1940", "NA")).toBe("/en/hots/players/?tag=Zemill%231940&region=NA");
+    expect(playersHref("ko", "Player12#1012", "NA")).toBe("/ko/hots/players/?tag=Player12%231012&region=NA");
+    expect(playersHref("en", "Player12#1012", "NA")).toBe("/en/hots/players/?tag=Player12%231012&region=NA");
   });
 });
 
 describe("fetchPlayer", () => {
   it("calls the API with the query and returns the profile", async () => {
-    const f = vi.fn().mockResolvedValue(res(200, zemill));
-    const r = await fetchPlayer("Zemill#1940", "NA", { fetchImpl: f, base: "https://api.test" });
-    expect(f.mock.calls[0]![0]).toBe("https://api.test/v1/players?battletag=Zemill%231940&region=NA");
+    const f = vi.fn().mockResolvedValue(res(200, sample));
+    const r = await fetchPlayer("Player12#1012", "NA", { fetchImpl: f, base: "https://api.test" });
+    expect(f.mock.calls[0]![0]).toBe("https://api.test/v1/players?battletag=Player12%231012&region=NA");
     expect(r.kind).toBe("ok");
-    if (r.kind === "ok") expect(r.data.player.account_level).toBe(1802);
+    if (r.kind === "ok") expect(r.data.player.account_level).toBe(3874);
   });
 
   it("defaults to the public API host", async () => {
-    const f = vi.fn().mockResolvedValue(res(200, zemill));
-    await fetchPlayer("Zemill#1940", "NA", { fetchImpl: f });
+    const f = vi.fn().mockResolvedValue(res(200, sample));
+    await fetchPlayer("Player12#1012", "NA", { fetchImpl: f });
     expect(String(f.mock.calls[0]![0]).startsWith(API_BASE_DEFAULT + "/v1/players?")).toBe(true);
     expect(API_BASE_DEFAULT).toBe("https://api.hpgg.win");
   });
@@ -133,67 +133,67 @@ describe("labels", () => {
 
 describe("playerView", () => {
   const now = new Date("2026-09-29T03:00:00Z");
-  const v = playerView(zemill, heroes, maps, "ko", now);
+  const v = playerView(sample, heroes, maps, "ko", now);
 
   it("summarises the account", () => {
-    expect(v.name).toBe("Zemill");
-    expect(v.tag).toBe("#1940");
+    expect(v.name).toBe("Player12");
+    expect(v.tag).toBe("#1012");
     expect(v.regionLabel).toBe("아메리카");
-    expect(v.level).toBe(1802);
-    expect(v.games).toBe(6684);
-    expect(v.winRate).toBe(52.39);
+    expect(v.level).toBe(3874);
+    expect(v.games).toBe(3596 + 3071);
+    expect(v.winRate).toBe(53.94);
     expect(v.stale).toBe(false);
   });
 
   it("puts Storm League first with its MMR, and no league tier", () => {
     // HP's tier is its own estimate from its MMR, not the in-game rank, and no API has the in-game
     // rank (HP API docs, Battle.net developer portal: no Heroes of the Storm; owner 2026-10-14)
-    expect(v.modes[0]).toMatchObject({ mode: "sl", label: "폭풍 리그", mmr: 2908, games: 93 });
+    expect(v.modes[0]).toMatchObject({ mode: "sl", label: "폭풍 리그", mmr: 3168, games: 36 + 44 });
     expect(v.modes[0]).not.toHaveProperty("tier");
     expect(v).not.toHaveProperty("rank");
   });
 
   it("uses Korean hero names, portraits and hero links", () => {
-    expect(v.heroes[0]).toMatchObject({ name: "루시우", slug: "lucio", portrait: "img/heroes/lucio.png", games: 300, winRate: 58.33, href: "/ko/hots/heroes/lucio/" });
-    expect(v.bestHeroes[0]!.name).toBe("누더기");
+    expect(v.heroes[0]).toMatchObject({ name: "켈투자드", slug: "kel-thuzad", portrait: "img/heroes/kel-thuzad.png", games: 892, winRate: 45.18, href: "/ko/hots/heroes/kel-thuzad/" });
+    expect(v.bestHeroes[0]!.name).toBe("라그나로스");
   });
 
   it("recent matches in Korean with MMR change", () => {
     expect(v.matches).toHaveLength(5);
-    expect(v.matches[0]).toMatchObject({ hero: "데커드", slug: "deckard", mode: "폭풍 리그", map: "볼스카야 공장", win: true, mmrChange: 2.58, when: "1일 전" });
+    expect(v.matches[0]).toMatchObject({ hero: "데커드", slug: "deckard", mode: "폭풍 리그", map: "볼스카야 공장", win: true, mmrChange: 5.65, when: "1일 전" });
     expect(v.recent).toEqual({ wins: 2, losses: 3 });
   });
 
   it("roles in the heroes_ko order with Korean names", () => {
     expect(v.roles.map((r) => r.label)).toEqual(["전사", "투사", "치유사", "지원가", "근접 암살자", "원거리 암살자"]);
-    expect(v.roles[0]!.winRate).toBe(48.52);
+    expect(v.roles[0]!.winRate).toBe(55.95);
   });
 
   it("maps: Korean names, ARAM maps included (#10)", () => {
-    expect(v.maps[0]).toMatchObject({ name: "브락시스 전초기지", games: 499 });
-    expect(v.maps.map((m) => m.name)).toEqual(["브락시스 전초기지", "은빛 도시", "잃어버린 동굴"]);
+    expect(v.maps[0]).toMatchObject({ name: "은빛 도시", games: 958 });
+    expect(v.maps.map((m) => m.name)).toEqual(["은빛 도시", "브락시스 전초기지", "잃어버린 동굴"]);
     expect(v.modes.map((m) => m.mode)).toEqual(["sl", "qm", "ar"]); // the server drops the modes gone from the game
     expect(v.modes.find((m) => m.mode === "ar")?.label).toBe("무작위 영웅 대전");
   });
 
   it("in English: English names, labels and links under /en", () => {
-    const e = playerView(zemill, localizeHeroes(heroes, "en"), localizeMaps(maps, "en"), "en", now);
+    const e = playerView(sample, localizeHeroes(heroes, "en"), localizeMaps(maps, "en"), "en", now);
     expect(e.regionLabel).toBe("Americas");
-    expect(e.modes[0]).toMatchObject({ label: "Storm League", mmr: 2908 });
-    expect(e.heroes[0]).toMatchObject({ name: "Lúcio", href: "/en/hots/heroes/lucio/" });
+    expect(e.modes[0]).toMatchObject({ label: "Storm League", mmr: 3168 });
+    expect(e.heroes[0]).toMatchObject({ name: "Kel'Thuzad", href: "/en/hots/heroes/kel-thuzad/" });
     expect(e.matches[0]).toMatchObject({ hero: "Deckard", mode: "Storm League", map: "Volskaya Foundry", when: "1 day ago" });
-    expect(e.maps.map((m) => m.name)).toEqual(["Braxis Outpost", "Silver City", "Lost Cavern"]);
+    expect(e.maps.map((m) => m.name)).toEqual(["Silver City", "Braxis Outpost", "Lost Cavern"]);
     expect(e.roles[0]!.label).toBe("Tank");
     expect(e.fetchedLabel).toMatch(/^as of 09\/29 \d\d:\d\d KST$/);
   });
 
   it("falls back to English names for heroes and maps it does not know, and flags stale data", () => {
     const odd: PlayerResponse = {
-      ...zemill,
+      ...sample,
       stale: true,
       notice: "quota_exceeded",
       player: {
-        ...zemill.player,
+        ...sample.player,
         win_rate: null,
         heroes_most_played: [{ hero: "Xal'atath", short_name: "xalatath", games: 3, wins: 2, losses: 1, win_rate: 66.67, last_played: null }],
         maps_most_played: [{ map: "New Map", games: 1, wins: 1, losses: 0, win_rate: 100 }],

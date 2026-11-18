@@ -82,12 +82,12 @@ def test_a_sign_in_creates_the_account_and_a_session(
 
     me = client.get("/v1/me")
     assert me.status_code == 200
-    assert me.json() == {"battletag": "blAs1N#3479", "region": None}
+    assert me.json() == {"battletag": "Player11#1011", "region": None}
     assert me.headers["cache-control"] == "no-store"
 
     # kept: the account id and BattleTag. Not kept: Blizzard's token, our raw session token.
     dump = db_text(settings)
-    assert "blAs1N#3479" in dump and "123456" in dump
+    assert "Player11#1011" in dump and "123456" in dump
     assert BNET_TOKEN not in dump
     assert client.cookies["hpgg_session"] not in dump
 
@@ -221,7 +221,7 @@ def test_deleting_the_account_removes_it_and_unlinks_comments(
     assert con.execute("select count(*) from sessions").fetchone() == (0,)
     assert con.execute("select account_id from comments").fetchone() == (None,)
     con.close()
-    assert "blAs1N#3479" not in db_text(settings)
+    assert "Player11#1011" not in db_text(settings)
 
 
 def test_the_site_may_send_the_session_cookie(client: TestClient) -> None:

@@ -64,7 +64,7 @@ async function mockApi(page: Page, { me, pool = [], sync = { status: "ok", recor
   return state;
 }
 
-const MEMBER: Me = { battletag: "blAs1N#3479", region: "KR" };
+const MEMBER: Me = { battletag: "Player11#1011", region: "KR" };
 const poolTab = (page: Page) => page.locator("#draft-tab-pool");
 const gridHero = (page: Page, slug: string) => page.locator(`#pool-heroes button[data-hero="${slug}"]`);
 const chip = (page: Page, slug: string) => page.locator(`#pool-mine [data-hero="${slug}"]`);
