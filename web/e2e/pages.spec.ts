@@ -4,13 +4,13 @@ test.beforeEach(async ({ page }) => {
   await page.route("**/gc.zgo.at/**", (r) => r.abort());
 });
 
-// Home, heroes, hero detail and maps pages against the frozen e2e data set.
+// Home, heroes, hero detail and maps pages against the e2e data set (synthetic, frozen).
 
 test("heroes: grid of 90 with tier badges, search and role filter", async ({ page }) => {
   await page.goto("./heroes/");
   const cards = page.locator("#grid a[data-hero]");
   await expect(cards).toHaveCount(90);
-  await expect(page.locator('#grid a[data-hero="qhira"] .tier-badge')).toHaveText("S");
+  await expect(page.locator('#grid a[data-hero="qhira"] .tier-badge')).toHaveText("A");
   await page.locator("#search").fill("일리");
   await expect(cards).toHaveCount(1);
   await expect(cards.first()).toContainText("일리단");
@@ -26,7 +26,8 @@ test("heroes: grid of 90 with tier badges, search and role filter", async ({ pag
   expect(n).toBeLessThan(90);
 });
 
-// #6: the e2e stats carry a Xal'atath row (20,000 games, 67 % — rank 1 if counted) that heroes_ko.json does not have.
+// #6: the e2e stats carry a Xal'atath row that heroes_ko.json does not have (in 다마그, 58.7 % on a 97.7 % pick rate:
+// rank 1 if counted).
 // A hero without assets is shown nowhere and is left out before the tier cut, so every other expectation holds.
 test("a hero in the stats without assets appears on no page and takes no rank", async ({ page }) => {
   const xal = (p: typeof page) => p.locator('[data-hero="xal-atath"], a[href*="xal-atath"]');
@@ -36,8 +37,9 @@ test("a hero in the stats without assets appears on no page and takes no rank", 
     await expect(xal(page), path).toHaveCount(0);
     await expect(page.locator("main"), path).not.toContainText("Xal'atath");
   }
-  await page.goto("./tier/");
-  await expect(page.locator("#rows tr[data-hero]").first()).toHaveAttribute("data-hero", "qhira");
+  await page.goto("./tier/?mode=sl&tier=high");
+  await expect(page.locator("#rows tr[data-hero]").first()).toHaveAttribute("data-hero", "tyrael");
+  await expect(page.locator("#rows tr[data-hero]").first().locator('td[data-col="rank"] [data-v]')).toHaveText("1");
   await page.locator("#site-search").fill("xal");
   await expect(page.getByRole("listbox")).toContainText("맞는 영웅이 없습니다");
   await page.goto("./heroes/xal-atath/");
@@ -48,10 +50,10 @@ test("heroes: the mode toggle swaps the tiers and the hero links carry the mode"
   await page.goto("./heroes/?role=Healer");
   await expect(page.locator('#roles button[data-role="Healer"]')).toHaveAttribute("aria-pressed", "true");
   const bw = page.locator('#grid a[data-hero="brightwing"]');
-  await expect(bw).toHaveAttribute("data-tier", "A"); // QM, as on the tier table
+  await expect(bw).toHaveAttribute("data-tier", "F"); // QM, as on the tier table
   await page.locator("#mode-sl").click();
   await expect(page).toHaveURL(/mode=sl&role=Healer/);
-  await expect(bw).toHaveAttribute("data-tier", "F");
+  await expect(bw).toHaveAttribute("data-tier", "A");
   await expect(bw).toHaveAttribute("href", "/ko/hots/heroes/brightwing/?mode=sl");
 });
 
@@ -89,7 +91,7 @@ test("hero detail: three stat cards, per-map rows (not links) in SL, region × b
   await expect(page.locator("h1")).toHaveText("일리단");
   const cards = page.locator("#stats > div");
   await expect(cards).toHaveCount(3); // tier, win rate, pick — no other-mode card (owner: confusing)
-  await expect(cards.first()).toContainText("B"); // QM tier from the fixture
+  await expect(cards.first()).toContainText("S"); // QM tier from the fixture
   await expect(cards.first()).toContainText("— 0"); // same rank as the previous patch, written like the table
   await expect(page.locator("#stats")).not.toContainText("점수");
   await expect(page.locator("#stats")).not.toContainText("밴 없음");
@@ -102,7 +104,7 @@ test("hero detail: three stat cards, per-map rows (not links) in SL, region × b
   await expect(page.locator("#maps")).toContainText("전장별 표본이 없습니다"); // fixture QM has no per-map rows: say so
   await page.locator("#mode-sl").click();
   await expect(page).toHaveURL(/mode=sl/);
-  await expect(cards.first()).toContainText("A");
+  await expect(cards.first()).toContainText("C");
   await expect(cards).toHaveCount(3);
   await expect(page.locator("#maps [data-map]")).toHaveCount(1); // fixture SL has one real map (Cursed Hollow)
   await expect(page.locator('#maps [data-map="cursed-hollow"]')).toContainText("저주받은 골짜기");
@@ -135,19 +137,19 @@ test("hero detail: section tabs stick under the header and land each section jus
 });
 
 test("hero detail: the 지역 × 구간 grid says 표본 부족 under the floor and 수집 전 where nothing was collected", async ({ page }) => {
-  // e2e data: Illidan has 88 Storm League games in NA (floor 200), KR is healthy, EU is not collected
+  // e2e data: Illidan has 79 Storm League games in NA (floor 200), KR is healthy, EU is not collected
   await page.goto("./heroes/illidan/?mode=sl");
   await expect(page.locator("#grid [data-cell]")).toHaveCount(12);
   const na = page.locator('#grid [data-cell="na-all"]');
   await expect(na.locator('[data-sample="thin"]')).toContainText("표본 부족");
-  await expect(na).toContainText("88게임");
+  await expect(na).toContainText("79게임");
   await expect(na.locator(".tier-badge")).toHaveCount(0);
   await expect(page.locator('#grid [data-cell="eu-all"]')).toHaveText("수집 전");
   await expect(page.locator('#grid [data-cell="kr-all"] [data-sample]')).toHaveCount(0); // ranked: tier and win rate
 });
 
 test("hero detail: 전장별 승률 under the floor has no bar and comes after the solid maps", async ({ page }) => {
-  // e2e data: Illidan has 88 Storm League games in NA — every map is under the floor (200); KR is healthy
+  // e2e data: Illidan has 79 Storm League games in NA — every map is under the floor (200); KR is healthy
   await page.goto("./heroes/illidan/?mode=sl&region=na");
   await expect(page.locator("#hero-region")).toHaveValue("na");
   const rows = page.locator("[data-map]");
@@ -176,46 +178,48 @@ test("hero detail: at the bottom of the page the last section's tab is active", 
 });
 
 test("role tabs: a hero that also plays 전사 or 투사 is under that tab too, labelled (played roles)", async ({ page }) => {
-  // e2e-data/latest/sl_comps.json played: Blaze (전사) also bruiser 41 %, Varian (투사) also tank 54 %; Alarak's move
+  // e2e-data/latest/sl_comps.json played: Blaze (전사) also bruiser 12 %, Varian (투사) also tank 17 %; Alarak's move
   // to ranged is between dealers and is not listed
   await page.goto("./tier/?role=Bruiser");
   const blaze = page.locator('#rows tr[data-hero="blaze"]');
   await expect(blaze).toBeVisible();
-  await expect(blaze.locator("[data-also]")).toHaveText("투사로도 41%");
+  await expect(blaze.locator("[data-also]")).toHaveText("투사로도 12%");
   await page.goto("./tier/?role=Tank");
-  await expect(page.locator('#rows tr[data-hero="varian"] [data-also]')).toHaveText("전사로도 54%");
+  await expect(page.locator('#rows tr[data-hero="varian"] [data-also]')).toHaveText("전사로도 17%");
   // on a phone the role column is hidden: the label sits under the name
   await page.setViewportSize({ width: 390, height: 844 });
-  await expect(page.locator('#rows tr[data-hero="varian"] [data-also-phone]')).toHaveText("전사로도 54%");
+  await expect(page.locator('#rows tr[data-hero="varian"] [data-also-phone]')).toHaveText("전사로도 17%");
   await page.setViewportSize({ width: 1280, height: 900 });
   await page.goto("./tier/?role=Ranged%20Assassin");
   await expect(page.locator('#rows tr[data-hero="alarak"]')).toHaveCount(0);
   await page.goto("./heroes/?role=Bruiser");
-  await expect(page.locator('#grid a[data-hero="blaze"] [data-also]')).toHaveText("투사로도 41%");
+  await expect(page.locator('#grid a[data-hero="blaze"] [data-also]')).toHaveText("투사로도 12%");
   await expect(page.locator('#grid a[data-hero="illidan"]')).toBeVisible();
 });
 
 test("hero detail: counters and synergies from the matchups file, with numbers, links and the rule", async ({ page }) => {
-  // e2e-data/matchups/abathur.json = the live answer recorded 2026-09-29 (SL, 2.55.17.98025), normalised
+  // e2e-data/matchups/abathur.json: SL, 2.55.17.98025, synthetic counts
   await page.goto("./heroes/abathur/");
   const counters = page.locator("#counters [data-matchup]");
   const synergies = page.locator("#synergies [data-matchup]");
   await expect(page.locator("#matchups-title")).toContainText("폭풍 리그");
   await expect(page.locator("#counters-title")).toHaveText("상대하기 어려운 영웅");
   await expect(page.locator("#synergies-title")).toHaveText("잘 맞는 영웅");
-  // gaps against what the two heroes' own rates lead to expect (e2e-data/latest/sl.json): Qhira was only strong
-  await expect(counters).toHaveCount(2);
-  await expect(synergies).toHaveCount(3); // Samuro, Kael'thas, Hogger: the only allies beyond the error
-  await expect(counters.first()).toHaveAttribute("data-matchup", "fenix");
-  await expect(counters.first()).toContainText("피닉스");
-  await expect(counters.first().locator("[data-delta]")).toHaveText("-10.3%p");
-  await expect(counters.first()).toContainText("104게임");
-  // the row says what was expected, so the gap can be checked: 40.4 % against an expected 50.7 % → −10.3
-  await expect(counters.first()).toContainText("기대 50.7%");
-  await expect(synergies.first()).toHaveAttribute("data-matchup", "samuro");
-  await expect(synergies.first().locator("[data-delta]")).toHaveText("+8.1%p");
+  // gaps against what the two heroes' own rates lead to expect (e2e-data/latest/sl.json); more than five enemies and
+  // allies are beyond the error, so both lists stop at the top five (MATCHUP_TOP)
+  await expect(counters).toHaveCount(5);
+  await expect(synergies).toHaveCount(5);
+  await expect(counters.first()).toHaveAttribute("data-matchup", "gul-dan");
+  await expect(counters.first()).toContainText("굴단");
+  await expect(counters.first().locator("[data-delta]")).toHaveText("-17.9%p");
+  await expect(counters.first()).toContainText("783게임");
+  // the row says what was expected, so the gap can be checked: Abathur 43.2 % − (Gul'dan 43.4 % − 50) = 49.8 %;
+  // 250 of 783 = 31.9 % against it → −17.9
+  await expect(counters.first()).toContainText("기대 49.8%");
+  await expect(synergies.first()).toHaveAttribute("data-matchup", "tyrael");
+  await expect(synergies.first().locator("[data-delta]")).toHaveText("+20.7%p");
   await expect(page.locator("#matchups-sub")).toContainText("2.55.17.98025");
-  await expect(page.locator("#matchups-sub")).toContainText("50.8%"); // the hero's own win rate in that sample
+  await expect(page.locator("#matchups-sub")).toContainText("43.2%"); // the hero's own win rate in that sample
   await expect(page.locator("#matchups-sub")).toContainText("기대 승률 대비");
   await expect(page.locator("#counters-title + span, #counters-title ~ span").first()).toContainText("기대보다 낮은");
   await expect(page.locator("#matchups-rule")).toContainText("n/(n+100)");
@@ -224,28 +228,28 @@ test("hero detail: counters and synergies from the matchups file, with numbers, 
   await expect(page.locator("#matchups-rule")).toContainText("차이가 오차(95%)를 넘는 영웅만");
   await expect(page.locator("nav[data-subnav] a[href='#matchups-title']")).toBeVisible();
   await counters.first().click();
-  await expect(page).toHaveURL(/\/heroes\/fenix\/$/);
-  await expect(page.locator("h1")).toHaveText("피닉스");
+  await expect(page).toHaveURL(/\/heroes\/gul-dan\/$/);
+  await expect(page.locator("h1")).toHaveText("굴단");
 });
 
 test("hero detail: Storm League win rate by league, bronze to master, with a faint point under 30 games", async ({ page }) => {
-  // e2e-data/latest/sl_tiers.json (collector/tiers.py): Abathur 53.0 / 52.0 / 48.0 / 50.0 / 45.0 / 45.0 (20 games)
+  // e2e-data/latest/sl_tiers.json (collector/tiers.py): Abathur 45.3 / 47.4 / 46.1 / 43.7 / 52.6 / 45.8 (master+: 24 games, faint)
   await page.goto("./heroes/abathur/");
   await expect(page.locator("#tiers-title")).toContainText("티어별 승률");
   await expect(page.locator("#tiers-title")).toContainText("폭풍 리그");
   const points = page.locator("#tiers [data-league]");
   await expect(points).toHaveCount(6);
   await expect(points.first()).toContainText("브론즈");
-  await expect(points.first()).toContainText("53.0%");
-  await expect(points.first()).toContainText("174게임");
+  await expect(points.first()).toContainText("45.3%");
+  await expect(points.first()).toContainText("351게임");
   await expect(points.last()).toHaveText(/^마스터\+/); // grandmasters are inside master
   await expect(points.last()).toHaveAttribute("data-thin", "true");
   await expect(page.locator("#tiers svg circle")).toHaveCount(6);
   // each league against its own all-hero average (asked 2026-10-14: higher leagues beat lower ones, so it is not 50%)
-  // bronze: Abathur 53.0 % (174) and Alarak 43.0 % (230) → average 47.31 %, Abathur +5.7%p
+  // bronze: Abathur 159 of 351 and Alarak 92 of 185 → average 46.83 %, Abathur 45.3 % → -1.5%p
   await expect(page.locator("#tiers svg [data-average]")).toHaveCount(1);
-  await expect(points.first().locator("[data-vs]")).toHaveText("+5.7%p");
-  await expect(page.locator("#tiers-sub")).toContainText("1,771게임");
+  await expect(points.first().locator("[data-vs]")).toHaveText("-1.5%p");
+  await expect(page.locator("#tiers-sub")).toContainText("3,211게임");
   await expect(page.locator("#tiers-rule")).toContainText("30게임 미만");
   await expect(page.locator("#tiers-rule")).toContainText("티어 평균");
   await expect(page.locator("nav[data-subnav] a[href='#tiers-title']")).toBeVisible();
@@ -258,30 +262,31 @@ test("hero detail: no league chart for a hero the file does not have", async ({ 
 });
 
 test("hero detail: Storm League win rate by game length, with the sample and a lean only beyond the error", async ({ page }) => {
-  // e2e-data/latest/sl_length.json (collector/hero_length.py): Abathur 38.0% / 50.0% / 55.0%, leaning late
+  // e2e-data/latest/sl_length.json (collector/hero_length.py): Abathur 53.1% / 55.2% / 57.1%, the collector's lean: late
   await page.goto("./heroes/abathur/");
   await expect(page.locator("#length-title")).toContainText("폭풍 리그");
   await expect(page.locator("#length-lean")).toHaveText("후반에 강함");
   const rows = page.locator("#length [data-band]");
   await expect(rows).toHaveCount(3);
   await expect(rows.nth(0)).toContainText("15분 이하");
-  await expect(rows.nth(0)).toContainText("38.0%");
-  await expect(rows.nth(0)).toContainText("150게임");
-  // against the hero's own rate, 297 of 610 = 48.7 % (every band's all-hero average is 50 %)
-  await expect(rows.nth(0).locator("[data-vs]")).toHaveText("-10.7%p");
-  await expect(page.locator("#length-sub")).toContainText("평균 48.7%");
+  await expect(rows.nth(0)).toContainText("53.1%");
+  await expect(rows.nth(0)).toContainText("194게임");
+  // against the hero's own rate, 531 of 954 = 55.7 % (every band's all-hero average is 50 %)
+  await expect(rows.nth(0).locator("[data-vs]")).toHaveText("-2.6%p");
+  await expect(page.locator("#length-sub")).toContainText("평균 55.7%");
   await expect(rows.nth(2)).toContainText("20분 초과");
-  await expect(rows.nth(2)).toContainText("55.0%");
-  await expect(page.locator("#length-sub")).toContainText("4,185게임");
+  await expect(rows.nth(2)).toContainText("57.1%");
+  await expect(page.locator("#length-sub")).toContainText("1,803게임");
   await expect(page.locator("#length-rule")).toContainText("30게임 미만");
   await expect(page.locator("nav[data-subnav] a[href='#length-title']")).toBeVisible();
 });
 
 test("hero detail: a thin game-length band shows no rate, and no lean is claimed", async ({ page }) => {
+  // e2e-data/latest/sl_length.json: Alarak has 20 games in 15~20분 (under 30)
   await page.goto("./heroes/alarak/");
-  const short = page.locator("#length [data-band='short']");
-  await expect(short).toContainText("12게임");
-  await expect(short).not.toContainText("%");
+  const mid = page.locator("#length [data-band='mid']");
+  await expect(mid).toContainText("20게임");
+  await expect(mid).not.toContainText("%");
   await expect(page.locator("#length-lean")).toHaveCount(0);
 });
 
@@ -428,8 +433,8 @@ test("tier table: Storm League rank-bracket selector loads sl_<bracket>.json and
   await expect(page).not.toHaveURL(/tier=/);
 });
 
-// e2e-data regions (synthetic, scaled from the global files): KR healthy (collected 2026-09-27T18:31Z = 03:31 KST, shown
-// as 09/28: dates are the Korean day, data.ts shortDate), NA thin (09/28), EU not collected
+// e2e-data regions (synthetic): KR healthy (collected 2026-09-27T18:31Z = 03:31 KST, shown as 09/28: dates are the
+// Korean day, data.ts shortDate), NA thin in Quick Match by meta.json (09/28), EU not collected
 test("tier table: region select loads {mode}_{region}.json, lands in the URL and shows that region's date", async ({ page }) => {
   await page.goto("./tier/");
   await expect(page.locator("#region option")).toHaveText(["전체 지역", "아시아 (KR)", "아메리카 (NA)", "유럽 (EU) · 수집 전"]);
@@ -438,7 +443,7 @@ test("tier table: region select loads {mode}_{region}.json, lands in the URL and
   await expect(page).toHaveURL(/region=kr/);
   await expect(page.locator("#table")).toHaveAttribute("aria-busy", "false");
   await expect(page.locator("#meta-line")).toContainText("아시아 (KR)");
-  await expect(page.locator("#meta-line")).toContainText("12,570 매치");
+  await expect(page.locator("#meta-line")).toContainText("21,862 매치");
   await expect(page.locator("#region-note")).toContainText("09/28 수집");
   await expect(page.locator("#region-note")).not.toHaveAttribute("data-thin", "true");
   await expect(page.locator("#rows [data-delta]")).toHaveCount(0); // no previous-patch file for a region: no ▲▼
@@ -448,10 +453,11 @@ test("tier table: region select loads {mode}_{region}.json, lands in the URL and
 });
 
 test("tier table: a thin region says so", async ({ page }) => {
-  await page.goto("./tier/?mode=sl&region=na");
+  // meta.json modes.qm_na: 29 heroes ranked of the 91 in the file (the generator makes QM NA thin)
+  await page.goto("./tier/?region=na");
   await expect(page.locator("#region")).toHaveValue("na");
   await expect(page.locator("#region-note")).toHaveAttribute("data-thin", "true");
-  await expect(page.locator("#region-note")).toContainText("12/91");
+  await expect(page.locator("#region-note")).toContainText("29/91");
 });
 
 // owner 2026-10-02: region and bracket together, e.g. KR × 브실골플 (e2e-data: KR has both brackets, EU none)
@@ -507,7 +513,7 @@ test("tier table: a previous-patch bracket file of an older bracket definition i
   // and no other patch's file takes its place (one reference patch, owner 2026-09-29): the view says it has no data
   await page.goto("./tier/?mode=sl&tier=low&patch=previous");
   await expect(page.locator("#meta-line")).toContainText("패치 2.55.17.97771에는 이 보기의 데이터가 없습니다");
-  await expect(page.locator("#meta-line")).not.toContainText("3,362 매치"); // the old [1,2] cohort
+  await expect(page.locator("#meta-line")).not.toContainText("3,409 매치"); // the old [1,2] cohort
   await expect(page.locator("#meta-line")).not.toContainText("2.55.17.98025"); // nor the current patch's [1-4] file
 });
 

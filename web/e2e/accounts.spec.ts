@@ -70,22 +70,22 @@ for (const width of [390, 1280]) {
 
 test("signed in: the BattleTag opens a menu with region, my profile, privacy, logout and delete; Escape and outside clicks close it", async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 800 });
-  await mockAccount(page, { battletag: "blAs1N#3479", region: "KR" });
+  await mockAccount(page, { battletag: "Player11#1011", region: "KR" });
   await page.goto("./");
   const button = page.locator("header #account-button");
-  await expect(button).toHaveText("blAs1N"); // the name; the whole BattleTag is in its label and atop the menu
-  await expect(button).toHaveAttribute("aria-label", /blAs1N#3479/);
+  await expect(button).toHaveText("Player11"); // the name; the whole BattleTag is in its label and atop the menu
+  await expect(button).toHaveAttribute("aria-label", /Player11#1011/);
   await expect(button).toHaveAttribute("aria-expanded", "false");
   await expect(page.locator("#account-panel")).toBeHidden();
   await button.click();
   await expect(button).toHaveAttribute("aria-expanded", "true");
   const panel = page.locator("#account-panel");
   await expect(panel).toBeVisible();
-  await expect(panel).toContainText("blAs1N#3479");
+  await expect(panel).toContainText("Player11#1011");
   await expect(panel.locator('[data-region="KR"]')).toHaveAttribute("aria-pressed", "true");
   await expect(panel.locator('[data-region="KR"]')).toHaveText("아시아");
   await expect(panel.locator('[data-region="EU"]')).toHaveAttribute("aria-pressed", "false");
-  await expect(panel.locator("#account-players")).toHaveAttribute("href", "/ko/hots/players/?tag=blAs1N%233479&region=KR");
+  await expect(panel.locator("#account-players")).toHaveAttribute("href", "/ko/hots/players/?tag=Player11%231011&region=KR");
   await expect(panel.locator("#account-privacy")).toHaveAttribute("href", "/ko/hots/privacy/");
   await expect(panel.locator("#account-logout")).toBeVisible();
   await expect(panel.locator("#account-delete")).toBeVisible();
@@ -99,20 +99,20 @@ test("signed in: the BattleTag opens a menu with region, my profile, privacy, lo
 });
 
 test("signed in on a phone: the menu fits the screen, no horizontal scroll", async ({ page }) => {
-  await mockAccount(page, { battletag: "blAs1N#3479", region: "NA" });
+  await mockAccount(page, { battletag: "Player11#1011", region: "NA" });
   await page.goto("./");
   const button = page.locator("header #account-button");
-  await expect(button).toContainText("blAs1N");
+  await expect(button).toContainText("Player11");
   await button.click();
   const box = (await page.locator("#account-panel").boundingBox())!;
   expect(box.x).toBeGreaterThanOrEqual(0);
   expect(box.x + box.width).toBeLessThanOrEqual(390);
   expect(await noHorizontalScroll(page)).toBe(true);
-  await expect(page.locator("#account-players")).toHaveAttribute("href", "/ko/hots/players/?tag=blAs1N%233479&region=NA");
+  await expect(page.locator("#account-players")).toHaveAttribute("href", "/ko/hots/players/?tag=Player11%231011&region=NA");
 });
 
 test("signed in without a region: asked once, the choice is saved", async ({ page }) => {
-  const api = await mockAccount(page, { battletag: "blAs1N#3479", region: null });
+  const api = await mockAccount(page, { battletag: "Player11#1011", region: null });
   await page.goto("./");
   const panel = page.locator("#account-panel");
   await expect(panel).toBeVisible(); // opened by itself
@@ -121,9 +121,9 @@ test("signed in without a region: asked once, the choice is saved", async ({ pag
   await expect(panel.locator('[data-region="EU"]')).toHaveAttribute("aria-pressed", "true");
   expect(api.calls.filter((c) => c.method === "POST" && c.path === "/v1/me/region").map((c) => c.body)).toEqual([{ region: "EU" }]);
   await expect(panel.locator("#account-region-prompt")).toHaveCount(0);
-  await expect(panel.locator("#account-players")).toHaveAttribute("href", "/ko/hots/players/?tag=blAs1N%233479&region=EU");
+  await expect(panel.locator("#account-players")).toHaveAttribute("href", "/ko/hots/players/?tag=Player11%231011&region=EU");
   // asked once: closed without a choice, the next page does not open it again
-  api.me = { battletag: "blAs1N#3479", region: null };
+  api.me = { battletag: "Player11#1011", region: null };
   await page.goto("./tier/");
   await expect(page.locator("header #account-button")).toBeVisible();
   await page.waitForTimeout(300);
@@ -145,7 +145,7 @@ test("the region prompt that opened by itself closes on an Escape that comes the
     });
     seen.observe(document, { subtree: true, childList: true, attributes: true, attributeFilter: ["hidden"] });
   });
-  await mockAccount(page, { battletag: "blAs1N#3479", region: null });
+  await mockAccount(page, { battletag: "Player11#1011", region: null });
   await page.goto("./");
   await expect(page.locator("header #account-button")).toBeVisible();
   await expect.poll(() => page.evaluate(() => (window as unknown as { escapeSent?: boolean }).escapeSent)).toBe(true);
@@ -154,7 +154,7 @@ test("the region prompt that opened by itself closes on an Escape that comes the
 });
 
 test("logout signs out and shows the login link again", async ({ page }) => {
-  const api = await mockAccount(page, { battletag: "blAs1N#3479", region: "KR" });
+  const api = await mockAccount(page, { battletag: "Player11#1011", region: "KR" });
   await page.goto("./");
   await page.locator("header #account-button").click();
   await page.locator("#account-logout").click();
@@ -164,7 +164,7 @@ test("logout signs out and shows the login link again", async ({ page }) => {
 });
 
 test("deleting the account asks first, says what goes, and only then deletes", async ({ page }) => {
-  const api = await mockAccount(page, { battletag: "blAs1N#3479", region: "KR" });
+  const api = await mockAccount(page, { battletag: "Player11#1011", region: "KR" });
   await page.goto("./");
   await page.locator("header #account-button").click();
   await page.locator("#account-delete").click();
@@ -184,12 +184,12 @@ test("deleting the account asks first, says what goes, and only then deletes", a
 for (const outcome of ["failed", "cancelled"] as const) {
   test(`?login=${outcome}: a short notice, and the parameter leaves the address`, async ({ page }) => {
     await mockAccount(page, null);
-    await page.goto(`./players/?tag=Zemill%231940&region=NA&login=${outcome}`);
+    await page.goto(`./players/?tag=Player12%231012&region=NA&login=${outcome}`);
     const notice = page.locator("#account-notice");
     await expect(notice).toBeVisible();
     await expect(notice).toHaveAttribute("aria-live", "polite");
     await expect(notice).toContainText(outcome === "failed" ? "로그인하지 못했습니다" : "로그인을 취소했습니다");
-    await expect(page).toHaveURL(/\/ko\/hots\/players\/\?tag=Zemill%231940&region=NA$/);
+    await expect(page).toHaveURL(/\/ko\/hots\/players\/\?tag=Player12%231012&region=NA$/);
   });
 }
 
@@ -210,7 +210,7 @@ test("privacy policy in Korean and English: what is kept, the cookies, the conta
 });
 
 test("control: an answer that allows any origin ('*') is refused for a credentialed call — the page stays signed out", async ({ page }) => {
-  await mockAccount(page, { battletag: "blAs1N#3479", region: "KR" }, "*");
+  await mockAccount(page, { battletag: "Player11#1011", region: "KR" }, "*");
   await page.goto("./");
   await expect(page.locator("header #account-login")).toBeVisible();
   await expect(page.locator("header #account-button")).toHaveCount(0);

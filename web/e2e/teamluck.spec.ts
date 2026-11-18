@@ -7,8 +7,8 @@ import { FEATURES } from "../src/features";
 // 팀운 on 전적 검색 (#90) against a mocked API: built 2026-10-06, off on the live site until the owner turns it on.
 test.skip(!FEATURES.teamluck, "팀운 is switched off (src/features.ts)");
 
-const fixture = JSON.parse(readFileSync(join(dirname(fileURLToPath(import.meta.url)), "../tests/fixtures/api_player_zemill.json"), "utf-8"));
-const matches = JSON.parse(readFileSync(join(dirname(fileURLToPath(import.meta.url)), "../tests/fixtures/api_matches_blas1n.json"), "utf-8"));
+const fixture = JSON.parse(readFileSync(join(dirname(fileURLToPath(import.meta.url)), "../tests/fixtures/api_player_sample.json"), "utf-8"));
+const matches = JSON.parse(readFileSync(join(dirname(fileURLToPath(import.meta.url)), "../tests/fixtures/api_matches_sample.json"), "utf-8"));
 const json = (route: Route, status: number, body: unknown) =>
   route.fulfill({ status, contentType: "application/json", headers: { "access-control-allow-origin": "*" }, body: JSON.stringify(body) });
 
@@ -52,7 +52,7 @@ const game = (id: number, hero: string, win: boolean, gap: number, x = 1) => ({
 const luck = {
   mode: "all",
   // the newest two games of the match list fixture: a big game in a win, a light one in a loss
-  games: [game(65597227, "Illidan", true, 120, 2.5), game(65597225, "Illidan", false, -90, 0.2), game(1, "Valla", true, 10)],
+  games: [game(78191829, "Illidan", true, 120, 2.5), game(38000431, "Illidan", false, -90, 0.2), game(1, "Valla", true, 10)],
   summary: { games: 20, gap_avg: 13.3, good: { games: 1, wins: 1 }, bad: { games: 1, wins: 0 }, even: { games: 1, wins: 1 } },
   partial: false,
   formula: { gap: "…", good: 50 },
@@ -74,7 +74,7 @@ test("팀운 is one line in the 최근 20경기 panel: a grade, no numbers", asy
     }
     return json(route, 200, url.pathname === "/v1/players/matches" ? matches : fixture);
   });
-  await page.goto("./players/?tag=Zemill%231940&region=NA");
+  await page.goto("./players/?tag=Player12%231012&region=NA");
   await expect(page.locator("#player-result")).toHaveAttribute("data-state", "ok");
   await expect(page.locator("#brief-luck")).toHaveAttribute("data-luck", "normal"); // mean gap +13.3
   await expect(page.locator("#brief-luck")).toContainText("팀운");
@@ -98,7 +98,7 @@ test("팀운: a spent allowance leaves the line out", async ({ page }) => {
     if (url.pathname === "/v1/players/teamluck") return json(route, 429, { error: { code: "quota_exceeded" } });
     return json(route, 200, url.pathname === "/v1/players/matches" ? matches : fixture);
   });
-  await page.goto("./players/?tag=Zemill%231940&region=NA");
+  await page.goto("./players/?tag=Player12%231012&region=NA");
   await expect(page.locator("#brief-avg")).toBeVisible();
   await expect(page.locator("#brief-luck")).toHaveCount(0);
 });

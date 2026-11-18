@@ -14,28 +14,28 @@ def _raw() -> dict[str, Any]:
 
 
 def test_career_totals() -> None:
-    p = normalize_player(_raw(), battletag="Zemill#1940", region="NA")
-    assert p["battletag"] == "Zemill#1940"
+    p = normalize_player(_raw(), battletag="Player12#1012", region="NA")
+    assert p["battletag"] == "Player12#1012"
     assert p["region"] == "NA"
-    assert p["account_level"] == 1802
-    assert (p["wins"], p["losses"], p["win_rate"]) == (3502, 3182, 52.39)
-    assert p["kda"] == 4.54
-    assert p["mvp_rate"] == 17.82
+    assert p["account_level"] == 9485
+    assert (p["wins"], p["losses"], p["win_rate"]) == (1634, 1190, 57.86)
+    assert p["kda"] == 5.88
+    assert p["mvp_rate"] == 85.81
 
 
 def test_modes_carry_mmr_and_league_in_a_fixed_order() -> None:
-    p = normalize_player(_raw(), battletag="Zemill#1940", region="NA")
+    p = normalize_player(_raw(), battletag="Player12#1012", region="NA")
     modes = {m["mode"]: m for m in p["modes"]}
     # Unranked Draft, Hero League and Team League are gone from the game: their old games are
     # hidden too (owner 2026-10-14), the recorded profile has all six
     assert [m["mode"] for m in p["modes"]] == ["sl", "qm", "ar"]
     assert modes["sl"] == {
         "mode": "sl",
-        "mmr": 2908,
+        "mmr": 5524,
         "tier": "Diamond 2",
-        "wins": 48,
-        "losses": 45,
-        "win_rate": 51.61,
+        "wins": 17,
+        "losses": 62,
+        "win_rate": 21.52,
     }
     assert modes["qm"]["tier"] == "Master"
 
@@ -49,42 +49,42 @@ def test_modes_without_games_are_dropped() -> None:
 
 
 def test_roles_heroes_maps() -> None:
-    p = normalize_player(_raw(), battletag="Zemill#1940", region="NA")
-    assert {r["role"]: r["win_rate"] for r in p["roles"]}["Tank"] == 48.52
+    p = normalize_player(_raw(), battletag="Player12#1012", region="NA")
+    assert {r["role"]: r["win_rate"] for r in p["roles"]}["Tank"] == 52.78
     assert len(p["roles"]) == 6
     top = p["heroes_most_played"][0]
     assert top == {
         "hero": "Lúcio",
         "short_name": "lucio",
-        "games": 300,
-        "wins": 175,
-        "losses": 125,
-        "win_rate": 58.33,
+        "games": 886,
+        "wins": 436,
+        "losses": 450,
+        "win_rate": 49.21,
         "last_played": "2026-09-26 02:32:09",
     }
-    assert p["heroes_best"][0]["hero"] == "Stitches"
+    assert p["heroes_best"][0]["hero"] == "Ragnaros"
     assert p["maps_most_played"][0] == {
-        "map": "Braxis Outpost",
-        "games": 499,
-        "wins": 257,
-        "losses": 242,
-        "win_rate": 51.5,
+        "map": "Silver City",
+        "games": 742,
+        "wins": 313,
+        "losses": 429,
+        "win_rate": 42.2,
     }
 
 
 def test_recent_matches_are_compact() -> None:
-    p = normalize_player(_raw(), battletag="Zemill#1940", region="NA")
+    p = normalize_player(_raw(), battletag="Player12#1012", region="NA")
     ms = p["recent_matches"]
     assert len(ms) == 5
     assert ms[0] == {
-        "replay_id": 65513747,
+        "replay_id": 91585299,
         "date": "2026-09-28 01:20:39",
         "mode": "sl",
         "map": "Volskaya Foundry",
         "hero": "Deckard",
         "short_name": "deckard",
         "win": True,
-        "mmr_change": 2.58,
+        "mmr_change": 4.33,
     }
     assert [m["win"] for m in ms] == [True, False, False, True, False]
     # the raw talent objects (≈5 KB per match) are not forwarded

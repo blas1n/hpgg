@@ -9,7 +9,7 @@ import { MATCHUP_K, MATCHUP_MIN_GAMES, MATCHUP_TOP, MATCHUP_Z, beyondError, hero
 const dataDir = join(dirname(fileURLToPath(import.meta.url)), "e2e-data");
 const json = <T>(rel: string): T => JSON.parse(readFileSync(join(dataDir, rel), "utf-8")) as T;
 const heroes = json<HeroTable>("heroes_ko.json");
-// normalised from the live /heroes/matchups answer recorded 2026-09-29 (Abathur, SL, 2.55.17.98025)
+// the shape of the /heroes/matchups answer recorded 2026-09-29 (Abathur, SL, 2.55.17.98025); numbers synthetic since the shutdown
 const abathur = json<MatchupsFile>("matchups/abathur.json");
 
 describe("matchupScore", () => {
@@ -98,8 +98,8 @@ describe("matchupsView", () => {
   it("carries patch, date and the hero's own win rate from the same sample", () => {
     expect(v.patch).toBe("2.55.17.98025");
     expect(v.collectedAt).toBe("2026-09-29T00:27:00Z");
-    expect(v.win_rate).toBe(50.79);
-    expect(v.games).toBe(4855);
+    expect(v.win_rate).toBe(43.19);
+    expect(v.games).toBe(8796);
   });
 
   it("top 5 counters: enemy heroes, worst first, all below the hero's own win rate and above the floor", () => {
@@ -112,8 +112,8 @@ describe("matchupsView", () => {
     expect([...scores].sort((a, b) => a - b)).toEqual(scores);
   });
 
-  it("synergies: ally heroes, best first, above the hero's own win rate beyond the error (3 of the recorded answer)", () => {
-    expect(v.synergies.map((r) => r.hero)).toEqual(["Samuro", "Tyrael", "Hogger"]);
+  it("synergies: ally heroes, best first, above the hero's own win rate beyond the error (5 in the fixture)", () => {
+    expect(v.synergies.map((r) => r.hero)).toEqual(["Tychus", "Tyrael", "The Butcher", "Li Li", "Kel'Thuzad"]);
     for (const r of v.synergies) {
       expect(r.delta).toBeGreaterThan(0);
       expect(beyondError(r.win_rate, abathur.win_rate, r.games)).toBe(true);
@@ -126,18 +126,21 @@ describe("matchupsView", () => {
     for (const r of v.counters) expect(beyondError(r.win_rate, abathur.win_rate, r.games)).toBe(true);
   });
 
+  // 1,000 games at z standard errors from the hero's own rate
+  const pairAt = (hero: string, z: number) => {
+    const own = abathur.win_rate;
+    const win_rate = Math.round((own + z * Math.sqrt((own * (100 - own)) / 1000)) * 100) / 100;
+    return { hero, games: 1000, wins: Math.round(win_rate * 10), win_rate };
+  };
+
   it("a counter within the error stays off the list, however big its sample", () => {
-    // 1,000 games at 48.0 % against an own 50.79 %: z = -1.77
-    const near = { hero: "Fenix", games: 1000, wins: 480, win_rate: 48 };
-    const far = { hero: "Kerrigan", games: 1000, wins: 460, win_rate: 46 }; // z = -3.04
-    const w = matchupsView({ ...abathur, enemy: [near, far] }, heroes)!;
+    const w = matchupsView({ ...abathur, enemy: [pairAt("Fenix", -1.7), pairAt("Kerrigan", -3)] }, heroes)!;
     expect(w.counters.map((r) => r.hero)).toEqual(["Kerrigan"]);
   });
 
-  it("a synergy within the error stays off the list too (ally pairs: 8.4 % beyond the error, 5 % by chance)", () => {
-    const near = { hero: "Fenix", games: 1000, wins: 535, win_rate: 53.5 }; // z = +1.71
-    const far = { hero: "Kerrigan", games: 1000, wins: 560, win_rate: 56 }; // z = +3.29
-    expect(matchupsView({ ...abathur, ally: [near, far] }, heroes)!.synergies.map((r) => r.hero)).toEqual(["Kerrigan"]);
+  it("a synergy within the error stays off the list too", () => {
+    const w = matchupsView({ ...abathur, ally: [pairAt("Fenix", 1.7), pairAt("Kerrigan", 3)] }, heroes)!;
+    expect(w.synergies.map((r) => r.hero)).toEqual(["Kerrigan"]);
   });
 
   it("the floor keeps a tiny sample off the list even with the biggest gap", () => {
@@ -155,7 +158,7 @@ describe("matchupsView", () => {
       ["Fenix", "fenix", "피닉스"],
     ]);
     expect(w.counters[1]!.portrait).toBe("img/heroes/fenix.png");
-    expect(w.counters[1]!.delta).toBeCloseTo(20 - 50.79);
+    expect(w.counters[1]!.delta).toBeCloseTo(20 - abathur.win_rate);
   });
 
   it("no file → null (the page says the data comes with the next collection)", () => {

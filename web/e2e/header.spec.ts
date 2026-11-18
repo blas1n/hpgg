@@ -6,8 +6,8 @@ import { messages } from "../src/i18n/messages";
 // Header design B · 검색 중심 (owner 2026-10-30): row 1 logo · one search box for a hero or a BattleTag · toggles;
 // row 2 the section tabs (no 홈 — the logo is home). Phones: logo + toggles, the search at full width, scrolling tabs.
 
-const fixture = JSON.parse(readFileSync(new URL("../tests/fixtures/api_player_zemill.json", import.meta.url), "utf-8"));
-const season = JSON.parse(readFileSync(new URL("../tests/fixtures/api_season_blas1n.json", import.meta.url), "utf-8"));
+const fixture = JSON.parse(readFileSync(new URL("../tests/fixtures/api_player_sample.json", import.meta.url), "utf-8"));
+const season = JSON.parse(readFileSync(new URL("../tests/fixtures/api_season_sample.json", import.meta.url), "utf-8"));
 
 test.use({ timezoneId: "Asia/Seoul" });
 
@@ -74,13 +74,13 @@ test("search: a BattleTag (full-width ＃) offers 전적 on the visitor's region
   await desktop(page);
   await page.goto("./tier/");
   const input = page.locator("#site-search");
-  await input.fill("Zemill＃1940");
+  await input.fill("Player12＃1012");
   const opt = page.locator('[role="option"][data-player]');
   await expect(opt).toHaveCount(1);
-  await expect(opt).toContainText(`Zemill#1940 · ${messages.ko.players.regions.KR}`);
+  await expect(opt).toContainText(`Player12#1012 · ${messages.ko.players.regions.KR}`);
   await expect(page.getByRole("listbox")).toContainText(messages.ko.search.playerGroup);
   await input.press("Enter");
-  await expect(page).toHaveURL(/\/ko\/hots\/players\/\?tag=Zemill%231940&region=KR$/);
+  await expect(page).toHaveURL(/\/ko\/hots\/players\/\?tag=Player12%231012&region=KR$/);
   await expect(page.locator("#player-result")).toHaveAttribute("data-state", "ok");
 });
 
@@ -89,16 +89,16 @@ test.describe("a visitor in Europe", () => {
   test("the BattleTag option is on their region, as the player search starts", async ({ page }) => {
     await page.route("https://api.hpgg.win/**", (r) => r.abort());
     await page.goto("/en/hots/");
-    await page.locator("#site-search").fill("Zemill#1940");
-    await expect(page.locator("[data-player]")).toContainText(`Zemill#1940 · ${messages.en.players.regions.EU}`);
+    await page.locator("#site-search").fill("Player12#1012");
+    await expect(page.locator("[data-player]")).toContainText(`Player12#1012 · ${messages.en.players.regions.EU}`);
     await page.locator("[data-player]").click();
-    await expect(page).toHaveURL(/\/en\/hots\/players\/\?tag=Zemill%231940&region=EU$/);
+    await expect(page).toHaveURL(/\/en\/hots\/players\/\?tag=Player12%231012&region=EU$/);
   });
 });
 
 test("search: an unfinished BattleTag shows the format hint", async ({ page }) => {
   await page.goto("./");
-  await page.locator("#site-search").fill("Zemill#19");
+  await page.locator("#site-search").fill("Player12#19");
   await expect(page.locator("[data-hint]")).toHaveText(messages.ko.search.tagHint);
   await expect(page.locator("[data-player]")).toHaveCount(0);
 });

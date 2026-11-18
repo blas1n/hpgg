@@ -21,7 +21,7 @@ class FakeBnet:
 
     def __init__(self) -> None:
         self.requests: list[httpx.Request] = []
-        self.user = {"sub": "123456", "id": 123456, "battletag": "blAs1N#3479"}
+        self.user = {"sub": "123456", "id": 123456, "battletag": "Player11#1011"}
         self.token_status = 200
 
     def __call__(self, request: httpx.Request) -> httpx.Response:

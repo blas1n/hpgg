@@ -5,7 +5,7 @@ import { lowContrast } from "./contrast";
 /** Pages of switched-off sections (src/features.ts) are not in the export. */
 const live = (path: string): boolean => sectionEnabled(path.split("/")[1]?.split("?")[0] ?? "");
 
-const playerFixture = fileURLToPath(new URL("../tests/fixtures/api_player_zemill.json", import.meta.url));
+const playerFixture = fileURLToPath(new URL("../tests/fixtures/api_player_sample.json", import.meta.url));
 
 test.beforeEach(async ({ page }) => {
   await page.route("**/gc.zgo.at/**", (r) => r.abort());
@@ -95,7 +95,7 @@ for (const theme of ["dark", "light"] as const) {
       test.setTimeout(120_000);
       await page.setViewportSize({ width, height: 900 });
       if (theme === "light") await page.addInitScript(() => localStorage.setItem("hpgg-theme", "light"));
-      const ko = ["./", "./tier/", "./tier/?mode=sl", "./heroes/", "./heroes/illidan/", "./heroes/illidan/?mode=sl", "./maps/", "./maps/cursed-hollow/", "./maps/towers-of-doom/", "./patches/", "./meta/", "./meta/?mode=sl", "./players/", "./players/?tag=Zemill%231940&region=NA", "./draft/", "./draft/?map=Cursed%20Hollow&d=illidan.zeratul.tracer.genji.abathur.uther.muradin", "./privacy/"].filter(live);
+      const ko = ["./", "./tier/", "./tier/?mode=sl", "./heroes/", "./heroes/illidan/", "./heroes/illidan/?mode=sl", "./maps/", "./maps/cursed-hollow/", "./maps/towers-of-doom/", "./patches/", "./meta/", "./meta/?mode=sl", "./players/", "./players/?tag=Player12%231012&region=NA", "./draft/", "./draft/?map=Cursed%20Hollow&d=illidan.zeratul.tracer.genji.abathur.uther.muradin", "./privacy/"].filter(live);
       // English pages (#10): the same pages under /en/hots/ — longer words, other line breaks
       for (const path of [...ko, ...ko.map((p) => `/en/hots/${p.slice(2)}`)]) {
         await page.goto(path);

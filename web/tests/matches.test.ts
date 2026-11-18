@@ -10,8 +10,8 @@ const here = dirname(fileURLToPath(import.meta.url));
 const json = <T>(rel: string): T => JSON.parse(readFileSync(join(here, rel), "utf-8")) as T;
 const heroes = localizeHeroes(json<HeroTable>("e2e-data/heroes_ko.json"), "ko");
 const maps = localizeMaps(json<MapTable>("e2e-data/maps_ko.json"), "ko");
-// API answer recorded from the local server against live HP, 2026-10-01 (blAs1N#3479 KR, newest 25 of 39)
-const full = json<MatchesResponse>("fixtures/api_matches_blas1n.json");
+// API answer in the shape the local server gave on 2026-10-01 (newest 25 of 39); numbers synthetic since the shutdown
+const full = json<MatchesResponse>("fixtures/api_matches_sample.json");
 const basic: MatchesResponse = {
   ...full,
   source: "basic",
@@ -31,8 +31,8 @@ const res = (status: number, body: unknown) =>
 describe("fetchMatches", () => {
   it("asks /v1/players/matches and reads the answer", async () => {
     const f = vi.fn().mockResolvedValue(res(200, full));
-    const r = await fetchMatches("blAs1N#3479", "KR", { fetchImpl: f, base: "https://api.test" });
-    expect(f.mock.calls[0]![0]).toBe("https://api.test/v1/players/matches?battletag=blAs1N%233479&region=KR");
+    const r = await fetchMatches("Player11#1011", "KR", { fetchImpl: f, base: "https://api.test" });
+    expect(f.mock.calls[0]![0]).toBe("https://api.test/v1/players/matches?battletag=Player11%231011&region=KR");
     expect(r.kind).toBe("ok");
     if (r.kind === "ok") expect(r.data.matches).toHaveLength(25);
   });
@@ -60,10 +60,11 @@ describe("briefing (the newest games)", () => {
   });
 
   it("averages the stat lines and takes KDA over the totals", () => {
-    expect(b.kda).toBeCloseTo((97 + 191) / 69, 2);
-    expect(b.avg?.kills).toBeCloseTo(97 / 20);
-    expect(b.avg?.heroDamage).toBeCloseTo(48691.65);
-    expect(b.avg?.healing).toBeCloseTo(50595.67, 1); // only games where the hero healed
+    // newest 20 games: 75 kills, 96 deaths, 718 assists
+    expect(b.kda).toBeCloseTo((75 + 718) / 96, 2);
+    expect(b.avg?.kills).toBeCloseTo(75 / 20);
+    expect(b.avg?.heroDamage).toBeCloseTo(61491.85);
+    expect(b.avg?.healing).toBeCloseTo(203938.33, 1); // only the 3 games where the hero healed
   });
 
   it("names the heroes played most, with their record", () => {
@@ -81,7 +82,8 @@ describe("briefing (the newest games)", () => {
   it("draws the MMR of the most played mode, oldest first, over every loaded game", () => {
     expect(b.mmr.mode).toBe("qm");
     expect(b.mmr.points).toHaveLength(25);
-    expect(b.mmr.points.at(-1)!.mmr).toBe(2342);
+    expect(b.mmr.points.at(-1)!.mmr).toBe(full.matches[0]!.mmr); // the newest game last
+    expect(b.mmr.points.at(-1)!.mmr).toBe(7437);
     expect(b.mmr.points[0]!.date < b.mmr.points.at(-1)!.date).toBe(true);
   });
 
@@ -100,10 +102,10 @@ describe("matchRows", () => {
 
   it("shows each game with its stat line in the page language", () => {
     const m = rows[0]!;
-    expect(m).toMatchObject({ hero: "알라라크", slug: "alarak", win: true, mode: "빠른 대전", mmrChange: 43.05, level: 22 });
+    expect(m).toMatchObject({ hero: "알라라크", slug: "alarak", win: true, mode: "빠른 대전", mmrChange: 44.45, level: 22 });
     expect(m.map).toBe(maps.maps.find((x) => x.name === "Hanamura Temple")?.ko ?? "Hanamura Temple");
-    expect(m.kda).toEqual({ kills: 9, deaths: 1, assists: 25, ratio: 34, perfect: false });
-    expect(m.stats?.heroDamage).toBe(72367);
+    expect(m.kda).toEqual({ kills: 5, deaths: 1, assists: 99, ratio: 104, perfect: false });
+    expect(m.stats?.heroDamage).toBe(77666);
     expect(m.when).toMatch(/시간 전/);
   });
 
@@ -124,9 +126,9 @@ describe("matchRows", () => {
     expect(matchRows([full.matches[1]!], heroes, maps, {}, "ko", new Date(), awards)[0]!.award).toBeNull();
   });
 
-  it("a perfect game's KDA is the takedowns, not infinity", () => {
+  it("a perfect game's KDA is kills + assists, not infinity", () => {
     const [m] = matchRows([{ ...full.matches[0]!, deaths: 0 }], heroes, maps, {}, "ko");
-    expect(m!.kda?.ratio).toBe(34);
+    expect(m!.kda?.ratio).toBe(5 + 99);
     expect(m!.kda?.perfect).toBe(true);
   });
 

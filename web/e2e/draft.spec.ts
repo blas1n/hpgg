@@ -9,7 +9,7 @@ test.beforeEach(async ({ page }) => {
   await page.route("**/gc.zgo.at/**", (r) => r.abort());
 });
 
-// 밴픽 simulator (#25) against the frozen e2e data set (only Abathur has a matchups file there).
+// 밴픽 simulator (#25) against the frozen synthetic e2e data set (only Abathur has a matchups file there).
 const abathur = JSON.parse(readFileSync(new URL("../tests/e2e-data/matchups/abathur.json", import.meta.url), "utf-8"));
 const sl = JSON.parse(readFileSync(new URL("../tests/e2e-data/latest/sl.json", import.meta.url), "utf-8"));
 
@@ -38,14 +38,16 @@ test("draft: the real order, turn prompt, suggestions with their terms, and the 
   await choose(page, "uther");
   await choose(page, "muradin");
 
-  // our pick with Abathur on the team: Samuro's ally term is Abathur's gap with Samuro (the hero page's rule)
-  const row = abathur.ally.find((r: { hero: string }) => r.hero === "Samuro");
-  // against what Samuro's own rate brings (e2e-data/latest/sl.json), shrunk, × 0.3 (allies' weight)
-  const samuroOwn = sl.rows.find((r: { hero: string; map: string }) => r.hero === "Samuro" && r.map === "all").win_rate;
-  const exp = abathur.win_rate + (samuroOwn - 50);
+  // our pick with Abathur on the team: Blaze's ally term is Abathur's gap with Blaze (the hero page's rule) — a
+  // suggested hero whose pair with Abathur is beyond the error in the e2e data (below expectation: a negative term)
+  const row = abathur.ally.find((r: { hero: string }) => r.hero === "Blaze");
+  // against what Blaze's own rate brings (e2e-data/latest/sl.json), shrunk, × 0.3 (allies' weight)
+  const blazeOwn = sl.rows.find((r: { hero: string; map: string }) => r.hero === "Blaze" && r.map === "all").win_rate;
+  const exp = abathur.win_rate + (blazeOwn - 50);
   const expected = (((row.win_rate - exp) * row.games) / (row.games + 100)) * 0.3;
-  const samuro = page.locator('#draft-suggest [data-hero="samuro"]');
-  await expect(samuro.locator("[data-term=allies]")).toHaveText(`+${expected.toFixed(1)}`);
+  expect(expected).toBeLessThan(-0.05);
+  const blaze = page.locator('#draft-suggest [data-hero="blaze"]');
+  await expect(blaze.locator("[data-term=allies]")).toHaveText(expected.toFixed(1));
   // Uther and Muradin have no matchups file in the e2e data: said, not hidden
   await expect(page.locator("#draft-missing")).toContainText("우서");
 
@@ -65,7 +67,7 @@ test("draft: the real order, turn prompt, suggestions with their terms, and the 
 });
 
 test("draft: our last pick without a healer — healers first, the rest pay the team term", async ({ page }) => {
-  // e2e-data/latest/sl_comps.json: no healer 37.3 % on 134 teams (−12.7, beyond the error), three ranged 44.0 % on 579
+  // e2e-data/latest/sl_comps.json is meant to make a team without a healer lose beyond the error
   const roles = new Map<string, string>(
     JSON.parse(readFileSync(new URL("../tests/e2e-data/heroes_ko.json", import.meta.url), "utf-8")).heroes.map((h: { slug: string; role: string }) => [h.slug, h.role]),
   );
@@ -84,7 +86,7 @@ test("draft: our last pick without a healer — healers first, the rest pay the 
   for (const row of await rows.all()) {
     const comp = Number(await row.locator("[data-term=comp]").textContent());
     if (roles.get((await row.getAttribute("data-hero"))!) === "Healer") expect(comp).toBe(0);
-    else expect(comp).toBeLessThanOrEqual(-12.6);
+    else expect(comp).toBeLessThanOrEqual(-8.2); // the no-healer cost in the e2e data
   }
   await expect(page.locator("#draft-rule")).toContainText("조합 = 이 영웅을 넣으면");
 });

@@ -98,10 +98,10 @@ async def test_first_sync_reads_every_page_and_marks_players_private(
     assert then.url.params["since"] == "2026-09-01T00:00:00+00:00"
     assert then.url.params["after_id"] == "319"
     store = HPStore(db)
-    assert await store.is_private("EU", "Razhag#2142")
-    assert await store.is_private("NA", "FUNKB0T#1899")
+    assert await store.is_private("EU", "Player13#1013")
+    assert await store.is_private("NA", "Player14#1014")
     assert await store.is_private("KR", "Late#1111")
-    assert not await store.is_private("KR", "Razhag#2142")  # regions are separate accounts
+    assert not await store.is_private("KR", "Player13#1013")  # regions are separate accounts
     cursor = await store.feed_cursor()
     assert cursor is not None
     assert (cursor.since, cursor.after_id) == ("2026-10-01T01:00:00+00:00", 7)
@@ -122,9 +122,9 @@ async def test_going_private_removes_the_cached_profile_in_any_letter_case(
     feed: PrivacyFeed, fake_hp: FakeHP, db: Database, clock: Clock
 ) -> None:
     store = HPStore(db)
-    typed = await cache_player(store, "razhag#2142", "EU", clock)  # as a visitor typed it
+    typed = await cache_player(store, "player13#1013", "EU", clock)  # as a visitor typed it
     kept = await cache_player(store, "Someone#1234", "EU", clock)
-    fake_hp.responder = lambda r: page([change("Razhag#2142", 2)])
+    fake_hp.responder = lambda r: page([change("Player13#1013", 2)])
     await feed.poll_once()
     assert await store.get(typed) is None
     assert await store.get(kept) is not None
@@ -133,10 +133,10 @@ async def test_going_private_removes_the_cached_profile_in_any_letter_case(
 async def test_a_private_player_is_not_served_from_cache_nor_asked_again(
     feed: PrivacyFeed, svc: PlayerService, fake_hp: FakeHP, db: Database, clock: Clock
 ) -> None:
-    fake_hp.responder = lambda r: page([change("Razhag#2142", 2)])
+    fake_hp.responder = lambda r: page([change("Player13#1013", 2)])
     await feed.poll_once()
     asked = len(fake_hp.requests)
-    r = await svc.lookup("RAZHAG#2142", "EU")
+    r = await svc.lookup("PLAYER13#1013", "EU")
     assert r.outcome == "private" and r.profile is None
     assert len(fake_hp.requests) == asked
 
@@ -144,13 +144,15 @@ async def test_a_private_player_is_not_served_from_cache_nor_asked_again(
 async def test_going_public_again_lets_the_player_be_looked_up(
     feed: PrivacyFeed, svc: PlayerService, fake_hp: FakeHP, db: Database
 ) -> None:
-    answers = iter([page([change("Razhag#2142", 2)]), page([change("Razhag#2142", 2, "public")])])
+    answers = iter(
+        [page([change("Player13#1013", 2)]), page([change("Player13#1013", 2, "public")])]
+    )
     fake_hp.responder = lambda r: next(answers)
     await feed.poll_once()
     await feed.poll_once()
-    assert not await HPStore(db).is_private("EU", "Razhag#2142")
+    assert not await HPStore(db).is_private("EU", "Player13#1013")
     fake_hp.responder = lambda r: hp_response("v1_players_200.json")
-    assert (await svc.lookup("Razhag#2142", "EU")).outcome == "ok"
+    assert (await svc.lookup("Player13#1013", "EU")).outcome == "ok"
 
 
 async def test_changes_apply_in_feed_order(

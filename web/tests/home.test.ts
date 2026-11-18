@@ -24,9 +24,9 @@ describe("roleLeaders", () => {
     expect(leaders.map((l) => l.role)).toEqual(heroes.roles.map((r) => r.name));
   });
 
-  it("picks the best-ranked hero of each role (Whitemane leads healers in the QM fixture)", () => {
+  it("picks the best-ranked hero of each role (Tyrande leads healers in the QM fixture)", () => {
     const healer = leaders.find((l) => l.role === "Healer")!;
-    expect(healer.hero.slug).toBe("whitemane");
+    expect(healer.hero.slug).toBe("tyrande");
     expect(healer.role_ko).toBe("치유사");
     const healerRanks = ranked(qm.rows).filter((x) => heroes.heroes.find((h) => h.name === x.row.hero)?.role === "Healer");
     expect(healer.rank).toBe(healerRanks[0]!.rank);
@@ -41,7 +41,7 @@ describe("topHeroes", () => {
     const top = topHeroes(cur, prev, heroes, 10);
     expect(top).toHaveLength(10);
     expect(top.map((t) => t.rank)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
-    expect(top[0]!.hero.slug).toBe("qhira");
+    expect(top[0]!.hero.slug).toBe("raynor"); // #1 of the QM fixture
     expect(top[0]!.delta).toBe(1); // was #2, now #1
     expect(top[1]!.delta).toBe(-1);
     expect(top[2]!.delta).toBe(0);

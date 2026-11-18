@@ -64,13 +64,13 @@ describe("searchHeroes on English pages", () => {
 describe("unifiedSearch: one header box for a hero name or a BattleTag", () => {
   const ko = { locale: "ko" as const, region: "KR" as const };
   it("a BattleTag (full-width ＃ and spaces normalised like the player search) is a 전적 option on the visitor's region", () => {
-    for (const q of ["Zemill＃1940", " Zemill ＃ 1940 ", "Zemill#1940"]) {
+    for (const q of ["Player12＃1012", " Player12 ＃ 1012 ", "Player12#1012"]) {
       const r = unifiedSearch(ITEMS, q, ko);
-      expect(r.player, q).toEqual({ tag: "Zemill#1940", region: "KR", href: "/ko/hots/players/?tag=Zemill%231940&region=KR" });
+      expect(r.player, q).toEqual({ tag: "Player12#1012", region: "KR", href: "/ko/hots/players/?tag=Player12%231012&region=KR" });
       expect(r.heroes, q).toEqual([]);
       expect(r.hint, q).toBe(false);
     }
-    expect(unifiedSearch(ITEMS, "Zemill#1940", { locale: "en", region: "NA" }).player?.href).toBe("/en/hots/players/?tag=Zemill%231940&region=NA");
+    expect(unifiedSearch(ITEMS, "Player12#1012", { locale: "en", region: "NA" }).player?.href).toBe("/en/hots/players/?tag=Player12%231012&region=NA");
   });
 
   it("a hero name gives hero results as before and no 전적 option", () => {
@@ -82,9 +82,9 @@ describe("unifiedSearch: one header box for a hero name or a BattleTag", () => {
   });
 
   it("hints at the BattleTag format for an unfinished tag, letters with digits, or a name no hero matches", () => {
-    expect(unifiedSearch(ITEMS, "Zemill#19", ko)).toMatchObject({ player: null, hint: true });
-    expect(unifiedSearch(ITEMS, "Zemill＃", ko)).toMatchObject({ player: null, hint: true });
-    expect(unifiedSearch(ITEMS, "zemill1940", ko)).toMatchObject({ player: null, hint: true });
+    expect(unifiedSearch(ITEMS, "Player12#10", ko)).toMatchObject({ player: null, hint: true });
+    expect(unifiedSearch(ITEMS, "Player12＃", ko)).toMatchObject({ player: null, hint: true });
+    expect(unifiedSearch(ITEMS, "player121012", ko)).toMatchObject({ player: null, hint: true });
     expect(unifiedSearch(ITEMS, "zzzz", ko)).toMatchObject({ heroes: [], player: null, hint: true });
     expect(unifiedSearch(ITEMS, "li", ko).hint).toBe(false);
     expect(unifiedSearch(ITEMS, "  ", ko)).toEqual({ heroes: [], player: null, hint: false });

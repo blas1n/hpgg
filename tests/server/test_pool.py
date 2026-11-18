@@ -111,7 +111,7 @@ def test_sync_adds_this_seasons_heroes_and_offers_the_rest_as_candidates(
         {"hero": "Zeratul", "games": 4, "wins": 3},
         {"hero": "Abathur", "games": 1, "wins": 0},
     ]
-    assert season.asked == [("blAs1N#3479", "KR")]  # the member's own BattleTag and region
+    assert season.asked == [("Player11#1011", "KR")]  # the member's own BattleTag and region
     # added to what was there, nothing taken away; the list keeps the order heroes came in
     assert pool(member) == ["Anduin", "Valla", "Li Li", "Lúcio"]
 

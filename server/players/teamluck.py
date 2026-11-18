@@ -7,7 +7,7 @@ teammates alone are weaker the better the player is, and a strong player read �
 The whole team against the opponents is the matchmaker's luck.
 
 A replay answer carries the MMR after the game (`player_conservative_rating` and
-`player_change` match the match list's after-each-game row, replay 65597227), so before =
+`player_change` match the match list's after-each-game row, replay 78191829), so before =
 mmr − mmr_change. Measured on the MMR after, a won game would make the winners look stronger and
 팀운 would only restate the record. Performance (teammates' KDA, damage) is circular for the same
 reason and is not used.

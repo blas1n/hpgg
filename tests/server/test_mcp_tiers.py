@@ -44,7 +44,7 @@ def test_tier_list_default_view(owner: tuple[TestClient, str]) -> None:  # noqa:
     t = call_tool(c, token, "get_tier_list")
     assert t["view"] == {"mode": "sl", "bracket": "all", "region": "all", "map": "all"}
     assert t["patch"]
-    assert t["min_games"] == 50
+    assert t["min_games"] == 200  # meta.json of the synthetic site data
     assert t["formula"]
     first = t["heroes"][0]
     assert first["rank"] == 1 and first["tier"] == "S"

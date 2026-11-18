@@ -78,7 +78,7 @@ async def test_an_opened_game_teaches_the_match_list_its_award(
     matches["body"]["data"][0]["match_award"] = "77"
     # the same game opened: HP names the award there
     replay = copy.deepcopy(recorded("v1_replay_200.json"))
-    me = next(p for t in replay["body"]["players"] for p in t if p["battletag"] == "blAs1N#3479")
+    me = next(p for t in replay["body"]["players"] for p in t if p["battletag"] == "Player11#1011")
     me["match_award"] = {"award_id": 77, "title": "Stunner", "icon": "storm_ui_mvp_stunner"}
 
     def answer(r: httpx.Request) -> httpx.Response:
@@ -91,12 +91,12 @@ async def test_an_opened_game_teaches_the_match_list_its_award(
     ms = MatchService(hp=hp, store=store, players=players, settings=settings, clock=clock)
     rs = ReplayService(hp=hp, store=store, settings=settings, clock=clock)
 
-    before = await ms.lookup("blAs1N#3479", "KR")
+    before = await ms.lookup("Player11#1011", "KR")
     assert before.matches[0]["award"] is None
-    game = (await rs.lookup(65597227)).replay
+    game = (await rs.lookup(78191829)).replay
     assert game is not None
-    mine = next(p for t in game["teams"] for p in t["players"] if p["battletag"] == "blAs1N#3479")
+    mine = next(p for t in game["teams"] for p in t["players"] if p["battletag"] == "Player11#1011")
     assert mine["award"] == "MostStuns"
-    after = await ms.lookup("blAs1N#3479", "KR")  # the cached list, not asked again
+    after = await ms.lookup("Player11#1011", "KR")  # the cached list, not asked again
     assert after.matches[0]["award"] == "MostStuns"
     assert sum(r.url.path.endswith("/players/matches") for r in fake_hp.requests) == 1

@@ -1,0 +1,59 @@
+{
+ "mode": "all",
+ "heroes": [
+  {
+   "hero": "Greymane",
+   "short_name": "greymane",
+   "games": 8,
+   "wins": 4,
+   "losses": 4,
+   "win_rate": 50.0,
+   "kda": 4.47,
+   "kills": 10.0,
+   "deaths": 7.23,
+   "assists": 7.22,
+   "hero_damage": 69121.31,
+   "siege_damage": 457642.4,
+   "healing": 0.0,
+   "damage_taken": 95780.2,
+   "experience": 13356.32
+  },
+  {
+   "hero": "Chen",
+   "short_name": "chen",
+   "games": 7,
+   "wins": 4,
+   "losses": 3,
+   "win_rate": 57.14,
+   "kda": 4.99,
+   "kills": 1.38,
+   "deaths": 6.6,
+   "assists": 48.1,
+   "hero_damage": 40859.52,
+   "siege_damage": 46367.78,
+   "healing": 8304.02,
+   "damage_taken": 102495.28,
+   "experience": 51464.7
+  },
+  {
+   "hero": "Alarak",
+   "short_name": "alarak",
+   "games": 2,
+   "wins": 1,
+   "losses": 1,
+   "win_rate": 50.0,
+   "kda": 2.27,
+   "kills": 3.27,
+   "deaths": 7.46,
+   "assists": 34.0,
+   "hero_damage": 35962.36,
+   "siege_damage": 65875.14,
+   "healing": 0.0,
+   "damage_taken": 40931.5,
+   "experience": 42292.22
+  }
+ ],
+ "fetched_at": "2026-10-02T03:00:00Z",
+ "stale": false,
+ "notice": null
+}

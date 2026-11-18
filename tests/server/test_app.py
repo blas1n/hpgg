@@ -15,7 +15,7 @@ from server.logs import configure_logging
 from tests.server.conftest import TOKEN, Clock, FakeHP
 
 URL = "/v1/players"
-OK = {"battletag": "Zemill#1940", "region": "NA"}
+OK = {"battletag": "Player12#1012", "region": "NA"}
 
 
 @pytest.fixture
@@ -47,7 +47,7 @@ def test_player_lookup(client: TestClient) -> None:
     r = client.get(URL, params=OK)
     assert r.status_code == 200
     body = r.json()
-    assert body["player"]["account_level"] == 1802
+    assert body["player"]["account_level"] == 9485
     assert body["stale"] is False and body["notice"] is None
     assert body["fetched_at"].endswith("Z")
     assert r.headers["cache-control"].startswith("public, max-age=")
@@ -56,12 +56,12 @@ def test_player_lookup(client: TestClient) -> None:
 @pytest.mark.parametrize(
     "params",
     [
-        {"battletag": "Zemill", "region": "NA"},
-        {"battletag": "Zemill#abc", "region": "NA"},
+        {"battletag": "Player12", "region": "NA"},
+        {"battletag": "Player12#abc", "region": "NA"},
         {"battletag": "Ze mill#1940", "region": "NA"},
-        {"battletag": "Zemill#1940", "region": "XX"},
-        {"battletag": "Zemill#1940"},
-        {"battletag": "Zemill#1940", "region": "NA", "season": "33"},
+        {"battletag": "Player12#1012", "region": "XX"},
+        {"battletag": "Player12#1012"},
+        {"battletag": "Player12#1012", "region": "NA", "season": "33"},
         {"battletag": "A" * 40 + "#1234", "region": "NA"},
     ],
 )
@@ -113,7 +113,7 @@ def test_private_player_is_403_player_private(client: TestClient, fake_hp: FakeH
     from tests.server.conftest import hp_response
 
     fake_hp.responder = lambda r: hp_response("v1_players_403_private.json")
-    r = client.get(URL, params={"battletag": "Razhag#2142", "region": "EU"})
+    r = client.get(URL, params={"battletag": "Player13#1013", "region": "EU"})
     assert r.status_code == 403
     assert r.json()["error"]["code"] == "player_private"
     assert "no-store" in r.headers["cache-control"]
@@ -133,7 +133,7 @@ def test_the_app_polls_the_privacy_feed_by_default(
                 json={
                     "changes": [
                         {
-                            "battletag": "Razhag#2142",
+                            "battletag": "Player13#1013",
                             "region": 2,
                             "state": "private",
                             "changed_at": "2026-10-01T00:00:00+00:00",
@@ -152,7 +152,7 @@ def test_the_app_polls_the_privacy_feed_by_default(
         while c.get("/healthz").json()["privacy"]["last_ok_at"] is None:
             assert time.monotonic() < deadline, "the feed was never polled"
             time.sleep(0.02)
-        r = c.get(URL, params={"battletag": "Razhag#2142", "region": "EU"})
+        r = c.get(URL, params={"battletag": "Player13#1013", "region": "EU"})
         assert r.status_code == 403
     players = [q for q in fake_hp.requests if q.url.path.endswith("/players")]
     assert players == []
@@ -270,7 +270,7 @@ def test_match_list(client: TestClient, fake_hp: FakeHP) -> None:
         if r.url.path.endswith("/players/matches")
         else "v1_players_200.json"
     )
-    r = client.get(URL + "/matches", params={"battletag": "blAs1N#3479", "region": "KR"})
+    r = client.get(URL + "/matches", params={"battletag": "Player11#1011", "region": "KR"})
     assert r.status_code == 200
     body = r.json()
     assert body["source"] == "full" and len(body["matches"]) == 3
@@ -299,7 +299,7 @@ def test_match_list_errors(
 
 
 def test_match_list_validates_like_the_profile(client: TestClient, fake_hp: FakeHP) -> None:
-    r = client.get(URL + "/matches", params={"battletag": "Zemill", "region": "KR"})
+    r = client.get(URL + "/matches", params={"battletag": "Player12", "region": "KR"})
     assert r.status_code == 422 and fake_hp.requests == []
 
 
@@ -307,7 +307,7 @@ def test_replay_in_full(client: TestClient, fake_hp: FakeHP) -> None:
     from tests.server.conftest import hp_response
 
     fake_hp.responder = lambda r: hp_response("v1_replay_200.json")
-    r = client.get("/v1/replays/65597227")
+    r = client.get("/v1/replays/78191829")
     assert r.status_code == 200
     body = r.json()
     assert body["replay"]["map"] == "Hanamura Temple" and len(body["replay"]["teams"]) == 2
@@ -340,7 +340,7 @@ def test_team_luck(client: TestClient, fake_hp: FakeHP) -> None:
         return hp_response("v1_players_200.json")
 
     fake_hp.responder = respond
-    r = client.get(URL + "/teamluck", params={"battletag": "blAs1N#3479", "region": "KR"})
+    r = client.get(URL + "/teamluck", params={"battletag": "Player11#1011", "region": "KR"})
     assert r.status_code == 200
     body = r.json()
     assert body["mode"] == "all" and body["partial"] is False

@@ -12,7 +12,7 @@ from fastapi.testclient import TestClient
 
 from tests.server.accounts_support import ORIGIN, sign_in
 
-OWNER = "blAs1N#3479"
+OWNER = "Player11#1011"
 REDIRECT = "https://chatgpt.com/connector_platform_oauth_redirect"
 RESOURCE = "https://api.hpgg.win/mcp"
 VERIFIER = "v" * 64
