@@ -1,7 +1,837 @@
 {
  "parser": 3,
- "fetched_at": "2026-11-22T18:20:35Z",
+ "fetched_at": "2026-11-24T18:21:09Z",
  "notes": [
+  {
+   "id": "24315644",
+   "published": "2026-11-23T18:09:00Z",
+   "build": "2.57.0.98746",
+   "title": {
+    "ko": "히어로즈 오브 더 스톰 라이브 패치 노트 - 2026년 11월 24일",
+    "en": "Heroes of the Storm Live Patch Notes - November 23, 2026"
+   },
+   "url": {
+    "ko": "https://news.blizzard.com/ko-kr/article/24315644/",
+    "en": "https://news.blizzard.com/en-us/article/24315644/"
+   },
+   "heroes": {
+    "Chromie": {
+     "verdict": "mixed",
+     "groups": [
+      {
+       "section": "talents",
+       "level": 1,
+       "ability": {
+        "ko": "다시 처음으로",
+        "en": "Once Again the First Time"
+       },
+       "changes": [
+        {
+         "ko": "공격력이 50%에서 55%로 증가했습니다.",
+         "en": "Damage increased from 50% to 55%.",
+         "direction": "up"
+        }
+       ]
+      },
+      {
+       "section": "talents",
+       "level": 1,
+       "ability": {
+        "ko": "깊은 숨결",
+        "en": "Deep Breathing"
+       },
+       "changes": [
+        {
+         "ko": "중첩당 추가 공격력이 0.5%에서 0.6%로 증가했습니다.",
+         "en": "Damage bonus per stack increased from 0.5% to 0.6%.",
+         "direction": "up"
+        }
+       ]
+      },
+      {
+       "section": "talents",
+       "level": 1,
+       "ability": {
+        "ko": "시간여행자의 집념",
+        "en": "Timewalker's Pursuit"
+       },
+       "changes": [
+        {
+         "ko": "추가 공격력이 15%에서 12%로 감소했습니다.",
+         "en": "Damage bonus reduced from 15% to 12%.",
+         "direction": "down"
+        }
+       ]
+      }
+     ]
+    },
+    "Gazlowe": {
+     "verdict": "mixed",
+     "groups": [
+      {
+       "section": "base",
+       "level": null,
+       "ability": null,
+       "changes": [
+        {
+         "ko": "일반 공격력이 100에서 105로 증가했습니다.",
+         "en": "Basic Attack damage increased from 100 to 105.",
+         "direction": "up"
+        },
+        {
+         "ko": "생명력이 2275에서 2375로 증가했습니다.",
+         "en": "Health increased from 2275 to 2375.",
+         "direction": "up"
+        }
+       ]
+      },
+      {
+       "section": "base",
+       "level": null,
+       "ability": {
+        "ko": "죽이는 레이저 [W]",
+        "en": "Deth Lazor [W]"
+       },
+       "changes": [
+        {
+         "ko": "치유량이 준 피해의 25%에서 30%로 증가했습니다.",
+         "en": "Healing from damage dealt increased from 25% to 30%.",
+         "direction": "up"
+        }
+       ]
+      },
+      {
+       "section": "talents",
+       "level": 20,
+       "ability": {
+        "ko": "폭탄 던지기",
+        "en": "Bomb Toss"
+       },
+       "changes": [
+        {
+         "ko": "더는 충전 횟수를 부여하지 않습니다.",
+         "en": "No longer grants an additional charge.",
+         "direction": "neutral"
+        },
+        {
+         "ko": "이제 재사용 대기시간이 3초 감소합니다.",
+         "en": "Now reduces the cooldown by 3 seconds.",
+         "direction": "neutral"
+        }
+       ]
+      }
+     ]
+    },
+    "Greymane": {
+     "verdict": "mixed",
+     "groups": [
+      {
+       "section": "talents",
+       "level": 7,
+       "ability": {
+        "ko": "폭탄주",
+        "en": "Incendiary Elixir"
+       },
+       "changes": [
+        {
+         "ko": "중첩당 추가 공격력이 25에서 30으로 증가했습니다.",
+         "en": "Damage bonus per stack increased from 25 to 30.",
+         "direction": "up"
+        }
+       ]
+      },
+      {
+       "section": "talents",
+       "level": 20,
+       "ability": {
+        "ko": "길니안 룰렛",
+        "en": "Gilnean Roulette"
+       },
+       "changes": [
+        {
+         "ko": "더는 대상의 생명력을 기반으로 공격력을 줄이지 않습니다.",
+         "en": "No longer reduces the percentage based Health damage.",
+         "direction": "neutral"
+        }
+       ]
+      }
+     ]
+    },
+    "Lúcio": {
+     "verdict": "buff",
+     "groups": [
+      {
+       "section": "talents",
+       "level": 1,
+       "ability": {
+        "ko": "파티 믹스",
+        "en": "Party Mix"
+       },
+       "changes": [
+        {
+         "ko": "퀘스트 완료 추가 사거리가 20%에서 30%로 증가했습니다.",
+         "en": "Quest completion radius bonus increased from 20% to 30%.",
+         "direction": "up"
+        }
+       ]
+      },
+      {
+       "section": "talents",
+       "level": 10,
+       "ability": {
+        "ko": "소리 방벽",
+        "en": "Sound Barrier"
+       },
+       "changes": [
+        {
+         "ko": "보호막이 1296에서 1488로 증가했습니다.",
+         "en": "Shield amount increased from 1296 to 1488.",
+         "direction": "up"
+        }
+       ]
+      },
+      {
+       "section": "talents",
+       "level": 13,
+       "ability": {
+        "ko": "부드럽게!",
+        "en": "Slip"
+       },
+       "changes": [
+        {
+         "ko": "효과 지속시간이 1초에서 2초로 증가했습니다.",
+         "en": "Lingering duration increased from 1 to 2 seconds.",
+         "direction": "up"
+        }
+       ]
+      },
+      {
+       "section": "talents",
+       "level": 20,
+       "ability": {
+        "ko": "불사의 명곡",
+        "en": "Summer Anthem"
+       },
+       "changes": [
+        {
+         "ko": "불사 상태의 지속시간이 1.5초에서 2.5초로 증가했습니다.",
+         "en": "Unkillable duration increased from 1.5 to 2.5 seconds.",
+         "direction": "up"
+        }
+       ]
+      }
+     ]
+    },
+    "Medivh": {
+     "verdict": "mixed",
+     "groups": [
+      {
+       "section": "base",
+       "level": null,
+       "ability": {
+        "ko": "비전 균열 [Q]",
+        "en": "Arcane Rift [Q]"
+       },
+       "changes": [
+        {
+         "ko": "공격력이 170에서 185로 증가했습니다.",
+         "en": "Damage increased from 170 to 185.",
+         "direction": "up"
+        }
+       ]
+      },
+      {
+       "section": "base",
+       "level": null,
+       "ability": {
+        "ko": "의지 투영 [W]",
+        "en": "Force of Will [W]"
+       },
+       "changes": [
+        {
+         "ko": "재사용 대기시간이 9초에서 8초로 감소했습니다.",
+         "en": "Cooldown reduced from 9 to 8 seconds.",
+         "direction": "up"
+        }
+       ]
+      },
+      {
+       "section": "base",
+       "level": null,
+       "ability": {
+        "ko": "차원문 [E]",
+        "en": "Portal [E]"
+       },
+       "changes": [
+        {
+         "ko": "재사용 대기시간이 16초에서 20초로 증가했습니다.",
+         "en": "Cooldown increased from 16 to 20 seconds.",
+         "direction": "down"
+        }
+       ]
+      },
+      {
+       "section": "talents",
+       "level": 1,
+       "ability": {
+        "ko": "기민함의 바람",
+        "en": "Winds of Celerity"
+       },
+       "changes": [
+        {
+         "ko": "이제 까마귀 형상 시전 시간도 0.25초 감소합니다.",
+         "en": "Now also reduces Raven Form cast time by 0.25 seconds.",
+         "direction": "neutral"
+        }
+       ]
+      },
+      {
+       "section": "talents",
+       "level": 1,
+       "ability": {
+        "ko": "까마귀의 지능",
+        "en": "Raven's Intellect"
+       },
+       "changes": [
+        {
+         "ko": "증가량이 200%에서 400%로 증가했습니다.",
+         "en": "Bonus increased from 200% to 400%.",
+         "direction": "up"
+        }
+       ]
+      },
+      {
+       "section": "talents",
+       "level": 1,
+       "ability": {
+        "ko": "차원문 특화",
+        "en": "Portal Mastery"
+       },
+       "changes": [
+        {
+         "ko": "이제 차원문의 마나 소모량이 100% 증가합니다.",
+         "en": "Now increases the Mana cost of Portal by 100%.",
+         "direction": "neutral"
+        }
+       ]
+      },
+      {
+       "section": "talents",
+       "level": 4,
+       "ability": {
+        "ko": "까마귀 전령",
+        "en": "Raven Familiar"
+       },
+       "changes": [
+        {
+         "ko": "공격력이 121에서 98로 감소했습니다.",
+         "en": "Damage reduced from 121 to 98.",
+         "direction": "down"
+        },
+        {
+         "ko": "감속 효과가 20%에서 15%로 감소했습니다.",
+         "en": "Slow reduced from 20% to 15%.",
+         "direction": "down"
+        }
+       ]
+      },
+      {
+       "section": "talents",
+       "level": 4,
+       "ability": {
+        "ko": "현시의 가루",
+        "en": "Dust of Appearance"
+       },
+       "changes": [
+        {
+         "ko": "재사용 대기시간이 45초에서 40초로 감소합니다.",
+         "en": "Cooldown reduced from 45 to 40 seconds.",
+         "direction": "up"
+        }
+       ]
+      }
+     ]
+    },
+    "Mei": {
+     "verdict": "mixed",
+     "groups": [
+      {
+       "section": "base",
+       "level": null,
+       "ability": {
+        "ko": "눈보라 [W]",
+        "en": "Blizzard [W]"
+       },
+       "changes": [
+        {
+         "ko": "눈보라가 폭발하기까지 걸리는 시간이 2초에서 1.875초로 감소했습니다.",
+         "en": "Detonation delay reduced from 2 to 1.875 seconds.",
+         "direction": "neutral"
+        },
+        {
+         "ko": "폭발 공격력이 75에서 80으로 증가했습니다.",
+         "en": "Detonation damage increased from 75 to 80.",
+         "direction": "up"
+        }
+       ]
+      },
+      {
+       "section": "base",
+       "level": null,
+       "ability": {
+        "ko": "얼음 활주 [E]",
+        "en": "Icing [E]"
+       },
+       "changes": [
+        {
+         "ko": "시전 시간이 0.125초에서 0.0625초로 감소했습니다.",
+         "en": "Cast time reduced from 0.125 to 0.0625 seconds.",
+         "direction": "up"
+        }
+       ]
+      },
+      {
+       "section": "talents",
+       "level": 10,
+       "ability": {
+        "ko": "눈사태",
+        "en": "Avalanche"
+       },
+       "changes": [
+        {
+         "ko": "재사용 대기시간이 90초에서 80초로 감소했습니다.",
+         "en": "Cooldown reduced from 90 to 80 seconds.",
+         "direction": "up"
+        }
+       ]
+      },
+      {
+       "section": "talents",
+       "level": 10,
+       "ability": {
+        "ko": "빙벽",
+        "en": "Ice Wall"
+       },
+       "changes": [
+        {
+         "ko": "시전 시간이 0.75초에서 0.6875초로 감소했습니다.",
+         "en": "Cast time reduced from 0.75 to 0.6875 seconds.",
+         "direction": "up"
+        }
+       ]
+      }
+     ]
+    },
+    "Mephisto": {
+     "verdict": "buff",
+     "groups": [
+      {
+       "section": "talents",
+       "level": 1,
+       "ability": {
+        "ko": "악독한 의도",
+        "en": "Malicious Intent"
+       },
+       "changes": [
+        {
+         "ko": "기술 위력 증가량이 25%에서 30%로 증가했습니다.",
+         "en": "Spell Power bonus increased from 25% to 30%.",
+         "direction": "up"
+        },
+        {
+         "ko": "지속시간이 2.5초에서 3초로 증가합니다.",
+         "en": "Duration increased from 2.5 to 3 seconds.",
+         "direction": "up"
+        }
+       ]
+      },
+      {
+       "section": "talents",
+       "level": 4,
+       "ability": {
+        "ko": "증오에 찬 회복",
+        "en": "Hateful Mending"
+       },
+       "changes": [
+        {
+         "ko": "마나 회복량이 10에서 15로 증가했습니다.",
+         "en": "Mana restored increased from 10 to 15.",
+         "direction": "up"
+        },
+        {
+         "ko": "치유량이 70%에서 85%로 증가했습니다.",
+         "en": "Healing increased from 70% to 85%.",
+         "direction": "up"
+        }
+       ]
+      },
+      {
+       "section": "talents",
+       "level": 4,
+       "ability": {
+        "ko": "전자기 보호막",
+        "en": "Static Barrier"
+       },
+       "changes": [
+        {
+         "ko": "보호막이 40%에서 50%로 증가했습니다.",
+         "en": "Shield amount increased from 40% to 50%.",
+         "direction": "up"
+        }
+       ]
+      }
+     ]
+    },
+    "Stukov": {
+     "verdict": "buff",
+     "groups": [
+      {
+       "section": "talents",
+       "level": 1,
+       "ability": {
+        "ko": "역겨운 손길",
+        "en": "Fetid Touch"
+       },
+       "changes": [
+        {
+         "ko": "재사용 대기시간 감소량이 5초에서 6초로 증가했습니다.",
+         "en": "Cooldown reduction increased from 5 to 6 seconds.",
+         "direction": "up"
+        }
+       ]
+      },
+      {
+       "section": "talents",
+       "level": 10,
+       "ability": {
+        "ko": "거친 휩쓸기",
+        "en": "Flailing Swipe"
+       },
+       "changes": [
+        {
+         "ko": "공격력이 48에서 62로 증가했습니다.",
+         "en": "Damage increased from 48 to 62.",
+         "direction": "up"
+        }
+       ]
+      }
+     ]
+    },
+    "Thrall": {
+     "verdict": "mixed",
+     "groups": [
+      {
+       "section": "talents",
+       "level": 1,
+       "ability": {
+        "ko": "정기의 메아리",
+        "en": "Echo of the Elements"
+       },
+       "changes": [
+        {
+         "ko": "이제 사망 시 중첩 5회를 잃습니다.",
+         "en": "Now loses 5 stacks upon death.",
+         "direction": "neutral"
+        }
+       ]
+      },
+      {
+       "section": "talents",
+       "level": 13,
+       "ability": {
+        "ko": "영혼의 보호막",
+        "en": "Spirit Shield"
+       },
+       "changes": [
+        {
+         "ko": "추가 기술 방어력이 70에서 50으로 감소했습니다.",
+         "en": "Spell Armor reduced from 70 to 50.",
+         "direction": "down"
+        }
+       ]
+      }
+     ]
+    },
+    "Xal'atath": {
+     "verdict": "mixed",
+     "groups": [
+      {
+       "section": "base",
+       "level": null,
+       "ability": {
+        "ko": "그림자 표식 [Q]",
+        "en": "Shadow Mark [Q]"
+       },
+       "changes": [
+        {
+         "ko": "사거리가 8에서 9로 증가했습니다.",
+         "en": "Range increased from 8 to 9.",
+         "direction": "up"
+        },
+        {
+         "ko": "중심부의 공격력이 120에서 130으로 증가했습니다. 외곽 부분의 공격력은 50%로 유지됩니다.",
+         "en": "Inner damage increased from 120 to 130. Outer damage remains 50%.",
+         "direction": "up"
+        }
+       ]
+      },
+      {
+       "section": "base",
+       "level": null,
+       "ability": {
+        "ko": "검은 심장의 의식 [W]",
+        "en": "Dark Heart Ritual [W]"
+       },
+       "changes": [
+        {
+         "ko": "폭발 공격력이 245에서 260으로 증가했습니다.",
+         "en": "Detonation damage increased from 245 to 260.",
+         "direction": "up"
+        }
+       ]
+      },
+      {
+       "section": "base",
+       "level": null,
+       "ability": {
+        "ko": "공허 걸음 [E]",
+        "en": "Void Step [E]"
+       },
+       "changes": [
+        {
+         "ko": "순간이동당 추가 일반 공격력이 10%에서 15%로 증가했습니다.",
+         "en": "Basic Attack damage bonus per teleport increased from 10% to 15%.",
+         "direction": "up"
+        },
+        {
+         "ko": "중심부의 공격력이 120에서 130으로 증가했습니다. 외곽 부분의 공격력은 50%로 유지됩니다.",
+         "en": "Inner damage increased from 120 to 130. Outer damage remains 50%.",
+         "direction": "up"
+        }
+       ]
+      },
+      {
+       "section": "base",
+       "level": null,
+       "ability": {
+        "ko": "공허 화살 [D]",
+        "en": "Void Volley [D]"
+       },
+       "changes": [
+        {
+         "ko": "퀘스트 중첩당 추가 공격력이 1%에서 0.75%로 감소했습니다.",
+         "en": "Damage bonus per quest stack decreased from 1% to 0.75%.",
+         "direction": "down"
+        },
+        {
+         "ko": "신화 보상 추가 공격력이 50%에서 35%로 감소했습니다.",
+         "en": "Mythic Reward damage bonus reduced from 50% to 35%.",
+         "direction": "down"
+        }
+       ]
+      },
+      {
+       "section": "talents",
+       "level": 1,
+       "ability": {
+        "ko": "고정 핵",
+        "en": "Anchored Core"
+       },
+       "changes": [
+        {
+         "ko": "더는 검은 심장의 의식의 지속시간을 증가시키지 않습니다.",
+         "en": "No longer increases Dark Heart Ritual duration.",
+         "direction": "neutral"
+        }
+       ]
+      },
+      {
+       "section": "talents",
+       "level": 1,
+       "ability": {
+        "ko": "그림자 망토",
+        "en": "Cloak of Shadows"
+       },
+       "changes": [
+        {
+         "ko": "이제 공허 걸음으로 순간이동하는 동안에만 기술 방어력을 얻습니다. 증가 효과가 더는 2초 동안 지속되지 않습니다.",
+         "en": "Now grants Spell Armor only while actively blinking. The bonus no longer persists for 2 seconds.",
+         "direction": "neutral"
+        }
+       ]
+      },
+      {
+       "section": "talents",
+       "level": 4,
+       "ability": {
+        "ko": "겁먹은 걸음",
+        "en": "Cold Feet"
+       },
+       "changes": [
+        {
+         "ko": "추가 지속시간이 1초에서 2초로 증가했습니다.",
+         "en": "Duration bonus increased from 1 to 2 seconds.",
+         "direction": "up"
+        }
+       ]
+      },
+      {
+       "section": "talents",
+       "level": 7,
+       "ability": {
+        "ko": "맹독 표식",
+        "en": "Toxic Mark"
+       },
+       "changes": [
+        {
+         "ko": "더는 그림자 표식의 지속시간을 증가시키지 않습니다.",
+         "en": "No longer increases Shadow Mark duration.",
+         "direction": "neutral"
+        },
+        {
+         "ko": "이제 겁먹은 걸음의 추가 지속시간 효과의 영향을 받습니다.",
+         "en": "Now benefits from Cold Feet's duration bonus.",
+         "direction": "neutral"
+        }
+       ]
+      },
+      {
+       "section": "talents",
+       "level": 10,
+       "ability": {
+        "ko": "공허 폭발",
+        "en": "Void Eruption"
+       },
+       "changes": [
+        {
+         "ko": "초당 공격력이 10% 감소했습니다.",
+         "en": "Damage per second reduced by 10%.",
+         "direction": "down"
+        },
+        {
+         "ko": "속도가 10% 감소했습니다. 이동 거리가 감소하지 않습니다.",
+         "en": "Speed reduced by 10%. Travel distance is not reduced.",
+         "direction": "neutral"
+        }
+       ]
+      },
+      {
+       "section": "talents",
+       "level": 16,
+       "ability": {
+        "ko": "표식의 생존력",
+        "en": "Marked Resilience"
+       },
+       "changes": [
+        {
+         "ko": "보호막이 160에서 200으로 증가했습니다.",
+         "en": "Shield amount increased from 160 to 200.",
+         "direction": "up"
+        }
+       ]
+      },
+      {
+       "section": "talents",
+       "level": 16,
+       "ability": {
+        "ko": "끊임없는 속삭임",
+        "en": "Relentless Whispers"
+       },
+       "changes": [
+        {
+         "ko": "더는 공격 속도를 증가시키지 않습니다.",
+         "en": "No longer increases Attack Speed.",
+         "direction": "neutral"
+        },
+        {
+         "ko": "이제 순간이동할 때마다 일반 공격력이 추가로 75% 증가합니다.",
+         "en": "Now grants an additional 75% Basic Attack damage per teleport.",
+         "direction": "neutral"
+        }
+       ]
+      },
+      {
+       "section": "talents",
+       "level": 16,
+       "ability": {
+        "ko": "조각난 현실",
+        "en": "Fractured Reality"
+       },
+       "changes": [
+        {
+         "ko": "추가 공격력이 25%에서 15%로 감소했습니다.",
+         "en": "Damage bonus reduced from 25% to 15%.",
+         "direction": "down"
+        }
+       ]
+      },
+      {
+       "section": "talents",
+       "level": 20,
+       "ability": {
+        "ko": "전령의 소모",
+        "en": "Harbinger's Consumption"
+       },
+       "changes": [
+        {
+         "ko": "적중당 재사용 대기시간 감소량이 14초에서 10초로 감소했습니다.",
+         "en": "Cooldown reduction per hit reduced from 14 to 10 seconds.",
+         "direction": "down"
+        },
+        {
+         "ko": "이제 보주 세 개가 더 천천히 주위를 맴돕니다.",
+         "en": "The three orbs now orbit more slowly.",
+         "direction": "neutral"
+        }
+       ]
+      },
+      {
+       "section": "talents",
+       "level": 20,
+       "ability": {
+        "ko": "불안정한 핵",
+        "en": "Unstable Core"
+       },
+       "changes": [
+        {
+         "ko": "더는 대상에게 지속 피해를 적용하지 않습니다.",
+         "en": "No longer applies a damage over time to targets.",
+         "direction": "neutral"
+        },
+        {
+         "ko": "적중 피해가 45에서 75로 증가했습니다.",
+         "en": "Impact damage increased from 45 to 75.",
+         "direction": "up"
+        }
+       ]
+      }
+     ]
+    },
+    "Yrel": {
+     "verdict": "mixed",
+     "groups": [
+      {
+       "section": "talents",
+       "level": null,
+       "ability": null,
+       "changes": [
+        {
+         "ko": "1레벨 카라보르의 빛 2명 미만의 대상에게 적중할 때의 증가량이 40%에서 35%로 감소합니다. 2명 이상의 대상에게 적중할 때의 증가량은 80%에서 70%로 감소했습니다.",
+         "en": "Level 1 Light of Karabor Bonus reduced from 40% to 35% when hitting less than 2 targets, and from 80% to 70% when hitting 2 or more targets.",
+         "direction": "down"
+        },
+        {
+         "ko": "7레벨 천상의 군마 효과 지속시간이 3초에서 4초로 증가했습니다.",
+         "en": "Level 7 Divine Steed Lingering duration increased from 3 seconds to 4 seconds.",
+         "direction": "up"
+        }
+       ]
+      }
+     ]
+    }
+   },
+   "hotfixes": []
+  },
   {
    "id": "24303007",
    "published": "2026-09-28T19:35:00Z",
@@ -7101,597 +7931,6 @@
     "en": "https://news.blizzard.com/en-us/article/24206703/"
    },
    "heroes": {},
-   "hotfixes": []
-  },
-  {
-   "id": "24205005",
-   "published": "2025-05-15T17:23:00Z",
-   "build": "2.55.10.94189",
-   "title": {
-    "ko": "히어로즈 오브 더 스톰 패치 노트 – 2025년 5월 16일",
-    "en": "Heroes of the Storm Live Patch Notes - May 15, 2025"
-   },
-   "url": {
-    "ko": "https://news.blizzard.com/ko-kr/article/24205005/",
-    "en": "https://news.blizzard.com/en-us/article/24205005/"
-   },
-   "heroes": {
-    "Ana": {
-     "verdict": "mixed",
-     "groups": [
-      {
-       "section": "base",
-       "level": null,
-       "ability": {
-        "ko": "생체 수류탄 [W]",
-        "en": "Biotic Grenade [W]"
-       },
-       "changes": [
-        {
-         "ko": "추가된 기능: 생체 수류탄이 적에게 적중하지 않으면 재사용 대기시간이 3초 감소합니다.",
-         "en": "ADDED FUNCTIONALITY: If Biotic Grenade does not hit any enemies, its cooldown is reduced by 3 seconds.",
-         "direction": "up"
-        },
-        {
-         "ko": "추가된 기능: 생체 수류탄이 아나에게만 적중하면 재사용 대기시간 2초 감소합니다.",
-         "en": "ADDED FUNCTIONALITY: If Biotic Grenade only hits Ana, its cooldown is reduced by 2 seconds.",
-         "direction": "neutral"
-        }
-       ]
-      },
-      {
-       "section": "talents",
-       "level": 1,
-       "ability": {
-        "ko": "흡혈탄",
-        "en": "Vampiric Rounds"
-       },
-       "changes": [
-        {
-         "ko": "때까치는 이제 지속 치유 효과를 15% 증가시킵니다.",
-         "en": "Shrike now gives a 15% passive healing bonus.",
-         "direction": "neutral"
-        }
-       ]
-      },
-      {
-       "section": "talents",
-       "level": 20,
-       "ability": {
-        "ko": "우제트의 심판",
-        "en": "Deadeye"
-       },
-       "changes": [
-        {
-         "ko": "추가된 기능: 호루스의 눈은 이제 활성화 또는 비활성화할 수 있습니다.",
-         "en": "ADDED FUNCTIONALITY: Eye of Horus can now be toggled On and Off.",
-         "direction": "neutral"
-        },
-        {
-         "ko": "추가된 기능: 호루스의 눈 탄환이 10초마다 한 번씩 보충됩니다.",
-         "en": "ADDED FUNCTIONALITY: Eye of Horus rounds are regained once every 10 seconds.",
-         "direction": "neutral"
-        },
-        {
-         "ko": "추가된 기능: 이제 호루스의 눈의 재사용 대기시간이 6초가 됩니다.",
-         "en": "ADDED FUNCTIONALITY: Eye of Horus cooldown is now 6 seconds.",
-         "direction": "neutral"
-        },
-        {
-         "ko": "우제트의 심판 추가 효과는 이제 4초 동안 지속됩니다.",
-         "en": "Bonuses acquired from Deadeye now lasts 4 seconds.",
-         "direction": "neutral"
-        }
-       ]
-      }
-     ]
-    },
-    "Auriel": {
-     "verdict": "nerf",
-     "groups": [
-      {
-       "section": "base",
-       "level": null,
-       "ability": {
-        "ko": "희망 불어넣기 [고유 능력 D]",
-        "en": "Bestow Hope [Trait D]"
-       },
-       "changes": [
-        {
-         "ko": "영웅이 아닌 대상에게 피해를 주고 저장하는 에너지가 피해량의 40%에서 35%로 감소했습니다.",
-         "en": "Reduced amount of energy stored from 40% to 35% of damage to non-Heroes.",
-         "direction": "down"
-        },
-        {
-         "ko": "영웅에게 피해를 주고 저장하는 에너지가 피해량의 80%에서 70%로 감소했습니다.",
-         "en": "Reduced amount of energy stored from 80% to 70% of damage to Heroes.",
-         "direction": "down"
-        }
-       ]
-      }
-     ]
-    },
-    "Azmodan": {
-     "verdict": "mixed",
-     "groups": [
-      {
-       "section": "talents",
-       "level": 16,
-       "ability": {
-        "ko": "밟아 뭉개기",
-        "en": "Trample"
-       },
-       "changes": [
-        {
-         "ko": "추가된 기능: 이제 밟아 뭉개기가 영웅에게 적중하면 궁극기의 재사용 대기시간이 25% 감소합니다.",
-         "en": "ADDED FUNCTIONALITY: Now reduces Heroic cooldown by 25% if Trample hits a Hero.",
-         "direction": "neutral"
-        }
-       ]
-      }
-     ]
-    },
-    "E.T.C.": {
-     "verdict": "mixed",
-     "groups": [
-      {
-       "section": "base",
-       "level": null,
-       "ability": {
-        "ko": "고막 터트리기 [W]",
-        "en": "Face Melt [W]"
-       },
-       "changes": [
-        {
-         "ko": "재사용 대기시간이 12초에서 10초로 감소했습니다.",
-         "en": "Cooldown reduced from 12 to 10 seconds.",
-         "direction": "up"
-        }
-       ]
-      },
-      {
-       "section": "base",
-       "level": null,
-       "ability": {
-        "ko": "록스타 [고유 능력 D]",
-        "en": "Rockstar [Trait D]"
-       },
-       "changes": [
-        {
-         "ko": "일반 기술로 증가하는 방어력이 20에서 25로 증가했습니다.",
-         "en": "Armor from Basic Abilities increased from 20 to 25.",
-         "direction": "up"
-        },
-        {
-         "ko": "궁극기로 증가하는 방어력이 60에서 50으로 감소했습니다.",
-         "en": "Armor from Heroic Abilities reduced from 60 to 50.",
-         "direction": "down"
-        }
-       ]
-      },
-      {
-       "section": "talents",
-       "level": 4,
-       "ability": {
-        "ko": "크라우드 서핑",
-        "en": "Crowd Surfer"
-       },
-       "changes": [
-        {
-         "ko": "재사용 대기시간 감소량이 7초에서 6초로 감소했습니다.",
-         "en": "Cooldown reduction reduced from 7 to 6 seconds.",
-         "direction": "down"
-        }
-       ]
-      },
-      {
-       "section": "talents",
-       "level": 7,
-       "ability": {
-        "ko": "해머온",
-        "en": "Hammer-on"
-       },
-       "changes": [
-        {
-         "ko": "추가된 기능: 일반 공격이 12%의 추가 피해를 줍니다. 기타 솔로가 활성화된 동안에는 36%로 증가합니다.",
-         "en": "ADDED FUNCTIONALITY: Basic Attacks deal 12% more damage, increased to 36% while Guitar Solo is active.",
-         "direction": "neutral"
-        }
-       ]
-      },
-      {
-       "section": "talents",
-       "level": 13,
-       "ability": {
-        "ko": "앙코르",
-        "en": "Encore"
-       },
-       "changes": [
-        {
-         "ko": "재사용 대기시간 감소량이 5%에서 4%로 감소했습니다.",
-         "en": "Cooldown reduction reduced from 5% to 4%.",
-         "direction": "down"
-        }
-       ]
-      },
-      {
-       "section": "talents",
-       "level": 20,
-       "ability": {
-        "ko": "호드의 힘으로",
-        "en": "Power of the Horde"
-       },
-       "changes": [
-        {
-         "ko": "새로운 특성: 사용하면 주위 아군 영웅에게 5초 동안 각각의 최대 생명력의 30%에 해당하는 피해 흡수 보호막을 부여합니다. 대상 지역에 있는 각 아군 영웅 하나당 효과가 2% 증가합니다. 이 새로운 특성은 폭풍 보호막을 대체합니다.",
-         "en": "NEW TALENT: Activate to grant nearby allied Heroes a Shield that absorbs damage equal to 30% of their maximum Health for 5 seconds, increased by 2% for each other allied Hero in the area. This new Talent replaces Storm Shield.",
-         "direction": "neutral"
-        }
-       ]
-      },
-      {
-       "section": "talents",
-       "level": 20,
-       "ability": {
-        "ko": "번개를 타고",
-        "en": "Ride the Lightning"
-       },
-       "changes": [
-        {
-         "ko": "새로운 특성: 사용하면 가까운 목표 위치로 순간이동하고 주위 적 영웅에게 48의 피해를 줍니다. 적중한 적 영웅 하나당 재사용 대기시간이 10초 감소합니다. 최대 50초까지 감소합니다.",
-         "en": "NEW TALENT: Activate to teleport to a nearby location and deal 48 damage to nearby enemy Heroes. The cooldown is reduced by 10 seconds for every enemy Hero hit, up to 50 seconds.",
-         "direction": "neutral"
-        }
-       ]
-      }
-     ]
-    },
-    "Genji": {
-     "verdict": "mixed",
-     "groups": [
-      {
-       "section": "talents",
-       "level": 1,
-       "ability": {
-        "ko": "길잡이",
-        "en": "Pathfinder"
-       },
-       "changes": [
-        {
-         "ko": "추가된 기능: 궁극기 사용 시 적 영웅에게 입힌 피해의 10%만큼 생명력을 회복합니다. 겐지의 생명력이 낮을수록 최대 30%까지 증가합니다.",
-         "en": "ADDED FUNCTIONALITY: Heroic Ability now heals Genji for 10% of the damage dealt to enemy Heroes, increased by up to 30% based on how low Genji's Health is.",
-         "direction": "neutral"
-        }
-       ]
-      },
-      {
-       "section": "talents",
-       "level": 10,
-       "ability": {
-        "ko": "폭렬참",
-        "en": "X-Strike"
-       },
-       "changes": [
-        {
-         "ko": "재사용 대기시간이 60초에서 75초로 증가했습니다.",
-         "en": "Cooldown increased from 60 seconds to 75 seconds.",
-         "direction": "down"
-        },
-        {
-         "ko": "폭발 공격력이 275에서 290으로 증가했습니다.",
-         "en": "Detonation damage increased from 275 to 290.",
-         "direction": "up"
-        },
-        {
-         "ko": "베기 공격력이 135에서 145로 증가했습니다.",
-         "en": "Slash damage increased from 135 to 145.",
-         "direction": "up"
-        }
-       ]
-      },
-      {
-       "section": "talents",
-       "level": 13,
-       "ability": {
-        "ko": "심안",
-        "en": "Shingan"
-       },
-       "changes": [
-        {
-         "ko": "이제 구조물에 40% 감소한 피해를 줍니다.",
-         "en": "Now does 40% less damage to Structures.",
-         "direction": "neutral"
-        }
-       ]
-      },
-      {
-       "section": "talents",
-       "level": 20,
-       "ability": {
-        "ko": "살아 있는 무기",
-        "en": "Living Weapon"
-       },
-       "changes": [
-        {
-         "ko": "재사용 대기시간 감소량이 10초에서 12.5초로 증가했습니다.",
-         "en": "Cooldown reduction increased from 10 seconds to 12.5 seconds.",
-         "direction": "up"
-        }
-       ]
-      }
-     ]
-    },
-    "Imperius": {
-     "verdict": "mixed",
-     "groups": [
-      {
-       "section": "base",
-       "level": null,
-       "ability": {
-        "ko": "타오르는 갑옷 [E]",
-        "en": "Molten Armor [E]"
-       },
-       "changes": [
-        {
-         "ko": "이제 사거리 내에 영웅이 없으면 2명의 추가 대상을 공격합니다.",
-         "en": "Now hits two extra targets if no Heroes are in range.",
-         "direction": "neutral"
-        }
-       ]
-      },
-      {
-       "section": "talents",
-       "level": 1,
-       "ability": {
-        "ko": "꿰뚫는 빛줄기",
-        "en": "Impaling Light"
-       },
-       "changes": [
-        {
-         "ko": "개편: 꿰뚫는 빛줄기의 재사용 대기시간이 2초 감소했습니다.",
-         "en": "REWORK: Impaling Light cooldown is reduced by 2 seconds.",
-         "direction": "up"
-        },
-        {
-         "ko": "개편: 꿰뚫는 빛줄기가 영웅에게 180%의 추가 피해를 주며, 적중한 추가 영웅 하나당 20% 감소합니다.",
-         "en": "REWORK: Impaling Light does 180% more damage to Heroes, reduced by 20% for each additional Hero hit.",
-         "direction": "neutral"
-        },
-        {
-         "ko": "개편: 꿰뚫는 빛줄기의 마나 소모량이 40에서 30으로 감소했습니다.",
-         "en": "REWORK: Impaling Light mana cost is reduced from 40 to 30.",
-         "direction": "up"
-        },
-        {
-         "ko": "개편: 용기의 낙인 대상의 기절 효과가 완료될 때, 대상에게 부여된 용기의 낙인 하나당 꿰뚫는 빛줄기의 재사용 대기시간이 1초 감소합니다",
-         "en": "REWORK: When a Valorous Branded target's Stun ends, Impaling Light's cooldown is reduced by 1 second for each Valorous Brand on the target.",
-         "direction": "neutral"
-        }
-       ]
-      },
-      {
-       "section": "talents",
-       "level": 7,
-       "ability": {
-        "ko": "영광의 불꽃",
-        "en": "Blaze of Glory"
-       },
-       "changes": [
-        {
-         "ko": "영광의 불꽃의 지연 시간이 2초에서 1.75초로 감소했습니다.",
-         "en": "Blaze of Glory delay reduced from 2 seconds to 1.75 seconds.",
-         "direction": "up"
-        }
-       ]
-      },
-      {
-       "section": "talents",
-       "level": 7,
-       "ability": {
-        "ko": "신성한 백열",
-        "en": "Holy Fervor"
-       },
-       "changes": [
-        {
-         "ko": "타오르는 갑옷은 이제 신성한 백열을 부여하지 않습니다.",
-         "en": "Molten Armor no longer grants Holy Fervor.",
-         "direction": "neutral"
-        }
-       ]
-      },
-      {
-       "section": "talents",
-       "level": 20,
-       "ability": {
-        "ko": "천상의 군단장",
-        "en": "Heavenly Host"
-       },
-       "changes": [
-        {
-         "ko": "추가된 기능: 천사의 무구로 부여되는 보호막이 더는 만료되지 않습니다.",
-         "en": "ADDED FUNCTIONALITY: All Shields created by Angelic Armaments no longer expire.",
-         "direction": "neutral"
-        },
-        {
-         "ko": "추가된 기능: 천상의 군단장 보호막으로 발사되는 검이 영웅이 아닌 적을 대상으로 지정할 수 있게 되며, 영웅을 우선적으로 공격합니다.",
-         "en": "ADDED FUNCTIONALITY: Swords fired by Heavenly Host Shields can target non-Heroes, but Heroes are prioritized.",
-         "direction": "neutral"
-        }
-       ]
-      },
-      {
-       "section": "talents",
-       "level": 20,
-       "ability": {
-        "ko": "타오르는 분노",
-        "en": "Molten Wrath"
-       },
-       "changes": [
-        {
-         "ko": "새로운 특성: 타오르는 갑옷이 사거리 내에 적 영웅이 있어도 2명의 추가 대상에게 적중합니다.",
-         "en": "NEW TALENT: Molten Armor will now hit two extra targets even if enemy Heroes are in range.",
-         "direction": "neutral"
-        }
-       ]
-      }
-     ]
-    },
-    "Lunara": {
-     "verdict": "mixed",
-     "groups": [
-      {
-       "section": "talents",
-       "level": 7,
-       "ability": {
-        "ko": "갈래창",
-        "en": "Splintered Spear"
-       },
-       "changes": [
-        {
-         "ko": "추가된 기능: 이제 갈래창 3중첩을 부여합니다. 추가 대상을 공격하면 중첩이 소모됩니다. 최대 3번까지 중첩되며, 한 번의 공격으로 모든 중첩을 소모할 수 있습니다.",
-         "en": "ADDED FUNCTIONALITY: Now grants 3 stacks of Splintered Spear. A stack is consumed when an extra target is attacked. Can have a maximum of 3 stacks and all stacks can be consumed in a single attack.",
-         "direction": "neutral"
-        }
-       ]
-      },
-      {
-       "section": "talents",
-       "level": 13,
-       "ability": {
-        "ko": "무한한 포자",
-        "en": "Endless Spores"
-       },
-       "changes": [
-        {
-         "ko": "이제 50의 마나를 반환합니다.",
-         "en": "Now also refunds 50 Mana.",
-         "direction": "neutral"
-        }
-       ]
-      },
-      {
-       "section": "talents",
-       "level": 20,
-       "ability": {
-        "ko": "자생지를 위하여",
-        "en": "For The Wildlands!"
-       },
-       "changes": [
-        {
-         "ko": "새로운 특성: 가시나무 덩굴이 추가로 4개의 덩굴을 원호 모양으로 발사합니다.",
-         "en": "NEW TALENT: Thornwood Vine now shoots out 4 additional Vines in an arc.",
-         "direction": "neutral"
-        }
-       ]
-      },
-      {
-       "section": "talents",
-       "level": 20,
-       "ability": {
-        "ko": "숲의 분노",
-        "en": "Forest's Wrath"
-       },
-       "changes": [
-        {
-         "ko": "이제 두 궁극기와 함께 선택할 수 있습니다.",
-         "en": "Can now be selected with either Heroic.",
-         "direction": "neutral"
-        }
-       ]
-      }
-     ]
-    },
-    "Malthael": {
-     "verdict": "mixed",
-     "groups": [
-      {
-       "section": "base",
-       "level": null,
-       "ability": {
-        "ko": "망령의 일격 [W]",
-        "en": "Wraith Strike [W]"
-       },
-       "changes": [
-        {
-         "ko": "사거리가 6에서 7로 증가했습니다.",
-         "en": "Range is increased from 6 to 7.",
-         "direction": "up"
-        }
-       ]
-      },
-      {
-       "section": "talents",
-       "level": 4,
-       "ability": {
-        "ko": "암흑의 수확",
-        "en": "Black Harvest"
-       },
-       "changes": [
-        {
-         "ko": "퀘스트 목표가 180초에서 150초로 감소했습니다.",
-         "en": "Quest goal reduced from 180 seconds to 150 seconds.",
-         "direction": "down"
-        }
-       ]
-      },
-      {
-       "section": "talents",
-       "level": 10,
-       "ability": {
-        "ko": "영혼 회오리",
-        "en": "Tormented Souls"
-       },
-       "changes": [
-        {
-         "ko": "이제 영혼 회오리가 끝날 때 망령의 일격의 재사용 대기시간이 초기화되지 않습니다.",
-         "en": "No longer resets the cooldown of Wraith Strike when Tormented Souls ends.",
-         "direction": "neutral"
-        },
-        {
-         "ko": "이제 망령의 일격의 재사용 대기시간을 2초로 감소시키며, 영혼 회오리가 활성화된 동안 마나를 소모하지 않습니다.",
-         "en": "Now reduces the cooldown of Wraith Strike to 2 seconds and removes its Mana cost while Tormented Souls is active.",
-         "direction": "neutral"
-        }
-       ]
-      },
-      {
-       "section": "talents",
-       "level": 20,
-       "ability": {
-        "ko": "영혼을 거두는 자",
-        "en": "Reaper of Souls"
-       },
-       "changes": [
-        {
-         "ko": "영혼 회오리 반경에 적 영웅이 2명 이상 있으면 지속 시간이 감소하지 않습니다.",
-         "en": "While 2 or more enemy Heroes are in Tormented Souls' radius, its duration does not decay.",
-         "direction": "neutral"
-        }
-       ]
-      }
-     ]
-    },
-    "Zagara": {
-     "verdict": "nerf",
-     "groups": [
-      {
-       "section": "talents",
-       "level": 16,
-       "ability": {
-        "ko": "부식성 타액",
-        "en": "Corrosive Saliva"
-       },
-       "changes": [
-        {
-         "ko": "공격력이 최대 생명력의 1.75%에서 1.5%로 감소했습니다.",
-         "en": "Damage reduced from 1.75% to 1.5% of maximum Health.",
-         "direction": "down"
-        }
-       ]
-      }
-     ]
-    }
-   },
    "hotfixes": []
   }
  ]
