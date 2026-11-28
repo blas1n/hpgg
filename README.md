@@ -15,6 +15,26 @@ down when its owner stopped playing; this repository stays up as a record of how
 | **Draft simulator** | **Patch notes** | **Phone** |
 | ![Draft](docs/screenshots/draft-desktop.png) | ![Patches](docs/screenshots/patches-desktop.png) | ![Phone](docs/screenshots/hero-mobile.png) |
 
+<!-- usage:start -->
+## Usage
+
+Live from 2026-09-28 to 2026-11-28 (62 days).
+
+| | |
+|---|---|
+| Page views | 22,843 (busiest day 2026-10-05: 846; busiest week from 2026-10-05: 3,718) |
+| Where from | South Korea 96% |
+| Language | Korean 97%, English 3% |
+| Device | desktop 74%, phone 25%, tablet 1% |
+| Player searches | 1,009 player profiles looked up |
+| Battle.net accounts | 17 (sign-in opened 2026-10-30), 3 kept a hero pool |
+| Comments | 1 |
+
+![Daily page views](docs/usage/daily-visits.svg)
+
+Page views are GoatCounter's (one per page per visit, no cookies); searches and accounts are the API's own totals, taken on shutdown day before its database was deleted.
+<!-- usage:end -->
+
 ## What it did
 
 - **Tier list with the formula on the page.** Quick Match and Storm League, per map, per region and per rank
