@@ -1,4 +1,4 @@
-// Copies the data folder (DATA_DIR, default ../data) into public/ so the static export ships it verbatim
+// Copies the data folder (DATA_DIR, default tests/e2e-data, the synthetic set) into public/ so the static export ships it verbatim
 // (latest/, previous/, img/, *_ko.json, CNAME), then writes robots.txt + sitemap.xml (scripts/sitemap.ts) and the forwarding pages for the URLs that were live before
 // every language moved under /<locale>/ (scripts/forwarders.ts: /, /hots/…, every hero and map, hots/*.html).
 // Run with Node's type stripping (package.json scripts) so it can load the TypeScript forwarders module.
@@ -9,7 +9,7 @@ import { writeForwarders } from "./forwarders.ts";
 import { writeSitemap } from "./sitemap.ts";
 
 const web = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const src = resolve(web, process.env.DATA_DIR ?? "../data");
+const src = resolve(web, process.env.DATA_DIR ?? "tests/e2e-data");
 const pub = join(web, "public");
 if (!existsSync(src)) throw new Error(`DATA_DIR not found: ${src}`);
 rmSync(pub, { recursive: true, force: true });

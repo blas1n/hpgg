@@ -1,6 +1,6 @@
 name: ci
 
-# The gates from docs/HANDOFF.md, on every pull request (collect-and-deploy only runs on main).
+# The gates from docs/HANDOFF.md, on every pull request.
 on:
   pull_request:
 
